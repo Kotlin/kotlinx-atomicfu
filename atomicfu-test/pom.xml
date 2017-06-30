@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jetbrains.atomicfu</groupId>
-        <artifactId>atomicfu</artifactId>
+        <groupId>kotlinx.atomicfu</groupId>
+        <artifactId>atomicfu-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -13,16 +13,17 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jetbrains.atomicfu</groupId>
-            <artifactId>atomicfu-maven-plugin</artifactId>
+            <groupId>kotlinx.atomicfu</groupId>
+            <artifactId>atomicfu</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.jetbrains.atomicfu</groupId>
+                <groupId>kotlinx.atomicfu</groupId>
                 <artifactId>atomicfu-maven-plugin</artifactId>
                 <version>1.0-SNAPSHOT</version>
                 <executions>

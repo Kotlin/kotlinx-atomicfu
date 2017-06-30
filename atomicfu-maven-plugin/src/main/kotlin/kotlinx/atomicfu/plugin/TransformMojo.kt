@@ -1,11 +1,11 @@
-package org.jetbrains.atomicfu.plugin
+package kotlinx.atomicfu.plugin
 
 import org.apache.maven.plugin.AbstractMojo
 
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
-import org.jetbrains.atomicfu.AtomicFUTransformer
+import kotlinx.atomicfu.AtomicFUTransformer
 
 import java.io.File
 

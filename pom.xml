@@ -2,15 +2,23 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.jetbrains.atomicfu</groupId>
-    <artifactId>atomicfu</artifactId>
+    <groupId>kotlinx.atomicfu</groupId>
+    <artifactId>atomicfu-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+
+    <name>atomicfu-parent</name>
+
+    <modules>
+        <module>atomicfu-maven-plugin</module>
+        <module>atomicfu-transformer</module>
+        <module>atomicfu-test</module>
+        <module>atomicfu</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.1.3</kotlin.version>
-
     </properties>
 
     <dependencies>
@@ -54,11 +62,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <modules>
-        <module>atomicfu-maven-plugin</module>
-        <module>atomicfu-transformer</module>
-        <module>atomicfu-test</module>
-    </modules>
 
 </project>
