@@ -1,7 +1,6 @@
 package kotlinx.atomicfu.test
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.*
 
 class LockFreeStack<T> {
     private val top = atomic<Node<T>>()
@@ -12,17 +11,24 @@ class LockFreeStack<T> {
 
     fun clear() { top.value = null }
 
-    fun push(value: T) {
+    fun pushLoop(value: T) {
         top.loop { cur ->
             val upd = Node(value, cur)
             if (top.compareAndSet(cur, upd)) return
         }
     }
 
-    fun pop(): T? {
+    fun popLoop(): T? {
         top.loop { cur ->
             if (cur == null) return null
             if (top.compareAndSet(cur, cur.next)) return cur.value
         }
     }
+
+    fun pushUpdate(value: T) {
+        top.update { cur -> Node(value, cur) }
+    }
+
+    fun popUpdate(): T? =
+        top.getAndUpdate { cur -> cur?.next } ?.value
 }

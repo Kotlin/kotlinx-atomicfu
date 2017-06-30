@@ -4,22 +4,32 @@ import org.junit.Test
 
 class LockFreeStackTest {
     @Test
-    fun testPushPop() {
+    fun testClear() {
         val s = LockFreeStack<String>()
         check(s.isEmpty())
-        s.push("A")
+        s.pushLoop("A")
         check(!s.isEmpty())
-        check(s.pop() == "A")
+        s.clear()
         check(s.isEmpty())
     }
 
     @Test
-    fun testClear() {
+    fun testPushPopLoop() {
         val s = LockFreeStack<String>()
         check(s.isEmpty())
-        s.push("A")
+        s.pushLoop("A")
         check(!s.isEmpty())
-        s.clear()
+        check(s.popLoop() == "A")
+        check(s.isEmpty())
+    }
+
+    @Test
+    fun testPushPopUpdate() {
+        val s = LockFreeStack<String>()
+        check(s.isEmpty())
+        s.pushUpdate("A")
+        check(!s.isEmpty())
+        check(s.popUpdate() == "A")
         check(s.isEmpty())
     }
 }

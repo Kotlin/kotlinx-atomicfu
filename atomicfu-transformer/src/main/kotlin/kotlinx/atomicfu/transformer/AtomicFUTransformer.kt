@@ -1,3 +1,5 @@
+@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
+
 package kotlinx.atomicfu.transformer
 
 import org.objectweb.asm.*
@@ -7,12 +9,15 @@ import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
 import org.objectweb.asm.ClassWriter.COMPUTE_MAXS
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type.OBJECT
+import org.objectweb.asm.Type.getMethodDescriptor
 import org.objectweb.asm.commons.InstructionAdapter
 import org.objectweb.asm.commons.InstructionAdapter.OBJECT_TYPE
+import org.objectweb.asm.tree.*
 import java.io.ByteArrayInputStream
 import java.io.File
+import kotlin.coroutines.experimental.buildSequence
 
-class TypeInfo(val fuType: Type, val pritiveType: Type)
+class TypeInfo(val fuType: Type, val primitiveType: Type)
 
 private const val AFU_PKG = "kotlinx/atomicfu"
 private const val JUCA_PKG = "java/util/concurrent/atomic"
@@ -47,12 +52,16 @@ data class FieldId(val owner: String, val name: String) {
     override fun toString(): String = "$owner::$name"
 }
 
+private class AbortTransform(msg: String) : Exception(msg)
+
+private fun abort(msg: String): Nothing = throw AbortTransform(msg)
+
 class FieldInfo(fieldId: FieldId, fieldType: Type) {
     val fieldName = fieldId.name
     val fuName = fieldId.name + '$' + "FU"
     val typeInfo = AFU_TYPES[fieldType.internalName]!!
     val fuType = typeInfo.fuType
-    val primitiveType = typeInfo.pritiveType
+    val primitiveType = typeInfo.primitiveType
 }
 
 class AtomicFUTransformer(private val dir: File) {
@@ -99,6 +108,7 @@ class AtomicFUTransformer(private val dir: File) {
             }
         } catch (e: Exception) {
             error("${cv.lastMethod ?: cv.className}: Failed to transform: $e")
+            e.printStackTrace(System.out)
         }
     }
 
@@ -159,72 +169,135 @@ class AtomicFUTransformer(private val dir: File) {
 
         override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
             lastMethod = "$className::$name$desc"
-            return TransformerMV(className, name, super.visitMethod(access, name, desc, signature, exceptions))
+            return TransformerMV(className, access, name, desc, signature, exceptions, super.visitMethod(access, name, desc, signature, exceptions))
         }
     }
 
     private inner class TransformerMV(
         private val className: String,
-        private val methodName: String,
-        mv: MethodVisitor?
-    ) : MethodVisitor(ASM5, mv) {
-        var curFactory: MethodId? = null
+        access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?,
+        mv: MethodVisitor
+    ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
+        init { this.mv = mv }
 
-        override fun visitMethodInsn(opcode: Int, owner: String, name: String, desc: String, itf: Boolean) {
-            val methodId = MethodId(owner, name, desc)
-            when {
-                opcode == Opcodes.INVOKESTATIC && methodId in FACTORIES -> {
-                    info("$className: transforming factory $methodId invocation")
-                    if (methodName != "<init>") error("$className::$methodName: factory $methodId is used outside of constructor")
-                    if (curFactory != null) error("$className::$methodName: interleaved/extra factory method invocations $methodId and $curFactory")
-                    curFactory = methodId
-                    transformed = true
+        override fun visitEnd() {
+            // transform instructions list
+            var i = instructions.first
+            while (i != null)
+                try {
+                    i = transform(i)
+                } catch (e: AbortTransform) {
+                    error("$className::$name: ${e.message}")
+                    i = i.next
                 }
-                opcode == Opcodes.INVOKEVIRTUAL && owner in AFU_TYPES -> {
-                    val typeInfo = AFU_TYPES[owner]!!
-                    val fuName = when (name) {
-                        "getValue" -> "get"
-                        "setValue" -> "set"
-                        else -> name
-                    }
-                    val methodType = Type.getMethodType(desc)
-                    super.visitMethodInsn(Opcodes.INVOKEVIRTUAL, typeInfo.fuType.internalName, fuName,
-                        Type.getMethodDescriptor(methodType.returnType, OBJECT_TYPE, *methodType.argumentTypes), false)
-                    transformed = true
-                }
-                else -> super.visitMethodInsn(opcode, owner, name, desc, itf)
+            // save transformed method
+            accept(mv)
+        }
+
+        fun AbstractInsnNode?.skipLL(): AbstractInsnNode? {
+            var cur = this
+            while (cur is LabelNode || cur is LineNumberNode) cur = cur.next
+            return cur
+        }
+
+        fun AbstractInsnNode?.skipStoreLoad(): AbstractInsnNode? {
+            val a = skipLL()
+            if (a !is VarInsnNode || a.opcode != Opcodes.ASTORE) return null
+            val b = a.next.skipLL()
+            if (b !is VarInsnNode || b.opcode != Opcodes.ALOAD || b.`var` != a.`var`) return null
+            return b
+        }
+
+        fun AbstractInsnNode?.sameVarLoads(): Sequence<AbstractInsnNode> = buildSequence {
+            val ld = this@sameVarLoads ?: return@buildSequence
+            ld as VarInsnNode // type assertion
+            var cur = ld.next
+            while (cur != null) {
+                if (cur is VarInsnNode && cur.opcode == Opcodes.ALOAD && cur.`var` == ld.`var`) yield(cur)
+                cur = cur.next
             }
         }
 
-        override fun visitFieldInsn(opcode: Int, owner: String, name: String, desc: String?) {
+        fun FieldInsnNode.checkPutField(): FieldId? {
+            if (opcode != Opcodes.PUTFIELD) return null
             val fieldId = FieldId(owner, name)
-            when {
-                opcode == Opcodes.PUTFIELD && fieldId in fields -> {
-                    if (methodName != "<init>") {
-                        error("$className::$methodName: initializing $fieldId outside of constructor")
-                        return
+            return if (fieldId in fields) fieldId else null
+        }
+
+        fun transform(i: AbstractInsnNode): AbstractInsnNode? {
+            when (i) {
+                is MethodInsnNode -> {
+                    val methodId = MethodId(i.owner, i.name, i.desc)
+                    when {
+                        i.opcode == Opcodes.INVOKESTATIC && methodId in FACTORIES -> {
+                            if (name != "<init>") abort("factory $methodId is used outside of constructor")
+                            val next = i.next.skipLL()
+                            val fieldId = (next as? FieldInsnNode)?.checkPutField() ?:
+                                abort("factory $methodId invocation must be followed by putfield")
+                            instructions.remove(i)
+                            transformed = true
+                            val f = fields[fieldId]!!
+                            if (Type.getType(i.desc).argumentTypes.isNotEmpty()) {
+                                (next as FieldInsnNode).desc = f.primitiveType.descriptor
+                                return next.next
+                            } else {
+                                val pop = InsnNode(Opcodes.POP)
+                                instructions.insert(next, pop)
+                                instructions.remove(next)
+                                return pop.next
+                            }
+                        }
+                        i.opcode == Opcodes.INVOKEVIRTUAL && i.owner in AFU_TYPES -> {
+                            val typeInfo = AFU_TYPES[i.owner]!!
+                            val fuName = when (i.name) {
+                                "getValue" -> "get"
+                                "setValue" -> "set"
+                                else -> i.name
+                            }
+                            val methodType = Type.getMethodType(i.desc)
+                            i.owner = typeInfo.fuType.internalName
+                            i.name = fuName
+                            i.desc = getMethodDescriptor(methodType.returnType, OBJECT_TYPE, *methodType.argumentTypes)
+                            transformed = true
+                        }
                     }
-                    if (curFactory == null) {
-                        error("$className::$methodName no factory method invocation before put field $fieldId")
-                        return
-                    }
-                    val f = fields[fieldId]!!
-                    if (Type.getType(curFactory!!.desc).argumentTypes.isNotEmpty()) {
-                        super.visitFieldInsn(Opcodes.PUTFIELD, owner, name, f.primitiveType.descriptor)
-                    } else {
-                        visitInsn(Opcodes.POP)
-                    }
-                    curFactory = null
-                    transformed = true
                 }
-                opcode == Opcodes.GETFIELD && fieldId in fields -> {
-                    val f = fields[fieldId]!!
-                    super.visitFieldInsn(Opcodes.GETSTATIC, owner, f.fuName, f.fuType.descriptor)
-                    super.visitInsn(Opcodes.SWAP)
-                    transformed = true
+                is FieldInsnNode -> {
+                    val fieldId = FieldId(i.owner, i.name)
+                    when {
+                        i.opcode == Opcodes.GETFIELD && fieldId in fields -> {
+                            val f = fields[fieldId]!!
+                            i.opcode = Opcodes.GETSTATIC
+                            i.name = f.fuName
+                            i.desc = f.fuType.descriptor
+                            transformed = true
+                            val swap = InsnNode(Opcodes.SWAP)
+                            val after = i.next.skipStoreLoad()
+                            if (after != null) {
+                                instructions.remove(i)
+                                instructions.insert(after, i)
+                            }
+                            instructions.insert(i, swap)
+                            for (j in after.sameVarLoads()) {
+                                val i2 = i.clone(null)
+                                instructions.insert(j, i2)
+                                instructions.insert(i2, InsnNode(Opcodes.SWAP))
+                            }
+                            return swap.next
+                        }
+                        fieldId in fields -> abort("Unsupported operation on $fieldId")
+                    }
                 }
-                else -> super.visitFieldInsn(opcode, owner, name, desc)
             }
+            return i.next
         }
     }
+}
+
+fun main(args: Array<String>) {
+    if (args.size != 1) {
+        println("Usage: AtomicFUTransformerKt <dir>")
+        return
+    }
+    AtomicFUTransformer(File(args[0])).transform()
 }

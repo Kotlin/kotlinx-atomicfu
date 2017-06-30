@@ -55,10 +55,18 @@ inline fun AtomicInt.loop(block: (Int) -> Unit): Nothing {
     }
 }
 
+inline fun AtomicInt.update(block: (Int) -> Int) {
+    while (true) {
+        val cur = value
+        val upd = block(cur)
+        if (compareAndSet(cur, upd)) return
+    }
+}
+
 inline fun AtomicInt.getAndUpdate(block: (Int) -> Int): Int {
     while (true) {
         val cur = value
-        val upd = block(value)
+        val upd = block(cur)
         if (compareAndSet(cur, upd)) return cur
     }
 }
@@ -66,24 +74,7 @@ inline fun AtomicInt.getAndUpdate(block: (Int) -> Int): Int {
 inline fun AtomicInt.updateAndGet(block: (Int) -> Int): Int {
     while (true) {
         val cur = value
-        val upd = block(value)
-        if (compareAndSet(cur, upd)) return upd
-    }
-}
-
-inline fun AtomicInt.getAndAccumulate(block: (Int, Int) -> Int): Int {
-    while (true) {
-        val cur = value
-        val upd = block(cur, value)
-        if (compareAndSet(cur, upd)) return cur
-    }
-}
-
-
-inline fun AtomicInt.accumulateAndGet(block: (Int, Int) -> Int): Int {
-    while (true) {
-        val cur = value
-        val upd = block(cur, value)
+        val upd = block(cur)
         if (compareAndSet(cur, upd)) return upd
     }
 }
@@ -131,10 +122,18 @@ inline fun AtomicLong.loop(block: (Long) -> Unit): Nothing {
     }
 }
 
+inline fun AtomicLong.update(block: (Long) -> Long) {
+    while (true) {
+        val cur = value
+        val upd = block(cur)
+        if (compareAndSet(cur, upd)) return
+    }
+}
+
 inline fun AtomicLong.getAndUpdate(block: (Long) -> Long): Long {
     while (true) {
         val cur = value
-        val upd = block(value)
+        val upd = block(cur)
         if (compareAndSet(cur, upd)) return cur
     }
 }
@@ -142,23 +141,7 @@ inline fun AtomicLong.getAndUpdate(block: (Long) -> Long): Long {
 inline fun AtomicLong.updateAndGet(block: (Long) -> Long): Long {
     while (true) {
         val cur = value
-        val upd = block(value)
-        if (compareAndSet(cur, upd)) return upd
-    }
-}
-
-inline fun AtomicLong.getAndAccumulate(block: (Long, Long) -> Long): Long {
-    while (true) {
-        val cur = value
-        val upd = block(cur, value)
-        if (compareAndSet(cur, upd)) return cur
-    }
-}
-
-inline fun AtomicLong.accumulateAndGet(block: (Long, Long) -> Long): Long {
-    while (true) {
-        val cur = value
-        val upd = block(cur, value)
+        val upd = block(cur)
         if (compareAndSet(cur, upd)) return upd
     }
 }
@@ -189,10 +172,18 @@ inline fun <T> AtomicRef<T>.loop(block: (T) -> Unit): Nothing {
     }
 }
 
+inline fun <T> AtomicRef<T>.update(block: (T) -> T) {
+    while (true) {
+        val cur = value
+        val upd = block(cur)
+        if (compareAndSet(cur, upd)) return
+    }
+}
+
 inline fun <T> AtomicRef<T>.getAndUpdate(block: (T) -> T): T {
     while (true) {
         val cur = value
-        val upd = block(value)
+        val upd = block(cur)
         if (compareAndSet(cur, upd)) return cur
     }
 }
@@ -200,26 +191,7 @@ inline fun <T> AtomicRef<T>.getAndUpdate(block: (T) -> T): T {
 inline fun <T> AtomicRef<T>.updateAndGet(block: (T) -> T): T {
     while (true) {
         val cur = value
-        val upd = block(value)
+        val upd = block(cur)
         if (compareAndSet(cur, upd)) return upd
     }
 }
-
-inline fun <T> AtomicRef<T>.getAndAccumulate(block: (T, T) -> T): T {
-    while (true) {
-        val cur = value
-        val upd = block(cur, value)
-        if (compareAndSet(cur, upd)) return cur
-    }
-}
-
-
-inline fun <T> AtomicRef<T>.accumulateAndGet(block: (T, T) -> T): T {
-    while (true) {
-        val cur = value
-        val upd = block(cur, value)
-        if (compareAndSet(cur, upd)) return upd
-    }
-}
-
-
