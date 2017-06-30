@@ -1,4 +1,4 @@
-package kotlinx.atomicfu
+package kotlinx.atomicfu.transformer
 
 import org.objectweb.asm.*
 import org.objectweb.asm.ClassReader.SKIP_CODE
@@ -32,6 +32,7 @@ private const val AFU_CLS = "$AFU_PKG/AtomicFU"
 private val FACTORIES: Set<MethodId> = setOf(
         MethodId(AFU_CLS, "atomicInt", "()L$AFU_PKG/AtomicInt;"),
         MethodId(AFU_CLS, "atomicLong", "()L$AFU_PKG/AtomicLong;"),
+        MethodId(AFU_CLS, "atomic", "()L$AFU_PKG/AtomicRef;"),
         MethodId(AFU_CLS, "atomic", "(Ljava/lang/Object;)L$AFU_PKG/AtomicRef;")
     )
 
@@ -47,7 +48,6 @@ data class FieldId(val owner: String, val name: String) {
 }
 
 class FieldInfo(fieldId: FieldId, fieldType: Type) {
-    val className = fieldId.owner
     val fieldName = fieldId.name
     val fuName = fieldId.name + '$' + "FU"
     val typeInfo = AFU_TYPES[fieldType.internalName]!!
@@ -58,6 +58,7 @@ class FieldInfo(fieldId: FieldId, fieldType: Type) {
 class AtomicFUTransformer(private val dir: File) {
     private var hasErrors = false
     private var transformed = false
+
     private val fields = mutableMapOf<FieldId, FieldInfo>()
 
     private fun walkClassFiles() = dir.walk()
@@ -147,6 +148,7 @@ class AtomicFUTransformer(private val dir: File) {
                     invokestatic(f.fuType.internalName, "newUpdater", Type.getMethodDescriptor(f.fuType, *params.toTypedArray()), false)
                     putstatic(className, f.fuName, f.fuType.descriptor)
                     visitInsn(Opcodes.RETURN)
+                    visitMaxs(0, 0)
                     visitEnd()
                 }
                 transformed = true
@@ -166,12 +168,16 @@ class AtomicFUTransformer(private val dir: File) {
         private val methodName: String,
         mv: MethodVisitor?
     ) : MethodVisitor(ASM5, mv) {
+        var curFactory: MethodId? = null
+
         override fun visitMethodInsn(opcode: Int, owner: String, name: String, desc: String, itf: Boolean) {
             val methodId = MethodId(owner, name, desc)
             when {
                 opcode == Opcodes.INVOKESTATIC && methodId in FACTORIES -> {
                     info("$className: transforming factory $methodId invocation")
-                    if (methodName != "<init>") error("$className: factory $methodId is used outside of constructor")
+                    if (methodName != "<init>") error("$className::$methodName: factory $methodId is used outside of constructor")
+                    if (curFactory != null) error("$className::$methodName: interleaved/extra factory method invocations $methodId and $curFactory")
+                    curFactory = methodId
                     transformed = true
                 }
                 opcode == Opcodes.INVOKEVIRTUAL && owner in AFU_TYPES -> {
@@ -194,13 +200,21 @@ class AtomicFUTransformer(private val dir: File) {
             val fieldId = FieldId(owner, name)
             when {
                 opcode == Opcodes.PUTFIELD && fieldId in fields -> {
-                    if (methodName != "<init>") error("$className: initializing $fieldId outside of constructor")
+                    if (methodName != "<init>") {
+                        error("$className::$methodName: initializing $fieldId outside of constructor")
+                        return
+                    }
+                    if (curFactory == null) {
+                        error("$className::$methodName no factory method invocation before put field $fieldId")
+                        return
+                    }
                     val f = fields[fieldId]!!
-                    if (f.primitiveType.sort == OBJECT) {
+                    if (Type.getType(curFactory!!.desc).argumentTypes.isNotEmpty()) {
                         super.visitFieldInsn(Opcodes.PUTFIELD, owner, name, f.primitiveType.descriptor)
                     } else {
                         visitInsn(Opcodes.POP)
                     }
+                    curFactory = null
                     transformed = true
                 }
                 opcode == Opcodes.GETFIELD && fieldId in fields -> {

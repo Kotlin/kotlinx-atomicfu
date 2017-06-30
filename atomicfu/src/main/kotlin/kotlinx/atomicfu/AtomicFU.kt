@@ -5,42 +5,48 @@ package kotlinx.atomicfu
 
 import java.util.concurrent.atomic.*
 
-fun atomicInt(): AtomicInt = error("Use AtomicFU plugin to transform this invocation")
-fun atomicLong(): AtomicLong = error("Use AtomicFU plugin to transform this invocation")
-fun <T> atomic(initial: T): AtomicRef<T> = error("Use AtomicFU plugin to transform this invocation")
+fun atomicInt(): AtomicInt = AtomicInt(0)
+fun atomicInt(initial: Int): AtomicInt = AtomicInt(initial)
+fun atomicLong(): AtomicLong = AtomicLong(0L)
+fun atomicLong(initial: Long): AtomicLong = AtomicLong(initial)
+fun <T> atomic(): AtomicRef<T?> = AtomicRef<T?>(null)
+fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
 
-inline fun <T> atomic(): AtomicRef<T?> = atomic<T?>(null)
-
-abstract class AtomicInt private constructor() {
+class AtomicInt internal constructor(initial: Int) {
     /** Get/set of this property maps to read/write of volatile variable */
-    abstract var value: Int
+    @Volatile
+    var value: Int = initial
 
     /** Maps to [AtomicIntegerFieldUpdater.lazySet] */
-    abstract fun lazySet(newValue: Int)
+    fun lazySet(newValue: Int) = FU.lazySet(this, newValue)
 
     /** Maps to [AtomicIntegerFieldUpdater.compareAndSet] */
-    abstract fun compareAndSet(expect: Int, update: Int): Boolean
+    fun compareAndSet(expect: Int, update: Int): Boolean = FU.compareAndSet(this, expect, update)
 
     /** Maps to [AtomicIntegerFieldUpdater.getAndSet] */
-    abstract fun getAndSet(newValue: Int): Int
+    fun getAndSet(newValue: Int): Int = FU.getAndSet(this, newValue)
 
     /** Maps to [AtomicIntegerFieldUpdater.getAndIncrement] */
-    abstract fun getAndIncrement(): Int
+    fun getAndIncrement(): Int = FU.getAndIncrement(this)
 
     /** Maps to [AtomicIntegerFieldUpdater.getAndDecrement] */
-    abstract fun getAndDecrement(): Int
+    fun getAndDecrement(): Int = FU.getAndDecrement(this)
 
     /** Maps to [AtomicIntegerFieldUpdater.getAndAdd] */
-    abstract fun getAndAdd(delta: Int): Int
+    fun getAndAdd(delta: Int): Int = FU.getAndAdd(this, delta)
 
     /** Maps to [AtomicIntegerFieldUpdater.addAndGet] */
-    abstract fun addAndGet(delta: Int): Int
+    fun addAndGet(delta: Int): Int = FU.addAndGet(this, delta)
 
     /** Maps to [AtomicIntegerFieldUpdater.incrementAndGet] */
-    abstract fun incrementAndGet(): Int
+    fun incrementAndGet(): Int = FU.incrementAndGet(this)
 
     /** Maps to [AtomicIntegerFieldUpdater.decrementAndGet] */
-    abstract fun decrementAndGet(): Int
+    fun decrementAndGet(): Int = FU.decrementAndGet(this)
+
+    private companion object {
+        private val FU = AtomicIntegerFieldUpdater.newUpdater(AtomicInt::class.java, "value")
+    }
 }
 
 inline fun AtomicInt.loop(block: (Int) -> Unit): Nothing {
@@ -82,36 +88,41 @@ inline fun AtomicInt.accumulateAndGet(block: (Int, Int) -> Int): Int {
     }
 }
 
-abstract class AtomicLong private constructor() {
+class AtomicLong internal constructor(initial: Long) {
     /** Get/set of this property maps to read/write of volatile variable */
-    abstract var value: Long
+    @Volatile
+    var value: Long = initial
 
     /** Maps to [AtomicLongFieldUpdater.lazySet] */
-    abstract fun lazySet(newValue: Long)
+    fun lazySet(newValue: Long) = FU.lazySet(this, newValue)
 
     /** Maps to [AtomicLongFieldUpdater.compareAndSet] */
-    abstract fun compareAndSet(expect: Long, update: Long): Boolean
+    fun compareAndSet(expect: Long, update: Long): Boolean = FU.compareAndSet(this, expect, update)
 
     /** Maps to [AtomicLongFieldUpdater.getAndSet] */
-    abstract fun getAndSet(newValue: Long): Long
+    fun getAndSet(newValue: Long): Long = FU.getAndSet(this, newValue)
 
     /** Maps to [AtomicLongFieldUpdater.getAndIncrement] */
-    abstract fun getAndIncrement(): Long
+    fun getAndIncrement(): Long = FU.getAndIncrement(this)
 
     /** Maps to [AtomicLongFieldUpdater.getAndDecrement] */
-    abstract fun getAndDecrement(): Long
+    fun getAndDecrement(): Long = FU.getAndDecrement(this)
 
     /** Maps to [AtomicLongFieldUpdater.getAndAdd] */
-    abstract fun getAndAdd(delta: Long): Long
+    fun getAndAdd(delta: Long): Long = FU.getAndAdd(this, delta)
 
     /** Maps to [AtomicLongFieldUpdater.addAndGet] */
-    abstract fun addAndGet(delta: Long): Long
+    fun addAndGet(delta: Long): Long = FU.addAndGet(this, delta)
 
     /** Maps to [AtomicLongFieldUpdater.incrementAndGet] */
-    abstract fun incrementAndGet(): Long
+    fun incrementAndGet(): Long = FU.incrementAndGet(this)
 
     /** Maps to [AtomicLongFieldUpdater.decrementAndGet] */
-    abstract fun decrementAndGet(): Long
+    fun decrementAndGet(): Long = FU.decrementAndGet(this)
+
+    private companion object {
+        private val FU = AtomicLongFieldUpdater.newUpdater(AtomicLong::class.java, "value")
+    }
 }
 
 inline fun AtomicLong.loop(block: (Long) -> Unit): Nothing {
@@ -152,18 +163,24 @@ inline fun AtomicLong.accumulateAndGet(block: (Long, Long) -> Long): Long {
     }
 }
 
-abstract class AtomicRef<T> private constructor() {
+@Suppress("UNCHECKED_CAST")
+class AtomicRef<T> internal constructor(initial: T) {
     /** Get/set of this property maps to read/write of volatile variable */
-    abstract var value: T
+    @Volatile
+    var value: T = initial
 
     /** Maps to [AtomicReferenceFieldUpdater.lazySet] */
-    abstract fun lazySet(newValue: T)
+    fun lazySet(newValue: T) = FU.lazySet(this, newValue)
 
     /** Maps to [AtomicReferenceFieldUpdater.compareAndSet] */
-    abstract fun compareAndSet(expect: T, update: T): Boolean
+    fun compareAndSet(expect: T, update: T): Boolean = FU.compareAndSet(this, expect, update)
 
     /** Maps to [AtomicReferenceFieldUpdater.getAndSet] */
-    abstract fun getAndSet(newValue: T): T
+    fun getAndSet(newValue: T): T = FU.getAndSet(this, newValue) as T
+
+    private companion object {
+        private val FU = AtomicReferenceFieldUpdater.newUpdater(AtomicRef::class.java, Any::class.java, "value")
+    }
 }
 
 inline fun <T> AtomicRef<T>.loop(block: (T) -> Unit): Nothing {
