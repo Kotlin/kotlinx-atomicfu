@@ -1,9 +1,9 @@
 package kotlinx.atomicfu.test
 
-import kotlinx.atomicfu.atomicLong
+import kotlinx.atomicfu.atomic
 
 class LockFreeLongCounter {
-    private val counter = atomicLong()
+    private val counter = atomic(0L)
 
     fun get(): Long = counter.value
 

@@ -3,14 +3,63 @@
 
 package kotlinx.atomicfu
 
-import java.util.concurrent.atomic.*
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
+import java.util.concurrent.atomic.AtomicLongFieldUpdater
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
-fun atomicInt(): AtomicInt = AtomicInt(0)
-fun atomicInt(initial: Int): AtomicInt = AtomicInt(initial)
-fun atomicLong(): AtomicLong = AtomicLong(0L)
-fun atomicLong(initial: Long): AtomicLong = AtomicLong(initial)
-fun <T> atomic(): AtomicRef<T?> = AtomicRef<T?>(null)
 fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
+fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
+fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
+
+@Suppress("UNCHECKED_CAST")
+class AtomicRef<T> internal constructor(initial: T) {
+    /** Get/set of this property maps to read/write of volatile variable */
+    @Volatile
+    var value: T = initial
+
+    /** Maps to [AtomicReferenceFieldUpdater.lazySet] */
+    fun lazySet(newValue: T) = FU.lazySet(this, newValue)
+
+    /** Maps to [AtomicReferenceFieldUpdater.compareAndSet] */
+    fun compareAndSet(expect: T, update: T): Boolean = FU.compareAndSet(this, expect, update)
+
+    /** Maps to [AtomicReferenceFieldUpdater.getAndSet] */
+    fun getAndSet(newValue: T): T = FU.getAndSet(this, newValue) as T
+
+    private companion object {
+        private val FU = AtomicReferenceFieldUpdater.newUpdater(AtomicRef::class.java, Any::class.java, "value")
+    }
+}
+
+inline fun <T> AtomicRef<T>.loop(block: (T) -> Unit): Nothing {
+    while (true) {
+        block(value)
+    }
+}
+
+inline fun <T> AtomicRef<T>.update(block: (T) -> T) {
+    while (true) {
+        val cur = value
+        val upd = block(cur)
+        if (compareAndSet(cur, upd)) return
+    }
+}
+
+inline fun <T> AtomicRef<T>.getAndUpdate(block: (T) -> T): T {
+    while (true) {
+        val cur = value
+        val upd = block(cur)
+        if (compareAndSet(cur, upd)) return cur
+    }
+}
+
+inline fun <T> AtomicRef<T>.updateAndGet(block: (T) -> T): T {
+    while (true) {
+        val cur = value
+        val upd = block(cur)
+        if (compareAndSet(cur, upd)) return upd
+    }
+}
 
 class AtomicInt internal constructor(initial: Int) {
     /** Get/set of this property maps to read/write of volatile variable */
@@ -146,52 +195,3 @@ inline fun AtomicLong.updateAndGet(block: (Long) -> Long): Long {
     }
 }
 
-@Suppress("UNCHECKED_CAST")
-class AtomicRef<T> internal constructor(initial: T) {
-    /** Get/set of this property maps to read/write of volatile variable */
-    @Volatile
-    var value: T = initial
-
-    /** Maps to [AtomicReferenceFieldUpdater.lazySet] */
-    fun lazySet(newValue: T) = FU.lazySet(this, newValue)
-
-    /** Maps to [AtomicReferenceFieldUpdater.compareAndSet] */
-    fun compareAndSet(expect: T, update: T): Boolean = FU.compareAndSet(this, expect, update)
-
-    /** Maps to [AtomicReferenceFieldUpdater.getAndSet] */
-    fun getAndSet(newValue: T): T = FU.getAndSet(this, newValue) as T
-
-    private companion object {
-        private val FU = AtomicReferenceFieldUpdater.newUpdater(AtomicRef::class.java, Any::class.java, "value")
-    }
-}
-
-inline fun <T> AtomicRef<T>.loop(block: (T) -> Unit): Nothing {
-    while (true) {
-        block(value)
-    }
-}
-
-inline fun <T> AtomicRef<T>.update(block: (T) -> T) {
-    while (true) {
-        val cur = value
-        val upd = block(cur)
-        if (compareAndSet(cur, upd)) return
-    }
-}
-
-inline fun <T> AtomicRef<T>.getAndUpdate(block: (T) -> T): T {
-    while (true) {
-        val cur = value
-        val upd = block(cur)
-        if (compareAndSet(cur, upd)) return cur
-    }
-}
-
-inline fun <T> AtomicRef<T>.updateAndGet(block: (T) -> T): T {
-    while (true) {
-        val cur = value
-        val upd = block(cur)
-        if (compareAndSet(cur, upd)) return upd
-    }
-}

@@ -20,6 +20,7 @@ class TypeInfo(val fuType: Type, val primitiveType: Type)
 
 private const val AFU_PKG = "kotlinx/atomicfu"
 private const val JUCA_PKG = "java/util/concurrent/atomic"
+private const val ATOMIC = "atomic"
 
 private val AFU_TYPES: Map<String, TypeInfo> = mapOf(
         "$AFU_PKG/AtomicInt" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerFieldUpdater"), Type.INT_TYPE),
@@ -34,10 +35,9 @@ data class MethodId(val owner: String, val name: String, val desc: String) {
 private const val AFU_CLS = "$AFU_PKG/AtomicFU"
 
 private val FACTORIES: Set<MethodId> = setOf(
-        MethodId(AFU_CLS, "atomicInt", "()L$AFU_PKG/AtomicInt;"),
-        MethodId(AFU_CLS, "atomicLong", "()L$AFU_PKG/AtomicLong;"),
-        MethodId(AFU_CLS, "atomic", "()L$AFU_PKG/AtomicRef;"),
-        MethodId(AFU_CLS, "atomic", "(Ljava/lang/Object;)L$AFU_PKG/AtomicRef;")
+        MethodId(AFU_CLS, ATOMIC, "(Ljava/lang/Object;)L$AFU_PKG/AtomicRef;"),
+        MethodId(AFU_CLS, ATOMIC, "(I)L$AFU_PKG/AtomicInt;"),
+        MethodId(AFU_CLS, ATOMIC, "(J)L$AFU_PKG/AtomicLong;")
     )
 
 private operator fun Int.contains(bit: Int) = this and bit != 0
@@ -50,10 +50,6 @@ private inline fun code(mv: MethodVisitor, block: InstructionAdapter.() -> Unit)
 data class FieldId(val owner: String, val name: String) {
     override fun toString(): String = "$owner::$name"
 }
-
-private class AbortTransform(msg: String) : Exception(msg)
-
-private fun abort(msg: String): Nothing = throw AbortTransform(msg)
 
 class FieldInfo(fieldId: FieldId, val fieldType: Type) {
     val owner = fieldId.owner
@@ -202,89 +198,82 @@ class AtomicFUTransformer(private val dir: File) {
                 accept(mv)
         }
 
-        fun AbstractInsnNode?.skipLL(): AbstractInsnNode? {
-            var cur = this
-            while (cur is LabelNode || cur is LineNumberNode) cur = cur.next
-            return cur
-        }
-
-        fun AbstractInsnNode?.findLVStore(): VarInsnNode? {
-            val a = skipLL()
-            return if (a is VarInsnNode && a.opcode == Opcodes.ASTORE) a else null
-        }
-
-        inline fun VarInsnNode.forSameVarLoads(block: (VarInsnNode) -> AbstractInsnNode?) {
-            var cur = next
-            while (cur != null) {
-                if (cur is VarInsnNode && cur.opcode == Opcodes.ALOAD && cur.`var` == `var`) {
-                    cur = block(cur)
-                } else
-                    cur = cur.next
-            }
-        }
-
-        fun FieldInsnNode.checkPutField(): FieldId? {
+        private fun FieldInsnNode.checkPutField(): FieldId? {
             if (opcode != Opcodes.PUTFIELD) return null
             val fieldId = FieldId(owner, name)
             return if (fieldId in fields) fieldId else null
         }
 
-        fun AbstractInsnNode?.nextInvokeVirtual(): MethodInsnNode? {
-            var cur = this
-            while (cur != null) {
-                if (cur is MethodInsnNode && cur.owner in AFU_TYPES) return cur
-                cur = cur.next
-            }
-            return null
-        }
-
-        // Adds `swap` or removes this `getstatic` depending on subsequent `invokevirtual`, which is also fixed
-        fun FieldInsnNode.fixupFieldLoad(f: FieldInfo): AbstractInsnNode? {
-            val i = nextInvokeVirtual() ?: abort("cannot find invokevirtual after read of field $f")
-            val typeInfo = AFU_TYPES[i.owner]!!
-            if (i.name == "getValue" || i.name == "setValue") {
-                instructions.remove(this) // drop getstatic (we don't need field updater)
+        // ld: instruction that loads atomic field (already changed to getstatic)
+        // iv: invoke virtual on the loaded atomic field (to be fixed)
+        private fun fixupInvokeVirtual(ld: FieldInsnNode, iv: MethodInsnNode, f: FieldInfo): AbstractInsnNode? {
+            val typeInfo = AFU_TYPES[iv.owner]!!
+            if (iv.name == "getValue" || iv.name == "setValue") {
+                instructions.remove(ld) // drop getstatic (we don't need field updater)
                 val j = FieldInsnNode(
-                    if (i.name == "getValue") Opcodes.GETFIELD else Opcodes.PUTFIELD,
+                    if (iv.name == "getValue") GETFIELD else PUTFIELD,
                     f.owner, f.name, f.primitiveType.descriptor)
-                instructions.set(i, j) // replace invokevirtual with get/setfield
+                instructions.set(iv, j) // replace invokevirtual with get/setfield
                 return j.next
             }
             // update method invocation to FieldUpdater invocation
-            val methodType = Type.getMethodType(i.desc)
-            i.owner = typeInfo.fuType.internalName
-            i.desc = getMethodDescriptor(methodType.returnType, OBJECT_TYPE, *methodType.argumentTypes)
+            val methodType = Type.getMethodType(iv.desc)
+            iv.owner = typeInfo.fuType.internalName
+            iv.desc = getMethodDescriptor(methodType.returnType, OBJECT_TYPE, *methodType.argumentTypes)
             // insert swap after field load
-            val swap = InsnNode(Opcodes.SWAP)
-            instructions.insert(this, swap)
+            val swap = InsnNode(SWAP)
+            instructions.insert(ld, swap)
             return swap.next
         }
 
-        fun transform(i: AbstractInsnNode): AbstractInsnNode? {
+        private fun fixupLoadedAtomicVar(ld: FieldInsnNode, f: FieldInfo): AbstractInsnNode? {
+            val j = FlowAnalyzer(ld.next, instructions).execute()
+            when (j) {
+                is MethodInsnNode -> {
+                    // invoked virtual method on atomic var -- fixup & done with it
+                    debug("${j.atLine()}$className::$name -- $f.${j.name}")
+                    return fixupInvokeVirtual(ld, j, f)
+                }
+                is VarInsnNode -> {
+                    // was stored to local -- needs more processing:
+                    // store owner ref into the variable instead
+                    val v = j.`var`
+                    val next = j.next
+                    instructions.remove(ld)
+                    localVariables[v]!!.apply {
+                        desc = f.owner
+                        signature = null
+                    }
+                    // recursively process all loads of this variable
+                    forVarLoads(v) { otherLd ->
+                        val ldCopy = ld.clone(null) as FieldInsnNode
+                        instructions.insert(otherLd, ldCopy)
+                        fixupLoadedAtomicVar(ldCopy, f)
+                    }
+                    return next
+                }
+                else -> abort("cannot happen")
+            }
+        }
+
+        private fun transform(i: AbstractInsnNode): AbstractInsnNode? {
             when (i) {
                 is MethodInsnNode -> {
                     val methodId = MethodId(i.owner, i.name, i.desc)
                     when {
                         i.opcode == Opcodes.INVOKESTATIC && methodId in FACTORIES -> {
                             if (name != "<init>") abort("factory $methodId is used outside of constructor")
-                            val next = i.next.skipLL()
+                            val next = i.nextUseful
                             val fieldId = (next as? FieldInsnNode)?.checkPutField() ?:
                                 abort("factory $methodId invocation must be followed by putfield")
                             instructions.remove(i)
                             transformed = true
                             val f = fields[fieldId]!!
-                            if (Type.getType(i.desc).argumentTypes.isNotEmpty()) {
-                                (next as FieldInsnNode).desc = f.primitiveType.descriptor
-                                return next.next
-                            } else {
-                                val pop = InsnNode(Opcodes.POP)
-                                instructions.insert(next, pop)
-                                instructions.remove(next)
-                                return pop.next
-                            }
+                            (next as FieldInsnNode).desc = f.primitiveType.descriptor
+                            return next.next
                         }
                         i.opcode == Opcodes.INVOKEVIRTUAL && i.owner in AFU_TYPES -> {
-                            abort("standalone invocation of $methodId that was not traced to previous field load")
+                            abort("standalone invocation of $methodId that was not traced to previous field load", i, instructions)
                         }
                     }
                 }
@@ -298,26 +287,7 @@ class AtomicFUTransformer(private val dir: File) {
                         i.name = f.fuName
                         i.desc = f.fuType.descriptor
                         transformed = true
-                        // when not stored to local var -- just fixup & return
-                        val st = i.next.findLVStore() ?: run {
-                            debug("$className::$name - field $fieldId -- ${i.nextInvokeVirtual()?.name}")
-                            return i.fixupFieldLoad(f)
-                        }
-                        // was stored to local -- needs more processing
-                        debug("$className::$name - field $fieldId stored to var #${st.`var`}")
-                        val next = st.next
-                        instructions.remove(i)
-                        localVariables[st.`var`]!!.apply {
-                            desc = f.owner
-                            signature = null
-                        }
-                        st.forSameVarLoads { ld ->
-                            val i2 = i.clone(null) as FieldInsnNode
-                            instructions.insert(ld, i2)
-                            info("$className::$name - field $fieldId from var #${st.`var`} -- ${i2.nextInvokeVirtual()?.name}")
-                            i2.fixupFieldLoad(f)
-                        }
-                        return next
+                        return fixupLoadedAtomicVar(i, f)
                     }
                 }
             }

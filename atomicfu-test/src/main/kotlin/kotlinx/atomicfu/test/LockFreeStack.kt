@@ -1,9 +1,12 @@
 package kotlinx.atomicfu.test
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.getAndUpdate
+import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.update
 
 class LockFreeStack<T> {
-    private val top = atomic<Node<T>>()
+    private val top = atomic<Node<T>?>(null)
 
     private class Node<T>(val value: T, val next: Node<T>?)
 
