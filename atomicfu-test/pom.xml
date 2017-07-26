@@ -36,6 +36,9 @@
                         <goals>
                             <goal>transform</goal>
                         </goals>
+                        <configuration>
+                            <verbose>true</verbose>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -11,13 +11,8 @@ val AbstractInsnNode.line: Int? get() {
     }
 }
 
-fun AbstractInsnNode.atLine(): String {
-    val line = line ?: return ""
-    return "at line $line: "
-}
-
-fun AbstractInsnNode.atIndex(il: InsnList?): String {
-    var cur = il?.first
+fun AbstractInsnNode.atIndex(insnList: InsnList?): String {
+    var cur = insnList?.first
     var index = 1
     while (cur != null && cur != this) {
         if (!cur.isUseless()) index++

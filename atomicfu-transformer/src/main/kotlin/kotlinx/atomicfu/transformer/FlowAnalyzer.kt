@@ -2,11 +2,13 @@ package kotlinx.atomicfu.transformer
 
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MultiANewArrayInsnNode
 
 class FlowAnalyzer(
-    private val start: AbstractInsnNode?,
-    private val instructions: InsnList
+    private val start: AbstractInsnNode?
 ) {
     private var cur: AbstractInsnNode? = null
 
@@ -14,7 +16,7 @@ class FlowAnalyzer(
     // this ref at one slot below it (and we can choose to merge them!)
     private var depth = 0
 
-    private fun abort(msg: String): Nothing = abort(msg, cur, instructions)
+    private fun abort(msg: String): Nothing = abort(msg, cur)
     private fun unsupported(): Nothing = abort("Unsupported operation on atomic variable")
     private fun unrecognized(): Nothing = abort("Unrecognized operation")
 

@@ -28,8 +28,10 @@ private val AFU_TYPES: Map<String, TypeInfo> = mapOf(
         "$AFU_PKG/AtomicRef" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicReferenceFieldUpdater"), OBJECT_TYPE)
     )
 
+private fun String.prettyStr() = replace('/', '.')
+
 data class MethodId(val owner: String, val name: String, val desc: String) {
-    override fun toString(): String = "$owner::$name"
+    override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
 private const val AFU_CLS = "$AFU_PKG/AtomicFU"
@@ -48,7 +50,7 @@ private inline fun code(mv: MethodVisitor, block: InstructionAdapter.() -> Unit)
 }
 
 data class FieldId(val owner: String, val name: String) {
-    override fun toString(): String = "$owner::$name"
+    override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
 class FieldInfo(fieldId: FieldId, val fieldType: Type) {
@@ -58,10 +60,25 @@ class FieldInfo(fieldId: FieldId, val fieldType: Type) {
     val typeInfo = AFU_TYPES[fieldType.internalName]!!
     val fuType = typeInfo.fuType
     val primitiveType = typeInfo.primitiveType
-    override fun toString(): String = "$owner::$name"
+    override fun toString(): String = "${owner.prettyStr()}::$name"
+}
+
+data class SourceInfo(
+    val method: MethodId,
+    val source: String?,
+    val i: AbstractInsnNode? = null,
+    val insnList: InsnList? = null
+) {
+    override fun toString(): String = buildString {
+        source?.let { append("$it:") }
+        i?.line?.let { append("$it:") }
+        append(" $method")
+    }
 }
 
 class AtomicFUTransformer(private val dir: File) {
+    var verbose = false
+
     private var hasErrors = false
     private var transformed = false
 
@@ -70,16 +87,23 @@ class AtomicFUTransformer(private val dir: File) {
     private fun walkClassFiles() = dir.walk()
         .filter { it.name.endsWith(".class") }
 
-    private fun info(msg: String) {
-        println("AtomicFU: $msg")
+    private fun log(message: String, level: String, sourceInfo: SourceInfo? = null) {
+        var loc = if (sourceInfo == null) "" else sourceInfo.toString() + ": "
+        if (verbose && sourceInfo != null && sourceInfo.i != null)
+            loc += sourceInfo.i.atIndex(sourceInfo.insnList)
+        println("AtomicFU: $level: $loc$message")
     }
 
-    private fun debug(msg: String) {
-        println("AtomicFU: debug: $msg")
+    private fun info(message: String, sourceInfo: SourceInfo? = null) {
+        log(message, "info", sourceInfo)
     }
 
-    private fun error(msg: String) {
-        println("AtomicFU: ERROR: $msg")
+    private fun debug(message: String, sourceInfo: SourceInfo? = null) {
+        if (verbose) log(message, "debug", sourceInfo)
+    }
+
+    private fun error(message: String, sourceInfo: SourceInfo? = null) {
+        log(message, "ERROR", sourceInfo)
         hasErrors = true
     }
 
@@ -108,7 +132,7 @@ class AtomicFUTransformer(private val dir: File) {
                 file.writeBytes(cw.toByteArray())
             }
         } catch (e: Exception) {
-            error("${cv.lastMethod ?: cv.className}: Failed to transform: $e")
+            error("Failed to transform: $e", cv.sourceInfo)
             e.printStackTrace(System.out)
         }
     }
@@ -137,7 +161,13 @@ class AtomicFUTransformer(private val dir: File) {
     }
 
     private inner class TransformerCV(cv: ClassVisitor) : CV(cv) {
-        var lastMethod: String? = null
+        private var source: String? = null
+        var sourceInfo: SourceInfo? = null
+
+        override fun visitSource(source: String?, debug: String?) {
+            this.source = source
+            super.visitSource(source, debug)
+        }
 
         override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
             val fieldType = Type.getType(desc)
@@ -169,17 +199,21 @@ class AtomicFUTransformer(private val dir: File) {
         }
 
         override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
-            lastMethod = "$className::$name$desc"
-            return TransformerMV(className, access, name, desc, signature, exceptions, super.visitMethod(access, name, desc, signature, exceptions))
+            val sourceInfo = SourceInfo(MethodId(className, name, desc), source)
+            val mv = TransformerMV(sourceInfo, access, name, desc, signature, exceptions, super.visitMethod(access, name, desc, signature, exceptions))
+            this.sourceInfo = mv.sourceInfo
+            return mv
         }
     }
 
     private inner class TransformerMV(
-        private val className: String,
+        sourceInfo: SourceInfo,
         access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?,
         mv: MethodVisitor
     ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
         init { this.mv = mv }
+
+        val sourceInfo = sourceInfo.copy(insnList = instructions)
 
         override fun visitEnd() {
             // transform instructions list
@@ -189,7 +223,7 @@ class AtomicFUTransformer(private val dir: File) {
                 try {
                     i = transform(i)
                 } catch (e: AbortTransform) {
-                    error("$className::$name: ${e.message}")
+                    error(e.message!!, sourceInfo.copy(i = e.i))
                     i = i.next
                     hasErrors = true
                 }
@@ -227,11 +261,11 @@ class AtomicFUTransformer(private val dir: File) {
         }
 
         private fun fixupLoadedAtomicVar(ld: FieldInsnNode, f: FieldInfo): AbstractInsnNode? {
-            val j = FlowAnalyzer(ld.next, instructions).execute()
+            val j = FlowAnalyzer(ld.next).execute()
             when (j) {
                 is MethodInsnNode -> {
                     // invoked virtual method on atomic var -- fixup & done with it
-                    debug("${j.atLine()}$className::$name -- $f.${j.name}")
+                    debug("invoke $f.${j.name}", sourceInfo.copy(i = j))
                     return fixupInvokeVirtual(ld, j, f)
                 }
                 is VarInsnNode -> {
@@ -273,7 +307,7 @@ class AtomicFUTransformer(private val dir: File) {
                             return next.next
                         }
                         i.opcode == Opcodes.INVOKEVIRTUAL && i.owner in AFU_TYPES -> {
-                            abort("standalone invocation of $methodId that was not traced to previous field load", i, instructions)
+                            abort("standalone invocation of $methodId that was not traced to previous field load", i)
                         }
                     }
                 }
