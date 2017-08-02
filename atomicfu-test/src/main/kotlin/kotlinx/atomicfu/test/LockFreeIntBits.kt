@@ -10,31 +10,22 @@ class LockFreeIntBits {
 
     operator fun get(index: Int): Boolean = bits.value and index.mask() != 0
 
-//    private inline fun bitUpdate(check: (Int) -> Boolean, upd: (Int) -> Int): Boolean {
-//        bits.update {
-//            if (check(it)) return false
-//            upd(it)
-//        }
-//        return true
-//    }
+    // User-defined private inline function
+    private inline fun bitUpdate(check: (Int) -> Boolean, upd: (Int) -> Int): Boolean {
+        bits.update {
+            if (check(it)) return false
+            upd(it)
+        }
+        return true
+    }
 
     fun bitSet(index: Int): Boolean {
         val mask = index.mask()
-        bits.update {
-            if (it and mask != 0) return false
-            it or mask
-        }
-        return true
-//        return bitUpdate({ it and mask != 0 }, { it or mask })
+        return bitUpdate({ it and mask != 0 }, { it or mask })
     }
 
     fun bitClear(index: Int): Boolean {
         val mask = index.mask()
-        bits.update {
-            if (it and mask == 0) return false
-            it and mask.inv()
-        }
-        return true
-//        return bitUpdate({ it and mask == 0 }, { it and mask.inv() })
+        return bitUpdate({ it and mask == 0 }, { it and mask.inv() })
     }
 }

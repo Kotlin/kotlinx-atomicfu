@@ -3,7 +3,6 @@
 package kotlinx.atomicfu.transformer
 
 import org.objectweb.asm.*
-import org.objectweb.asm.ClassReader.SKIP_CODE
 import org.objectweb.asm.ClassReader.SKIP_FRAMES
 import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
 import org.objectweb.asm.ClassWriter.COMPUTE_MAXS
@@ -22,11 +21,13 @@ private const val AFU_PKG = "kotlinx/atomicfu"
 private const val JUCA_PKG = "java/util/concurrent/atomic"
 private const val ATOMIC = "atomic"
 
-private val AFU_TYPES: Map<String, TypeInfo> = mapOf(
+private val AFU_CLASSES: Map<String, TypeInfo> = mapOf(
         "$AFU_PKG/AtomicInt" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerFieldUpdater"), Type.INT_TYPE),
         "$AFU_PKG/AtomicLong" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicLongFieldUpdater"), Type.LONG_TYPE),
         "$AFU_PKG/AtomicRef" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicReferenceFieldUpdater"), OBJECT_TYPE)
     )
+
+private val AFU_TYPES: Map<Type, TypeInfo> = AFU_CLASSES.mapKeys { Type.getObjectType(it.key) }
 
 private fun String.prettyStr() = replace('/', '.')
 
@@ -57,9 +58,10 @@ class FieldInfo(fieldId: FieldId, val fieldType: Type) {
     val owner = fieldId.owner
     val name = fieldId.name
     val fuName = fieldId.name + '$' + "FU"
-    val typeInfo = AFU_TYPES[fieldType.internalName]!!
+    val typeInfo = AFU_CLASSES[fieldType.internalName]!!
     val fuType = typeInfo.fuType
     val primitiveType = typeInfo.primitiveType
+    val accessors = mutableListOf<MethodId>()
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
@@ -83,6 +85,7 @@ class AtomicFUTransformer(private val dir: File) {
     private var transformed = false
 
     private val fields = mutableMapOf<FieldId, FieldInfo>()
+    private val accessors = mutableMapOf<MethodId, FieldInfo>()
 
     private fun walkClassFiles() = dir.walk()
         .filter { it.name.endsWith(".class") }
@@ -117,7 +120,7 @@ class AtomicFUTransformer(private val dir: File) {
     }
 
     private fun collectFields(file: File) {
-        ClassReader(file.inputStream()).accept(CollectorCV(), SKIP_CODE)
+        ClassReader(file.inputStream()).accept(CollectorCV(), SKIP_FRAMES)
     }
 
     private fun transformFile(file: File) {
@@ -146,17 +149,61 @@ class AtomicFUTransformer(private val dir: File) {
         }
     }
 
+    private fun registerField(field: FieldId, fieldType: Type): FieldInfo {
+        val result = fields.getOrPut(field) { FieldInfo(field, fieldType) }
+        if (result.fieldType != fieldType) abort("$field type mismatch between $fieldType and ${result.fieldType}")
+        return result
+    }
+
     private inner class CollectorCV : CV(null) {
         override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
             val fieldType = Type.getType(desc)
-            if (fieldType.sort == OBJECT && fieldType.internalName in AFU_TYPES) {
+            if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
                 val field = FieldId(className, name)
                 info("$field field found")
                 if (ACC_PUBLIC in access) error("$field field cannot be public")
                 if (ACC_FINAL !in access) error("$field field must be final")
-                fields[field] = FieldInfo(field, fieldType)
+                registerField(field, fieldType)
             }
-            return super.visitField(access, name, desc, signature, value)
+            return null
+        }
+
+        override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
+            val methodType = Type.getMethodType(desc)
+            if (isPotentialAccessorMethod(access, methodType))
+                return AccessorCollectorMV(methodType.argumentTypes[0].internalName, access, name, desc, signature, exceptions)
+            return null
+        }
+    }
+
+    private fun isPotentialAccessorMethod(access: Int, methodType: Type): Boolean =
+        access or ACC_SYNTHETIC != 0 &&
+        access or ACC_STATIC != 0 &&
+        methodType.argumentTypes.size == 1 &&
+        methodType.argumentTypes[0].sort == OBJECT &&
+        methodType.returnType in AFU_TYPES
+
+    private inner class AccessorCollectorMV(
+        private val className: String,
+        access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?
+    ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
+        override fun visitEnd() {
+            val insns = instructions.listUseful(4)
+            if (insns.size == 3 &&
+                insns[0].isAload(0) &&
+                insns[1].isGetField(className) &&
+                insns[2].isAreturn())
+            {
+                val fi = insns[1] as FieldInsnNode
+                val fieldName = fi.name
+                val field = FieldId(className, fieldName)
+                val fieldType = Type.getType(fi.desc)
+                val accessorMethod = MethodId(className, name, desc)
+                info("$field accessor $name found")
+                val fieldInfo = registerField(field, fieldType)
+                fieldInfo.accessors += accessorMethod
+                accessors[accessorMethod] = fieldInfo
+            }
         }
     }
 
@@ -171,10 +218,11 @@ class AtomicFUTransformer(private val dir: File) {
 
         override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
             val fieldType = Type.getType(desc)
-            if (fieldType.sort == OBJECT && fieldType.internalName in AFU_TYPES) {
+            if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
                 val f = fields[FieldId(className, name)]!!
-                super.visitField((access wo ACC_FINAL) or ACC_VOLATILE, f.name, f.primitiveType.descriptor, null, null)
-                super.visitField(access or ACC_STATIC, f.fuName, f.fuType.descriptor, null, null)
+                val protection = if (f.accessors.isEmpty()) ACC_PRIVATE else 0
+                super.visitField(protection or ACC_VOLATILE, f.name, f.primitiveType.descriptor, null, null)
+                super.visitField(protection or ACC_FINAL or ACC_STATIC, f.fuName, f.fuType.descriptor, null, null)
                 code(super.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null)) {
                     visitCode()
                     val params = mutableListOf<Type>()
@@ -199,8 +247,12 @@ class AtomicFUTransformer(private val dir: File) {
         }
 
         override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
-            val sourceInfo = SourceInfo(MethodId(className, name, desc), source)
-            val mv = TransformerMV(sourceInfo, access, name, desc, signature, exceptions, super.visitMethod(access, name, desc, signature, exceptions))
+            val method = MethodId(className, name, desc)
+            if (method in accessors)
+                return null // drop accessor
+            val sourceInfo = SourceInfo(method, source)
+            val superMV = super.visitMethod(access, name, desc, signature, exceptions)
+            val mv = TransformerMV(sourceInfo, access, name, desc, signature, exceptions, superMV)
             this.sourceInfo = mv.sourceInfo
             return mv
         }
@@ -241,7 +293,7 @@ class AtomicFUTransformer(private val dir: File) {
         // ld: instruction that loads atomic field (already changed to getstatic)
         // iv: invoke virtual on the loaded atomic field (to be fixed)
         private fun fixupInvokeVirtual(ld: FieldInsnNode, iv: MethodInsnNode, f: FieldInfo): AbstractInsnNode? {
-            val typeInfo = AFU_TYPES[iv.owner]!!
+            val typeInfo = AFU_CLASSES[iv.owner]!!
             if (iv.name == "getValue" || iv.name == "setValue") {
                 instructions.remove(ld) // drop getstatic (we don't need field updater)
                 val j = FieldInsnNode(
@@ -295,7 +347,7 @@ class AtomicFUTransformer(private val dir: File) {
                 is MethodInsnNode -> {
                     val methodId = MethodId(i.owner, i.name, i.desc)
                     when {
-                        i.opcode == Opcodes.INVOKESTATIC && methodId in FACTORIES -> {
+                        i.opcode == INVOKESTATIC && methodId in FACTORIES -> {
                             if (name != "<init>") abort("factory $methodId is used outside of constructor")
                             val next = i.nextUseful
                             val fieldId = (next as? FieldInsnNode)?.checkPutField() ?:
@@ -306,18 +358,27 @@ class AtomicFUTransformer(private val dir: File) {
                             (next as FieldInsnNode).desc = f.primitiveType.descriptor
                             return next.next
                         }
-                        i.opcode == Opcodes.INVOKEVIRTUAL && i.owner in AFU_TYPES -> {
+                        i.opcode == INVOKESTATIC && methodId in accessors -> {
+                            // replace GETSTATIC to accessor with GETSTATIC on field updater
+                            val f = accessors[methodId]!!
+                            val j = FieldInsnNode(GETSTATIC, f.owner, f.fuName, f.fuType.descriptor)
+                            instructions.insert(i, j)
+                            instructions.remove(i)
+                            transformed = true
+                            return fixupLoadedAtomicVar(j, f)
+                        }
+                        i.opcode == INVOKEVIRTUAL && i.owner in AFU_CLASSES -> {
                             abort("standalone invocation of $methodId that was not traced to previous field load", i)
                         }
                     }
                 }
                 is FieldInsnNode -> {
                     val fieldId = FieldId(i.owner, i.name)
-                    if (i.opcode == Opcodes.GETFIELD && fieldId in fields) {
-                        // Convert getfield to getstatic
+                    if (i.opcode == GETFIELD && fieldId in fields) {
+                        // Convert GETFIELD to GETSTATIC on field updater
                         val f = fields[fieldId]!!
                         if (i.desc != f.fieldType.descriptor) return i.next // already converted get/setfield
-                        i.opcode = Opcodes.GETSTATIC
+                        i.opcode = GETSTATIC
                         i.name = f.fuName
                         i.desc = f.fuType.descriptor
                         transformed = true
@@ -335,5 +396,7 @@ fun main(args: Array<String>) {
         println("Usage: AtomicFUTransformerKt <dir>")
         return
     }
-    AtomicFUTransformer(File(args[0])).transform()
+    val t = AtomicFUTransformer(File(args[0]))
+    t.verbose = true
+    t.transform()
 }
