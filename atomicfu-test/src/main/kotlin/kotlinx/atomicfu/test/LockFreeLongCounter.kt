@@ -7,7 +7,12 @@ class LockFreeLongCounter {
 
     fun get(): Long = counter.value
 
-    fun increment(): Long {
-        return counter.incrementAndGet()
+    fun increment(): Long = counter.incrementAndGet()
+
+    fun getInner(): Long = Inner().getFromOuter()
+
+    // testing how an inner class can get access to it
+    private inner class Inner {
+        fun getFromOuter(): Long = counter.value
     }
 }
