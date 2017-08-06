@@ -7,16 +7,46 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
-fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
-fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
-fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
+/**
+ * Creates atomic reference with a given [initial] value.
+ *
+ * It can only be used in initialize of private read-only property, like this:
+ *
+ * ```
+ * private val f = atomic<Type>(initial)
+ * ```
+ */
+public fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
+
+/**
+ * Creates atomic [Int] with a given [initial] value.
+ *
+ * It can only be used in initialize of private read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialInt)
+ * ```
+ */
+public fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
+
+/**
+ * Creates atomic [Long] with a given [initial] value.
+ *
+ * It can only be used in initialize of private read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialLong)
+ * ```
+ */
+public fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
+
+// ==================================== AtomicRef ====================================
 
 @Suppress("UNCHECKED_CAST")
-class AtomicRef<T> internal constructor(initial: T) {
+public class AtomicRef<T> internal constructor(
     /** Get/set of this property maps to read/write of volatile variable */
-    @Volatile
-    var value: T = initial
-
+    @Volatile var value: T
+) {
     /** Maps to [AtomicReferenceFieldUpdater.lazySet] */
     fun lazySet(newValue: T) = FU.lazySet(this, newValue)
 
@@ -61,11 +91,12 @@ inline fun <T> AtomicRef<T>.updateAndGet(block: (T) -> T): T {
     }
 }
 
-class AtomicInt internal constructor(initial: Int) {
-    /** Get/set of this property maps to read/write of volatile variable */
-    @Volatile
-    var value: Int = initial
+// ==================================== AtomicInt ====================================
 
+public class AtomicInt internal constructor(
+    /** Get/set of this property maps to read/write of volatile variable */
+    @Volatile var value: Int
+) {
     /** Maps to [AtomicIntegerFieldUpdater.lazySet] */
     fun lazySet(newValue: Int) = FU.lazySet(this, newValue)
 
@@ -128,11 +159,12 @@ inline fun AtomicInt.updateAndGet(block: (Int) -> Int): Int {
     }
 }
 
-class AtomicLong internal constructor(initial: Long) {
-    /** Get/set of this property maps to read/write of volatile variable */
-    @Volatile
-    var value: Long = initial
+// ==================================== AtomicLong ====================================
 
+public class AtomicLong internal constructor(
+    /** Get/set of this property maps to read/write of volatile variable */
+    @Volatile var value: Long
+) {
     /** Maps to [AtomicLongFieldUpdater.lazySet] */
     fun lazySet(newValue: Long) = FU.lazySet(this, newValue)
 
