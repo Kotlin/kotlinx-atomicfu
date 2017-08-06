@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>kotlinx.atomicfu</groupId>
+        <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>atomicfu-parent</artifactId>
         <version>0.1-SNAPSHOT</version>
     </parent>
@@ -11,9 +11,14 @@
     <artifactId>atomicfu-test</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <atomicfu.version>${project.version}</atomicfu.version>
+    </properties>
+
+
     <dependencies>
         <dependency>
-            <groupId>kotlinx.atomicfu</groupId>
+            <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>atomicfu</artifactId>
             <version>0.1-SNAPSHOT</version>
             <scope>provided</scope>
@@ -27,10 +32,29 @@
 
     <build>
         <plugins>
+            <!-- compile Kotlin files to staging directory -->
             <plugin>
-                <groupId>kotlinx.atomicfu</groupId>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <output>${project.build.directory}/classes-atomicfu</output>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- transform classes with AtomicFU plugin -->
+            <plugin>
+                <groupId>org.jetbrains.kotlinx</groupId>
                 <artifactId>atomicfu-maven-plugin</artifactId>
-                <version>0.1-SNAPSHOT</version>
+                <version>${atomicfu.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -38,10 +62,28 @@
                         </goals>
                         <configuration>
                             <verbose>true</verbose>
+                            <input>${project.build.directory}/classes-atomicfu</input>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            <!-- additional test execution with surefire on non-transformed files -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>atomicfu-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <classesDirectory>${project.build.directory}/classes-atomicfu</classesDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- other -->
             <plugin>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <configuration>

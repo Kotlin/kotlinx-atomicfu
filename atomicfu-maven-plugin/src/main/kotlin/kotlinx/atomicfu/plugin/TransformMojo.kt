@@ -10,10 +10,16 @@ import java.io.File
 @Mojo(name = "transform", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
 class TransformMojo : AbstractMojo() {
     /**
-     * Location of the file.
+     * Original classes directory.
      */
-    @Parameter(defaultValue = "\${project.build.outputDirectory}", property = "outputDir", required = true)
-    lateinit var outputDir: File
+    @Parameter(defaultValue = "\${project.build.outputDirectory}", property = "input", required = true)
+    lateinit var input: File
+
+    /**
+     * Transformed classes directory.
+     */
+    @Parameter(defaultValue = "\${project.build.outputDirectory}", property = "output", required = true)
+    lateinit var output: File
 
     /**
      * Verbose debug info.
@@ -22,7 +28,7 @@ class TransformMojo : AbstractMojo() {
     var verbose: Boolean = false
 
     override fun execute() {
-        val t = AtomicFUTransformer(outputDir)
+        val t = AtomicFUTransformer(input, output)
         t.verbose = verbose
         t.transform()
     }

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>kotlinx.atomicfu</groupId>
+        <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>atomicfu-parent</artifactId>
         <version>0.1-SNAPSHOT</version>
     </parent>
@@ -13,7 +13,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>kotlinx.atomicfu</groupId>
+            <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>atomicfu-transformer</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
@@ -46,9 +46,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.5</version>
                 <configuration>
-                    <goalPrefix>atomicfu-maven-plugin</goalPrefix>
+                    <goalPrefix>atomicfu</goalPrefix>
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
                 </configuration>
                 <executions>

@@ -12,6 +12,7 @@ import org.objectweb.asm.Type.getMethodDescriptor
 import org.objectweb.asm.commons.InstructionAdapter
 import org.objectweb.asm.commons.InstructionAdapter.OBJECT_TYPE
 import org.objectweb.asm.tree.*
+import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
 
@@ -44,7 +45,6 @@ private val FACTORIES: Set<MethodId> = setOf(
     )
 
 private operator fun Int.contains(bit: Int) = this and bit != 0
-private infix fun Int.wo(bit: Int) = this and bit.inv()
 
 private inline fun code(mv: MethodVisitor, block: InstructionAdapter.() -> Unit) {
     block(InstructionAdapter(mv))
@@ -78,8 +78,13 @@ data class SourceInfo(
     }
 }
 
-class AtomicFUTransformer(private val dir: File) {
+class AtomicFUTransformer(
+    private val inputDir: File,
+    private val outputDir: File = inputDir
+) {
     var verbose = false
+
+    private var logger = LoggerFactory.getLogger(AtomicFUTransformer::class.java)
 
     private var hasErrors = false
     private var transformed = false
@@ -87,53 +92,71 @@ class AtomicFUTransformer(private val dir: File) {
     private val fields = mutableMapOf<FieldId, FieldInfo>()
     private val accessors = mutableMapOf<MethodId, FieldInfo>()
 
-    private fun walkClassFiles() = dir.walk()
+    private fun walkClassFiles() = inputDir.walk()
         .filter { it.name.endsWith(".class") }
 
-    private fun log(message: String, level: String, sourceInfo: SourceInfo? = null) {
+    private fun format(message: String, sourceInfo: SourceInfo? = null): String {
         var loc = if (sourceInfo == null) "" else sourceInfo.toString() + ": "
         if (verbose && sourceInfo != null && sourceInfo.i != null)
             loc += sourceInfo.i.atIndex(sourceInfo.insnList)
-        println("AtomicFU: $level: $loc$message")
+        return "$loc$message"
     }
 
+
     private fun info(message: String, sourceInfo: SourceInfo? = null) {
-        log(message, "info", sourceInfo)
+        logger.info(format(message, sourceInfo))
     }
 
     private fun debug(message: String, sourceInfo: SourceInfo? = null) {
-        if (verbose) log(message, "debug", sourceInfo)
+        logger.debug(format(message, sourceInfo))
     }
 
     private fun error(message: String, sourceInfo: SourceInfo? = null) {
-        log(message, "ERROR", sourceInfo)
+        logger.error(format(message, sourceInfo))
         hasErrors = true
     }
 
     fun transform() {
-        info("Analyzing $dir...")
-        walkClassFiles().forEach { collectFields(it) }
+        info("Analyzing in $inputDir")
+        var inpFilesTime = 0L
+        var outFilesTime = 0L
+        walkClassFiles().forEach { file ->
+            inpFilesTime = inpFilesTime.coerceAtLeast(file.lastModified())
+            analyzeFile(file)
+            outFilesTime = outFilesTime.coerceAtLeast(file.toOutputFile().lastModified())
+        }
         if (hasErrors) throw Exception("Encountered errors while collecting fields")
-        info("Transforming $dir...")
-        walkClassFiles().forEach { transformFile(it) }
-        if (hasErrors) throw Exception("Encountered errors while transforming")
+        if (inpFilesTime > outFilesTime || outputDir == inputDir) {
+            // perform transformation
+            info("Transforming to $outputDir")
+            walkClassFiles().forEach { transformFile(it) }
+            if (hasErrors) throw Exception("Encountered errors while transforming")
+        } else {
+            info("Nothing to transform -- all classes are up to date")
+        }
     }
 
-    private fun collectFields(file: File) {
+    private fun File.toOutputFile(): File =
+        File(outputDir, relativeTo(inputDir).toString())
+
+    private fun analyzeFile(file: File) {
         ClassReader(file.inputStream()).accept(CollectorCV(), SKIP_FRAMES)
     }
 
     private fun transformFile(file: File) {
         transformed = false
         val bytes = file.readBytes()
+        val outFile = file.toOutputFile()
         val cw = ClassWriter(COMPUTE_MAXS or COMPUTE_FRAMES)
         val cv = TransformerCV(cw)
         try {
             ClassReader(ByteArrayInputStream(bytes)).accept(cv, SKIP_FRAMES)
+            outFile.parentFile.mkdirs()
             if (transformed && !hasErrors) {
                 info("Writing transformed $file")
-                file.writeBytes(cw.toByteArray())
-            }
+                outFile.writeBytes(cw.toByteArray()) // write transformed bytes
+            } else
+                outFile.writeBytes(bytes) // write original bytes
         } catch (e: Exception) {
             error("Failed to transform: $e", cv.sourceInfo)
             e.printStackTrace(System.out)
