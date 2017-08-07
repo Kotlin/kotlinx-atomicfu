@@ -239,6 +239,12 @@ class AtomicFUTransformer(
         private var source: String? = null
         var sourceInfo: SourceInfo? = null
 
+        private var originalClinit: MethodNode? = null
+        private var newClinit: MethodNode? = null
+
+        private fun newClinit() = MethodNode(ASM5, ACC_STATIC, "<clinit>", "()V", null, null)
+        fun getOrCreateNewClinit(): MethodNode = newClinit ?: newClinit().also { newClinit = it }
+
         override fun visitSource(source: String?, debug: String?) {
             this.source = source
             super.visitSource(source, debug)
@@ -251,8 +257,7 @@ class AtomicFUTransformer(
                 val protection = if (f.accessors.isEmpty()) ACC_PRIVATE else 0
                 super.visitField(protection or ACC_VOLATILE, f.name, f.primitiveType.descriptor, null, null)
                 super.visitField(protection or ACC_FINAL or ACC_STATIC, f.fuName, f.fuType.descriptor, null, null)
-                code(super.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null)) {
-                    visitCode()
+                code(getOrCreateNewClinit()) {
                     val params = mutableListOf<Type>()
                     params += Type.getObjectType("java/lang/Class")
                     aconst(Type.getObjectType(className))
@@ -264,9 +269,6 @@ class AtomicFUTransformer(
                     aconst(f.name)
                     invokestatic(f.fuType.internalName, "newUpdater", Type.getMethodDescriptor(f.fuType, *params.toTypedArray()), false)
                     putstatic(className, f.fuName, f.fuType.descriptor)
-                    visitInsn(Opcodes.RETURN)
-                    visitMaxs(0, 0)
-                    visitEnd()
                 }
                 transformed = true
                 return null
@@ -279,10 +281,42 @@ class AtomicFUTransformer(
             if (method in accessors)
                 return null // drop accessor
             val sourceInfo = SourceInfo(method, source)
-            val superMV = super.visitMethod(access, name, desc, signature, exceptions)
+            val superMV = if (access or ACC_STATIC != 0 && name == "<clinit>" && desc == "()V") {
+                // defer writing class initialization method
+                val node = MethodNode(ASM5, name, desc, signature, exceptions)
+                if (originalClinit != null) abort("Multiple <clinit> methods found")
+                originalClinit = node
+                node
+            } else {
+                // write transformed method to class right away
+                super.visitMethod(access, name, desc, signature, exceptions)
+            }
             val mv = TransformerMV(sourceInfo, access, name, desc, signature, exceptions, superMV)
             this.sourceInfo = mv.sourceInfo
             return mv
+        }
+
+        override fun visitEnd() {
+            // collect class initialization
+            if (originalClinit != null || newClinit != null) {
+                val newClinit = newClinit
+                if (newClinit == null) {
+                    // dump just original clinit
+                    originalClinit!!.accept(cv)
+                } else {
+                    // create dummy base code if needed
+                    val originalClinit = originalClinit ?: newClinit().also {
+                        code(it) { visitInsn(Opcodes.RETURN) }
+                    }
+                    // makes sure return is last useful instruction
+                    val last = originalClinit.instructions.last
+                    val ret = last.thisOrPrevUseful
+                    if (ret == null || !ret.isReturn()) abort("Last instruction in <clinit> shall be RETURN", ret)
+                    originalClinit.instructions.insertBefore(ret, newClinit.instructions)
+                    originalClinit.accept(cv)
+                }
+            }
+            super.visitEnd()
         }
     }
 

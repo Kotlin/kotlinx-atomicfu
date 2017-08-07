@@ -23,14 +23,20 @@ fun AbstractInsnNode.atIndex(insnList: InsnList?): String {
 }
 
 val AbstractInsnNode.nextUseful: AbstractInsnNode? get() {
-    var cur = next
-    while (cur.isUseless()) cur = cur.next
+    var cur: AbstractInsnNode? = next
+    while (cur.isUseless()) cur = cur!!.next
+    return cur
+}
+
+val AbstractInsnNode?.thisOrPrevUseful: AbstractInsnNode? get() {
+    var cur: AbstractInsnNode? = this
+    while (cur.isUseless()) cur = cur!!.previous
     return cur
 }
 
 private fun AbstractInsnNode?.isUseless() = this is LabelNode || this is LineNumberNode || this is FrameNode
 
-fun InsnList.listUseful(limit: Int) : List<AbstractInsnNode> {
+fun InsnList.listUseful(limit: Int = Int.MAX_VALUE) : List<AbstractInsnNode> {
     val result = ArrayList<AbstractInsnNode>(limit)
     var cur = first
     while (cur != null && result.size < limit) {
@@ -48,6 +54,9 @@ fun AbstractInsnNode.isGetField(owner: String) =
 
 fun AbstractInsnNode.isAreturn() =
     this.opcode == ARETURN
+
+fun AbstractInsnNode.isReturn() =
+    this.opcode == RETURN
 
 inline fun MethodNode.forVarLoads(v: Int, block: (VarInsnNode) -> AbstractInsnNode?) {
     var cur = instructions.first
