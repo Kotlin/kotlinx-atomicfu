@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>atomicfu-parent</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.1</version>
     </parent>
 
     <artifactId>atomicfu-transformer</artifactId>

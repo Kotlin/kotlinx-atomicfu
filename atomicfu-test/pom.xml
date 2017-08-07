@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>atomicfu-parent</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.1</version>
     </parent>
 
     <artifactId>atomicfu-test</artifactId>
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>atomicfu</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
