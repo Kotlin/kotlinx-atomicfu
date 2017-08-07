@@ -17,4 +17,13 @@ class LockFreeLongCounterTest {
 
     @Test
     fun testGetInner() = testWith { getInner() }
+
+    @Test
+    fun testAdd2() {
+        val c = LockFreeLongCounter()
+        c.add2()
+        check(c.get() == 2L)
+        c.add2()
+        check(c.get() == 4L)
+    }
 }

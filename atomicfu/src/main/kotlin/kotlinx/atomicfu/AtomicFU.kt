@@ -124,6 +124,9 @@ public class AtomicInt internal constructor(
     /** Maps to [AtomicIntegerFieldUpdater.decrementAndGet] */
     fun decrementAndGet(): Int = FU.decrementAndGet(this)
 
+    inline operator fun plusAssign(delta: Int) { getAndAdd(delta) }
+    inline operator fun minusAssign(delta: Int) { getAndAdd(-delta) }
+
     private companion object {
         private val FU = AtomicIntegerFieldUpdater.newUpdater(AtomicInt::class.java, "value")
     }
@@ -191,6 +194,11 @@ public class AtomicLong internal constructor(
 
     /** Maps to [AtomicLongFieldUpdater.decrementAndGet] */
     fun decrementAndGet(): Long = FU.decrementAndGet(this)
+
+    inline operator fun plusAssign(delta: Int) { getAndAdd(delta.toLong()) }
+    inline operator fun minusAssign(delta: Int) { getAndAdd(-delta.toLong()) }
+    inline operator fun plusAssign(delta: Long) { getAndAdd(delta) }
+    inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
 
     private companion object {
         private val FU = AtomicLongFieldUpdater.newUpdater(AtomicLong::class.java, "value")
