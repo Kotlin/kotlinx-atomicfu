@@ -4,8 +4,6 @@ package kotlinx.atomicfu.transformer
 
 import org.objectweb.asm.*
 import org.objectweb.asm.ClassReader.SKIP_FRAMES
-import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
-import org.objectweb.asm.ClassWriter.COMPUTE_MAXS
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type.OBJECT
 import org.objectweb.asm.Type.getMethodDescriptor
@@ -15,6 +13,7 @@ import org.objectweb.asm.tree.*
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.net.URLClassLoader
 
 class TypeInfo(val fuType: Type, val primitiveType: Type)
 
@@ -43,6 +42,8 @@ private val FACTORIES: Set<MethodId> = setOf(
         MethodId(AFU_CLS, ATOMIC, "(I)L$AFU_PKG/AtomicInt;"),
         MethodId(AFU_CLS, ATOMIC, "(J)L$AFU_PKG/AtomicLong;")
     )
+
+private fun File.isClassFile() = toString().endsWith(".class")
 
 private operator fun Int.contains(bit: Int) = this and bit != 0
 
@@ -79,6 +80,7 @@ data class SourceInfo(
 }
 
 class AtomicFUTransformer(
+    classpath: List<String>,
     private val inputDir: File,
     private val outputDir: File = inputDir
 ) {
@@ -86,14 +88,15 @@ class AtomicFUTransformer(
 
     private var logger = LoggerFactory.getLogger(AtomicFUTransformer::class.java)
 
+    private val classLoader = URLClassLoader(
+        (listOf(inputDir) + (classpath.map { File(it) } - outputDir))
+            .map {it.toURI().toURL() }.toTypedArray())
+
     private var hasErrors = false
     private var transformed = false
 
     private val fields = mutableMapOf<FieldId, FieldInfo>()
     private val accessors = mutableMapOf<MethodId, FieldInfo>()
-
-    private fun walkClassFiles() = inputDir.walk()
-        .filter { it.name.endsWith(".class") }
 
     private fun format(message: String, sourceInfo: SourceInfo? = null): String {
         var loc = if (sourceInfo == null) "" else sourceInfo.toString() + ": "
@@ -101,7 +104,6 @@ class AtomicFUTransformer(
             loc += sourceInfo.i.atIndex(sourceInfo.insnList)
         return "$loc$message"
     }
-
 
     private fun info(message: String, sourceInfo: SourceInfo? = null) {
         logger.info(format(message, sourceInfo))
@@ -120,16 +122,22 @@ class AtomicFUTransformer(
         info("Analyzing in $inputDir")
         var inpFilesTime = 0L
         var outFilesTime = 0L
-        walkClassFiles().forEach { file ->
+        inputDir.walk().filter { it.isFile }.forEach { file ->
             inpFilesTime = inpFilesTime.coerceAtLeast(file.lastModified())
-            analyzeFile(file)
+            if (file.isClassFile()) analyzeFile(file)
             outFilesTime = outFilesTime.coerceAtLeast(file.toOutputFile().lastModified())
         }
         if (hasErrors) throw Exception("Encountered errors while collecting fields")
         if (inpFilesTime > outFilesTime || outputDir == inputDir) {
             // perform transformation
             info("Transforming to $outputDir")
-            walkClassFiles().forEach { transformFile(it) }
+            inputDir.walk().filter { it.isFile }.forEach { file ->
+                val bytes = file.readBytes()
+                val outBytes = if (file.isClassFile()) transformFile(file, bytes) else bytes
+                val outFile = file.toOutputFile()
+                outFile.parentFile.mkdirs()
+                outFile.writeBytes(outBytes) // write resulting bytes
+            }
             if (hasErrors) throw Exception("Encountered errors while transforming")
         } else {
             info("Nothing to transform -- all classes are up to date")
@@ -143,24 +151,21 @@ class AtomicFUTransformer(
         ClassReader(file.inputStream()).accept(CollectorCV(), SKIP_FRAMES)
     }
 
-    private fun transformFile(file: File) {
+    private fun transformFile(file: File, bytes: ByteArray): ByteArray {
         transformed = false
-        val bytes = file.readBytes()
-        val outFile = file.toOutputFile()
-        val cw = ClassWriter(COMPUTE_MAXS or COMPUTE_FRAMES)
+        val cw = CW()
         val cv = TransformerCV(cw)
         try {
             ClassReader(ByteArrayInputStream(bytes)).accept(cv, SKIP_FRAMES)
-            outFile.parentFile.mkdirs()
             if (transformed && !hasErrors) {
-                info("Writing transformed $file")
-                outFile.writeBytes(cw.toByteArray()) // write transformed bytes
-            } else
-                outFile.writeBytes(bytes) // write original bytes
+                info("Transformed $file")
+                return cw.toByteArray() // write transformed bytes
+            }
         } catch (e: Exception) {
             error("Failed to transform: $e", cv.sourceInfo)
             e.printStackTrace(System.out)
         }
+        return bytes
     }
 
     private abstract inner class CV(cv: ClassVisitor?) : ClassVisitor(ASM5, cv) {
@@ -412,6 +417,23 @@ class AtomicFUTransformer(
             return i.next
         }
     }
+
+    private inner class CW : ClassWriter(COMPUTE_MAXS or COMPUTE_FRAMES) {
+        override fun getCommonSuperClass(type1: String, type2: String): String {
+            var c: Class<*> = Class.forName(type1.replace('/', '.'), false, classLoader)
+            val d: Class<*> = Class.forName(type2.replace('/', '.'), false, classLoader)
+            if (c.isAssignableFrom(d)) return type1
+            if (d.isAssignableFrom(c)) return type2
+            if (c.isInterface || d.isInterface) {
+                return "java/lang/Object"
+            } else {
+                do {
+                    c = c.superclass
+                } while (!c.isAssignableFrom(d))
+                return c.name.replace('.', '/')
+            }
+        }
+    }
 }
 
 fun main(args: Array<String>) {
@@ -419,7 +441,7 @@ fun main(args: Array<String>) {
         println("Usage: AtomicFUTransformerKt <dir>")
         return
     }
-    val t = AtomicFUTransformer(File(args[0]))
+    val t = AtomicFUTransformer(emptyList(), File(args[0]))
     t.verbose = true
     t.transform()
 }

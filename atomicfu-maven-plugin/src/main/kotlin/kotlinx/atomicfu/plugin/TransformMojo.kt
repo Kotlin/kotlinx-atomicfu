@@ -5,10 +5,19 @@ import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
+import org.apache.maven.plugins.annotations.ResolutionScope
 import java.io.File
 
-@Mojo(name = "transform", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
+@Mojo(name = "transform",
+    defaultPhase = LifecyclePhase.PROCESS_CLASSES,
+    requiresDependencyResolution = ResolutionScope.COMPILE)
 class TransformMojo : AbstractMojo() {
+    /**
+     * Project classpath.
+     */
+    @Parameter(defaultValue = "\${project.compileClasspathElements}", required = true, readonly = true)
+    lateinit var classpath: List<String>
+
     /**
      * Original classes directory.
      */
@@ -28,7 +37,7 @@ class TransformMojo : AbstractMojo() {
     var verbose: Boolean = false
 
     override fun execute() {
-        val t = AtomicFUTransformer(input, output)
+        val t = AtomicFUTransformer(classpath, input, output)
         t.verbose = verbose
         t.transform()
     }
