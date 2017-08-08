@@ -1,4 +1,4 @@
-# AtomicFU
+# AtomicFU [ ![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.atomicfu/images/download.svg) ](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu/_latestVersion)
 
 The idiomatic way to use atomic operations in Kotlin. 
 
