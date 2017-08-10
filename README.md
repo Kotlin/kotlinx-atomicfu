@@ -89,72 +89,103 @@ Declare AtomicFU version:
 Add Bintray JCenter repository:
 
 ```xml
-<repositories>
-    <repository>
-        <id>central</id>
-        <url>http://jcenter.bintray.com</url>
-    </repository>
-</repositories>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>http://jcenter.bintray.com</url>
+        </repository>
+    </repositories>
 ```
 
 Declare _provided_ dependency on the AtomicFU library 
 (the users of the resulting artifact will not have a dependency on AtomicFU library):
 
 ```xml
-<dependencies>
-    <dependency>
-        <groupId>org.jetbrains.kotlinx</groupId>
-        <artifactId>atomicfu</artifactId>
-        <version>${project.version}</version>
-        <scope>provided</scope>
-    </dependency>
-</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>atomicfu</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 ```
 
 Configure build steps:
 
 ```xml
-<build>
-    <plugins>
-        <!-- compile Kotlin files to staging directory -->
-        <plugin>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-maven-plugin</artifactId>
-            <version>${kotlin.version}</version>
-            <executions>
-                <execution>
-                    <id>compile</id>
-                    <phase>compile</phase>
-                    <goals>
-                        <goal>compile</goal>
-                    </goals>
-                    <configuration>
-                        <output>${project.build.directory}/classes-atomicfu</output>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-        <!-- transform classes with AtomicFU plugin -->
-        <plugin>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>atomicfu-maven-plugin</artifactId>
-            <version>${atomicfu.version}</version>
-            <executions>
-                <execution>
-                    <goals>
-                        <goal>transform</goal>
-                    </goals>
-                    <configuration>
-                        <input>${project.build.directory}/classes-atomicfu</input>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
+    <build>
+        <plugins>
+            <!-- compile Kotlin files to staging directory -->
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <output>${project.build.directory}/classes-atomicfu</output>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- transform classes with AtomicFU plugin -->
+            <plugin>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>atomicfu-maven-plugin</artifactId>
+                <version>${atomicfu.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>transform</goal>
+                        </goals>
+                        <configuration>
+                            <input>${project.build.directory}/classes-atomicfu</input>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 ```
 
+## Testing lock-free data structures (optional)
 
+You can optionally test lock-freedomness of lock-free data structures using `LockFreedomTestEnvironment` class.
+See example in [`LockFreeQueueLFTest`](atomicfu-test/src/test/kotlin/kotlinx/atomicfu/test/LockFreeQueueLFTest.kt).
+Testing is performed by pausing one (random) thread before or after a random state-update operation and
+making sure that all other threads can still make progress. 
+
+In order to make those test to actually perform lock-freedomness testing you need to configure an additional 
+execution of tests with the original (non-transformed) classes:
+
+```xml
+    <build>
+        <plugins>
+            <!-- additional test execution with surefire on non-transformed files -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>lockfree-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <classesDirectory>${project.build.directory}/classes-atomicfu</classesDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+```
 
 
 
