@@ -20,7 +20,7 @@
 
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>atomicfu-parent</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.2</version>
     <packaging>pom</packaging>
 
     <name>AtomicFU</name>
