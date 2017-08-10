@@ -80,7 +80,7 @@ Declare AtomicFU version:
 
 ```xml
 <properties>
-     <atomicfu.version>0.1</atomicfu.version>
+     <atomicfu.version>0.2-SNAPSHOT</atomicfu.version>
 </properties> 
 ```
 
