@@ -71,24 +71,27 @@ public class AtomicRef<T> internal constructor(value: T) {
     @Volatile
     public var value: T = value
         set(value) {
+            interceptor.beforeUpdate(this)
             field = value
-            interceptor.onSet(this, value)
+            interceptor.afterSet(this, value)
         }
 
     /**
      * Maps to [AtomicReferenceFieldUpdater.lazySet].
      */
     public fun lazySet(value: T) {
+        interceptor.beforeUpdate(this)
         FU.lazySet(this, value)
-        interceptor.onSet(this, value)
+        interceptor.afterSet(this, value)
     }
 
     /**
      * Maps to [AtomicReferenceFieldUpdater.compareAndSet].
      */
     public fun compareAndSet(expect: T, update: T): Boolean {
+        interceptor.beforeUpdate(this)
         val result = FU.compareAndSet(this, expect, update)
-        if (result) interceptor.onRMW(this, expect, update)
+        if (result) interceptor.afterRMW(this, expect, update)
         return result
     }
 
@@ -96,8 +99,9 @@ public class AtomicRef<T> internal constructor(value: T) {
      * Maps to [AtomicReferenceFieldUpdater.getAndSet].
      */
     public fun getAndSet(value: T): T {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndSet(this, value) as T
-        interceptor.onRMW(this, oldValue, value)
+        interceptor.afterRMW(this, oldValue, value)
         return oldValue
     }
 
@@ -162,24 +166,27 @@ public class AtomicInt internal constructor(value: Int) {
     @Volatile
     public var value: Int = value
         set(value) {
+            interceptor.beforeUpdate(this)
             field = value
-            interceptor.onSet(this, value)
+            interceptor.afterSet(this, value)
         }
 
     /**
      * Maps to [AtomicIntegerFieldUpdater.lazySet].
      */
     public fun lazySet(value: Int) {
+        interceptor.beforeUpdate(this)
         FU.lazySet(this, value)
-        interceptor.onSet(this, value)
+        interceptor.afterSet(this, value)
     }
 
     /**
      * Maps to [AtomicIntegerFieldUpdater.compareAndSet].
      */
     public fun compareAndSet(expect: Int, update: Int): Boolean {
+        interceptor.beforeUpdate(this)
         val result = FU.compareAndSet(this, expect, update)
-        if (result) interceptor.onRMW(this, expect, update)
+        if (result) interceptor.afterRMW(this, expect, update)
         return result
     }
 
@@ -187,8 +194,9 @@ public class AtomicInt internal constructor(value: Int) {
      * Maps to [AtomicIntegerFieldUpdater.getAndSet].
      */
     public fun getAndSet(value: Int): Int {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndSet(this, value)
-        interceptor.onRMW(this, oldValue, value)
+        interceptor.afterRMW(this, oldValue, value)
         return oldValue
     }
 
@@ -196,8 +204,9 @@ public class AtomicInt internal constructor(value: Int) {
      * Maps to [AtomicIntegerFieldUpdater.getAndIncrement].
      */
     public fun getAndIncrement(): Int {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndIncrement(this)
-        interceptor.onRMW(this, oldValue, oldValue + 1)
+        interceptor.afterRMW(this, oldValue, oldValue + 1)
         return oldValue
     }
 
@@ -205,8 +214,9 @@ public class AtomicInt internal constructor(value: Int) {
      * Maps to [AtomicIntegerFieldUpdater.getAndDecrement].
      */
     public fun getAndDecrement(): Int {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndDecrement(this)
-        interceptor.onRMW(this, oldValue, oldValue - 1)
+        interceptor.afterRMW(this, oldValue, oldValue - 1)
         return oldValue
     }
 
@@ -214,8 +224,9 @@ public class AtomicInt internal constructor(value: Int) {
      * Maps to [AtomicIntegerFieldUpdater.getAndAdd].
      */
     public fun getAndAdd(delta: Int): Int {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndAdd(this, delta)
-        interceptor.onRMW(this, oldValue, oldValue + delta)
+        interceptor.afterRMW(this, oldValue, oldValue + delta)
         return oldValue
     }
 
@@ -223,8 +234,9 @@ public class AtomicInt internal constructor(value: Int) {
      * Maps to [AtomicIntegerFieldUpdater.addAndGet].
      */
     public fun addAndGet(delta: Int): Int {
+        interceptor.beforeUpdate(this)
         val newValue = FU.addAndGet(this, delta)
-        interceptor.onRMW(this, newValue - delta, newValue)
+        interceptor.afterRMW(this, newValue - delta, newValue)
         return newValue
     }
 
@@ -232,8 +244,9 @@ public class AtomicInt internal constructor(value: Int) {
      * Maps to [AtomicIntegerFieldUpdater.incrementAndGet].
      */
     public fun incrementAndGet(): Int {
+        interceptor.beforeUpdate(this)
         val newValue = FU.incrementAndGet(this)
-        interceptor.onRMW(this, newValue - 1, newValue)
+        interceptor.afterRMW(this, newValue - 1, newValue)
         return newValue
     }
 
@@ -241,8 +254,9 @@ public class AtomicInt internal constructor(value: Int) {
      * Maps to [AtomicIntegerFieldUpdater.decrementAndGet].
      */
     public fun decrementAndGet(): Int {
+        interceptor.beforeUpdate(this)
         val newValue = FU.decrementAndGet(this)
-        interceptor.onRMW(this, newValue + 1, newValue)
+        interceptor.afterRMW(this, newValue + 1, newValue)
         return newValue
     }
 
@@ -317,24 +331,27 @@ public class AtomicLong internal constructor(value: Long) {
     @Volatile
     public var value: Long = value
         set(value) {
+            interceptor.beforeUpdate(this)
             field = value
-            interceptor.onSet(this, value)
+            interceptor.afterSet(this, value)
         }
 
     /**
      * Maps to [AtomicLongFieldUpdater.lazySet].
      */
     public fun lazySet(value: Long) {
+        interceptor.beforeUpdate(this)
         FU.lazySet(this, value)
-        interceptor.onSet(this, value)
+        interceptor.afterSet(this, value)
     }
 
     /**
      * Maps to [AtomicLongFieldUpdater.compareAndSet].
      */
     public fun compareAndSet(expect: Long, update: Long): Boolean {
+        interceptor.beforeUpdate(this)
         val result = FU.compareAndSet(this, expect, update)
-        if (result) interceptor.onRMW(this, expect, update)
+        if (result) interceptor.afterRMW(this, expect, update)
         return result
     }
 
@@ -342,8 +359,9 @@ public class AtomicLong internal constructor(value: Long) {
      * Maps to [AtomicLongFieldUpdater.getAndSet].
      */
     public fun getAndSet(value: Long): Long {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndSet(this, value)
-        interceptor.onRMW(this, oldValue, value)
+        interceptor.afterRMW(this, oldValue, value)
         return oldValue
     }
 
@@ -351,8 +369,9 @@ public class AtomicLong internal constructor(value: Long) {
      * Maps to [AtomicLongFieldUpdater.getAndIncrement].
      */
     public fun getAndIncrement(): Long {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndIncrement(this)
-        interceptor.onRMW(this, oldValue, oldValue + 1)
+        interceptor.afterRMW(this, oldValue, oldValue + 1)
         return oldValue
     }
 
@@ -360,8 +379,9 @@ public class AtomicLong internal constructor(value: Long) {
      * Maps to [AtomicLongFieldUpdater.getAndDecrement].
      */
     public fun getAndDecrement(): Long {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndDecrement(this)
-        interceptor.onRMW(this, oldValue, oldValue - 1)
+        interceptor.afterRMW(this, oldValue, oldValue - 1)
         return oldValue
     }
 
@@ -369,8 +389,9 @@ public class AtomicLong internal constructor(value: Long) {
      * Maps to [AtomicLongFieldUpdater.getAndAdd].
      */
     public fun getAndAdd(delta: Long): Long {
+        interceptor.beforeUpdate(this)
         val oldValue = FU.getAndAdd(this, delta)
-        interceptor.onRMW(this, oldValue, oldValue + delta)
+        interceptor.afterRMW(this, oldValue, oldValue + delta)
         return oldValue
     }
 
@@ -378,8 +399,9 @@ public class AtomicLong internal constructor(value: Long) {
      * Maps to [AtomicLongFieldUpdater.addAndGet].
      */
     public fun addAndGet(delta: Long): Long {
+        interceptor.beforeUpdate(this)
         val newValue = FU.addAndGet(this, delta)
-        interceptor.onRMW(this, newValue - delta, newValue)
+        interceptor.afterRMW(this, newValue - delta, newValue)
         return newValue
     }
 
@@ -387,8 +409,9 @@ public class AtomicLong internal constructor(value: Long) {
      * Maps to [AtomicLongFieldUpdater.incrementAndGet].
      */
     public fun incrementAndGet(): Long {
+        interceptor.beforeUpdate(this)
         val newValue = FU.incrementAndGet(this)
-        interceptor.onRMW(this, newValue - 1, newValue)
+        interceptor.afterRMW(this, newValue - 1, newValue)
         return newValue
     }
 
@@ -396,8 +419,9 @@ public class AtomicLong internal constructor(value: Long) {
      * Maps to [AtomicLongFieldUpdater.decrementAndGet].
      */
     public fun decrementAndGet(): Long {
+        interceptor.beforeUpdate(this)
         val newValue = FU.decrementAndGet(this)
-        interceptor.onRMW(this, newValue + 1, newValue)
+        interceptor.afterRMW(this, newValue + 1, newValue)
         return newValue
     }
 

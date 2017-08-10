@@ -39,12 +39,15 @@ internal fun unlockAndResetInterceptor(impl: AtomicOperationInterceptor) {
  * Interceptor for modifications of atomic variables.
  */
 internal open class AtomicOperationInterceptor {
-    open fun <T> onSet(ref: AtomicRef<T>, newValue: T) {}
-    open fun <T> onRMW(ref: AtomicRef<T>, oldValue: T, newValue: T) { onSet(ref, newValue) }
-    open fun onSet(ref: AtomicInt, newValue: Int) {}
-    open fun onRMW(ref: AtomicInt, oldValue: Int, newValue: Int) { onSet(ref, newValue) }
-    open fun onSet(ref: AtomicLong, newValue: Long) {}
-    open fun onRMW(ref: AtomicLong, oldValue: Long, newValue: Long) { onSet(ref, newValue) }
+    open fun <T> beforeUpdate(ref: AtomicRef<T>) {}
+    open fun beforeUpdate(ref: AtomicInt) {}
+    open fun beforeUpdate(ref: AtomicLong) {}
+    open fun <T> afterSet(ref: AtomicRef<T>, newValue: T) {}
+    open fun afterSet(ref: AtomicInt, newValue: Int) {}
+    open fun afterSet(ref: AtomicLong, newValue: Long) {}
+    open fun <T> afterRMW(ref: AtomicRef<T>, oldValue: T, newValue: T) {}
+    open fun afterRMW(ref: AtomicInt, oldValue: Int, newValue: Int) {}
+    open fun afterRMW(ref: AtomicLong, oldValue: Long, newValue: Long) {}
 }
 
 private object DefaultInterceptor : AtomicOperationInterceptor() {

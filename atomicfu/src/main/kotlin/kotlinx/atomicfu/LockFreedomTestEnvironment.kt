@@ -216,9 +216,15 @@ public open class LockFreedomTestEnvironment(
     }
 
     private inner class Interceptor : AtomicOperationInterceptor() {
-        override fun <T> onSet(ref: AtomicRef<T>, newValue: T) = step()
-        override fun onSet(ref: AtomicInt, newValue: Int) = step()
-        override fun onSet(ref: AtomicLong, newValue: Long) = step()
+        override fun <T> beforeUpdate(ref: AtomicRef<T>) = step()
+        override fun beforeUpdate(ref: AtomicInt) = step()
+        override fun beforeUpdate(ref: AtomicLong) = step()
+        override fun <T> afterSet(ref: AtomicRef<T>, newValue: T) = step()
+        override fun afterSet(ref: AtomicInt, newValue: Int) = step()
+        override fun afterSet(ref: AtomicLong, newValue: Long) = step()
+        override fun <T> afterRMW(ref: AtomicRef<T>, oldValue: T, newValue: T) = step()
+        override fun afterRMW(ref: AtomicInt, oldValue: Int, newValue: Int) = step()
+        override fun afterRMW(ref: AtomicLong, oldValue: Long, newValue: Long) = step()
         override fun toString(): String = "LockFreedomTestEnvironment($name)"
     }
 }
