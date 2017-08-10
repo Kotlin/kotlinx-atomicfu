@@ -58,21 +58,23 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 
 ## Dos and Don'ts
 
-* Always declare atomic variables as `private val`.
-* Do not leak references on atomic variable themselves. 
-* Only simple operations on atomic variables _directly_ are supported.
+* Declare atomic variables as `private val`. You can use just (public) `val` in nested classes, 
+  but make sure they are not accessed outside of your Kotlin source file.
+* Only simple operations on atomic variables _directly_ are supported. 
+** Do not read references on atomic variables into local variables,
+   e.g. `top.compareAndSet(...)` is Ok, while `val tmp = top; tmp...` is not. 
+** Do not leak references on atomic variables in other way (return, pass as params, etc). 
 * Do not introduce complex data flow in parameters to atomic variable operations, 
   i.e. `top.value = complex_expression` and `top.compareAndSet(cur, complex_expression)` are not supported 
   (more specifically, `complex_expression` should not have branches in its compiled representation).
 * Use the following pattern if you need to expose the value of atomic property to the public:
 
 ```kotlin
-private val _foo = atomic<T>(initial)  // private atomic, name it with leading underscore
+private val fooAtomic = atomic<T>(initial)  // private atomic, name it as xxxAtomic
 public var foo: T                      // public val/var
-    get() = _foo.value
-    set(value) { _foo.value = value }
+    get() = fooAtomic.value
+    set(value) { fooAtomic.value = value }
 ```  
-   
 
 ## Maven build setup
 

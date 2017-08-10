@@ -47,16 +47,16 @@ private val AFU_TYPES: Map<Type, TypeInfo> = AFU_CLASSES.mapKeys { Type.getObjec
 
 private fun String.prettyStr() = replace('/', '.')
 
-data class MethodId(val owner: String, val name: String, val desc: String) {
+data class MethodId(val owner: String, val name: String, val desc: String, val invokeOpcode: Int) {
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
 private const val AFU_CLS = "$AFU_PKG/AtomicFU"
 
 private val FACTORIES: Set<MethodId> = setOf(
-        MethodId(AFU_CLS, ATOMIC, "(Ljava/lang/Object;)L$AFU_PKG/AtomicRef;"),
-        MethodId(AFU_CLS, ATOMIC, "(I)L$AFU_PKG/AtomicInt;"),
-        MethodId(AFU_CLS, ATOMIC, "(J)L$AFU_PKG/AtomicLong;")
+        MethodId(AFU_CLS, ATOMIC, "(Ljava/lang/Object;)L$AFU_PKG/AtomicRef;", INVOKESTATIC),
+        MethodId(AFU_CLS, ATOMIC, "(I)L$AFU_PKG/AtomicInt;", INVOKESTATIC),
+        MethodId(AFU_CLS, ATOMIC, "(J)L$AFU_PKG/AtomicLong;", INVOKESTATIC)
     )
 
 private fun File.isClassFile() = toString().endsWith(".class")
@@ -214,18 +214,25 @@ class AtomicFUTransformer(
 
         override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
             val methodType = Type.getMethodType(desc)
-            if (isPotentialAccessorMethod(access, methodType))
-                return AccessorCollectorMV(methodType.argumentTypes[0].internalName, access, name, desc, signature, exceptions)
+            getPotentialAccessorType(access, className, methodType)?.let { onType ->
+                return AccessorCollectorMV(onType.internalName, access, name, desc, signature, exceptions)
+            }
             return null
         }
     }
 
-    private fun isPotentialAccessorMethod(access: Int, methodType: Type): Boolean =
-        access or ACC_SYNTHETIC != 0 &&
-        access or ACC_STATIC != 0 &&
-        methodType.argumentTypes.size == 1 &&
-        methodType.argumentTypes[0].sort == OBJECT &&
-        methodType.returnType in AFU_TYPES
+    // returns a type on which this is a potential accessor
+    private fun getPotentialAccessorType(access: Int, className: String, methodType: Type): Type? {
+        if (methodType.returnType !in AFU_TYPES) return null
+        if (access and ACC_STATIC != 0) {
+            return if (methodType.argumentTypes.size == 1 && methodType.argumentTypes[0].sort == OBJECT)
+                methodType.argumentTypes[0] else null
+        } else {
+            // if it not static, then it must be final
+            return if (access and ACC_FINAL != 0 && methodType.argumentTypes.isEmpty())
+                Type.getObjectType(className) else null
+        }
+    }
 
     private inner class AccessorCollectorMV(
         private val className: String,
@@ -242,7 +249,7 @@ class AtomicFUTransformer(
                 val fieldName = fi.name
                 val field = FieldId(className, fieldName)
                 val fieldType = Type.getType(fi.desc)
-                val accessorMethod = MethodId(className, name, desc)
+                val accessorMethod = MethodId(className, name, desc, accessToInvokeOpcode(access))
                 info("$field accessor $name found")
                 val fieldInfo = registerField(field, fieldType)
                 fieldInfo.accessors += accessorMethod
@@ -293,7 +300,7 @@ class AtomicFUTransformer(
         }
 
         override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
-            val method = MethodId(className, name, desc)
+            val method = MethodId(className, name, desc, accessToInvokeOpcode(access))
             if (method in accessors)
                 return null // drop accessor
             val sourceInfo = SourceInfo(method, source)
@@ -423,9 +430,9 @@ class AtomicFUTransformer(
         private fun transform(i: AbstractInsnNode): AbstractInsnNode? {
             when (i) {
                 is MethodInsnNode -> {
-                    val methodId = MethodId(i.owner, i.name, i.desc)
+                    val methodId = MethodId(i.owner, i.name, i.desc, i.opcode)
                     when {
-                        i.opcode == INVOKESTATIC && methodId in FACTORIES -> {
+                        methodId in FACTORIES -> {
                             if (name != "<init>") abort("factory $methodId is used outside of constructor")
                             val next = i.nextUseful
                             val fieldId = (next as? FieldInsnNode)?.checkPutField() ?:
@@ -436,8 +443,8 @@ class AtomicFUTransformer(
                             (next as FieldInsnNode).desc = f.primitiveType.descriptor
                             return next.next
                         }
-                        i.opcode == INVOKESTATIC && methodId in accessors -> {
-                            // replace GETSTATIC to accessor with GETSTATIC on field updater
+                        methodId in accessors -> {
+                            // replace INVOKESTATIC/VIRTUAL to accessor with GETSTATIC on field updater
                             val f = accessors[methodId]!!
                             val j = FieldInsnNode(GETSTATIC, f.owner, f.fuName, f.fuType.descriptor)
                             instructions.insert(i, j)

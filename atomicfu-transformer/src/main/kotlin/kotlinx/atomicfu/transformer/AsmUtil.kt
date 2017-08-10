@@ -84,3 +84,7 @@ inline fun MethodNode.forVarLoads(v: Int, block: (VarInsnNode) -> AbstractInsnNo
     }
 }
 
+fun accessToInvokeOpcode(access: Int) =
+    if (access and ACC_STATIC != 0) INVOKESTATIC else INVOKEVIRTUAL
+
+
