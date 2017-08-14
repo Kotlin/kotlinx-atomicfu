@@ -74,6 +74,7 @@ data class FieldId(val owner: String, val name: String) {
 class FieldInfo(fieldId: FieldId, val fieldType: Type) {
     val owner = fieldId.owner
     val name = fieldId.name
+    val ownerType: Type = Type.getObjectType(owner)
     val fuName = fieldId.name + '$' + "FU"
     val typeInfo = AFU_CLASSES[fieldType.internalName]!!
     val fuType = typeInfo.fuType
@@ -397,7 +398,7 @@ class AtomicFUTransformer(
             return swap.next
         }
 
-        private fun fixupLoadedAtomicVar(ld: FieldInsnNode, f: FieldInfo): AbstractInsnNode? {
+        private fun fixupLoadedAtomicVar(f: FieldInfo, ld: FieldInsnNode): AbstractInsnNode? {
             val j = FlowAnalyzer(ld.next).execute()
             when (j) {
                 is MethodInsnNode -> {
@@ -411,20 +412,32 @@ class AtomicFUTransformer(
                     val v = j.`var`
                     val next = j.next
                     instructions.remove(ld)
-                    localVariables[v]!!.apply {
-                        desc = f.owner
-                        signature = null
-                    }
-                    // recursively process all loads of this variable
-                    forVarLoads(v) { otherLd ->
-                        val ldCopy = ld.clone(null) as FieldInsnNode
-                        instructions.insert(otherLd, ldCopy)
-                        fixupLoadedAtomicVar(ldCopy, f)
+                    val lv = localVar(v)
+                    if (lv != null) {
+                        // Stored to a local variable with an entry in LVT (typically because of inline function)
+                        if (lv.desc != f.fieldType.descriptor)
+                            abort("field $f was stored to a local variable #$v \"${lv.name}\" with unexpected type: ${lv.desc}")
+                        // correct local variable descriptor
+                        lv.desc = f.ownerType.descriptor
+                        lv.signature = null
+                        // process all loads of this variable in the corresponding local variable range
+                        forVarLoads(v, lv.start, lv.end) { otherLd ->
+                            fixupVarLoad(f, ld, otherLd)
+                        }
+                    } else {
+                        // Spilled temporarily to a local variable w/o an entry in LVT -> fixup only one load
+                        fixupVarLoad(f, ld, nextVarLoad(v, next))
                     }
                     return next
                 }
                 else -> abort("cannot happen")
             }
+        }
+
+        private fun fixupVarLoad(f: FieldInfo, ld: FieldInsnNode, otherLd: VarInsnNode): AbstractInsnNode? {
+            val ldCopy = ld.clone(null) as FieldInsnNode
+            instructions.insert(otherLd, ldCopy)
+            return fixupLoadedAtomicVar(f, ldCopy)
         }
 
         private fun transform(i: AbstractInsnNode): AbstractInsnNode? {
@@ -450,7 +463,7 @@ class AtomicFUTransformer(
                             instructions.insert(i, j)
                             instructions.remove(i)
                             transformed = true
-                            return fixupLoadedAtomicVar(j, f)
+                            return fixupLoadedAtomicVar(f, j)
                         }
                         i.opcode == INVOKEVIRTUAL && i.owner in AFU_CLASSES -> {
                             abort("standalone invocation of $methodId that was not traced to previous field load", i)
@@ -467,7 +480,7 @@ class AtomicFUTransformer(
                         i.name = f.fuName
                         i.desc = f.fuType.descriptor
                         transformed = true
-                        return fixupLoadedAtomicVar(i, f)
+                        return fixupLoadedAtomicVar(f, i)
                     }
                 }
             }

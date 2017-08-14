@@ -74,14 +74,36 @@ fun AbstractInsnNode.isAreturn() =
 fun AbstractInsnNode.isReturn() =
     this.opcode == RETURN
 
-inline fun MethodNode.forVarLoads(v: Int, block: (VarInsnNode) -> AbstractInsnNode?) {
-    var cur = instructions.first
-    while (cur != null) {
+@Suppress("UNCHECKED_CAST")
+fun MethodNode.localVar(v: Int): LocalVariableNode? =
+    (localVariables as List<LocalVariableNode>).firstOrNull { it.index == v }
+
+inline fun forVarLoads(v: Int, start: LabelNode, end: LabelNode, block: (VarInsnNode) -> AbstractInsnNode?) {
+    var cur: AbstractInsnNode? = start
+    while (cur != null && cur !== end) {
         if (cur is VarInsnNode && cur.opcode == ALOAD && cur.`var` == v) {
             cur = block(cur)
         } else
             cur = cur.next
     }
+}
+
+fun nextVarLoad(v: Int, start: AbstractInsnNode): VarInsnNode {
+    var cur: AbstractInsnNode? = start
+    while (cur != null) {
+        when (cur.opcode) {
+            GOTO, TABLESWITCH, LOOKUPSWITCH, ATHROW, IFEQ, IFNE, IFLT, IFGE, IFGT, IFLE, IFNULL, IFNONNULL,
+            IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE,
+            IRETURN, FRETURN, ARETURN, RETURN, LRETURN, DRETURN -> {
+                abort("Unsupported branching/control while searching for load of spilled variable #$v", cur)
+            }
+            ALOAD -> {
+                if ((cur as VarInsnNode).`var` == v) return cur
+            }
+        }
+        cur = cur.next
+    }
+    abort("Flow control falls after the end of the method while searching for load of spilled variable #$v")
 }
 
 fun accessToInvokeOpcode(access: Int) =
