@@ -42,4 +42,11 @@ class LockFreeLongCounterTest {
         c.add2()
         check(c.get() == 4L)
     }
+
+    @Test
+    fun testSetM2() {
+        val c = LockFreeLongCounter()
+        c.setM2()
+        check(c.get() == -2L)
+    }
 }

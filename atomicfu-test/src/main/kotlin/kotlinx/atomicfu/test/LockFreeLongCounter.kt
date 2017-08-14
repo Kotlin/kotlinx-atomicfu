@@ -29,6 +29,10 @@ class LockFreeLongCounter {
         counter += 2
     }
 
+    fun setM2() {
+        counter.value = -2L // LDC instruction here
+    }
+
     fun getInner(): Long = Inner().getFromOuter()
 
     // testing how an inner class can get access to it

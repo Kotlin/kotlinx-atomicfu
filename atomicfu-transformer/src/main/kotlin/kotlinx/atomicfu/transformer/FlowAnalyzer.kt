@@ -18,10 +18,7 @@ package kotlinx.atomicfu.transformer
 
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.FieldInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.MultiANewArrayInsnNode
+import org.objectweb.asm.tree.*
 
 class FlowAnalyzer(
     private val start: AbstractInsnNode?
@@ -81,6 +78,13 @@ class FlowAnalyzer(
             is MultiANewArrayInsnNode -> {
                 pop(i.dims)
                 push(1)
+            }
+            is LdcInsnNode -> {
+                when (i.cst) {
+                    is Double -> push(2)
+                    is Long -> push(2)
+                    else -> push(1)
+                }
             }
             else -> when (i.opcode) {
                 ASTORE -> {
