@@ -74,10 +74,7 @@ public open class LockFreedomTestEnvironment(
         var second = 0
         while (true) {
             waitUntil(nextTime)
-            val ops = performedOps.sum()
-            val resumes = performedResumes
-            val resumesStr = if (resumes == 0) "" else " (pause/resumes $resumes)"
-            println("--- $second: Performed $ops operations$resumesStr")
+            println("--- $second: Performed ${performedOps.sum()} operations${resumeStr()}")
             progress()
             val stallLimit = System.currentTimeMillis() - STALL_LIMIT_MS
             val stalled = threads.filter { it.lastOpTime < stallLimit }
@@ -94,6 +91,13 @@ public open class LockFreedomTestEnvironment(
         unlockAndResetInterceptor(interceptor)
         uncaughtException.get()?.let { throw it }
         threads.find { it.isAlive }?.let { dumpThreadsError("A thread is still alive: $it")}
+        println("------ Done with ${performedOps.sum()} operations${resumeStr()}")
+        progress()
+    }
+
+    private fun resumeStr(): String {
+        val resumes = performedResumes
+        return if (resumes == 0) "" else " (pause/resumes $resumes)"
     }
 
     private fun waitUntil(nextTime: Long) {
@@ -122,9 +126,11 @@ public open class LockFreedomTestEnvironment(
      * Creates a new test thread in this environment that is executes a given lock-free [operation]
      * in a loop while this environment [isActive].
      */
-    public inline fun testThread(name: String? = null, crossinline operation: () -> Unit) =
+    public inline fun testThread(name: String? = null, crossinline operation: TestThread.() -> Unit) =
         object : TestThread(name) {
-            override fun operation() = operation()
+            override fun operation() {
+                operation.invoke(this)
+            }
         }
 
     /**
@@ -132,9 +138,14 @@ public open class LockFreedomTestEnvironment(
      */
     @Suppress("LeakingThis")
     public abstract inner class TestThread(name: String?) : Thread(composeThreadName(name)) {
-        @Volatile var lastOpTime = 0L
-        @Volatile var pausedEpoch = -1
-        var progressEpoch = -1 // thread-local
+        internal @Volatile var lastOpTime = 0L
+        internal @Volatile var pausedEpoch = -1
+
+        // thread-local stuff
+        private var operationEpoch = -1
+        private var progressEpoch = -1
+        private val random = ThreadLocalRandom.current()
+        private var sink = 0
 
         init {
             check(!started)
@@ -146,27 +157,63 @@ public open class LockFreedomTestEnvironment(
                 ensureLockFree {
                     operation()
                 }
-                lastOpTime = System.currentTimeMillis()
-                performedOps.add(1)
             }
         }
 
         public abstract fun operation()
+
+        /**
+         * Use it to insert an arbitrary intermission between lock-free operations.
+         */
+        public inline fun <T> intermission(block: () -> T): T {
+            afterLockFreeOperation()
+            return try { block() }
+                finally { beforeLockFreeOperation() }
+        }
+
+        /**
+         * Wrapper around lock-free operations.
+         */
+        private inline fun <T> ensureLockFree(operation: () -> T): T {
+            beforeLockFreeOperation()
+            return try { operation() }
+                finally { afterLockFreeOperation() }
+        }
+
+        @PublishedApi
+        internal fun beforeLockFreeOperation() {
+            operationEpoch = getPausedEpoch()
+        }
+
+        @PublishedApi
+        internal fun afterLockFreeOperation() {
+            lastOpTime = System.currentTimeMillis()
+            performedOps.add(1)
+            if (operationEpoch < 0) return
+            if (operationEpoch <= progressEpoch) return
+            progressEpoch = operationEpoch
+            val total = globalPauseProgress.incrementAndGet()
+            if (total >= threads.size - 1) {
+                check(total == threads.size - 1)
+                resumePaused()
+            }
+        }
+
+        /**
+         * Inserts random spin wait between multiple lock-free operations in [operation].
+         */
+        public fun randomSpinWaitIntermission() {
+            intermission {
+                if (random.nextInt(100) < 95) return // be quick, no wait 95% of time
+                do {
+                    val x = random.nextInt(100)
+                    repeat(x) { sink += it }
+                } while (x >= 90)
+            }
+        }
     }
 
     // ---------- Implementation ----------
-
-    /**
-     * Wrapper around lock-free operations.
-     */
-    private inline fun <T> ensureLockFree(operation: () -> T): T {
-        val epoch = getPausedEpoch()
-        return try {
-            operation()
-        } finally {
-            if (epoch >= 0) onProgressDuringPause(epoch)
-        }
-    }
 
     private fun getPausedEpoch(): Int {
         while (true) {
@@ -190,18 +237,7 @@ public open class LockFreedomTestEnvironment(
         }
     }
 
-    private fun onProgressDuringPause(epoch: Int) {
-        val self = Thread.currentThread() as TestThread
-        if (epoch <= self.progressEpoch) return
-        self.progressEpoch = epoch
-        val total = globalPauseProgress.incrementAndGet()
-        if (total >= threads.size - 1) {
-            check(total == threads.size - 1)
-            resume()
-        }
-    }
-
-    private fun resume() {
+    private fun resumePaused() {
         val thread = pausedThread.get()
         check(globalPauseProgress.compareAndSet(threads.size - 1, 0))
         check(thread != null)
