@@ -61,9 +61,9 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 * Declare atomic variables as `private val`. You can use just (public) `val` in nested classes, 
   but make sure they are not accessed outside of your Kotlin source file.
 * Only simple operations on atomic variables _directly_ are supported. 
-** Do not read references on atomic variables into local variables,
-   e.g. `top.compareAndSet(...)` is Ok, while `val tmp = top; tmp...` is not. 
-** Do not leak references on atomic variables in other way (return, pass as params, etc). 
+  * Do not read references on atomic variables into local variables,
+    e.g. `top.compareAndSet(...)` is Ok, while `val tmp = top; tmp...` is not. 
+  * Do not leak references on atomic variables in other way (return, pass as params, etc). 
 * Do not introduce complex data flow in parameters to atomic variable operations, 
   i.e. `top.value = complex_expression` and `top.compareAndSet(cur, complex_expression)` are not supported 
   (more specifically, `complex_expression` should not have branches in its compiled representation).
