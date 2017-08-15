@@ -27,6 +27,8 @@ import java.util.concurrent.locks.LockSupport
 private const val PAUSE_EVERY_N_STEPS = 1000
 private const val STALL_LIMIT_MS = 2000L // 2 sec
 
+private const val STATUS_DONE = Int.MAX_VALUE
+
 /**
  * Environment for performing lock-freedom tests for lock-free data structures
  * that are written with [atomic] variables.
@@ -36,9 +38,10 @@ public open class LockFreedomTestEnvironment(
 ) {
     private val interceptor = Interceptor()
     private val threads = mutableListOf<TestThread>()
-    private var started = false
     private val performedOps = LongAdder()
     private val uncaughtException = AtomicReference<Throwable?>()
+    private var started = false
+    private var performedResumes = 0
 
     private val ueh = Thread.UncaughtExceptionHandler { t, e ->
         synchronized(System.out) {
@@ -48,12 +51,15 @@ public open class LockFreedomTestEnvironment(
         }
     }
 
-    @Volatile private var isActive = false
-    @Volatile private var performedResumes = 0
-    private val pausedThread = AtomicReference<TestThread?>()
+    // status < 0             - inv paused thread id
+    // status >= 0            - no. of performed resumes so far (==last epoch)
+    // status == STATUS_DONE - done working
+    private val status = AtomicInteger()
     private val globalPauseProgress = AtomicInteger()
 
     // ---------- API ----------
+
+    public val isActive: Boolean get() = status.get() != STATUS_DONE
 
     /**
      * Starts lock-freedom test for a given duration in seconds,
@@ -64,7 +70,6 @@ public open class LockFreedomTestEnvironment(
         check(threads.size >= 2) { "Must define at least two test threads" }
         lockAndSetInterceptor(interceptor)
         started = true
-        isActive = true
         var nextTime = System.currentTimeMillis()
         threads.forEach { thread ->
             thread.setUncaughtExceptionHandler(ueh)
@@ -82,11 +87,8 @@ public open class LockFreedomTestEnvironment(
             if (++second > seconds) break
             nextTime += 1000L
         }
-        isActive = false
-        pausedThread.get()?.let {
-            pausedThread.set(null)
-            LockSupport.unpark(it)
-        }
+        val curStatus = status.getAndSet(STATUS_DONE)
+        if (curStatus < 0) LockSupport.unpark(threads[curStatus.inv()])
         threads.forEach { it.join(1000L) }
         unlockAndResetInterceptor(interceptor)
         uncaughtException.get()?.let { throw it }
@@ -138,6 +140,8 @@ public open class LockFreedomTestEnvironment(
      */
     @Suppress("LeakingThis")
     public abstract inner class TestThread(name: String?) : Thread(composeThreadName(name)) {
+        internal val id: Int
+
         internal @Volatile var lastOpTime = 0L
         internal @Volatile var pausedEpoch = -1
 
@@ -149,6 +153,7 @@ public open class LockFreedomTestEnvironment(
 
         init {
             check(!started)
+            id = threads.size
             threads += this
         }
 
@@ -187,16 +192,17 @@ public open class LockFreedomTestEnvironment(
 
         @PublishedApi
         internal fun afterLockFreeOperation() {
+            if (operationEpoch > progressEpoch) {
+                progressEpoch = operationEpoch
+                val total = globalPauseProgress.incrementAndGet()
+                if (total >= threads.size - 1) {
+                    check(total == threads.size - 1)
+                    check(globalPauseProgress.compareAndSet(threads.size - 1, 0))
+                    resumeOp()
+                }
+            }
             lastOpTime = System.currentTimeMillis()
             performedOps.add(1)
-            if (operationEpoch < 0) return
-            if (operationEpoch <= progressEpoch) return
-            progressEpoch = operationEpoch
-            val total = globalPauseProgress.incrementAndGet()
-            if (total >= threads.size - 1) {
-                check(total == threads.size - 1)
-                resumePaused()
-            }
         }
 
         /**
@@ -217,33 +223,43 @@ public open class LockFreedomTestEnvironment(
 
     private fun getPausedEpoch(): Int {
         while (true) {
-            val thread = pausedThread.get() ?: return -1
-            val epoch = thread.pausedEpoch
-            if (thread == pausedThread.get()) return epoch
+            val curStatus = status.get()
+            if (curStatus >= 0) return -1 // not paused
+            val thread = threads[curStatus.inv()]
+            if (curStatus == status.get()) return thread.pausedEpoch
         }
     }
 
     internal fun step() {
-        if (ThreadLocalRandom.current().nextInt(PAUSE_EVERY_N_STEPS) == 0) pause()
+        if (ThreadLocalRandom.current().nextInt(PAUSE_EVERY_N_STEPS) == 0) pauseOp()
     }
 
-    private fun pause() {
-        if (pausedThread.get() != null) return
-        val self = Thread.currentThread() as TestThread
-        self.pausedEpoch = performedResumes
-        if (!pausedThread.compareAndSet(null, self)) return
-        while (pausedThread.get() == self) {
-            LockSupport.park()
+    private fun pauseOp() {
+        while (true) {
+            val curStatus = status.get()
+            if (curStatus < 0 || curStatus == STATUS_DONE) return // some other thread paused or done
+            val thread = Thread.currentThread() as TestThread
+            thread.pausedEpoch = curStatus + 1
+            val newStatus = thread.id.inv()
+            if (status.compareAndSet(curStatus, newStatus)) {
+                while (status.get() == newStatus) LockSupport.park() // wait
+                return
+            }
         }
     }
 
-    private fun resumePaused() {
-        val thread = pausedThread.get()
-        check(globalPauseProgress.compareAndSet(threads.size - 1, 0))
-        check(thread != null)
-        performedResumes++
-        check(pausedThread.compareAndSet(thread, null))
-        LockSupport.unpark(thread)
+    private fun resumeOp() {
+        while (true) {
+            val curStatus = status.get()
+            if (curStatus == STATUS_DONE) return // done
+            check(curStatus < 0)
+            val thread = threads[curStatus.inv()]
+            performedResumes = thread.pausedEpoch
+            if (status.compareAndSet(curStatus, thread.pausedEpoch)) {
+                LockSupport.unpark(thread)
+                return
+            }
+        }
     }
 
     private fun composeThreadName(threadName: String?): String {
