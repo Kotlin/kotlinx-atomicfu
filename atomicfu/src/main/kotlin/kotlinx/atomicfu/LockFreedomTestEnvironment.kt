@@ -29,6 +29,8 @@ private const val STALL_LIMIT_MS = 2000L // 2 sec
 
 private const val STATUS_DONE = Int.MAX_VALUE
 
+private const val MAX_PARK_NANOS = 100_000L // part for at most 100us just in case of loosing unpark signal
+
 /**
  * Environment for performing lock-freedom tests for lock-free data structures
  * that are written with [atomic] variables.
@@ -229,7 +231,7 @@ public open class LockFreedomTestEnvironment(
                 pausedEpoch = curStatus + 1
                 val newStatus = id.inv()
                 if (status.compareAndSet(curStatus, newStatus)) {
-                    while (status.get() == newStatus) LockSupport.park() // wait
+                    while (status.get() == newStatus) LockSupport.parkNanos(MAX_PARK_NANOS) // wait
                     return
                 }
             }
@@ -243,7 +245,8 @@ public open class LockFreedomTestEnvironment(
             val curStatus = status.get()
             if (curStatus >= 0) return -1 // not paused
             val thread = threads[curStatus.inv()]
-            if (curStatus == status.get()) return thread.pausedEpoch
+            val pausedEpoch = thread.pausedEpoch
+            if (curStatus == status.get()) return pausedEpoch
         }
     }
 
