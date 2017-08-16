@@ -18,7 +18,7 @@
 
 package kotlinx.atomicfu
 
-import java.util.concurrent.ThreadLocalRandom
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.LongAdder
@@ -140,7 +140,8 @@ public open class LockFreedomTestEnvironment(
      */
     @Suppress("LeakingThis")
     public abstract inner class TestThread(name: String?) : Thread(composeThreadName(name)) {
-        internal val id: Int
+        private val id: Int
+        private val random = Random()
 
         internal @Volatile var lastOpTime = 0L
         internal @Volatile var pausedEpoch = -1
@@ -148,7 +149,6 @@ public open class LockFreedomTestEnvironment(
         // thread-local stuff
         private var operationEpoch = -1
         private var progressEpoch = -1
-        private val random = ThreadLocalRandom.current()
         private var sink = 0
 
         init {
@@ -198,7 +198,7 @@ public open class LockFreedomTestEnvironment(
                 if (total >= threads.size - 1) {
                     check(total == threads.size - 1)
                     check(globalPauseProgress.compareAndSet(threads.size - 1, 0))
-                    resumeOp()
+                    resumeImpl()
                 }
             }
             lastOpTime = System.currentTimeMillis()
@@ -217,6 +217,23 @@ public open class LockFreedomTestEnvironment(
                 } while (x >= 90)
             }
         }
+
+        internal fun stepImpl() {
+            if (random.nextInt(PAUSE_EVERY_N_STEPS) == 0) pauseImpl()
+        }
+
+        internal fun pauseImpl() {
+            while (true) {
+                val curStatus = status.get()
+                if (curStatus < 0 || curStatus == STATUS_DONE) return // some other thread paused or done
+                pausedEpoch = curStatus + 1
+                val newStatus = id.inv()
+                if (status.compareAndSet(curStatus, newStatus)) {
+                    while (status.get() == newStatus) LockSupport.park() // wait
+                    return
+                }
+            }
+        }
     }
 
     // ---------- Implementation ----------
@@ -231,24 +248,11 @@ public open class LockFreedomTestEnvironment(
     }
 
     internal fun step() {
-        if (ThreadLocalRandom.current().nextInt(PAUSE_EVERY_N_STEPS) == 0) pauseOp()
+        val thread = Thread.currentThread() as? TestThread ?: return
+        thread.stepImpl()
     }
 
-    private fun pauseOp() {
-        while (true) {
-            val curStatus = status.get()
-            if (curStatus < 0 || curStatus == STATUS_DONE) return // some other thread paused or done
-            val thread = Thread.currentThread() as TestThread
-            thread.pausedEpoch = curStatus + 1
-            val newStatus = thread.id.inv()
-            if (status.compareAndSet(curStatus, newStatus)) {
-                while (status.get() == newStatus) LockSupport.park() // wait
-                return
-            }
-        }
-    }
-
-    private fun resumeOp() {
+    private fun resumeImpl() {
         while (true) {
             val curStatus = status.get()
             if (curStatus == STATUS_DONE) return // done
@@ -279,4 +283,16 @@ public open class LockFreedomTestEnvironment(
         override fun afterRMW(ref: AtomicLong, oldValue: Long, newValue: Long) = step()
         override fun toString(): String = "LockFreedomTestEnvironment($name)"
     }
+}
+
+/**
+ * Manual pause for on-going lock-free operation in a specified piece of code.
+ * Use it for targeted debugging of specific places in code. It does nothing
+ * when invoked outside of test thread.
+ *
+ * **Don't use it in production code.**
+ */
+public fun pauseLockFreeOp() {
+    val thread = Thread.currentThread() as? LockFreedomTestEnvironment.TestThread ?: return
+    thread.pauseImpl()
 }
