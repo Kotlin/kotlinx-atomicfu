@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu 
 
+## Version 0.4
+
+* Publish sources.
+* Provide top-level `pauseLockFreeOp` for debugging.
+* Stability improvements.
+
 ## Version 0.3
 
 * Improved handling of compiler local variables for atomic fields.
