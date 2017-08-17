@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu 
 
+## Version 0.5
+
+* Longer timeout to detect stalls in lock-free code, with shutdown logic
+  that detected them even on short runs.
+* Kotlin 1.1.4  
+
 ## Version 0.4
 
 * Publish sources.

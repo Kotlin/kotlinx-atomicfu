@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>atomicfu-parent</artifactId>
-        <version>0.4-SNAPSHOT</version>
+        <version>0.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>atomicfu-test</artifactId>
