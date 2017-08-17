@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu 
 
+## Version 0.6
+
+* toString defined for debugging.
+
 ## Version 0.5
 
 * Longer timeout to detect stalls in lock-free code, with shutdown logic
