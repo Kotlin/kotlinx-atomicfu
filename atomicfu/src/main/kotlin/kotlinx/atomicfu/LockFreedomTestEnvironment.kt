@@ -25,11 +25,12 @@ import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.LockSupport
 
 private const val PAUSE_EVERY_N_STEPS = 1000
-private const val STALL_LIMIT_MS = 2000L // 2 sec
+private const val STALL_LIMIT_MS = 15_000L // 15s
+private const val SHUTDOWN_CHECK_MS = 10L // 10ms
 
 private const val STATUS_DONE = Int.MAX_VALUE
 
-private const val MAX_PARK_NANOS = 100_000L // part for at most 100us just in case of loosing unpark signal
+private const val MAX_PARK_NANOS = 1_000_000L // part for at most 1ms just in case of loosing unpark signal
 
 /**
  * Environment for performing lock-freedom tests for lock-free data structures
@@ -59,15 +60,17 @@ public open class LockFreedomTestEnvironment(
     private val status = AtomicInteger()
     private val globalPauseProgress = AtomicInteger()
 
-    // ---------- API ----------
+    @Volatile
+    private var isActive = true
 
-    public val isActive: Boolean get() = status.get() != STATUS_DONE
+    // ---------- API ----------
 
     /**
      * Starts lock-freedom test for a given duration in seconds,
      * invoking [progress] every second (it will be invoked `seconds + 1` times).
      */
     public fun performTest(seconds: Int, progress: () -> Unit = {}) {
+        check(isActive) { "Can perform test at most once on this instance" }
         println("=== $name")
         check(threads.size >= 2) { "Must define at least two test threads" }
         lockAndSetInterceptor(interceptor)
@@ -83,21 +86,41 @@ public open class LockFreedomTestEnvironment(
             waitUntil(nextTime)
             println("--- $second: Performed ${performedOps.sum()} operations${resumeStr()}")
             progress()
-            val stallLimit = System.currentTimeMillis() - STALL_LIMIT_MS
-            val stalled = threads.filter { it.lastOpTime < stallLimit }
-            if (stalled.isNotEmpty()) dumpThreadsError("Progress stalled in threads ${stalled.map { it.name }}")
+            checkStalled()
             if (++second > seconds) break
             nextTime += 1000L
         }
+        // shutdown all non-paused threads first
+        val shutdownDeadline = System.currentTimeMillis() + STALL_LIMIT_MS
+        isActive = false
+        while (System.currentTimeMillis() < shutdownDeadline) {
+            if (!hasActiveNonPausedThread()) break
+            checkStalled()
+            Thread.sleep(SHUTDOWN_CHECK_MS)
+        }
+        // shutdown paused threads (if any)
         val curStatus = status.getAndSet(STATUS_DONE)
         if (curStatus < 0) LockSupport.unpark(threads[curStatus.inv()])
-        threads.forEach { it.join(1000L) }
+        threads.forEach {
+            val remaining = shutdownDeadline - System.currentTimeMillis()
+            if (remaining > 0) it.join(remaining)
+        }
+        // cleanup & be done
         unlockAndResetInterceptor(interceptor)
         uncaughtException.get()?.let { throw it }
         threads.find { it.isAlive }?.let { dumpThreadsError("A thread is still alive: $it")}
         println("------ Done with ${performedOps.sum()} operations${resumeStr()}")
         progress()
     }
+
+    private fun checkStalled() {
+        val stallLimit = System.currentTimeMillis() - STALL_LIMIT_MS
+        val stalled = threads.filter { it.lastOpTime < stallLimit }
+        if (stalled.isNotEmpty()) dumpThreadsError("Progress stalled in threads ${stalled.map { it.name }}")
+    }
+
+    private fun hasActiveNonPausedThread(): Boolean =
+        threads.any { it.isAlive && it.index.inv() != status.get() }
 
     private fun resumeStr(): String {
         val resumes = performedResumes
@@ -142,11 +165,12 @@ public open class LockFreedomTestEnvironment(
      */
     @Suppress("LeakingThis")
     public abstract inner class TestThread(name: String?) : Thread(composeThreadName(name)) {
-        private val id: Int
-        private val random = Random()
+        internal val index: Int
 
         internal @Volatile var lastOpTime = 0L
         internal @Volatile var pausedEpoch = -1
+
+        private val random = Random()
 
         // thread-local stuff
         private var operationEpoch = -1
@@ -155,7 +179,7 @@ public open class LockFreedomTestEnvironment(
 
         init {
             check(!started)
-            id = threads.size
+            index = threads.size
             threads += this
         }
 
@@ -229,7 +253,7 @@ public open class LockFreedomTestEnvironment(
                 val curStatus = status.get()
                 if (curStatus < 0 || curStatus == STATUS_DONE) return // some other thread paused or done
                 pausedEpoch = curStatus + 1
-                val newStatus = id.inv()
+                val newStatus = index.inv()
                 if (status.compareAndSet(curStatus, newStatus)) {
                     while (status.get() == newStatus) LockSupport.parkNanos(MAX_PARK_NANOS) // wait
                     return
