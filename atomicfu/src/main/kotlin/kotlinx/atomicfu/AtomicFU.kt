@@ -105,6 +105,8 @@ public class AtomicRef<T> internal constructor(value: T) {
         return oldValue
     }
 
+    override fun toString(): String = value.toString()
+
     private companion object {
         private val FU = AtomicReferenceFieldUpdater.newUpdater(AtomicRef::class.java, Any::class.java, "value")
     }
@@ -270,6 +272,8 @@ public class AtomicInt internal constructor(value: Int) {
      */
     public inline operator fun minusAssign(delta: Int) { getAndAdd(-delta) }
 
+    override fun toString(): String = value.toString()
+
     private companion object {
         private val FU = AtomicIntegerFieldUpdater.newUpdater(AtomicInt::class.java, "value")
     }
@@ -434,6 +438,8 @@ public class AtomicLong internal constructor(value: Long) {
      * Performs atomic subtraction of [delta].
      */
     public inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
+
+    override fun toString(): String = value.toString()
 
     private companion object {
         private val FU = AtomicLongFieldUpdater.newUpdater(AtomicLong::class.java, "value")
