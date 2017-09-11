@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu 
 
+## Version 0.7
+
+* Fixed lost ACC_STATIC on <clinit> methods
+* Publish to Maven Central 
+
 ## Version 0.6
 
 * toString defined for debugging.

@@ -86,19 +86,8 @@ Declare AtomicFU version:
 
 ```xml
 <properties>
-     <atomicfu.version>0.6</atomicfu.version>
+     <atomicfu.version>0.7</atomicfu.version>
 </properties> 
-```
-
-Add Bintray JCenter repository:
-
-```xml
-    <repositories>
-        <repository>
-            <id>central</id>
-            <url>http://jcenter.bintray.com</url>
-        </repository>
-    </repositories>
 ```
 
 Declare _provided_ dependency on the AtomicFU library 
