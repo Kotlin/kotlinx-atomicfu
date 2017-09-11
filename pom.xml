@@ -47,6 +47,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.1.4</kotlin.version>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+        <dokka.version>0.9.15</dokka.version>
         <slf4j.version>1.8.0-alpha2</slf4j.version>
     </properties>
 
@@ -116,6 +117,11 @@
                     <version>${kotlin.version}</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.jetbrains.dokka</groupId>
+                    <artifactId>dokka-maven-plugin</artifactId>
+                    <version>${dokka.version}</version>
+                </plugin>
+                <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.19.1</version>
                 </plugin>
@@ -130,6 +136,14 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>bintray-kotlin-dokka</id>
+            <name>bintray-kotlin-dokka</name>
+            <url>http://dl.bintray.com/kotlin/dokka</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <developers>
         <developer>
