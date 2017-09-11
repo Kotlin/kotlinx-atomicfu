@@ -305,9 +305,10 @@ class AtomicFUTransformer(
             if (method in accessors)
                 return null // drop accessor
             val sourceInfo = SourceInfo(method, source)
-            val superMV = if (access or ACC_STATIC != 0 && name == "<clinit>" && desc == "()V") {
+            val superMV = if (name == "<clinit>" && desc == "()V") {
+                if (access and ACC_STATIC == 0) abort("<clinit> method not marked as static")
                 // defer writing class initialization method
-                val node = MethodNode(ASM5, name, desc, signature, exceptions)
+                val node = MethodNode(ASM5, access, name, desc, signature, exceptions)
                 if (originalClinit != null) abort("Multiple <clinit> methods found")
                 originalClinit = node
                 node
