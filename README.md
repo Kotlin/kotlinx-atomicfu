@@ -71,13 +71,13 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 * Do not introduce complex data flow in parameters to atomic variable operations, 
   i.e. `top.value = complex_expression` and `top.compareAndSet(cur, complex_expression)` are not supported 
   (more specifically, `complex_expression` should not have branches in its compiled representation).
-* Use the following pattern if you need to expose the value of atomic property to the public:
+* Use the following convention if you need to expose the value of atomic property to the public:
 
 ```kotlin
-private val fooAtomic = atomic<T>(initial)  // private atomic, name it as xxxAtomic
-public var foo: T                      // public val/var
-    get() = fooAtomic.value
-    set(value) { fooAtomic.value = value }
+private val _foo = atomic<T>(initial) // private atomic, convention is to name it with leading underscore
+public var foo: T                     // public val/var
+    get() = _foo.value
+    set(value) { _foo.value = value }
 ```  
 
 ## Maven build setup
