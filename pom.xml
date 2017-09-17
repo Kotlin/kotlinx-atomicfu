@@ -37,6 +37,7 @@
     </licenses>
 
     <modules>
+        <module>atomicfu-gradle-plugin</module>
         <module>atomicfu-maven-plugin</module>
         <module>atomicfu-transformer</module>
         <module>atomicfu-test</module>
