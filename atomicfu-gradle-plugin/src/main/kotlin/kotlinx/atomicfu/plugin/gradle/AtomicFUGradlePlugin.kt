@@ -11,7 +11,7 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
-    private val TASK_NAME = "atomicFUTransform"
+    private val TASK_NAME = "atomicFU"
     override fun apply(target: Project) {
         target.tasks.create(TASK_NAME, AtomicFUTransformTask::class.java)
     }
