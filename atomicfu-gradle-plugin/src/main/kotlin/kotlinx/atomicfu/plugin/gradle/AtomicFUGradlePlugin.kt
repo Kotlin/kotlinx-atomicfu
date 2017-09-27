@@ -4,8 +4,9 @@ import kotlinx.atomicfu.transformer.AtomicFUTransformer
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.io.File
@@ -18,19 +19,22 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
 }
 
 open class AtomicFUTransformTask : DefaultTask() {
-    @InputDirectory
-    lateinit var inputDir: File
+
+    @InputFiles
+    lateinit var inputFiles: FileCollection
     @OutputDirectory
     lateinit var outputDir: File
-    @Input
-    var classPath: List<String> = listOf()
+    @InputFiles
+    var classPath: FileCollection = project.files()
     @Input
     var verbose: Boolean = false
 
     @TaskAction
     fun transform() {
-        val t = AtomicFUTransformer(classPath, inputDir, outputDir)
-        t.verbose = verbose
-        t.transform()
+        inputFiles.files.forEach {
+            val t = AtomicFUTransformer(classPath.files.map { it.absolutePath }, it, outputDir)
+            t.verbose = verbose
+            t.transform()
+        }
     }
 }
