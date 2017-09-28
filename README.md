@@ -86,7 +86,7 @@ Declare AtomicFU version:
 
 ```xml
 <properties>
-     <atomicfu.version>0.7</atomicfu.version>
+     <atomicfu.version>0.8</atomicfu.version>
 </properties> 
 ```
 
@@ -104,7 +104,8 @@ Declare _provided_ dependency on the AtomicFU library
     </dependencies>
 ```
 
-Configure build steps:
+Configure build steps so that Kotlin compiler puts classes into a different `classes-pre-atomicfu` directory,
+which is then transformed to a regular `classes` directory to be used later by tests and delivery.
 
 ```xml
     <build>
@@ -122,7 +123,7 @@ Configure build steps:
                             <goal>compile</goal>
                         </goals>
                         <configuration>
-                            <output>${project.build.directory}/classes-atomicfu</output>
+                            <output>${project.build.directory}/classes-pre-atomicfu</output>
                         </configuration>
                     </execution>
                 </executions>
@@ -138,13 +139,58 @@ Configure build steps:
                             <goal>transform</goal>
                         </goals>
                         <configuration>
-                            <input>${project.build.directory}/classes-atomicfu</input>
+                            <input>${project.build.directory}/classes-pre-atomicfu</input>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+```
+
+## Gradle build setup
+
+Add and apply AtmoicFU plugin:
+
+```groovy
+buildscript {
+    ext.atomicfu_version = '0.8'
+
+    dependencies {
+        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
+    }
+}
+
+apply plugin: 'kotlinx-atomicfu'
+```
+
+Add compile-only dependency on AtomicFU library:
+
+```groovy
+dependencies {
+    compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
+}
+```
+
+Install bytecode transformation pipeline so that compiled classes from `classes` directory get 
+transformed to a different `classes-post-atomicfu` directory to be used later by tests and delivery.
+
+```groovy
+def CLASSES_POST_ATOMICFU = file("$buildDir/classes-post-atomicfu/main")
+
+atomicFU {
+    inputFiles = sourceSets.main.output.classesDirs
+    outputDir = CLASSES_POST_ATOMICFU
+    classPath = sourceSets.main.runtimeClasspath
+}
+
+atomicFU.dependsOn compileKotlin
+testClasses.dependsOn atomicFU
+jar.dependsOn atomicFU
+
+jar {
+    from files(CLASSES_POST_ATOMICFU, sourceSets.main.output.resourcesDir)
+}
 ```
 
 ## Testing lock-free data structures (optional)
@@ -155,7 +201,9 @@ Testing is performed by pausing one (random) thread before or after a random sta
 making sure that all other threads can still make progress. 
 
 In order to make those test to actually perform lock-freedomness testing you need to configure an additional 
-execution of tests with the original (non-transformed) classes:
+execution of tests with the original (non-transformed) classes.
+
+For Maven add:
 
 ```xml
     <build>
@@ -171,13 +219,28 @@ execution of tests with the original (non-transformed) classes:
                             <goal>test</goal>
                         </goals>
                         <configuration>
-                            <classesDirectory>${project.build.directory}/classes-atomicfu</classesDirectory>
+                            <classesDirectory>${project.build.directory}/classes-pre-atomicfu</classesDirectory>
+                            <includes>
+                                <include>**/*LFTest.*</include>
+                            </includes>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+```
+
+For Gradle add:
+
+```groovy
+dependencies {
+    testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
+}
+
+task lockFreedomTest(type: Test, dependsOn: testClasses) {
+    include '**/*LFTest.*'
+}
 ```
 
 

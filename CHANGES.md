@@ -1,9 +1,13 @@
 # Change log for kotlinx.atomicfu 
 
+## Version 0.8
+
+* `atomicfu-gradle-plugin` introduced.
+
 ## Version 0.7
 
-* Fixed lost ACC_STATIC on <clinit> methods
-* Publish to Maven Central 
+* Fixed lost ACC_STATIC on <clinit> methods.
+* Publish to Maven Central. 
 
 ## Version 0.6
 
@@ -32,7 +36,7 @@
 * Support non-private atomic fields in nested classes that are accessed by other
   classes in the same compilation unit.
 * Support for lock-freedom testing on unprocessed code 
-  (other pontential uses via interceptors in the future).
+  (other potential uses via interceptors in the future).
 
 ## Version 0.1
 
