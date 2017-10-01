@@ -98,7 +98,7 @@ Declare _provided_ dependency on the AtomicFU library
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>atomicfu</artifactId>
-            <version>${project.version}</version>
+            <version>${atomicfu.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
