@@ -1,6 +1,7 @@
 package kotlinx.atomicfu.plugin.gradle
 
 import kotlinx.atomicfu.transformer.AtomicFUTransformer
+import kotlinx.atomicfu.transformer.Variant
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -27,12 +28,15 @@ open class AtomicFUTransformTask : DefaultTask() {
     @InputFiles
     var classPath: FileCollection = project.files()
     @Input
-    var verbose: Boolean = false
+    var verbose = false
+    @Input
+    var variant= Variant.FU
 
     @TaskAction
     fun transform() {
         inputFiles.files.forEach {
-            val t = AtomicFUTransformer(classPath.files.map { it.absolutePath }, it, outputDir)
+            val t = AtomicFUTransformer(
+                classPath.files.map { it.absolutePath }, it, outputDir, variant)
             t.verbose = verbose
             t.transform()
         }

@@ -124,6 +124,8 @@ which is then transformed to a regular `classes` directory to be used later by t
                         </goals>
                         <configuration>
                             <output>${project.build.directory}/classes-pre-atomicfu</output>
+                            <!-- "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code -->
+                            <variant>FU</variant>  
                         </configuration>
                     </execution>
                 </executions>
@@ -150,7 +152,8 @@ which is then transformed to a regular `classes` directory to be used later by t
 
 ## Gradle build setup
 
-Add and apply AtmoicFU plugin:
+You will need Gradle 4.0 or later for the following snippets to work.
+Add and apply AtomicFU plugin:
 
 ```groovy
 buildscript {
@@ -182,6 +185,7 @@ atomicFU {
     inputFiles = sourceSets.main.output.classesDirs
     outputDir = CLASSES_POST_ATOMICFU
     classPath = sourceSets.main.runtimeClasspath
+    variant = "FU" // "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code
 }
 
 atomicFU.dependsOn compileKotlin
@@ -192,6 +196,17 @@ jar {
     from files(CLASSES_POST_ATOMICFU, sourceSets.main.output.resourcesDir)
 }
 ```
+
+## VarHandles with Java 9 (optional)
+
+AtomicFU can produce code that is using Java 9 
+[VarHandle](http://download.java.net/java/jdk9/docs/api/java/lang/invoke/VarHandle.html)
+instead of `AtomicXXXFieldUpdater`. Set `variant` configuration option to `VH`.  
+
+You can also create [JEP 238](http://openjdk.java.net/jeps/238) multi-release jar with both
+`AtomicXXXFieldUpdater` baseline and `VarHandle` version for Java 9+. 
+Set `variant` configuration option to `BOTH` and configure `Multi-Release: true` attribute
+in the resulting jar manifest.
 
 ## Testing lock-free data structures (optional)
 

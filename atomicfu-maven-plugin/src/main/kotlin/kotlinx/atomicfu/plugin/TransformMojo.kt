@@ -17,6 +17,7 @@
 package kotlinx.atomicfu.plugin
 
 import kotlinx.atomicfu.transformer.AtomicFUTransformer
+import kotlinx.atomicfu.transformer.Variant
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
@@ -47,13 +48,19 @@ class TransformMojo : AbstractMojo() {
     lateinit var output: File
 
     /**
+     * Transformation variant: "FU", "VH", or "BOTH".
+     */
+    @Parameter(defaultValue = "FU", property = "variant", required = true)
+    lateinit var variant: Variant
+
+    /**
      * Verbose debug info.
      */
     @Parameter(defaultValue = "false", property = "verbose", required = false)
     var verbose: Boolean = false
 
     override fun execute() {
-        val t = AtomicFUTransformer(classpath, input, output)
+        val t = AtomicFUTransformer(classpath, input, output, variant)
         t.verbose = verbose
         t.transform()
     }
