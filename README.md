@@ -193,6 +193,7 @@ testClasses.dependsOn atomicFU
 jar.dependsOn atomicFU
 
 jar {
+    mainSpec.sourcePaths.clear() // hack to clear existing paths
     from files(CLASSES_POST_ATOMICFU, sourceSets.main.output.resourcesDir)
 }
 ```
