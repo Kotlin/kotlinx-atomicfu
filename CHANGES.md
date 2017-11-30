@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu 
 
+## Version 0.9.1
+
+* Kotlin 1.2.0
+
 ## Version 0.9
 
 * Support generation of `VarHandle` variant for Java 9.
