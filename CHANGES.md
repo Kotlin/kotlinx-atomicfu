@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu 
 
+## Version 0.9.2
+
+* Replaced deprecated kotlin-stdlib-jre8 dependency with kotlin-stdlib-jdk8
+
 ## Version 0.9.1
 
 * Kotlin 1.2.0
