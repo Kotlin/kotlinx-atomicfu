@@ -19,16 +19,15 @@
 package kotlinx.atomicfu.transformer
 
 import org.objectweb.asm.*
-import org.objectweb.asm.ClassReader.SKIP_FRAMES
+import org.objectweb.asm.ClassReader.*
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type.*
-import org.objectweb.asm.commons.InstructionAdapter
-import org.objectweb.asm.commons.InstructionAdapter.OBJECT_TYPE
+import org.objectweb.asm.commons.*
+import org.objectweb.asm.commons.InstructionAdapter.*
 import org.objectweb.asm.tree.*
-import org.slf4j.LoggerFactory
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.net.URLClassLoader
+import org.slf4j.*
+import java.io.*
+import java.net.*
 
 class TypeInfo(val fuType: Type, val primitiveType: Type)
 
@@ -259,12 +258,12 @@ class AtomicFUTransformer(
     // returns a type on which this is a potential accessor
     private fun getPotentialAccessorType(access: Int, className: String, methodType: Type): Type? {
         if (methodType.returnType !in AFU_TYPES) return null
-        if (access and ACC_STATIC != 0) {
-            return if (methodType.argumentTypes.size == 1 && methodType.argumentTypes[0].sort == OBJECT)
+        return if (access and ACC_STATIC != 0) {
+            if (methodType.argumentTypes.size == 1 && methodType.argumentTypes[0].sort == OBJECT)
                 methodType.argumentTypes[0] else null
         } else {
             // if it not static, then it must be final
-            return if (access and ACC_FINAL != 0 && methodType.argumentTypes.isEmpty())
+            if (access and ACC_FINAL != 0 && methodType.argumentTypes.isEmpty())
                 Type.getObjectType(className) else null
         }
     }
@@ -316,10 +315,10 @@ class AtomicFUTransformer(
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
                 val f = fields[FieldId(className, name)]!!
                 val protection = if (f.accessors.isEmpty()) ACC_PRIVATE else 0
-                super.visitField(protection or ACC_VOLATILE, f.name, f.primitiveType.descriptor, null, null)
+                val fv = super.visitField(protection or ACC_VOLATILE, f.name, f.primitiveType.descriptor, null, null)
                 if (vh) vhField(protection, f) else fuField(protection, f)
                 transformed = true
-                return null
+                return fv
             }
             return super.visitField(access, name, desc, signature, value)
         }
@@ -580,7 +579,7 @@ class AtomicFUTransformer(
                             instructions.remove(i)
                             transformed = true
                             val f = fields[fieldId]!!
-                            (next as FieldInsnNode).desc = f.primitiveType.descriptor
+                            next.desc = f.primitiveType.descriptor
                             return next.next
                         }
                         methodId in accessors -> {
@@ -622,13 +621,13 @@ class AtomicFUTransformer(
             val d: Class<*> = Class.forName(type2.replace('/', '.'), false, classLoader)
             if (c.isAssignableFrom(d)) return type1
             if (d.isAssignableFrom(c)) return type2
-            if (c.isInterface || d.isInterface) {
-                return "java/lang/Object"
+            return if (c.isInterface || d.isInterface) {
+                "java/lang/Object"
             } else {
                 do {
                     c = c.superclass
                 } while (!c.isAssignableFrom(d))
-                return c.name.replace('.', '/')
+                c.name.replace('.', '/')
             }
         }
     }
