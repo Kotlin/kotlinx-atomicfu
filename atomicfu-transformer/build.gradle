@@ -1,0 +1,11 @@
+
+apply plugin: 'kotlin'
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.ow2.asm:asm:$asm_version"
+    compile "org.ow2.asm:asm-commons:$asm_version"
+    compile "org.ow2.asm:asm-tree:$asm_version"
+    compile "org.slf4j:slf4j-api:$slf4j_version"
+    runtime "org.slf4j:slf4j-simple:$slf4j_version"
+}

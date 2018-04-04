@@ -117,9 +117,9 @@ enum class Variant { FU, VH, BOTH }
 
 class AtomicFUTransformer(
     classpath: List<String>,
-    private val inputDir: File,
-    private val outputDir: File = inputDir,
-    private val variant: Variant = Variant.FU
+    var inputDir: File,
+    var outputDir: File = inputDir,
+    var variant: Variant = Variant.FU
 ) {
     var verbose = false
 
@@ -634,11 +634,12 @@ class AtomicFUTransformer(
 }
 
 fun main(args: Array<String>) {
-    if (args.size != 1) {
-        println("Usage: AtomicFUTransformerKt <dir>")
+    if (args.size !in 1..2) {
+        println("Usage: AtomicFUTransformerKt <dir> [<output>]")
         return
     }
     val t = AtomicFUTransformer(emptyList(), File(args[0]))
+    if (args.size > 1) t.outputDir = File(args[1])
     t.verbose = true
     t.transform()
 }

@@ -1,0 +1,25 @@
+{
+  "name": "atomicfu-js",
+  "version" : "$version",
+  "description" : "AtomicFU stubs for JS",
+  "main" : "atomicfu.js",
+  "author": "JetBrains",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/Kotlin/atomicfu",
+  "bugs": {
+    "url": "https://github.com/Kotlin/atomicfu/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kotlin/atomicfu.git"
+  },
+  "keywords": [
+    "Kotlin",
+    "atomic",
+    "JavaScript",
+    "JetBrains"
+  ],
+  "dependencies": {
+    "kotlin": "$kotlin_version"
+  }
+}
