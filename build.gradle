@@ -22,7 +22,9 @@ allprojects {
 
     // TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
     if (rootProject.properties["publish"]) {
-        apply from: rootProject.file("gradle/publish-bintray.gradle")
+        if (project != rootProject) {
+            apply from: rootProject.file("gradle/publish-bintray.gradle")
+        }
     }
 }
 

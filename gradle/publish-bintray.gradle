@@ -4,6 +4,9 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
+// GroupId for publishing
+group = 'org.jetbrains.kotlinx'
+
 // --------------- pom configuration ---------------
 
 def pomConfig = {
@@ -38,15 +41,17 @@ task sourcesJar(type: Jar) {
     from "src/main/kotlin"
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-//            from components.java
-            artifact sourcesJar
-            pom.withXml {
-                def root = asNode()
-                root.appendNode('name', project.name)
-                root.children().last() + pomConfig
+if (!project.name.endsWith("-native")) {
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.java
+                artifact sourcesJar
+                pom.withXml {
+                    def root = asNode()
+                    root.appendNode('name', project.name)
+                    root.children().last() + pomConfig
+                }
             }
         }
     }

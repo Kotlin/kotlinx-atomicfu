@@ -1,12 +1,12 @@
 apply plugin: 'konan'
 
 konanArtifacts {
-    library('atomicfu', targets: ["ios_arm64", "ios_x64", "macos_x64"]) {
+    library('atomicfu_native', targets: ["ios_arm64", "ios_x64", "macos_x64"]) {
         enableMultiplatform true
     }
     // TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
     if (!rootProject.properties["publish"]) {
-        program('atomicfu-test', targets: ["macos_x64"]) {
+        program('atomicfu_test', targets: ["macos_x64"]) {
             srcDir 'src/test/kotlin'
             commonSourceSet 'test'
             libraries {
@@ -22,4 +22,9 @@ dependencies {
 }
 
 task test(dependsOn: run)
+
+// TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
+if (rootProject.properties["publish"]) {
+    publishToMavenLocal.dependsOn(build)
+}
 
