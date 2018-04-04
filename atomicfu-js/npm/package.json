@@ -1,7 +1,7 @@
 {
   "name": "atomicfu-js",
   "version" : "$version",
-  "description" : "AtomicFU stubs for JS",
+  "description" : "AtomicFU utilities for JS",
   "main" : "atomicfu.js",
   "author": "JetBrains",
   "license": "Apache-2.0",

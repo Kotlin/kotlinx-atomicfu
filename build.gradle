@@ -2,17 +2,27 @@ buildscript {
     repositories {
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+        maven { url 'https://dl.bintray.com/jetbrains/kotlin-native-dependencies' }
 
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
     }
 }
 
 allprojects {
     repositories {
         jcenter()
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+    }
+
+    // TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
+    if (rootProject.properties["publish"]) {
+        apply from: rootProject.file("gradle/publish-bintray.gradle")
     }
 }
 

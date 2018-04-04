@@ -21,6 +21,7 @@ import kotlin.test.*
 
 class LockFreeQueueTest {
     @Test
+    @Ignore // todo: https://youtrack.jetbrains.com/issue/KT-23582
     fun testBasic() {
         val q = LockFreeQueue()
         check(q.dequeue() == -1)
