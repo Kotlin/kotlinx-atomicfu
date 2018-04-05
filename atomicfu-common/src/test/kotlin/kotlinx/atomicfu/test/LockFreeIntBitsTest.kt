@@ -21,7 +21,6 @@ import kotlin.test.*
 
 class LockFreeIntBitsTest {
     @Test
-    @Ignore // todo: https://youtrack.jetbrains.com/issue/KT-23582
     fun testBasic() {
         val bs = LockFreeIntBits()
         check(!bs[0])

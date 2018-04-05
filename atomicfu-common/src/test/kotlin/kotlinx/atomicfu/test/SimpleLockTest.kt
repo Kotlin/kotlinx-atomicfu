@@ -21,7 +21,6 @@ import kotlin.test.*
 
 class SimpleLockTest {
     @Test
-    @Ignore // todo: https://youtrack.jetbrains.com/issue/KT-23582
     fun withLock() {
         val lock = SimpleLock()
         val result = lock.withLock {

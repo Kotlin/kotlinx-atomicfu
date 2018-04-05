@@ -10,7 +10,7 @@ konanArtifacts {
             srcDir 'src/test/kotlin'
             commonSourceSet 'test'
             libraries {
-                artifact 'atomicfu'
+                artifact 'atomicfu_native'
             }
             extraOpts '-tr'
         }

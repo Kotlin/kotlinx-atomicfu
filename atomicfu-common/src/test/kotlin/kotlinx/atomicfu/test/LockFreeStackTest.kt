@@ -21,7 +21,6 @@ import kotlin.test.*
 
 class LockFreeStackTest {
     @Test
-    @Ignore // todo: https://youtrack.jetbrains.com/issue/KT-23582
     fun testClear() {
         val s = LockFreeStack<String>()
         check(s.isEmpty())
@@ -32,7 +31,6 @@ class LockFreeStackTest {
     }
 
     @Test
-    @Ignore // todo: https://youtrack.jetbrains.com/issue/KT-23582
     fun testPushPopLoop() {
         val s = LockFreeStack<String>()
         check(s.isEmpty())
