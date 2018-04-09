@@ -18,6 +18,8 @@ package kotlinx.atomicfu.transformer
 
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.tree.*
+import org.objectweb.asm.util.*
+import java.io.*
 
 val AbstractInsnNode.line: Int? get() {
     var cur = this
@@ -109,4 +111,11 @@ fun nextVarLoad(v: Int, start: AbstractInsnNode): VarInsnNode {
 fun accessToInvokeOpcode(access: Int) =
     if (access and ACC_STATIC != 0) INVOKESTATIC else INVOKEVIRTUAL
 
+fun AbstractInsnNode.toText(): String {
+    val printer = Textifier()
+    accept(TraceMethodVisitor(printer))
+    val sw = StringWriter()
+    printer.print(PrintWriter(sw))
+    return sw.toString()
+}
 

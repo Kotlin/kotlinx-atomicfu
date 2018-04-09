@@ -31,7 +31,7 @@ class FlowAnalyzer(
 
     private fun abort(msg: String): Nothing = abort(msg, cur)
     private fun unsupported(): Nothing = abort("Unsupported operation on atomic variable")
-    private fun unrecognized(): Nothing = abort("Unrecognized operation")
+    private fun unrecognized(i: AbstractInsnNode): Nothing = abort("Unrecognized operation ${i.toText()}")
 
     private fun push(n: Int) { depth += n }
 
@@ -73,7 +73,7 @@ class FlowAnalyzer(
                     popDesc(i.desc)
                     pop(1)
                 }
-                else -> unrecognized()
+                else -> unrecognized(i)
             }
             is MultiANewArrayInsnNode -> {
                 pop(i.dims)
@@ -243,7 +243,7 @@ class FlowAnalyzer(
                 CHECKCAST -> {
                     /* nop for our needs */
                 }
-                else -> unrecognized()
+                else -> unrecognized(i)
             }
         }
         return null
