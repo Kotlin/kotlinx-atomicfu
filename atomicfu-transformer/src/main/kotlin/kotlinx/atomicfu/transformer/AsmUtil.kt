@@ -114,8 +114,6 @@ fun accessToInvokeOpcode(access: Int) =
 fun AbstractInsnNode.toText(): String {
     val printer = Textifier()
     accept(TraceMethodVisitor(printer))
-    val sw = StringWriter()
-    printer.print(PrintWriter(sw))
-    return sw.toString()
+    return (printer.getText()[0] as String).trim()
 }
 

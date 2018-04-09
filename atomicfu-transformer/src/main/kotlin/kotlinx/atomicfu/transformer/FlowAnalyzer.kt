@@ -56,6 +56,9 @@ class FlowAnalyzer(
 
     private fun executeOne(i: AbstractInsnNode): AbstractInsnNode? {
         when (i) {
+            is LabelNode -> { /* ignore */ }
+            is LineNumberNode -> { /* ignore */ }
+            is FrameNode -> { /* ignore */ }
             is MethodInsnNode -> {
                 popDesc(i.desc)
                 if (i.opcode == INVOKEVIRTUAL && depth == 0) return i // invoke virtual on atomic field ref
