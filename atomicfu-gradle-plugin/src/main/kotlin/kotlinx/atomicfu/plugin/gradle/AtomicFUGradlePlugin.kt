@@ -13,14 +13,12 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
-    private val TASK_NAME = "atomicFU"
     override fun apply(target: Project) {
-        target.tasks.create(TASK_NAME, AtomicFUTransformTask::class.java)
+        target.tasks.create("atomicFU", AtomicFUTransformTask::class.java)
     }
 }
 
 open class AtomicFUTransformTask : DefaultTask() {
-
     @InputFiles
     lateinit var inputFiles: FileCollection
     @OutputDirectory
@@ -35,10 +33,12 @@ open class AtomicFUTransformTask : DefaultTask() {
     @TaskAction
     fun transform() {
         inputFiles.files.forEach {
-            val t = AtomicFUTransformer(
-                classPath.files.map { it.absolutePath }, it, outputDir, variant)
-            t.verbose = verbose
-            t.transform()
+            AtomicFUTransformer(classPath.files.map { it.absolutePath }, it).let { t ->
+                t.outputDir = outputDir
+                t.variant = variant
+                t.verbose = verbose
+                t.transform()
+            }
         }
     }
 }

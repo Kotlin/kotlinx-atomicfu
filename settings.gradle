@@ -1,6 +1,9 @@
 
 include 'atomicfu'
 include 'atomicfu-common'
-include 'atomicfu-transformer'
 include 'atomicfu-js'
 include 'atomicfu-native'
+
+include 'atomicfu-transformer'
+include 'atomicfu-gradle-plugin'
+include 'atomicfu-maven-plugin'

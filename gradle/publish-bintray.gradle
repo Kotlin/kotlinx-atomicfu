@@ -4,9 +4,6 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
-// GroupId for publishing
-group = 'org.jetbrains.kotlinx'
-
 // --------------- pom configuration ---------------
 
 def pomConfig = {
@@ -47,6 +44,11 @@ if (!project.name.endsWith("-native")) {
             maven(MavenPublication) {
                 from components.java
                 artifact sourcesJar
+                if (project.name.endsWith("-maven-plugin")) {
+                    pom.with {
+                        packaging = 'maven-plugin'
+                    }
+                }
                 pom.withXml {
                     def root = asNode()
                     root.appendNode('name', project.name)

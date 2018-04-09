@@ -1,0 +1,60 @@
+apply plugin: 'kotlin'
+apply plugin: 'maven'
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile project(":atomicfu-transformer")
+    compile "org.apache.maven:maven-core:$maven_version"
+    compile "org.apache.maven:maven-plugin-api:$maven_version"
+    compile 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+}
+
+def pomFile = file("$buildDir/pom.xml")
+def outputDir = compileKotlin.destinationDir
+
+task generatePomFile(dependsOn: [compileKotlin, task(":atomicfu-transformer:installToMavenLocal")]) {
+    def buildDir = project.buildDir // because Maven model also has "project"
+    outputs.file(pomFile)
+    doLast {
+        install.repositories.mavenInstaller.pom.with {
+            groupId = project.group
+            artifactId = project.name
+            version = project.version
+            packaging = 'maven-plugin'
+
+            withXml {
+                asNode().with {
+                    appendNode('build').with {
+                        appendNode('directory', buildDir)
+                        appendNode('outputDirectory', outputDir)
+                    }
+                    appendNode('properties').with {
+                        appendNode('project.build.sourceEncoding', 'UTF-8')
+                    }
+                }
+            }
+        }
+        install.repositories.mavenInstaller.pom.writeTo(pomFile)
+        assert pomFile.file, "$pomFile: was not generated"
+        logger.info("POM is generated in $pomFile")
+    }
+}
+
+// runs the plugin description generator
+task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
+    def pluginDescriptorFile = new File(outputDir, 'META-INF/maven/plugin.xml')
+
+    workingDir projectDir
+    commandLine 'sh', './mvnw',
+            '--errors',
+            '--batch-mode',
+            '--file', pomFile,
+            'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'
+
+    doLast {
+        assert pluginDescriptorFile.file, "$pluginDescriptorFile: was not generated"
+        logger.info("Plugin descriptor is generated in $pluginDescriptorFile")
+    }
+}
+
+project.jar.dependsOn(generatePluginDescriptor)

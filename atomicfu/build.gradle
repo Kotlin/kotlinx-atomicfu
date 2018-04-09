@@ -3,27 +3,26 @@ apply plugin: 'kotlin-platform-jvm'
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     expectedBy project(":atomicfu-common")
-    compile project(":atomicfu-transformer")
 
+    testCompile project(":atomicfu-transformer")
     testCompile "junit:junit:$junit_version"
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
 }
 
-def CLASSES_PRE_ATOMICFU = file("$buildDir/classes/kotlin/test")
-def CLASSES_POST_ATOMICFU = file("$buildDir/classes-post-atomicfu/test")
+def classesPreAtomicFuDir = file("$buildDir/classes/kotlin/test")
+def classesPostAtomicFuDir = file("$buildDir/classes-post-atomicfu/test")
 
 task transformTestClasses(type: JavaExec, dependsOn: compileTestKotlin) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
-    args = [CLASSES_PRE_ATOMICFU, CLASSES_POST_ATOMICFU]
+    args = [classesPreAtomicFuDir, classesPostAtomicFuDir]
     classpath = sourceSets.test.runtimeClasspath
-    inputs.dir(CLASSES_PRE_ATOMICFU)
-    outputs.dir(CLASSES_POST_ATOMICFU)
+    inputs.dir(classesPreAtomicFuDir)
+    outputs.dir(classesPostAtomicFuDir)
 }
 
 task transformedTest(type: Test, dependsOn: transformTestClasses) {
-    classpath = files(configurations.testRuntime,
-            CLASSES_POST_ATOMICFU)
+    classpath = files(configurations.testRuntime, classesPostAtomicFuDir)
     exclude '**/*LFTest.*'
 }
 
@@ -34,5 +33,5 @@ tasks.withType(Test) {
     }
 }
 
-build.dependsOn transformedTest
+test.dependsOn transformedTest
 
