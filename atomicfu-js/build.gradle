@@ -82,3 +82,11 @@ task testMochaNode(type: NodeTask, dependsOn: [compileTestKotlin2Js, installDepe
 
 test.dependsOn testMochaNode
 
+// Workaround the problem with Node downloading
+repositories.whenObjectAdded {
+    if (it instanceof IvyArtifactRepository) {
+        metadataSources {
+            artifact()
+        }
+    }
+}
