@@ -12,7 +12,9 @@ dependencies {
 def pomFile = file("$buildDir/pom.xml")
 def outputDir = compileKotlin.destinationDir
 
-task generatePomFile(dependsOn: [compileKotlin, task(":atomicfu-transformer:installToMavenLocal")]) {
+evaluationDependsOn(':atomicfu-transformer')
+
+task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishToMavenLocal']) {
     def buildDir = project.buildDir // because Maven model also has "project"
     outputs.file(pomFile)
     doLast {
