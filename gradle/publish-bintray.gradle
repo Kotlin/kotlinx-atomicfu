@@ -62,11 +62,10 @@ if (!project.name.endsWith("-native")) {
 bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-    publications = ['maven']
     pkg {
         userOrg = 'kotlin'
         repo = 'kotlinx'
-        name = 'atomicfu'
+        name = 'kotlinx.atomicfu'
         version {
             name = project.version
             vcsTag = project.version
@@ -75,6 +74,9 @@ bintray {
     }
 }
 
-bintrayUpload.doLast {
-    println("Uploaded $project.name version $project.version")
+bintrayUpload.doFirst {
+    publications = project.publishing.publications.collect {
+        println("Uploading artifact '$it.groupId:$it.artifactId:$it.version' from publication '$it.name'")
+        it.name
+    }
 }
