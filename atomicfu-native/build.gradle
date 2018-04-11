@@ -1,16 +1,17 @@
 apply plugin: 'konan'
 
 konanArtifacts {
-    library('atomicfu_native', targets: ["ios_arm64", "ios_x64", "macos_x64"]) {
+    library(project.name, targets: ["ios_arm64", "ios_x64", "macos_x64"]) {
         enableMultiplatform true
+        artifactName project.name.replace('-', '_')
     }
     // TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
     if (!rootProject.properties["publish"]) {
-        program('atomicfu_test', targets: ["macos_x64"]) {
+        program("${project.name}-test", targets: ["macos_x64"]) {
             srcDir 'src/test/kotlin'
             commonSourceSet 'test'
             libraries {
-                artifact 'atomicfu_native'
+                artifact project.name
             }
             extraOpts '-tr'
         }
