@@ -5,7 +5,6 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
         maven { url 'https://dl.bintray.com/jetbrains/kotlin-native-dependencies' }
-        maven { url "https://cdn.lfrs.sl/repository.liferay.com/nexus/content/groups/public" }
     }
     
     dependencies {
@@ -13,7 +12,6 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
-        classpath "com.liferay:com.liferay.gradle.plugins.maven.plugin.builder:1.2.0"
     }
 }
 
