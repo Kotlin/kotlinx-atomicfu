@@ -21,11 +21,8 @@ allprojects {
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
     }
 
-    // TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
-    if (rootProject.properties["publish"]) {
-        if (project != rootProject) {
-            apply from: rootProject.file("gradle/publish-bintray.gradle")
-        }
+    if (project != rootProject) {
+        apply from: rootProject.file("gradle/publish-bintray.gradle")
     }
 }
 

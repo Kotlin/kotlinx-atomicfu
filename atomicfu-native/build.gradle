@@ -5,16 +5,13 @@ konanArtifacts {
         enableMultiplatform true
         artifactName project.name.replace('-', '_')
     }
-    // TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
-    if (!rootProject.properties["publish"]) {
-        program("${project.name}-test", targets: ["macos_x64"]) {
-            srcDir 'src/test/kotlin'
-            commonSourceSet 'test'
-            libraries {
-                artifact project.name
-            }
-            extraOpts '-tr'
+    program("${project.name}-test", targets: ["macos_x64"]) {
+        srcDir 'src/test/kotlin'
+        commonSourceSet 'test'
+        libraries {
+            artifact project.name
         }
+        extraOpts '-tr'
     }
 }
 
@@ -24,8 +21,7 @@ dependencies {
 
 task test(dependsOn: run)
 
-// TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
-if (rootProject.properties["publish"]) {
-    publishToMavenLocal.dependsOn(build)
-}
+// todo: figure out how to avoid uploading of test artifacts
+
+publishToMavenLocal.dependsOn(build)
 
