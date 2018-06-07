@@ -7,9 +7,6 @@ apply plugin: 'com.jfrog.bintray'
 // --------------- pom configuration ---------------
 
 def pomConfig = {
-    description "AtomicFU utilities"
-    url "https://github.com/Kotlin/atomicfu"
-
     licenses {
         license {
             name "The Apache Software License, Version 2.0"
@@ -25,7 +22,6 @@ def pomConfig = {
             organizationUrl "http://www.jetbrains.com"
         }
     }
-
     scm {
         url "https://github.com/Kotlin/atomicfu"
     }
@@ -61,7 +57,11 @@ if (!project.name.endsWith("-native")) {
                 }
                 pom.withXml {
                     def root = asNode()
+                    // NOTE: Don't try to move top-level things (especially "description") to the pomConfig block
+                    //       because they would resolve incorrectly to top-level project properties in Gradle/Groovy
                     root.appendNode('name', project.name)
+                    root.appendNode('description', 'AtomicFU utilities')
+                    root.appendNode('url', 'https://github.com/Kotlin/atomicfu')
                     root.children().last() + pomConfig
                 }
             }
