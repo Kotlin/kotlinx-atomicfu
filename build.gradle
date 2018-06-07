@@ -21,14 +21,12 @@ allprojects {
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
     }
 
+    def deployVersion = properties['DeployVersion']
+    if (deployVersion != null) version = deployVersion
+
     if (project != rootProject) {
         apply from: rootProject.file("gradle/publish-bintray.gradle")
     }
-}
-
-allprojects {
-    def deployVersion = properties['DeployVersion']
-    if (deployVersion != null) version = deployVersion
 }
 
 // main deployment task

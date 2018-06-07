@@ -1,4 +1,14 @@
-# Change log for kotlinx.atomicfu 
+# Change log for kotlinx.atomicfu
+
+## Version 0.10.0
+
+* Kotlin 1.2.41
+* Multiplatform: 
+  * Extracted common code into `atomicfu-common` module.
+  * Basic support on JS via `atomicfu-js` module (boxed objects, Bintray publishing only).
+* JVM transformer:  
+  * Preserve annotations on atomic fields.
+  * Ignore no-ops in flow analyzer (support more variety of code patterns).
 
 ## Version 0.9.2
 
