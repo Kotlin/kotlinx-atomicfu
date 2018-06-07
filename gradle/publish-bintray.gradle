@@ -40,6 +40,9 @@ task sourcesJar(type: Jar) {
 
 if (!project.name.endsWith("-native")) {
     publishing {
+        repositories {
+            maven { url = 'https://kotlin.bintray.com/kotlinx' }
+        }
         publications {
             maven(MavenPublication) {
                 from components.java
@@ -74,9 +77,12 @@ bintray {
     }
 }
 
+// NOTE: Must do publishToMavenLocal first to generate .module files
+bintrayUpload.dependsOn publishToMavenLocal
+
 bintrayUpload.doFirst {
     publications = project.publishing.publications.collect {
         println("Uploading artifact '$it.groupId:$it.artifactId:$it.version' from publication '$it.name'")
-        it.name
+        it
     }
 }
