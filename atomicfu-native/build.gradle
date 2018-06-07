@@ -21,7 +21,5 @@ dependencies {
 
 task test(dependsOn: run)
 
-// todo: figure out how to avoid uploading of test artifacts
-
 publishToMavenLocal.dependsOn(build)
 
