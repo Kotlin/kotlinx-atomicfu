@@ -26,3 +26,10 @@ allprojects {
     }
 }
 
+allprojects {
+    def deployVersion = properties['DeployVersion']
+    if (deployVersion != null) version = deployVersion
+}
+
+// main deployment task
+task deploy(dependsOn: getTasksByName("bintrayUpload", true))
