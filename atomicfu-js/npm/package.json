@@ -1,5 +1,5 @@
 {
-  "name": "atomicfu-js",
+  "name": "kotlinx-atomicfu",
   "version" : "$version",
   "description" : "AtomicFU utilities for JS",
   "main" : "atomicfu.js",
