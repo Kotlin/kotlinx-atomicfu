@@ -1,5 +1,8 @@
 apply plugin: 'kotlin-platform-js'
-apply plugin: 'com.moowork.node'
+
+apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
+apply from: file("$rootProject.projectDir/gradle/test-mocha-js.gradle")
+apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
@@ -24,63 +27,6 @@ compileKotlin2Js {
         outputFile = new File(outputFile.parent, baseName + ".js")
     }
 }
-
-// Configures testing for JS modules
-
-node {
-    version = "$node_version"
-    npmVersion = "$npm_version"
-    download = true
-    nodeModulesDir = file(buildDir)
-}
-
-task prepareNodePackage(type: Copy) {
-    from("npm") {
-        include 'package.json'
-        expand project.properties
-    }
-    from("npm") {
-        exclude 'package.json'
-    }
-    into "$node.nodeModulesDir"
-}
-
-npmInstall.dependsOn prepareNodePackage
-
-task populateNodeModules(type: Copy, dependsOn: [compileKotlin2Js]) {
-    from compileKotlin2Js.destinationDir
-    into "$node.nodeModulesDir/node_modules"
-
-    afterEvaluate {
-        configurations.testCompile.each {
-            if (it.absolutePath.endsWith(".jar")) {
-                from zipTree(it.absolutePath).matching {
-                    include '*.js'
-                    include '*.js.map'
-                }
-            }
-        }
-    }
-}
-
-npmInstall.dependsOn populateNodeModules
-
-task installDependenciesMochaNode(type: NpmTask, dependsOn: [npmInstall]) {
-    args = ['install',
-            "mocha@$mocha_version",
-            "source-map-support@$source_map_support_version",
-            '--no-save']
-    if (project.hasProperty("teamcity")) args += [
-            "mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
-}
-
-task testMochaNode(type: NodeTask, dependsOn: [compileTestKotlin2Js, installDependenciesMochaNode]) {
-    script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
-    args = [compileTestKotlin2Js.outputFile, '--require', 'source-map-support/register']
-    if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
-}
-
-test.dependsOn testMochaNode
 
 // Workaround the problem with Node downloading
 repositories.whenObjectAdded {

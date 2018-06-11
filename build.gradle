@@ -30,4 +30,4 @@ allprojects {
 }
 
 // main deployment task
-task deploy(dependsOn: getTasksByName("bintrayUpload", true))
+task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
