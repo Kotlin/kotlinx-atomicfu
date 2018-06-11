@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.10.1
+
+* JS: NPM deployment.
+
 ## Version 0.10.0
 
 * Kotlin 1.2.41
