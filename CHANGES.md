@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.10.2
+
+* JS: Main file renamed to kotlinx-atomicfu.js to match NPM module name
+
 ## Version 0.10.1
 
 * JS: NPM deployment.
