@@ -1,8 +1,12 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.10.3
+
+* Kotlin 1.2.50.
+
 ## Version 0.10.2
 
-* JS: Main file renamed to kotlinx-atomicfu.js to match NPM module name
+* JS: Main file renamed to kotlinx-atomicfu.js to match NPM module name.
 
 ## Version 0.10.1
 
@@ -10,7 +14,7 @@
 
 ## Version 0.10.0
 
-* Kotlin 1.2.41
+* Kotlin 1.2.41.
 * Multiplatform: 
   * Extracted common code into `atomicfu-common` module.
   * Basic support on JS via `atomicfu-js` module (boxed objects, Bintray publishing only).
@@ -20,7 +24,7 @@
 
 ## Version 0.9.2
 
-* Replaced deprecated kotlin-stdlib-jre8 dependency with kotlin-stdlib-jdk8
+* Replaced deprecated kotlin-stdlib-jre8 dependency with kotlin-stdlib-jdk8.
 
 ## Version 0.9.1
 
