@@ -21,9 +21,8 @@ tasks.withType(compileKotlin2Js.getClass()) {
 
 compileKotlin2Js {
     kotlinOptions {
-        // drop -js suffix from main outputFile, but don't do it for tests
-        // see https://youtrack.jetbrains.com/issue/KT-23582
-        def baseName = project.name - "-js"
+        // NOTE: Module base-name must be equal to the package name declared in package.json
+        def baseName = "kotlinx-atomicfu"
         outputFile = new File(outputFile.parent, baseName + ".js")
     }
 }

@@ -2,7 +2,7 @@
   "name": "kotlinx-atomicfu",
   "version" : "$version",
   "description" : "AtomicFU utilities for JS",
-  "main" : "atomicfu.js",
+  "main" : "kotlinx-atomicfu.js",
   "author": "JetBrains",
   "license": "Apache-2.0",
   "homepage": "https://github.com/Kotlin/atomicfu",
