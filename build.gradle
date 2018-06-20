@@ -27,6 +27,8 @@ allprojects {
     if (project != rootProject) {
         apply from: rootProject.file("gradle/publish-bintray.gradle")
     }
+
+    project.gradle.services.get(org.gradle.api.internal.FeaturePreviews.class).enableFeature(org.gradle.api.internal.FeaturePreviews.Feature.GRADLE_METADATA)
 }
 
 // main deployment task
