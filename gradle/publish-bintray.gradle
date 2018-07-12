@@ -4,28 +4,9 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
-// --------------- pom configuration ---------------
+apply from: project.rootProject.file('gradle/maven-central.gradle')
 
-def pomConfig = {
-    licenses {
-        license {
-            name "The Apache Software License, Version 2.0"
-            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-            distribution "repo"
-        }
-    }
-    developers {
-        developer {
-            id "JetBrains"
-            name "JetBrains Team"
-            organization "JetBrains"
-            organizationUrl "http://www.jetbrains.com"
-        }
-    }
-    scm {
-        url "https://github.com/Kotlin/atomicfu"
-    }
-}
+def isNative = project.name.endsWith("native")
 
 // ------------- tasks
 
@@ -40,31 +21,23 @@ task javadocJar(type: Jar) {
     from "$buildDir/javadoc" // would not exist
 }
 
-if (!project.name.endsWith("-native")) {
-    publishing {
-        repositories {
-            maven { url = 'https://kotlin.bintray.com/kotlinx' }
-        }
-        publications {
-            maven(MavenPublication) {
+publishing {
+    repositories {
+        maven { url = 'https://kotlin.bintray.com/kotlinx' }
+    }
+    publications {
+        maven(MavenPublication) {
+            if (!isNative) {
                 from components.java
-                artifact sourcesJar
-                artifact javadocJar
-                if (project.name.endsWith("-maven-plugin")) {
-                    pom.with {
-                        packaging = 'maven-plugin'
-                    }
-                }
-                pom.withXml {
-                    def root = asNode()
-                    // NOTE: Don't try to move top-level things (especially "description") to the pomConfig block
-                    //       because they would resolve incorrectly to top-level project properties in Gradle/Groovy
-                    root.appendNode('name', project.name)
-                    root.appendNode('description', 'AtomicFU utilities')
-                    root.appendNode('url', 'https://github.com/Kotlin/atomicfu')
-                    root.children().last() + pomConfig
+            }
+            artifact sourcesJar
+            artifact javadocJar
+            if (project.name.endsWith("-maven-plugin")) {
+                pom.with {
+                    packaging = 'maven-plugin'
                 }
             }
+            pom.withXml(configureMavenCentralMetadata)
         }
     }
 }
@@ -84,9 +57,10 @@ bintray {
     }
 }
 
-// NOTE: Must do publishToMavenLocal first to generate .module files
+// TODO :kludge this is required for K/N publishing
 bintrayUpload.dependsOn publishToMavenLocal
 
+// This is for easier debugging of bintray uploading problems
 bintrayUpload.doFirst {
     publications = project.publishing.publications.findAll { !it.name.contains('-test') }.collect {
         println("Uploading artifact '$it.groupId:$it.artifactId:$it.version' from publication '$it.name'")
