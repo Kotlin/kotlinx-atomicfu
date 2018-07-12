@@ -48,24 +48,22 @@ public actual class AtomicRef<T> internal constructor(value: T) {
 // ==================================== AtomicBoolean ====================================
 
 public actual class AtomicBoolean internal constructor(value: Boolean) {
-    public actual var value: Int = if (value) 1 else 0
+    public actual var value: Boolean = value
 
     public actual inline fun lazySet(value: Boolean) {
-        this.value = if (value) 1 else 0
+        this.value = value
     }
 
     public actual inline fun compareAndSet(expect: Boolean, update: Boolean): Boolean {
-        val e = if (expect) 1 else 0
-        val u = if (update) 1 else 0
-        if (value != e) return false
-        value = u
+        if (value != expect) return false
+        value = update
         return true
     }
 
     public actual fun getAndSet(value: Boolean): Boolean {
         val oldValue = this.value
-        this.value =  if (value) 1 else 0
-        return oldValue == 1
+        this.value = value
+        return oldValue
     }
 }
 

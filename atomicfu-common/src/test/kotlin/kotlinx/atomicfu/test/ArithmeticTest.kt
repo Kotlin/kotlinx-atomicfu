@@ -67,14 +67,13 @@ class ArithmeticTest {
     @Test
     fun testBoolean() {
         val a = BooleanArithmetic()
-        check(a.x == 0)
+        check(!a.x)
         a.lazySet(true)
-        check(a.x == 1)
+        check(a.x)
         check(a.getAndSet(false))
         a.compareAndSet(false, true)
-        check(a.x == 1)
+        check(a.x)
     }
-
 }
 
 class IntArithmetic {

@@ -143,7 +143,7 @@ public expect class AtomicBoolean {
     /**
      * Reading/writing this property maps to read/write of volatile variable.
      */
-    public var value: Int
+    public var value: Boolean
 
     /**
      * Maps to [AtomicIntegerFieldUpdater.lazySet].
@@ -167,7 +167,7 @@ public expect class AtomicBoolean {
  */
 public inline fun AtomicBoolean.loop(action: (Boolean) -> Unit): Nothing {
     while (true) {
-        action(value == 1)
+        action(value)
     }
 }
 
@@ -176,7 +176,7 @@ public inline fun AtomicBoolean.loop(action: (Boolean) -> Unit): Nothing {
  */
 public inline fun AtomicBoolean.update(function: (Boolean) -> Boolean) {
     while (true) {
-        val cur = value == 1
+        val cur = value
         val upd = function(cur)
         if (compareAndSet(cur, upd)) return
     }
@@ -187,7 +187,7 @@ public inline fun AtomicBoolean.update(function: (Boolean) -> Boolean) {
  */
 public inline fun AtomicBoolean.getAndUpdate(function: (Boolean) -> Boolean): Boolean {
     while (true) {
-        val cur = value == 1
+        val cur = value
         val upd = function(cur)
         if (compareAndSet(cur, upd)) return cur
     }
@@ -198,7 +198,7 @@ public inline fun AtomicBoolean.getAndUpdate(function: (Boolean) -> Boolean): Bo
  */
 public inline fun AtomicBoolean.updateAndGet(function: (Boolean) -> Boolean): Boolean {
     while (true) {
-        val cur = value == 1
+        val cur = value
         val upd = function(cur)
         if (compareAndSet(cur, upd)) return upd
     }

@@ -138,7 +138,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
      * Reading/writing this property maps to read/write of volatile variable.
      */
     @Volatile
-    public actual var value: Int = if (v) 1 else 0
+    public actual var value: Boolean = v
         set(value) {
             interceptor.beforeUpdate(this)
             field = value
@@ -152,7 +152,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
         interceptor.beforeUpdate(this)
         val v = if (value) 1 else 0
         FU.lazySet(this, v)
-        interceptor.afterSet(this, v)
+        interceptor.afterSet(this, value)
     }
 
     /**
@@ -163,7 +163,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
         val e = if (expect) 1 else 0
         val u = if (update) 1 else 0
         val result = FU.compareAndSet(this, e, u)
-        if (result) interceptor.afterRMW(this, e, u)
+        if (result) interceptor.afterRMW(this, expect, update)
         return result
     }
 
@@ -174,7 +174,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
         interceptor.beforeUpdate(this)
         val v = if (value) 1 else 0
         val oldValue = FU.getAndSet(this, v)
-        interceptor.afterRMW(this, oldValue, v)
+        interceptor.afterRMW(this, (oldValue == 1), value)
         return oldValue == 1
     }
 
