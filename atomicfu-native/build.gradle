@@ -1,9 +1,12 @@
 apply plugin: 'kotlin-platform-native'
 
+def currentOS = System.getProperty("os.name").toLowerCase(Locale.US)
+def currentTargets = currentOS.contains("mac") ? ["ios_arm64", "ios_arm32", "ios_x64", "macos_x64"] : ["host"]
+
 sourceSets {
     main {
         component {
-            target "host" // "ios_arm64", "ios_x64", "macos_x64", "linux_x64"
+            target currentTargets
             outputKinds = [KLIBRARY]
         }
     }

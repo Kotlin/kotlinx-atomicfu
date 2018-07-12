@@ -1,5 +1,15 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.10.3-native
+
+* Kotlin 1.2.51.
+* Initial Kotlin/Native support:
+  * Build for Kotlin/Native 0.8.
+  * Only JS-like single-threaded applications are supported (no actual atomics).
+  * Supported targets: "ios_arm64", "ios_arm32", "ios_x64", "macos_x64".
+* NOTE: This version is not available in NPM and Maven Central. Use this Bintray repository: 
+  * `maven { url "https://kotlin.bintray.com/kotlinx" }`    
+
 ## Version 0.10.3
 
 * Kotlin 1.2.50.
