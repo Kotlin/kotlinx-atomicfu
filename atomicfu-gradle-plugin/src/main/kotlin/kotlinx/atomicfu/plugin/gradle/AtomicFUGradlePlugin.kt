@@ -17,34 +17,6 @@ import org.gradle.api.plugins.JavaPluginConvention
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(target: Project) {
-        target.tasks.create("atomicFU", AtomicFUTransformTask::class.java)
-    }
-}
-
-open class AtomicFUTransformTask : DefaultTask() {
-    @InputFiles
-    lateinit var inputFiles: FileCollection
-    @OutputDirectory
-    lateinit var outputDir: File
-    @InputFiles
-    var classPath: FileCollection = project.files()
-    @Input
-    var verbose = false
-    @Input
-    var variant= Variant.FU
-
-    @TaskAction
-    fun transform() {
-        inputFiles.files.forEach {
-            AtomicFUTransformer(classPath.files.map { it.absolutePath }, it).let { t ->
-                t.outputDir = outputDir
-                t.variant = variant
-                t.verbose = verbose
-                t.transform()
-            }
-        }
-        val javaPlugin = project.convention.getPlugin(JavaPluginConvention::class.java)
-        val sourceSets = javaPlugin.sourceSets
-        sourceSets.forEach { sourceSet -> (sourceSet.output.classesDirs as ConfigurableFileCollection).setFrom(outputDir) }
+        target.configureTransformation()
     }
 }
