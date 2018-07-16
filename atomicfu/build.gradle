@@ -31,7 +31,7 @@ task transformFU(type: JavaExec, dependsOn: configureDirs) {
 task transformVH(type: JavaExec, dependsOn: transformFU) {
     println("TRANSFORM VH")
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
-    args = [classesPreAtomicFuDir, classesPostTransformVH, "FU"]
+    args = [classesPreAtomicFuDir, classesPostTransformVH, "VH"]
     classpath = sourceSets.test.runtimeClasspath
     inputs.dir(classesPreAtomicFuDir)
     outputs.dir(classesPostTransformVH)
