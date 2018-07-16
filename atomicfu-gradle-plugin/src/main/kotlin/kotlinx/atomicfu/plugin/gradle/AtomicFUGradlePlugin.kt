@@ -26,18 +26,11 @@ fun Project.configureTransformation() {
 
             //make copy of original classes directory
             val classesDirsCopy = project.files(classesDirs.toTypedArray()).filter { it.exists() }
-            println("\t CLASSESDIRSCOPY: ")
-            classesDirsCopy.files.forEach{print(it.path)}
-            println()
 
             //directory for transformed classes
             val transformedClassesDir = File(project.buildDir, "classes/${sourceSetParam.name}-instrumented")
             // make transformedClassesDir the source path for output.classesDirs
             (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
-
-            println("\t SOURCESET after set & before transform: ")
-            sourceSetParam.output.classesDirs.files.forEach{print(it.path)}
-            println()
 
             val instrumentTask = project.tasks.create(sourceSetParam.getTaskName("instrument", "classes"), AtomicFUTransformTask::class.java)
             instrumentTask.apply {
@@ -72,13 +65,11 @@ open class AtomicFUTransformTask : ConventionTask() {
 
     @TaskAction
     fun transform() {
-        println("ENTERED TRANSFORM FUNCTION")
         inputFiles.files.forEach {
             AtomicFUTransformer(classPath.files.map { it.absolutePath }, it).let { t ->
                 t.outputDir = outputDir
                 t.variant = variant
                 t.verbose = verbose
-                println("AND NOW TRANSFORM TASK")
                 t.transform()
             }
         }
