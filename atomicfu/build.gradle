@@ -11,20 +11,56 @@ dependencies {
 }
 
 def classesPreAtomicFuDir = file("$buildDir/classes/kotlin/test")
-def classesPostAtomicFuDir = file("$buildDir/classes-post-atomicfu/test")
+def classesPostTransformFU = file("$buildDir/classes/kotlin/postTransformedFU")
+def classesPostTransformVH = file("$buildDir/classes/kotlin/postTransformedVH")
+def classesPostTransformBOTH = file("$buildDir/classes/kotlin/postTransformedBOTH")
 
-task transformTestClasses(type: JavaExec, dependsOn: compileTestKotlin) {
+task configureDirs(dependsOn: compileTestKotlin) {
+    (sourceSets.test.output.classesDirs as ConfigurableFileCollection).setFrom(classesPostTransformFU, classesPostTransformVH, classesPostTransformBOTH)
+}
+
+task transformFU(type: JavaExec, dependsOn: compileTestKotlin) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
-    args = [classesPreAtomicFuDir, classesPostAtomicFuDir]
+    args = [classesPreAtomicFuDir, classesPostTransformFU, "FU"]
     classpath = sourceSets.test.runtimeClasspath
     inputs.dir(classesPreAtomicFuDir)
-    outputs.dir(classesPostAtomicFuDir)
+    outputs.dir(classesPostTransformFU)
 }
 
-task transformedTest(type: Test, dependsOn: transformTestClasses) {
-    classpath = files(configurations.testRuntime, classesPostAtomicFuDir)
+task transformVH(type: JavaExec, dependsOn: compileTestKotlin) {
+    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
+    args = [classesPreAtomicFuDir, classesPostTransformVH, "VH"]
+    classpath = sourceSets.test.runtimeClasspath
+    inputs.dir(classesPreAtomicFuDir)
+    outputs.dir(classesPostTransformVH)
+}
+
+task transformBOTH(type: JavaExec, dependsOn: compileTestKotlin) {
+    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
+    args = [classesPreAtomicFuDir, classesPostTransformBOTH, "BOTH"]
+    classpath = sourceSets.test.runtimeClasspath
+    inputs.dir(classesPreAtomicFuDir)
+    outputs.dir(classesPostTransformBOTH)
+}
+
+task transformedTestFU(type: Test, dependsOn: transformFU) {
+    classpath = files(configurations.testRuntime, classesPostTransformFU)
     exclude '**/*LFTest.*'
 }
+
+task transformedTestVH(type: Test, dependsOn: transformVH) {
+    classpath = files(configurations.testRuntime, classesPostTransformVH)
+    exclude '**/*LFTest.*'
+}
+
+transformedTestVH.onlyIf { JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal() }
+
+task transformedTestBOTH(type: Test, dependsOn: transformBOTH) {
+    classpath = files(configurations.testRuntime, classesPostTransformBOTH)
+    exclude '**/*LFTest.*'
+}
+
+task testAll(dependsOn: [transformedTestFU, transformedTestVH, transformedTestBOTH]) {}
 
 tasks.withType(Test) {
     testLogging {
@@ -33,5 +69,5 @@ tasks.withType(Test) {
     }
 }
 
-test.dependsOn transformedTest
+test.dependsOn testAll
 
