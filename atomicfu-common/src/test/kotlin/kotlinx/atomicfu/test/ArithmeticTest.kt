@@ -63,6 +63,17 @@ class ArithmeticTest {
         check(a.decrementAndGet() == 7L)
         check(a.x == 7L)
     }
+
+    @Test
+    fun testBoolean() {
+        val a = BooleanArithmetic()
+        check(!a.x)
+        a.lazySet(true)
+        check(a.x)
+        check(a.getAndSet(false))
+        a.compareAndSet(false, true)
+        check(a.x)
+    }
 }
 
 class IntArithmetic {
@@ -91,4 +102,13 @@ class LongArithmetic {
     fun addAndGet(v: Long) = _x.addAndGet(v)
     fun incrementAndGet() = _x.incrementAndGet()
     fun decrementAndGet() = _x.decrementAndGet()
+}
+
+class BooleanArithmetic {
+    private val _x = atomic(false)
+    val x get() = _x.value
+
+    fun lazySet(v: Boolean) = _x.lazySet(v)
+    fun getAndSet(v: Boolean) = _x.getAndSet(v)
+    fun compareAndSet(e: Boolean, u: Boolean) = _x.compareAndSet(e, u)
 }

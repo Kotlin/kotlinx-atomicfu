@@ -42,12 +42,15 @@ internal open class AtomicOperationInterceptor {
     open fun <T> beforeUpdate(ref: AtomicRef<T>) {}
     open fun beforeUpdate(ref: AtomicInt) {}
     open fun beforeUpdate(ref: AtomicLong) {}
+    open fun beforeUpdate(ref: AtomicBoolean){}
     open fun <T> afterSet(ref: AtomicRef<T>, newValue: T) {}
     open fun afterSet(ref: AtomicInt, newValue: Int) {}
     open fun afterSet(ref: AtomicLong, newValue: Long) {}
+    open fun afterSet(ref: AtomicBoolean, newValue: Boolean) {}
     open fun <T> afterRMW(ref: AtomicRef<T>, oldValue: T, newValue: T) {}
     open fun afterRMW(ref: AtomicInt, oldValue: Int, newValue: Int) {}
     open fun afterRMW(ref: AtomicLong, oldValue: Long, newValue: Long) {}
+    open fun afterRMW(ref: AtomicBoolean, oldValue: Boolean, newValue: Boolean) {}
 }
 
 private object DefaultInterceptor : AtomicOperationInterceptor() {

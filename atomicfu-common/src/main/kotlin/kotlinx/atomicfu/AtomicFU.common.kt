@@ -49,6 +49,17 @@ public expect fun atomic(initial: Int): AtomicInt
  */
 public expect fun atomic(initial: Long): AtomicLong
 
+/**
+ * Creates atomic [Boolean] with a given [initial] value.
+ *
+ * It can only be used in initialize of private read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialBoolean)
+ * ```
+ */
+public expect fun atomic(initial: Boolean): AtomicBoolean
+
 // ==================================== AtomicRef ====================================
 
 /**
@@ -113,6 +124,79 @@ public inline fun <T> AtomicRef<T>.getAndUpdate(function: (T) -> T): T {
  * Updates variable atomically using the specified [function] of its value and returns its new value.
  */
 public inline fun <T> AtomicRef<T>.updateAndGet(function: (T) -> T): T {
+    while (true) {
+        val cur = value
+        val upd = function(cur)
+        if (compareAndSet(cur, upd)) return upd
+    }
+}
+
+
+// ==================================== AtomicBoolean ====================================
+
+/**
+ * Atomic reference to a [Boolean] variable with volatile reads/writes via
+ * [value] property and various atomic read-modify-write operations
+ * like [compareAndSet] and others.
+ */
+public expect class AtomicBoolean {
+    /**
+     * Reading/writing this property maps to read/write of volatile variable.
+     */
+    public var value: Boolean
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.lazySet].
+     */
+    public fun lazySet(value: Boolean)
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.compareAndSet].
+     */
+    public fun compareAndSet(expect: Boolean, update: Boolean): Boolean
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.getAndSet].
+     */
+    public fun getAndSet(value: Boolean): Boolean
+
+}
+
+/**
+ * Infinite loop that reads this atomic variable and performs the specified [action] on its value.
+ */
+public inline fun AtomicBoolean.loop(action: (Boolean) -> Unit): Nothing {
+    while (true) {
+        action(value)
+    }
+}
+
+/**
+ * Updates variable atomically using the specified [function] of its value.
+ */
+public inline fun AtomicBoolean.update(function: (Boolean) -> Boolean) {
+    while (true) {
+        val cur = value
+        val upd = function(cur)
+        if (compareAndSet(cur, upd)) return
+    }
+}
+
+/**
+ * Updates variable atomically using the specified [function] of its value and returns its old value.
+ */
+public inline fun AtomicBoolean.getAndUpdate(function: (Boolean) -> Boolean): Boolean {
+    while (true) {
+        val cur = value
+        val upd = function(cur)
+        if (compareAndSet(cur, upd)) return cur
+    }
+}
+
+/**
+ * Updates variable atomically using the specified [function] of its value and returns its new value.
+ */
+public inline fun AtomicBoolean.updateAndGet(function: (Boolean) -> Boolean): Boolean {
     while (true) {
         val cur = value
         val upd = function(cur)
