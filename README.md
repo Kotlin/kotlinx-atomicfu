@@ -10,8 +10,8 @@ The idiomatic way to use atomic operations in Kotlin.
 * Use Kotlin-specific extensions (e.g. inline `updateAndGet` and `getAndUpdate` functions).
 * Compile-time dependency only (no runtime dependencies) on Kotlin/JVM.
   * Post-compilation bytecode transformer that declares all the relevant field updaters for you.
-  * See [JVM build setup](#jvm-build-setup) for details. 
-* [Multiplatform](#multiplatform) 
+  * See [JVM build setup](#jvm-build-setup) for details.
+* [Multiplatform](#multiplatform)
   * [Kotlin/JS](#javascript) and [Kotlin/Native](#native) are supported.
   * However, they work as a library dependencies at the moment (unlike Kotlin/JVM).
   * This enables writing common Kotlin code with atomics.
@@ -87,7 +87,7 @@ public var foo: T                     // public val/var
 
 ## JVM build setup
 
-Building with [Maven](#maven) and [Gradle](#gradle) is supported for Kotlin/JVM. 
+Building with [Maven](#maven) and [Gradle](#gradle) is supported for Kotlin/JVM.
 
 ## Maven
 
@@ -162,7 +162,7 @@ which is then transformed to a regular `classes` directory to be used later by t
 ## Gradle
 
 You will need Gradle 4.0 or later for the following snippets to work.
-Add and apply AtomicFU plugin:
+Just add and apply AtomicFU plugin:
 
 ```groovy
 buildscript {
@@ -176,32 +176,12 @@ buildscript {
 apply plugin: 'kotlinx-atomicfu'
 ```
 
-Add compile-only dependency on AtomicFU library:
+Add compile-only dependency on AtomicFU library and run-time dependency for tests:
 
 ```groovy
 dependencies {
     compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
-}
-```
-
-Install bytecode transformation pipeline so that compiled classes from `classes` directory get 
-transformed to a different `classes-post-atomicfu` directory to be used later by tests and delivery.
-
-```groovy
-atomicFU {
-    inputFiles = sourceSets.main.output.classesDirs
-    outputDir = file("$buildDir/classes-post-atomicfu/main")
-    classPath = sourceSets.main.runtimeClasspath
-    variant = "FU" // "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code
-}
-
-atomicFU.dependsOn compileKotlin
-testClasses.dependsOn atomicFU
-jar.dependsOn atomicFU
-
-jar {
-    mainSpec.sourcePaths.clear() // hack to clear existing paths
-    from files(atomicFU.outputDir, sourceSets.main.output.resourcesDir)
+    testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
 }
 ```
 
@@ -213,24 +193,24 @@ to your common code dependencies.
 
 ### JavaScript
 
-This library is available for Kotlin/JS via Bintray JCenter and Maven Central as 
+This library is available for Kotlin/JS via Bintray JCenter and Maven Central as
 [`org.jetbrains.kotlinx:atomicfu-js`](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu) and via NPM
-as [`kotlinx.atomicfu`](https://www.npmjs.com/package/kotlinx-atomicfu). 
+as [`kotlinx.atomicfu`](https://www.npmjs.com/package/kotlinx-atomicfu).
 It is a regular library and you should declare a normal dependency, no plugin is needed nor available.
-Both Maven and Gradle can be used. 
+Both Maven and Gradle can be used.
 
-Since Kotlin/JS does not generally provide binary compatibility between versions, 
-you should use the same version of Kotlin compiler. 
+Since Kotlin/JS does not generally provide binary compatibility between versions,
+you should use the same version of Kotlin compiler.
 See [gradle.properties](gradle.properties).
 
 ### Native
 
-This library is available for Kotlin/Native via Bintray JCenter and Maven Central as 
-[`org.jetbrains.kotlinx:atomicfu-native`](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu). 
+This library is available for Kotlin/Native via Bintray JCenter and Maven Central as
+[`org.jetbrains.kotlinx:atomicfu-native`](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu).
 It is a regular library and you should declare a normal dependency, no plugin is needed nor available.
-Only single-threaded code (JS-style) is currently supported. 
+Only single-threaded code (JS-style) is currently supported.
 
-Kotlin/Native supports only Gradle version 4.7 or later 
+Kotlin/Native supports only Gradle version 4.7 or later
 and you should use `kotlin-platform-native` plugin.
 
 First of all, you'll need to enable Gradle metadata in your
@@ -270,16 +250,16 @@ dependencies {
 sourceSets {
     main {
         component {
-            target "ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64" 
+            target "ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64"
             outputKinds = [EXECUTABLE]
         }
     }
 }
 ```
 
-Since Kotlin/Native does not generally provide binary compatibility between versions, 
-you should use the same version of Kotlin/Native compiler as was used to build AtomicFU. 
-Add an appropriate `kotlin_native_version` to your `gradle.properties` file. 
+Since Kotlin/Native does not generally provide binary compatibility between versions,
+you should use the same version of Kotlin/Native compiler as was used to build AtomicFU.
+Add an appropriate `kotlin_native_version` to your `gradle.properties` file.
 See [gradle.properties](gradle.properties) in AtomicFU project.
 
 ## Additional features
