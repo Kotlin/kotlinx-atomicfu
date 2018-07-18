@@ -153,7 +153,7 @@ which is then transformed to a regular `classes` directory to be used later by t
 ## Gradle build setup
 
 You will need Gradle 4.0 or later for the following snippets to work.
-Add and apply AtomicFU plugin:
+Just add and apply AtomicFU plugin:
 
 ```groovy
 buildscript {
@@ -174,30 +174,6 @@ dependencies {
     compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
 }
 ```
-
-Install bytecode transformation pipeline so that compiled classes from `classes` directory get 
-transformed to a different `classes-post-atomicfu` directory to be used later by tests and delivery.
-
-```groovy
-def CLASSES_POST_ATOMICFU = file("$buildDir/classes-post-atomicfu/main")
-
-atomicFU {
-    inputFiles = sourceSets.main.output.classesDirs
-    outputDir = CLASSES_POST_ATOMICFU
-    classPath = sourceSets.main.runtimeClasspath
-    variant = "FU" // "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code
-}
-
-atomicFU.dependsOn compileKotlin
-testClasses.dependsOn atomicFU
-jar.dependsOn atomicFU
-
-jar {
-    mainSpec.sourcePaths.clear() // hack to clear existing paths
-    from files(CLASSES_POST_ATOMICFU, sourceSets.main.output.resourcesDir)
-}
-```
-
 ## VarHandles with Java 9 (optional)
 
 AtomicFU can produce code that is using Java 9 
