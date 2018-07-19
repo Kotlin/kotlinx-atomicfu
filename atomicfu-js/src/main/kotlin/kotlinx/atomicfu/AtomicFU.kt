@@ -65,6 +65,8 @@ public actual class AtomicBoolean internal constructor(value: Boolean) {
         this.value = value
         return oldValue
     }
+
+    override fun toString(): String = value.toString()
 }
 
 // ==================================== AtomicInt ====================================

@@ -21,6 +21,7 @@ package kotlinx.atomicfu
 public actual fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
 public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
 public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
+public actual fun atomic(initial: Boolean): AtomicBoolean = AtomicBoolean(initial)
 
 // ==================================== AtomicRef ====================================
 
@@ -36,6 +37,30 @@ public actual class AtomicRef<T> internal constructor(value: T) {
     }
 
     public actual fun getAndSet(value: T): T {
+        val oldValue = this.value
+        this.value = value
+        return oldValue
+    }
+
+    override fun toString(): String = value.toString()
+}
+
+// ==================================== AtomicBoolean ====================================
+
+public actual class AtomicBoolean internal constructor(value: Boolean) {
+    public actual var value: Boolean = value
+
+    public actual inline fun lazySet(value: Boolean) {
+        this.value = value
+    }
+
+    public actual inline fun compareAndSet(expect: Boolean, update: Boolean): Boolean {
+        if (value != expect) return false
+        value = update
+        return true
+    }
+
+    public actual fun getAndSet(value: Boolean): Boolean {
         val oldValue = this.value
         this.value = value
         return oldValue
