@@ -1,5 +1,4 @@
 // -- Testing with Mocha under Node
-
 task installDependenciesMochaNode(type: NpmTask, dependsOn: [npmInstall]) {
     args = ['install',
             "mocha@$mocha_version",
@@ -9,9 +8,9 @@ task installDependenciesMochaNode(type: NpmTask, dependsOn: [npmInstall]) {
             "mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
 }
 
-task testMochaNode(type: NodeTask, dependsOn: [compileTestKotlin2Js, installDependenciesMochaNode]) {
+task testMochaNode(type: NodeTask, dependsOn: [compileKotlin2Js, installDependenciesMochaNode]) {
     script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
-    args = [compileTestKotlin2Js.outputFile, '--require', 'source-map-support/register']
+    args = [file("$buildDir/classes/kotlin/test/atomicfu-js_testTransformed.js"), '--require', 'source-map-support/register']
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
     if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }
