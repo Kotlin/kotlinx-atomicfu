@@ -6,14 +6,15 @@
 
 The idiomatic way to use atomic operations in Kotlin. 
 
-* Code it like `AtomicReference/Int/Long`, but run it in production like `AtomicReference/Int/LongFieldUpdater`. 
+* Code it like `AtomicReference/Int/Long`, but run it in production like `AtomicReference/Int/LongFieldUpdater` for [Kotlin/JVM](#jvm) and plain unboxed values for [Kotlin/JS](#javascript). 
 * Use Kotlin-specific extensions (e.g. inline `updateAndGet` and `getAndUpdate` functions).
-* Compile-time dependency only (no runtime dependencies) on Kotlin/JVM.
-  * Post-compilation bytecode transformer that declares all the relevant field updaters for you.
-  * See [JVM build setup](#jvm-build-setup) for details. 
+* Compile-time dependency only (no runtime dependencies).
+  * Post-compilation bytecode transformer that declares all the relevant field updaters for you on [Kotlin/JVM](#jvm).
+  * Post-compilation JavaScript files transformer on [Kotlin/JS](#javascript)
+  * See [JVM](#jvm-build-setup) and [JS](#js-build-setup) build setup for details. 
 * [Multiplatform](#multiplatform) 
-  * [Kotlin/JS](#javascript) and [Kotlin/Native](#native) are supported.
-  * However, they work as a library dependencies at the moment (unlike Kotlin/JVM).
+  * [Kotlin/Native](#native) is also supported.
+  * However, [Kotlin/Native](#native) works as library dependency at the moment (unlike Kotlin/JVM and Kotlin/JS).
   * This enables writing common Kotlin code with atomics.
 
 ## Example
@@ -186,23 +187,37 @@ dependencies {
 }
 ```
 
+## JS build setup 
+## Gradle
+You will need Gradle 4.0 or later for the following snippets to work.
+Add and apply AtomicFU plugin:
+
+```groovy
+buildscript {
+    ext.atomicfu_version = '0.11.1'
+
+    dependencies {
+        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
+    }
+}
+
+apply plugin: 'kotlinx-atomicfu'
+```
+
+Add compile-only dependency on AtomicFU library and run-time dependency for tests:
+
+```groovy
+dependencies {
+    compileOnly "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
+    testRuntime "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
+}
+```
+
 ## Multiplatform
 
-AtomicFU is also available for [Kotlin/JS](#javascript) and [Kotlin/Native](#native). If you write
+AtomicFU is also available for [Kotlin/Native](#native). If you write
 a common code that should get compiled or different platforms, add `org.jetbrains.kotlinx:atomicfu-common`
 to your common code dependencies.
-
-### JavaScript
-
-This library is available for Kotlin/JS via Bintray JCenter and Maven Central as 
-[`org.jetbrains.kotlinx:atomicfu-js`](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu) and via NPM
-as [`kotlinx.atomicfu`](https://www.npmjs.com/package/kotlinx-atomicfu). 
-It is a regular library and you should declare a normal dependency, no plugin is needed nor available.
-Both Maven and Gradle can be used. 
-
-Since Kotlin/JS does not generally provide binary compatibility between versions, 
-you should use the same version of Kotlin compiler. 
-See [gradle.properties](gradle.properties).
 
 ### Native
 
