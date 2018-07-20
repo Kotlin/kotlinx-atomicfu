@@ -25,7 +25,6 @@ import org.objectweb.asm.Type.*
 import org.objectweb.asm.commons.*
 import org.objectweb.asm.commons.InstructionAdapter.*
 import org.objectweb.asm.tree.*
-import org.slf4j.*
 import java.io.*
 import java.net.*
 import java.util.*
@@ -74,8 +73,6 @@ private val FACTORIES: Set<MethodId> = setOf(
     MethodId(AFU_CLS, ATOMIC, "(Z)L$AFU_PKG/AtomicBoolean;", INVOKESTATIC)
 )
 
-private fun File.isClassFile() = toString().endsWith(".class")
-
 private operator fun Int.contains(bit: Int) = this and bit != 0
 
 private inline fun code(mv: MethodVisitor, block: InstructionAdapter.() -> Unit) {
@@ -113,74 +110,24 @@ class FieldInfo(val fieldId: FieldId, val fieldType: Type) {
     private fun mangleInternal(fieldName: String): String = "$fieldName\$internal"
 }
 
-data class SourceInfo(
-    val method: MethodId,
-    val source: String?,
-    val i: AbstractInsnNode? = null,
-    val insnList: InsnList? = null
-) {
-    override fun toString(): String = buildString {
-        source?.let { append("$it:") }
-        i?.line?.let { append("$it:") }
-        append(" $method")
-    }
-}
-
 enum class Variant { FU, VH, BOTH }
 
 class AtomicFUTransformer(
     classpath: List<String>,
-    var inputDir: File,
-    var outputDir: File = inputDir,
+    inputDir: File,
+    outputDir: File = inputDir,
     var variant: Variant = Variant.FU
-) {
-    var verbose = false
-
-    private var logger = LoggerFactory.getLogger(AtomicFUTransformer::class.java)
+) : AtomicFUTransformerBase(inputDir, outputDir) {
 
     private val classLoader = URLClassLoader(
         (listOf(inputDir) + (classpath.map { File(it) } - outputDir))
             .map { it.toURI().toURL() }.toTypedArray()
     )
 
-    private var hasErrors = false
-    private var transformed = false
-
     private val fields = mutableMapOf<FieldId, FieldInfo>()
     private val accessors = mutableMapOf<MethodId, FieldInfo>()
 
-    private fun format(message: String, sourceInfo: SourceInfo? = null): String {
-        var loc = if (sourceInfo == null) "" else sourceInfo.toString() + ": "
-        if (verbose && sourceInfo != null && sourceInfo.i != null)
-            loc += sourceInfo.i.atIndex(sourceInfo.insnList)
-        return "$loc$message"
-    }
-
-    private fun info(message: String, sourceInfo: SourceInfo? = null) {
-        logger.info(format(message, sourceInfo))
-    }
-
-    private fun debug(message: String, sourceInfo: SourceInfo? = null) {
-        logger.debug(format(message, sourceInfo))
-    }
-
-    private fun error(message: String, sourceInfo: SourceInfo? = null) {
-        logger.error(format(message, sourceInfo))
-        hasErrors = true
-    }
-
-    private fun File.mkdirsAndWrite(outBytes: ByteArray) {
-        parentFile.mkdirs()
-        writeBytes(outBytes) // write resulting bytes
-    }
-
-    private operator fun File.div(child: String) =
-        File(this, child)
-
-    private fun File.toOutputFile(): File =
-        outputDir / relativeTo(inputDir).toString()
-
-    fun transform() {
+    override fun transform() {
         info("Analyzing in $inputDir")
         val succ = analyzeFiles()
         if (hasErrors) throw Exception("Encountered errors while collecting fields")
