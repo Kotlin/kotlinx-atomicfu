@@ -8,6 +8,6 @@ class C {
     @Test
     fun testInternal() {
         val a = A()
-        check(a.yyy.decrementAndGet() == 5L)
+        check(a.yyy.decrementAndGet() == 638753975930025819)
     }
 }

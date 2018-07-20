@@ -59,9 +59,7 @@ class LockFreeLongCounter {
 
     fun increment(): Long = counter.incrementAndGet()
 
-    fun add2() {
-        counter += 2
-    }
+    fun add2() = counter.getAndAdd(2)
 
     fun setM2() {
         counter.value = -2L // LDC instruction here
