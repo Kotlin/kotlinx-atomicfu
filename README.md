@@ -231,7 +231,8 @@ It is a regular library and you should declare a normal dependency, no plugin is
 Only single-threaded code (JS-style) is currently supported. 
 
 Kotlin/Native supports only Gradle version 4.7 or later 
-and you should use `kotlin-platform-native` plugin like this.
+and you should use `kotlin-platform-native` plugin.
+
 First of all, you'll need to enable Gradle metadata in your
 `settings.gradle` file:
 
@@ -239,7 +240,7 @@ First of all, you'll need to enable Gradle metadata in your
 enableFeaturePreview('GRADLE_METADATA')
 ```
 
-Then, you'll need to apply the corresponding plug and add apropriate dependencies in your
+Then, you'll need to apply the corresponding plugin and add appropriate dependencies in your
 `build.gradle` file:
 
 ```groovy
@@ -279,7 +280,7 @@ sourceSets {
 Since Kotlin/Native does not generally provide binary compatibility between versions, 
 you should use the same version of Kotlin/Native compiler as was used to build AtomicFU. 
 Add an appropriate `kotlin_native_version` to your `gradle.properties` file. 
-See [gradle.properties](gradle.properties) in AtomicFu project.
+See [gradle.properties](gradle.properties) in AtomicFU project.
 
 ## Additional features
 
