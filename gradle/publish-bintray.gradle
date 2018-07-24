@@ -10,15 +10,18 @@ def isNative = project.name.endsWith("native")
 
 // ------------- tasks
 
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from "src/main/kotlin"
-}
+// workaround for tasks created by native plugin
+if (!isNative) {
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from "src/main/kotlin"
+    }
 
-// empty xxx-javadoc.jar
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from "$buildDir/javadoc" // would not exist
+    // empty xxx-javadoc.jar
+    task javadocJar(type: Jar) {
+        classifier = 'javadoc'
+        from "$buildDir/javadoc" // would not exist
+    }
 }
 
 publishing {
@@ -29,9 +32,9 @@ publishing {
         maven(MavenPublication) {
             if (!isNative) {
                 from components.java
+                artifact sourcesJar
+                artifact javadocJar
             }
-            artifact sourcesJar
-            artifact javadocJar
             if (project.name.endsWith("-maven-plugin")) {
                 pom.with {
                     packaging = 'maven-plugin'

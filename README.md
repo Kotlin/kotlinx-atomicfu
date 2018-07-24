@@ -8,11 +8,12 @@ The idiomatic way to use atomic operations in Kotlin.
 
 * Code it like `AtomicReference/Int/Long`, but run it in production like `AtomicReference/Int/LongFieldUpdater`. 
 * Use Kotlin-specific extensions (e.g. inline `updateAndGet` and `getAndUpdate` functions).
-* Compile-time dependency only (no runtime dependencies).
-* Post-compilation bytecode transformer that declares all the relevant field updaters for you. 
-* Cross-platform 
-  * Kotlin/JS and Kotlin/Native (single-thread only) are supported, too.
-  * However, they work as a library dependency at the moment (unlike Kotlin/JVM).
+* Compile-time dependency only (no runtime dependencies) on Kotlin/JVM.
+  * Post-compilation bytecode transformer that declares all the relevant field updaters for you.
+  * See [JVM build setup](#jvm-build-setup) for details. 
+* [Multiplatform](#multiplatform) 
+  * [Kotlin/JS](#javascript) and [Kotlin/Native](#native) are supported.
+  * However, they work as a library dependencies at the moment (unlike Kotlin/JVM).
   * This enables writing common Kotlin code with atomics.
 
 ## Example
@@ -84,7 +85,11 @@ public var foo: T                     // public val/var
     set(value) { _foo.value = value }
 ```  
 
-## Maven build setup
+## JVM build setup
+
+Building with [Maven](#maven) and [Gradle](#gradle) is supported for Kotlin/JVM. 
+
+## Maven
 
 Declare AtomicFU version:
 
@@ -154,7 +159,7 @@ which is then transformed to a regular `classes` directory to be used later by t
     </build>
 ```
 
-## Gradle build setup
+## Gradle
 
 You will need Gradle 4.0 or later for the following snippets to work.
 Add and apply AtomicFU plugin:
@@ -183,11 +188,9 @@ Install bytecode transformation pipeline so that compiled classes from `classes`
 transformed to a different `classes-post-atomicfu` directory to be used later by tests and delivery.
 
 ```groovy
-def CLASSES_POST_ATOMICFU = file("$buildDir/classes-post-atomicfu/main")
-
 atomicFU {
     inputFiles = sourceSets.main.output.classesDirs
-    outputDir = CLASSES_POST_ATOMICFU
+    outputDir = file("$buildDir/classes-post-atomicfu/main")
     classPath = sourceSets.main.runtimeClasspath
     variant = "FU" // "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code
 }
@@ -198,11 +201,91 @@ jar.dependsOn atomicFU
 
 jar {
     mainSpec.sourcePaths.clear() // hack to clear existing paths
-    from files(CLASSES_POST_ATOMICFU, sourceSets.main.output.resourcesDir)
+    from files(atomicFU.outputDir, sourceSets.main.output.resourcesDir)
 }
 ```
 
-## VarHandles with Java 9 (optional)
+## Multiplatform
+
+AtomicFU is also available for [Kotlin/JS](#javascript) and [Kotlin/Native](#native). If you write
+a common code that should get compiled or different platforms, add `org.jetbrains.kotlinx:atomicfu-common`
+to your common code dependencies.
+
+### JavaScript
+
+This library is available for Kotlin/JS via Bintray JCenter and Maven Central as 
+[`org.jetbrains.kotlinx:atomicfu-js`](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu) and via NPM
+as [`kotlinx.atomicfu`](https://www.npmjs.com/package/kotlinx-atomicfu). 
+It is a regular library and you should declare a normal dependency, no plugin is needed nor available.
+Both Maven and Gradle can be used. 
+
+Since Kotlin/JS does not generally provide binary compatibility between versions, 
+you should use the same version of Kotlin compiler. 
+See [gradle.properties](gradle.properties).
+
+### Native
+
+This library is available for Kotlin/Native via Bintray JCenter and Maven Central as 
+[`org.jetbrains.kotlinx:atomicfu-native`](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu). 
+It is a regular library and you should declare a normal dependency, no plugin is needed nor available.
+Only single-threaded code (JS-style) is currently supported. 
+
+Kotlin/Native supports only Gradle version 4.7 or later 
+and you should use `kotlin-platform-native` plugin like this.
+First of all, you'll need to enable Gradle metadata in your
+`settings.gradle` file:
+
+```groovy
+enableFeaturePreview('GRADLE_METADATA')
+```
+
+Then, you'll need to apply the corresponding plug and add apropriate dependencies in your
+`build.gradle` file:
+
+```groovy
+buildscript {
+    repositories {
+        jcenter()
+        maven { url 'https://plugins.gradle.org/m2/' }
+        maven { url 'https://dl.bintray.com/jetbrains/kotlin-native-dependencies' }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
+    }
+
+}
+
+apply plugin: 'kotlin-platform-native'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation 'org.jetbrains.kotlinx:atomicfu-native:0.11.0'
+}
+
+sourceSets {
+    main {
+        component {
+            target "ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64" 
+            outputKinds = [EXECUTABLE]
+        }
+    }
+}
+```
+
+Since Kotlin/Native does not generally provide binary compatibility between versions, 
+you should use the same version of Kotlin/Native compiler as was used to build AtomicFU. 
+Add an appropriate `kotlin_native_version` to your `gradle.properties` file. 
+See [gradle.properties](gradle.properties) in AtomicFu project.
+
+## Additional features
+
+AtomicFU provides some additional features that you can optionally use.
+
+### VarHandles with Java 9 (optional)
 
 AtomicFU can produce code that is using Java 9 
 [VarHandle](http://download.java.net/java/jdk9/docs/api/java/lang/invoke/VarHandle.html)
@@ -213,7 +296,7 @@ You can also create [JEP 238](http://openjdk.java.net/jeps/238) multi-release ja
 Set `variant` configuration option to `BOTH` and configure `Multi-Release: true` attribute
 in the resulting jar manifest.
 
-## Testing lock-free data structures (optional)
+### Testing lock-free data structures on JVM (optional)
 
 You can optionally test lock-freedomness of lock-free data structures using `LockFreedomTestEnvironment` class.
 See example in [`LockFreeQueueLFTest`](atomicfu-test/src/test/kotlin/kotlinx/atomicfu/test/LockFreeQueueLFTest.kt).
