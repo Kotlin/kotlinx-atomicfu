@@ -10,6 +10,10 @@ The idiomatic way to use atomic operations in Kotlin.
 * Use Kotlin-specific extensions (e.g. inline `updateAndGet` and `getAndUpdate` functions).
 * Compile-time dependency only (no runtime dependencies).
 * Post-compilation bytecode transformer that declares all the relevant field updaters for you. 
+* Cross-platform 
+  * Kotlin/JS and Kotlin/Native (single-thread only) are supported, too.
+  * However, they work as a library dependency at the moment (unlike Kotlin/JVM).
+  * This enables writing common Kotlin code with atomics.
 
 ## Example
 
