@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.11.0
+
+* AtomicBoolean support (see #6)
+* Kotlin/Native 0.9-dev-2922, all platforms, published to Maven Central
+
 ## Version 0.10.3-native
 
 * Kotlin 1.2.51.
