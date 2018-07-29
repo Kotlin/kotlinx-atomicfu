@@ -18,7 +18,7 @@ Let us declare a `top` variable for a lock-free stack implementation:
 ```kotlin
 import kotlinx.atomicfu.atomic // import top-level atomic function from kotlinx.atomicfu
 
-private val top = atomic<Node?>(null) // must be declared as private val with initializer
+private val top = atomic<Node?>(null) 
 ```
 
 Use `top.value` to perform volatile reads and writes:
@@ -62,7 +62,7 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 
 ## Dos and Don'ts
 
-* Declare atomic variables as `private val`. You can use just (public) `val` in nested classes, 
+* Declare atomic variables as `private val` or `internal val`. You can use just (public) `val` in nested classes, 
   but make sure they are not accessed outside of your Kotlin source file.
 * Only simple operations on atomic variables _directly_ are supported. 
   * Do not read references on atomic variables into local variables,
