@@ -93,17 +93,25 @@ data class FieldId(val owner: String, val name: String) {
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
-class FieldInfo(fieldId: FieldId, val fieldType: Type) {
+class FieldInfo(val fieldId: FieldId, val fieldType: Type) {
     val owner = fieldId.owner
-    val name = fieldId.name
     val ownerType: Type = Type.getObjectType(owner)
-    val fuName = fieldId.name + '$' + "FU"
     val typeInfo = AFU_CLASSES[fieldType.internalName]!!
     val fuType = typeInfo.fuType
-    val accessors = mutableListOf<MethodId>()
+    val accessors = mutableSetOf<MethodId>()
+    var hasExternalAccess = false
+    val name: String
+        get() = if (hasExternalAccess) mangleInternal(fieldId.name) else fieldId.name
+    val fuName: String
+        get() {
+            val fuName = fieldId.name + '$' + "FU"
+            return if (hasExternalAccess) mangleInternal(fuName) else fuName
+        }
+
     override fun toString(): String = "${owner.prettyStr()}::$name"
 
     fun getPrimitiveType(vh: Boolean): Type = if (vh) typeInfo.originalType else typeInfo.transformedType
+    private fun mangleInternal(fieldName: String): String = "$fieldName\$internal"
 }
 
 data class SourceInfo(
@@ -162,17 +170,22 @@ class AtomicFUTransformer(
         hasErrors = true
     }
 
+    private fun File.mkdirsAndWrite(outBytes: ByteArray) {
+        parentFile.mkdirs()
+        writeBytes(outBytes) // write resulting bytes
+    }
+
+    private operator fun File.div(child: String) =
+        File(this, child)
+
+    private fun File.toOutputFile(): File =
+        outputDir / relativeTo(inputDir).toString()
+
     fun transform() {
         info("Analyzing in $inputDir")
-        var inpFilesTime = 0L
-        var outFilesTime = 0L
-        inputDir.walk().filter { it.isFile }.forEach { file ->
-            inpFilesTime = inpFilesTime.coerceAtLeast(file.lastModified())
-            if (file.isClassFile()) analyzeFile(file)
-            outFilesTime = outFilesTime.coerceAtLeast(file.toOutputFile().lastModified())
-        }
+        val succ = analyzeFiles()
         if (hasErrors) throw Exception("Encountered errors while collecting fields")
-        if (inpFilesTime > outFilesTime || outputDir == inputDir) {
+        if (succ || outputDir == inputDir) {
             // perform transformation
             info("Transforming to $outputDir")
             val vh = variant == Variant.VH
@@ -193,19 +206,28 @@ class AtomicFUTransformer(
         }
     }
 
-    private fun File.mkdirsAndWrite(outBytes: ByteArray) {
-        parentFile.mkdirs()
-        writeBytes(outBytes) // write resulting bytes
+    private fun analyzeFiles(): Boolean {
+        var inpFilesTime = 0L
+        var outFilesTime = 0L
+        // 1 phase: visit methods and fields, register all accessors
+        inputDir.walk().filter { it.isFile }.forEach { file ->
+            inpFilesTime = inpFilesTime.coerceAtLeast(file.lastModified())
+            if (file.isClassFile()) analyzeFile(file)
+        }
+        // 2 phase: visit method bodies for external references to fields
+        inputDir.walk().filter { it.isFile }.forEach { file ->
+            if (file.isClassFile()) analyzeExternalRefs(file)
+            outFilesTime = outFilesTime.coerceAtLeast(file.toOutputFile().lastModified())
+        }
+        return inpFilesTime > outFilesTime
     }
-
-    private operator fun File.div(child: String) =
-        File(this, child)
-
-    private fun File.toOutputFile(): File =
-        outputDir / relativeTo(inputDir).toString()
 
     private fun analyzeFile(file: File) {
         ClassReader(file.inputStream()).accept(CollectorCV(), SKIP_FRAMES)
+    }
+
+    private fun analyzeExternalRefs(file: File) {
+        ClassReader(file.inputStream()).accept(ReferencesCollectorCV(), SKIP_FRAMES)
     }
 
     private fun transformFile(file: File, bytes: ByteArray, vh: Boolean): ByteArray {
@@ -262,19 +284,6 @@ class AtomicFUTransformer(
         }
     }
 
-    // returns a type on which this is a potential accessor
-    private fun getPotentialAccessorType(access: Int, className: String, methodType: Type): Type? {
-        if (methodType.returnType !in AFU_TYPES) return null
-        return if (access and ACC_STATIC != 0) {
-            if (methodType.argumentTypes.size == 1 && methodType.argumentTypes[0].sort == OBJECT)
-                methodType.argumentTypes[0] else null
-        } else {
-            // if it not static, then it must be final
-            if (access and ACC_FINAL != 0 && methodType.argumentTypes.isEmpty())
-                Type.getObjectType(className) else null
-        }
-    }
-
     private inner class AccessorCollectorMV(
         private val className: String,
         access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?
@@ -299,6 +308,54 @@ class AtomicFUTransformer(
         }
     }
 
+    // returns a type on which this is a potential accessor
+    private fun getPotentialAccessorType(access: Int, className: String, methodType: Type): Type? {
+        if (methodType.returnType !in AFU_TYPES) return null
+        return if (access and ACC_STATIC != 0) {
+            if (methodType.argumentTypes.size == 1 && methodType.argumentTypes[0].sort == OBJECT)
+                methodType.argumentTypes[0] else null
+        } else {
+            // if it not static, then it must be final
+            if (access and ACC_FINAL != 0 && methodType.argumentTypes.isEmpty())
+                Type.getObjectType(className) else null
+        }
+    }
+
+    private inner class ReferencesCollectorCV : CV(null) {
+        override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
+            return ReferencesCollectorMV(className, access, name, desc, signature, exceptions)
+        }
+    }
+
+    private inner class ReferencesCollectorMV(
+        private val className: String,
+        access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?
+    ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
+
+        override fun visitEnd() {
+            // skip accessor method - already registered in the previous phase
+            val methodId = MethodId(className, name, desc, accessToInvokeOpcode(access))
+            accessors[methodId]?.let { return }
+            // not accessor
+            var i = instructions.first
+            while (i != null) {
+                i = getPotentialExternalAccessorInvokes(i)
+            }
+        }
+
+        private fun getPotentialExternalAccessorInvokes(i: AbstractInsnNode): AbstractInsnNode? {
+            if (i is MethodInsnNode) {
+                val methodId = MethodId(i.owner, i.name, i.desc, i.opcode)
+                // compare owner packages
+                if (methodId.owner.substringBeforeLast('/') != className.substringBeforeLast('/')) {
+                    accessors[methodId]?.let { it.hasExternalAccess= true }
+                }
+            }
+            return i.next
+        }
+    }
+
+
     private inner class TransformerCV(
         cv: ClassVisitor,
         private val vh: Boolean
@@ -320,8 +377,13 @@ class AtomicFUTransformer(
         override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
             val fieldType = Type.getType(desc)
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
-                val f = fields[FieldId(className, name)]!!
-                val protection = if (f.accessors.isEmpty()) ACC_PRIVATE else 0
+                val fieldId = FieldId(className, name)
+                val f = fields[fieldId]!!
+                val protection = when {
+                    f.hasExternalAccess -> ACC_PUBLIC or ACC_SYNTHETIC
+                    f.accessors.isEmpty() -> ACC_PRIVATE
+                    else -> 0
+                }
                 val primitiveType = f.getPrimitiveType(vh)
                 val fv = super.visitField(protection or ACC_VOLATILE, f.name, primitiveType.descriptor, null, null)
                 if (vh) vhField(protection, f) else fuField(protection, f)
@@ -377,10 +439,11 @@ class AtomicFUTransformer(
             }
         }
 
-        override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>? ): MethodVisitor? {
+        override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
             val method = MethodId(className, name, desc, accessToInvokeOpcode(access))
-            if (method in accessors)
+            if (method in accessors) {
                 return null // drop accessor
+            }
             val sourceInfo = SourceInfo(method, source)
             val superMV = if (name == "<clinit>" && desc == "()V") {
                 if (access and ACC_STATIC == 0) abort("<clinit> method not marked as static")
@@ -469,7 +532,7 @@ class AtomicFUTransformer(
         // ld: instruction that loads atomic field (already changed to getstatic)
         // iv: invoke virtual on the loaded atomic field (to be fixed)
         private fun fixupInvokeVirtual(ld: FieldInsnNode, iv: MethodInsnNode, f: FieldInfo): AbstractInsnNode? {
-            var typeInfo = AFU_CLASSES[iv.owner]!!
+            val typeInfo = AFU_CLASSES[iv.owner]!!
             if (iv.name == "getValue" || iv.name == "setValue") {
                 instructions.remove(ld) // drop getstatic (we don't need field updater)
                 val primitiveType = f.getPrimitiveType(vh)
@@ -610,6 +673,7 @@ class AtomicFUTransformer(
                             val f = fields[fieldId]!!
                             val primitiveType = f.getPrimitiveType(vh)
                             next.desc = primitiveType.descriptor
+                            next.name = f.name
                             return next.next
                         }
                         methodId in accessors -> {
@@ -676,4 +740,3 @@ fun main(args: Array<String>) {
     t.verbose = true
     t.transform()
 }
-
