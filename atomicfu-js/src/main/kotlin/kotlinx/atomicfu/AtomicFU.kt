@@ -187,3 +187,43 @@ public actual class AtomicLong internal constructor(value: Long) {
 
     override fun toString(): String = value.toString()
 }
+
+// ==================================== AtomicIntArray ====================================
+
+@JsName("AtomicIntArray\$int")
+public actual class AtomicIntArray actual constructor(size: Int) {
+    public actual var array = arrayOf<AtomicInt>()
+
+    @JsName("get\$atomicfu")
+    public actual operator fun get(index: Int): AtomicInt = array[index]
+}
+
+// ==================================== AtomicLongArray ====================================
+
+@JsName("AtomicLongArray\$long")
+public actual class AtomicLongArray actual constructor(size: Int) {
+    public actual var array = arrayOf<AtomicLong>()
+
+    @JsName("get\$atomicfu")
+    public actual operator fun get(index: Int): AtomicLong = array[index]
+}
+
+// ==================================== AtomicBooleanArray ====================================
+
+@JsName("AtomicBooleanArray\$boolean")
+public actual class AtomicBooleanArray actual constructor(size: Int) {
+    public actual var array = arrayOf<AtomicBoolean>()
+
+    @JsName("get\$atomicfu")
+    public actual operator fun get(index: Int): AtomicBoolean = array[index]
+}
+
+// ==================================== AtomicArray ====================================
+
+@JsName("AtomicRefArray\$ref")
+public actual class AtomicArray<T> actual constructor(size: Int) {
+    public actual var array = arrayOf<AtomicRef<T>>()
+
+    @JsName("get\$atomicfu")
+    public actual operator fun get(index: Int): AtomicRef<T> = array[index]
+}

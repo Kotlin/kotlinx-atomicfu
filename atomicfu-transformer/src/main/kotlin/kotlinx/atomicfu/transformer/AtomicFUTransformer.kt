@@ -38,27 +38,35 @@ private const val JUCA_PKG = "java/util/concurrent/atomic"
 private const val JLI_PKG = "java/lang/invoke"
 private const val ATOMIC = "atomic"
 private const val ATOMICFU = "atomicfu"
-private const val INTERNAL = "internal"
+
+private val INT_ARRAY_TYPE = Type.getType("[I")
+private val LONG_ARRAY_TYPE = Type.getType("[J")
+private val BOOLEAN_ARRAY_TYPE = Type.getType("[Z")
+private val REF_ARRAY_TYPE = Type.getType("[Ljava/lang/Object;")
+
 
 private val AFU_CLASSES: Map<String, TypeInfo> = mapOf(
     "$AFU_PKG/AtomicInt" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerFieldUpdater"), INT_TYPE, INT_TYPE),
     "$AFU_PKG/AtomicLong" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicLongFieldUpdater"), LONG_TYPE, LONG_TYPE),
-    "$AFU_PKG/AtomicRef" to TypeInfo(
-        Type.getObjectType("$JUCA_PKG/AtomicReferenceFieldUpdater"),
-        OBJECT_TYPE,
-        OBJECT_TYPE
-    ),
-    "$AFU_PKG/AtomicBoolean" to TypeInfo(
-        Type.getObjectType("$JUCA_PKG/AtomicIntegerFieldUpdater"),
-        BOOLEAN_TYPE,
-        INT_TYPE
-    )
+    "$AFU_PKG/AtomicRef" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicReferenceFieldUpdater"), OBJECT_TYPE, OBJECT_TYPE),
+    "$AFU_PKG/AtomicBoolean" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerFieldUpdater"), BOOLEAN_TYPE, INT_TYPE),
+
+    "$AFU_PKG/AtomicIntArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerArray"), INT_ARRAY_TYPE, INT_ARRAY_TYPE),
+    "$AFU_PKG/AtomicLongArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicLongArray"), LONG_ARRAY_TYPE, LONG_ARRAY_TYPE),
+    "$AFU_PKG/AtomicBooleanArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerArray"), BOOLEAN_ARRAY_TYPE, INT_ARRAY_TYPE),
+    "$AFU_PKG/AtomicArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicReferenceArray"), REF_ARRAY_TYPE, REF_ARRAY_TYPE)
 )
 
 private val WRAPPER: Map<Type, String> = mapOf(
     Type.INT_TYPE to "java/lang/Integer",
     Type.LONG_TYPE to "java/lang/Long",
     Type.BOOLEAN_TYPE to "java/lang/Boolean"
+)
+
+private val ARRAY_ELEMENT_TYPE: Map<Type, Int> = mapOf(
+    INT_ARRAY_TYPE to T_INT,
+    LONG_ARRAY_TYPE to T_LONG,
+    BOOLEAN_ARRAY_TYPE to T_BOOLEAN
 )
 
 private val AFU_TYPES: Map<Type, TypeInfo> = AFU_CLASSES.mapKeys { Type.getObjectType(it.key) }
@@ -82,7 +90,12 @@ private val FACTORIES: Set<MethodId> = setOf(
     MethodId(AFU_CLS, ATOMIC, "(Ljava/lang/Object;)L$AFU_PKG/AtomicRef;", INVOKESTATIC),
     MethodId(AFU_CLS, ATOMIC, "(I)L$AFU_PKG/AtomicInt;", INVOKESTATIC),
     MethodId(AFU_CLS, ATOMIC, "(J)L$AFU_PKG/AtomicLong;", INVOKESTATIC),
-    MethodId(AFU_CLS, ATOMIC, "(Z)L$AFU_PKG/AtomicBoolean;", INVOKESTATIC)
+    MethodId(AFU_CLS, ATOMIC, "(Z)L$AFU_PKG/AtomicBoolean;", INVOKESTATIC),
+
+    MethodId("$AFU_PKG/AtomicIntArray", "<init>", "(I)V", INVOKESPECIAL),
+    MethodId("$AFU_PKG/AtomicLongArray", "<init>", "(I)V", INVOKESPECIAL),
+    MethodId("$AFU_PKG/AtomicBooleanArray", "<init>", "(I)V", INVOKESPECIAL),
+    MethodId("$AFU_PKG/AtomicArray", "<init>", "(I)V", INVOKESPECIAL)
 )
 
 private fun File.isClassFile() = toString().endsWith(".class")
@@ -103,7 +116,7 @@ data class FieldId(val owner: String, val name: String) {
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
-class FieldInfo(val fieldId: FieldId, val fieldType: Type) {
+class FieldInfo(val fieldId: FieldId, val fieldType: Type, val signature: String?) {
     val owner = fieldId.owner
     val ownerType: Type = Type.getObjectType(owner)
     val typeInfo = AFU_CLASSES[fieldType.internalName]!!
@@ -113,7 +126,10 @@ class FieldInfo(val fieldId: FieldId, val fieldType: Type) {
 
     override fun toString(): String = "${owner.prettyStr()}::${getName(hasExternalAccess)}"
 
-    fun getPrimitiveType(vh: Boolean): Type = if (vh) typeInfo.originalType else typeInfo.transformedType
+    fun getPrimitiveType(vh: Boolean): Type {
+        signature?.let {if (isGenericArrayOwner(signature)) return Type.getType("[" + getGenericType(it))}
+        return if (vh) typeInfo.originalType else typeInfo.transformedType
+    }
     fun getName(hasExternalAccess: Boolean) : String = if (hasExternalAccess) mangleInternal(fieldId.name) else fieldId.name
     fun getFUName(hasExternalAccess: Boolean) : String {
         val fuName = fieldId.name + '$' + "FU"
@@ -121,6 +137,13 @@ class FieldInfo(val fieldId: FieldId, val fieldType: Type) {
     }
 
     private fun mangleInternal(fieldName: String): String = "$fieldName\$internal"
+    private fun getGenericType(signature: String) = signature.substringAfter('<').substringBefore('>')
+    private fun isGenericArrayOwner(signature: String): Boolean {
+        AFU_CLASSES[signature.substringBefore('<')]?.let {
+            return it.originalType == REF_ARRAY_TYPE
+        }
+        return false
+    }
 }
 
 data class SourceInfo(
@@ -272,8 +295,8 @@ class AtomicFUTransformer(
         }
     }
 
-    private fun registerField(field: FieldId, fieldType: Type): FieldInfo {
-        val result = fields.getOrPut(field) { FieldInfo(field, fieldType) }
+    private fun registerField(field: FieldId, fieldType: Type, signature: String?): FieldInfo {
+        val result = fields.getOrPut(field) { FieldInfo(field, fieldType, signature) }
         if (result.fieldType != fieldType) abort("$field type mismatch between $fieldType and ${result.fieldType}")
         return result
     }
@@ -286,7 +309,7 @@ class AtomicFUTransformer(
                 info("$field field found")
                 if (ACC_PUBLIC in access) error("$field field cannot be public")
                 if (ACC_FINAL !in access) error("$field field must be final")
-                registerField(field, fieldType)
+                registerField(field, fieldType, signature)
             }
             return null
         }
@@ -317,7 +340,7 @@ class AtomicFUTransformer(
                 val fieldType = Type.getType(fi.desc)
                 val accessorMethod = MethodId(className, name, desc, accessToInvokeOpcode(access))
                 info("$field accessor $name found")
-                val fieldInfo = registerField(field, fieldType)
+                val fieldInfo = registerField(field, fieldType, signature)
                 fieldInfo.accessors += accessorMethod
                 accessors[accessorMethod] = fieldInfo
             }
@@ -354,7 +377,7 @@ class AtomicFUTransformer(
             getPotentialAccessorType(access, className, methodType)?.let {
                 return
             }
-                // not accessor
+            // not accessor
             var i = instructions.first
             while (i != null) {
                 i = getPotentialExternalAccessorInvokes(i)
@@ -411,15 +434,17 @@ class AtomicFUTransformer(
         override fun visitField( access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
             val fieldType = Type.getType(desc)
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
-                var fieldId = FieldId(className, name)
+                val fieldId = FieldId(className, name)
                 val f = fields[fieldId]!!
                 var protection = if (f.accessors.isEmpty()) ACC_PRIVATE else 0
-                val primitiveType = f.getPrimitiveType(vh)
+                var primitiveType = f.getPrimitiveType(vh)
                 if (f.hasExternalAccess) {
                     protection = ACC_PUBLIC
                 }
-                val fv = super.visitField(protection or ACC_VOLATILE, f.getName(f.hasExternalAccess), primitiveType.descriptor, null, null)
-                if (vh) vhField(protection, f) else fuField(protection, f)
+                val arrayField = f.getPrimitiveType(vh).sort == ARRAY
+                val fv = if (arrayField && !vh) super.visitField(protection, f.getName(f.hasExternalAccess), f.fuType.descriptor, null, null)
+                                   else super.visitField(protection or ACC_VOLATILE, f.getName(f.hasExternalAccess), primitiveType.descriptor, null, null)
+                if (vh) vhField(protection, f, arrayField) else if (!arrayField) fuField(protection, f)
                 transformed = true
                 return fv
             }
@@ -427,24 +452,31 @@ class AtomicFUTransformer(
         }
 
         // Generates static VarHandle field
-        private fun vhField(protection: Int, f: FieldInfo) {
+        private fun vhField(protection: Int, f: FieldInfo, arrayField: Boolean) {
             super.visitField(protection or ACC_FINAL or ACC_STATIC, f.getFUName(f.hasExternalAccess), VH_TYPE.descriptor, null, null)
             code(getOrCreateNewClinit()) {
-                invokestatic(METHOD_HANDLES, "lookup", "()L$LOOKUP;", false)
-                aconst(Type.getObjectType(className))
-                aconst(f.getName(f.hasExternalAccess))
-                val primitiveType = f.getPrimitiveType(vh)
-                if (primitiveType.sort == OBJECT) {
-                    aconst(primitiveType)
+                if (!arrayField) {
+                    invokestatic(METHOD_HANDLES, "lookup", "()L$LOOKUP;", false)
+                    aconst(Type.getObjectType(className))
+                    aconst(f.getName(f.hasExternalAccess))
+                    val primitiveType = f.getPrimitiveType(vh)
+                    if (primitiveType.sort == OBJECT) {
+                        aconst(primitiveType)
+                    } else {
+                        val wrapper = WRAPPER[primitiveType]!!
+                        getstatic(wrapper, "TYPE", CLASS_TYPE.descriptor)
+                    }
+                    invokevirtual(
+                        LOOKUP, "findVarHandle",
+                        getMethodDescriptor(VH_TYPE, CLASS_TYPE, STRING_TYPE, CLASS_TYPE), false
+                    )
+                    putstatic(className, f.getFUName(f.hasExternalAccess), VH_TYPE.descriptor)
                 } else {
-                    val wrapper = WRAPPER[primitiveType]!!
-                    getstatic(wrapper, "TYPE", CLASS_TYPE.descriptor)
+                    // create VarHandle for array
+                    aconst(f.getPrimitiveType(vh))
+                    invokestatic(METHOD_HANDLES, "arrayElementVarHandle", getMethodDescriptor(VH_TYPE, CLASS_TYPE), false)
+                    putstatic(className, f.getFUName(f.hasExternalAccess), VH_TYPE.descriptor)
                 }
-                invokevirtual(
-                    LOOKUP, "findVarHandle",
-                    getMethodDescriptor(VH_TYPE, CLASS_TYPE, STRING_TYPE, CLASS_TYPE), false
-                )
-                putstatic(className, f.getFUName(f.hasExternalAccess), VH_TYPE.descriptor)
             }
         }
 
@@ -540,6 +572,8 @@ class AtomicFUTransformer(
             maxLocals = tempLocal + bumpedLocals
         }
 
+        private fun descToName(desc: String): String = desc.substring(1, desc.length - 1)
+
         override fun visitEnd() {
             // transform instructions list
             var hasErrors = false
@@ -565,86 +599,130 @@ class AtomicFUTransformer(
 
         // ld: instruction that loads atomic field (already changed to getstatic)
         // iv: invoke virtual on the loaded atomic field (to be fixed)
-        private fun fixupInvokeVirtual(ld: FieldInsnNode, iv: MethodInsnNode, f: FieldInfo): AbstractInsnNode? {
-            var typeInfo = AFU_CLASSES[iv.owner]!!
+        private fun fixupInvokeVirtual(ld: FieldInsnNode, onArrayElement: Boolean, iv: MethodInsnNode, f: FieldInfo): AbstractInsnNode? {
+            val typeInfo = if (!onArrayElement) AFU_CLASSES[iv.owner]!! else f.typeInfo
             if (iv.name == "getValue" || iv.name == "setValue") {
-                instructions.remove(ld) // drop getstatic (we don't need field updater)
-                val primitiveType = f.getPrimitiveType(vh)
-                val j = FieldInsnNode(
-                    if (iv.name == "getValue") GETFIELD else PUTFIELD,
-                    f.owner, f.getName(f.hasExternalAccess), primitiveType.descriptor
-                )
-                instructions.set(iv, j) // replace invokevirtual with get/setfield
-                return j.next
+                if (!onArrayElement) {
+                    instructions.remove(ld) // drop getstatic (we don't need field updater)
+                    val primitiveType = f.getPrimitiveType(vh)
+                    val j = FieldInsnNode(
+                        if (iv.name == "getValue") GETFIELD else PUTFIELD,
+                        f.owner, f.getName(f.hasExternalAccess), primitiveType.descriptor
+                    )
+                    instructions.set(iv, j) // replace invokevirtual with get/setfield
+                    return j.next
+                } else {
+                    var methodType = Type.getMethodType(iv.desc)
+                    if (f.typeInfo.originalType != f.typeInfo.transformedType && !vh) {
+                        val ret = f.typeInfo.transformedType.elementType
+                        iv.desc = Type.getMethodDescriptor(ret, *methodType.argumentTypes)
+                        methodType = Type.getMethodType(iv.desc)
+                    }
+                    iv.name = iv.name.substring(0, 3)
+                    if (!vh) {
+                        // map to j.u.c.a.Atomic*Array get or set
+                        iv.owner = descToName(f.fuType.descriptor)
+                        iv.desc = Type.getMethodDescriptor(methodType.returnType, INT_TYPE, *methodType.argumentTypes)
+                    } else {
+                        // map to VarHandle get or set
+                        iv.owner = descToName(VH_TYPE.descriptor)
+                        iv.desc = Type.getMethodDescriptor(methodType.returnType, f.getPrimitiveType(vh), INT_TYPE, *methodType.argumentTypes)
+                    }
+                    return iv
+                }
             }
-            // update method invocation
-            if (vh) vhOperation(iv, typeInfo) else fuOperation(iv, typeInfo)
-            // insert swap after field load
-            val swap = InsnNode(SWAP)
-            instructions.insert(ld, swap)
-            return swap.next
+            if (AFU_CLASSES[iv.owner]!!.originalType.sort == ARRAY && iv.name == "get") {
+                //remove getter of array element
+                // save stack start of atomic operation args
+                val args = iv.next
+                instructions.remove(iv)
+                // fixup atomic operation on this array element
+                val nextAtomicOperation = FlowAnalyzer(args).execute() as MethodInsnNode
+                val fixedAtomicOperation = fixupInvokeVirtual(ld, true, nextAtomicOperation, f)
+                return fixedAtomicOperation!!.next
+            } else {
+                // update method invocation
+                if (vh) vhOperation(iv, typeInfo, onArrayElement) else fuOperation(iv, typeInfo, onArrayElement)
+                if (!onArrayElement) {
+                    // insert swap after field load
+                    val swap = InsnNode(SWAP)
+                    instructions.insert(ld, swap)
+                    return swap.next
+                }
+                return iv.next
+            }
         }
 
-        private fun vhOperation(iv: MethodInsnNode, typeInfo: TypeInfo) {
+        private fun vhOperation(iv: MethodInsnNode, typeInfo: TypeInfo, onArrayElement: Boolean) {
             val methodType = Type.getMethodType(iv.desc)
             val args = methodType.argumentTypes
             iv.owner = VH_TYPE.internalName
-            val params = mutableListOf<Type>(OBJECT_TYPE, *args)
-            val long = typeInfo.originalType == LONG_TYPE
+            val params = if (!onArrayElement) mutableListOf<Type>(OBJECT_TYPE, *args) else mutableListOf<Type>(typeInfo.originalType, INT_TYPE, *args)
+            val elementType = if (onArrayElement) typeInfo.originalType.elementType else typeInfo.originalType
+            val long = elementType == LONG_TYPE
             when (iv.name) {
                 "lazySet" -> iv.name = "setRelease"
                 "getAndIncrement" -> {
                     instructions.insertBefore(iv, insns { if (long) lconst(1) else iconst(1) })
-                    params += typeInfo.originalType
+                    params += elementType
                     iv.name = "getAndAdd"
                 }
                 "getAndDecrement" -> {
                     instructions.insertBefore(iv, insns { if (long) lconst(-1) else iconst(-1) })
-                    params += typeInfo.originalType
+                    params += elementType
                     iv.name = "getAndAdd"
                 }
                 "addAndGet" -> {
                     bumpLocals(if (long) 2 else 1)
                     instructions.insertBefore(iv, insns {
                         if (long) dup2() else dup()
-                        store(tempLocal, typeInfo.originalType)
+                        store(tempLocal, elementType)
                     })
                     iv.name = "getAndAdd"
                     instructions.insert(iv, insns {
-                        load(tempLocal, typeInfo.originalType)
-                        add(typeInfo.originalType)
+                        load(tempLocal, elementType)
+                        add(elementType)
                     })
                 }
                 "incrementAndGet" -> {
                     instructions.insertBefore(iv, insns { if (long) lconst(1) else iconst(1) })
-                    params += typeInfo.originalType
+                    params += elementType
                     iv.name = "getAndAdd"
                     instructions.insert(iv, insns {
                         if (long) lconst(1) else iconst(1)
-                        add(typeInfo.originalType)
+                        add(elementType)
                     })
                 }
                 "decrementAndGet" -> {
                     instructions.insertBefore(iv, insns { if (long) lconst(-1) else iconst(-1) })
-                    params += typeInfo.originalType
+                    params += elementType
                     iv.name = "getAndAdd"
                     instructions.insert(iv, insns {
                         if (long) lconst(-1) else iconst(-1)
-                        add(typeInfo.originalType)
+                        add(elementType)
                     })
                 }
             }
             iv.desc = getMethodDescriptor(methodType.returnType, *params.toTypedArray())
         }
 
-        private fun fuOperation(iv: MethodInsnNode, typeInfo: TypeInfo) {
+        private fun fuOperation(iv: MethodInsnNode, typeInfo: TypeInfo, onArrayElement: Boolean) {
             val methodType = Type.getMethodType(iv.desc)
-            val trans = typeInfo.originalType != typeInfo.transformedType
+            val originalElementType = if (onArrayElement) typeInfo.originalType.elementType else typeInfo.originalType
+            val transformedElementType = if (onArrayElement) typeInfo.transformedType.elementType else typeInfo.transformedType
+            val trans = originalElementType != transformedElementType
             val args = methodType.argumentTypes
             var ret = methodType.returnType
             if (trans) {
-                args.forEachIndexed { i, type -> if (type == typeInfo.originalType) args[i] = typeInfo.transformedType }
-                if (iv.name == "getAndSet") ret = typeInfo.transformedType
+                args.forEachIndexed { i, type -> if (type == originalElementType) args[i] = transformedElementType }
+                if (iv.name == "getAndSet") ret = transformedElementType
+            }
+            if (onArrayElement) {
+                // map to j.u.c.a.AtomicIntegerArray method
+                iv.owner = typeInfo.fuType.internalName
+                // add int argument as element index
+                iv.desc = getMethodDescriptor(ret, INT_TYPE, *args)
+                return
             }
             iv.owner = typeInfo.fuType.internalName
             iv.desc = getMethodDescriptor(ret, OBJECT_TYPE, *args)
@@ -656,7 +734,7 @@ class AtomicFUTransformer(
                 is MethodInsnNode -> {
                     // invoked virtual method on atomic var -- fixup & done with it
                     debug("invoke $f.${j.name}", sourceInfo.copy(i = j))
-                    return fixupInvokeVirtual(ld, j, f)
+                    return fixupInvokeVirtual(ld, false, j, f)
                 }
                 is VarInsnNode -> {
                     // was stored to local -- needs more processing:
@@ -702,9 +780,39 @@ class AtomicFUTransformer(
                             val next = i.nextUseful
                             val fieldId = (next as? FieldInsnNode)?.checkPutField()
                                 ?: abort("factory $methodId invocation must be followed by putfield")
+                            val f = fields[fieldId]!!
+                            AFU_CLASSES[i.owner]?.let {
+                                if (it.originalType.sort == ARRAY) {
+                                    if (!vh) {
+                                        // replace with invoking j.u.c.a.Atomic*Array constructor
+                                        val jucaAtomicArrayDesc = it.fuType.descriptor
+                                        // go to invoke of new class AFU_PKG/Atomic*Array
+                                        // todo flow analyser
+                                        val newPos = i.previous.previous.previous
+                                        (newPos as TypeInsnNode).desc = descToName(jucaAtomicArrayDesc)
+                                        i.owner = descToName(jucaAtomicArrayDesc)
+                                        //fix the following putfield
+                                        next.desc = jucaAtomicArrayDesc
+                                        next.name = f.getName(f.hasExternalAccess)
+                                        transformed = true
+                                        return next.next
+                                    } else {
+                                        // remove invoking j.u.c.a.Atomic*Array constructor
+                                        instructions.remove(i.previous.previous.previous)
+                                        // remove dup
+                                        instructions.remove(i.previous.previous)
+                                        // create pure array of given size and put it
+                                        val newarray = if (f.signature == null) IntInsnNode(NEWARRAY, ARRAY_ELEMENT_TYPE[it.originalType]!!)
+                                                            else TypeInsnNode(ANEWARRAY, descToName(f.getPrimitiveType(vh).elementType.descriptor))
+                                        instructions.set(i, newarray)
+                                        next.desc = f.getPrimitiveType(vh).descriptor
+                                        next.name = f.getName(f.hasExternalAccess)
+                                        return next.next
+                                    }
+                                }
+                            }
                             instructions.remove(i)
                             transformed = true
-                            val f = fields[fieldId]!!
                             val primitiveType = f.getPrimitiveType(vh)
                             next.desc = primitiveType.descriptor
                             next.name = f.getName(f.hasExternalAccess)
@@ -717,8 +825,21 @@ class AtomicFUTransformer(
                                 GETSTATIC, f.owner, f.getFUName(f.hasExternalAccess),
                                 if (vh) VH_TYPE.descriptor else f.fuType.descriptor
                             )
+                            if (f.getPrimitiveType(vh).sort == ARRAY && !vh) {
+                                j.opcode = GETFIELD
+                                j.name = f.getName(f.hasExternalAccess)
+                            }
                             instructions.insert(i, j)
                             instructions.remove(i)
+                            if (f.getPrimitiveType(vh).sort == ARRAY && vh) {
+                                // swap className reference and VarHandle
+                                val swap = InsnNode(SWAP)
+                                val getPureArray = FieldInsnNode(GETFIELD, f.owner, f.getName(f.hasExternalAccess), f.getPrimitiveType(vh).descriptor)
+                                instructions.insert(j, swap)
+                                instructions.insert(swap, getPureArray)
+                                transformed = true
+                                return fixupLoadedAtomicVar(f, getPureArray)
+                            }
                             transformed = true
                             return fixupLoadedAtomicVar(f, j)
                         }
@@ -728,12 +849,14 @@ class AtomicFUTransformer(
                     }
                 }
                 is FieldInsnNode -> {
-                    var fieldId = FieldId(i.owner, i.name)
+                    val fieldId = FieldId(i.owner, i.name)
                     if (i.opcode == GETFIELD && fieldId in fields) {
                         // Convert GETFIELD to GETSTATIC on var handle / field updater
                         val f = fields[fieldId]!!
-                        if (i.desc != f.fieldType.descriptor) return i.next // already converted get/setfield
-                        i.opcode = GETSTATIC
+                        if (f.getPrimitiveType(vh).sort != ARRAY) {
+                            if (i.desc != f.fieldType.descriptor) return i.next // already converted get/setfield
+                            i.opcode = GETSTATIC
+                        }
                         i.name = f.getFUName(f.hasExternalAccess)
                         i.desc = if (vh) VH_TYPE.descriptor else f.fuType.descriptor
                         transformed = true
