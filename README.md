@@ -300,7 +300,7 @@ in the resulting jar manifest.
 ### Testing lock-free data structures on JVM (optional)
 
 You can optionally test lock-freedomness of lock-free data structures using `LockFreedomTestEnvironment` class.
-See example in [`LockFreeQueueLFTest`](atomicfu-test/src/test/kotlin/kotlinx/atomicfu/test/LockFreeQueueLFTest.kt).
+See example in [`LockFreeQueueLFTest`](atomicfu/src/test/kotlin/kotlinx/atomicfu/test/LockFreeQueueLFTest.kt).
 Testing is performed by pausing one (random) thread before or after a random state-update operation and
 making sure that all other threads can still make progress. 
 
