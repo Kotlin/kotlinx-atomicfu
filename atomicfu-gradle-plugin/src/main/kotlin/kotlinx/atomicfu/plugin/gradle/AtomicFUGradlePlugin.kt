@@ -8,24 +8,37 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.ConventionTask
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.plugins.ExtensionContainer
 import java.io.File
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
-
+import org.gradle.api.tasks.compile.AbstractCompile
+import org.gradle.jvm.tasks.Jar
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(target: Project) {
         target.configureTransformation()
+        (target.tasks.findByName("jar") as Jar).setupJarManifest()
     }
 }
 
 fun Project.configureTransformation() {
+    plugins.matching { it::class.java.canonicalName.startsWith("org.jetbrains.kotlin.gradle.plugin") }.all {
+        val compileTestKotlin = tasks.findByName("compileTestKotlin") as AbstractCompile?
+        compileTestKotlin?.doFirst {
+            compileTestKotlin.classpath = (compileTestKotlin.classpath
+                - mainSourceSet.output.classesDirs
+                + files((mainSourceSet as ExtensionAware).extensions.getByName("classesDirsCopy")))
+        }
+    }
     afterEvaluate {
         sourceSets.all { sourceSetParam ->
             val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
 
             // make copy of original classes directory
             val classesDirsCopy = project.files(classesDirs.toTypedArray()).filter { it.exists() }
+            (sourceSetParam as ExtensionAware).extensions.add("classesDirsCopy", classesDirsCopy)
 
             // directory for transformed classes
             val transformedClassesDir = File(project.buildDir, "classes/${sourceSetParam.name}-transformed")
@@ -44,6 +57,13 @@ fun Project.configureTransformation() {
             //now instrumentTask is responsible for compiling this source set into the classes directory
             sourceSetParam.compiledBy(transformTask)
         }
+    }
+}
+
+fun Jar.setupJarManifest(classifier: String = "") {
+    this.classifier = classifier
+    manifest.attributes.apply {
+        put("Multi-Release", "true")
     }
 }
 

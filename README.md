@@ -266,16 +266,13 @@ See [gradle.properties](gradle.properties) in AtomicFU project.
 
 AtomicFU provides some additional features that you can optionally use.
 
-### VarHandles with Java 9 (optional)
+### VarHandles with Java 9
 
-AtomicFU can produce code that is using Java 9 
+AtomicFU can produces code that is using Java 9 
 [VarHandle](http://download.java.net/java/jdk9/docs/api/java/lang/invoke/VarHandle.html)
-instead of `AtomicXXXFieldUpdater`. Set `variant` configuration option to `VH`.  
-
-You can also create [JEP 238](http://openjdk.java.net/jeps/238) multi-release jar with both
-`AtomicXXXFieldUpdater` baseline and `VarHandle` version for Java 9+. 
-Set `variant` configuration option to `BOTH` and configure `Multi-Release: true` attribute
-in the resulting jar manifest.
+instead of `AtomicXXXFieldUpdater` and creates [JEP 238](http://openjdk.java.net/jeps/238) multi-release jar file.
+You can set `variant` configuration option to `VH` in order to create a library that has only Java 9+ code
+and does not support Java 8 and below.  
 
 ### Testing lock-free data structures on JVM (optional)
 
