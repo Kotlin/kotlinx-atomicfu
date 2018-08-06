@@ -11,11 +11,13 @@ import org.gradle.api.internal.ConventionTask
 import java.io.File
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
+import org.gradle.jvm.tasks.Jar
 
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(target: Project) {
         target.configureTransformation()
+        (target.tasks.findByName("jar") as Jar).setupJarManifest()
     }
 }
 
@@ -44,6 +46,13 @@ fun Project.configureTransformation() {
             //now instrumentTask is responsible for compiling this source set into the classes directory
             sourceSetParam.compiledBy(transformTask)
         }
+    }
+}
+
+fun Jar.setupJarManifest(classifier: String = "") {
+    this.classifier = classifier
+    manifest.attributes.apply {
+        put("Multi-Release", "true")
     }
 }
 
