@@ -124,15 +124,15 @@ Configure add apply plugin just like for [JVM](#jvm).
 ### Native
 
 This library is available for Kotlin/Native (`atomicfu-native`).
-Only single-threaded code (JS-style) is currently supported. 
-Kotlin/Native supports only Gradle version 4.10. 
-You'll need to enable Gradle metadata in your `settings.gradle` file:
+Kotlin/Native uses Gradle metadata and needs Gradle version 5.3 or later
+See [Gradle Metadata 1.0 announcement](https://blog.gradle.org/gradle-metadata-1.0) for more details.
+Apply the corresponding plugin just like for [JVM](#jvm). 
 
-```groovy
-enableFeaturePreview('GRADLE_METADATA')
-```
-
-Then, you'll need to apply the corresponding plugin just like for [JVM](#jvm). 
+Atomic references for Kotlin/Native are based on 
+[FreezableAtomicReference](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.concurrent/-freezable-atomic-reference/-init-.html)
+and every reference that is stored to the previously 
+[frozen](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.concurrent/freeze.html) 
+(shared with another thread) atomic is automatically frozen, too.
 
 Since Kotlin/Native does not generally provide binary compatibility between versions, 
 you should use the same version of Kotlin compiler as was used to build AtomicFU. 
