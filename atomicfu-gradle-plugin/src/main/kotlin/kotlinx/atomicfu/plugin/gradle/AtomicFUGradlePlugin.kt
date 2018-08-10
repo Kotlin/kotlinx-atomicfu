@@ -2,6 +2,7 @@ package kotlinx.atomicfu.plugin.gradle
 
 import kotlinx.atomicfu.transformer.AtomicFUTransformer
 import kotlinx.atomicfu.transformer.Variant
+import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ProjectDependency
@@ -60,6 +61,7 @@ fun Project.configureTransformation() {
     }
 }
 
+
 fun Jar.setupJarManifest(classifier: String = "") {
     this.classifier = classifier
     manifest.attributes.apply {
@@ -92,7 +94,7 @@ open class AtomicFUTransformTask : ConventionTask() {
     var verbose = false
 
     @Input
-    var variant= Variant.BOTH
+    var variant= if (JavaVersion.current().ordinal >= JavaVersion.VERSION_1_9.ordinal) Variant.VH else Variant.BOTH
 
     @TaskAction
     fun transform() {
