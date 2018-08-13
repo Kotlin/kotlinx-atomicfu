@@ -19,20 +19,22 @@ task configureDirs(dependsOn: compileTestKotlin) {
     (sourceSets.test.output.classesDirs as ConfigurableFileCollection).setFrom(classesPostTransformFU, classesPostTransformVH, classesPostTransformBOTH)
 }
 
+task checkJdk16() {
+    doLast {
+        if (!System.env.JDK_16) {
+            throw new GradleException("JDK_16 environment variable is not defined. " +
+                    "Can't build against JDK 1.6 runtime and run JDK 1.6 compatibility tests. " +
+                    "Please ensure JDK 1.6 is installed and that JDK_16 points to it.")
+        }
+    }
+}
+
 task transformFU(type: JavaExec, dependsOn: compileTestKotlin) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
     args = [classesPreAtomicFuDir, classesPostTransformFU, "FU"]
     classpath = sourceSets.test.runtimeClasspath
     inputs.dir(classesPreAtomicFuDir)
     outputs.dir(classesPostTransformFU)
-}
-
-task transformVH(type: JavaExec, dependsOn: compileTestKotlin) {
-    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
-    args = [classesPreAtomicFuDir, classesPostTransformVH, "VH"]
-    classpath = sourceSets.test.runtimeClasspath
-    inputs.dir(classesPreAtomicFuDir)
-    outputs.dir(classesPostTransformVH)
 }
 
 task transformBOTH(type: JavaExec, dependsOn: compileTestKotlin) {
@@ -43,8 +45,34 @@ task transformBOTH(type: JavaExec, dependsOn: compileTestKotlin) {
     outputs.dir(classesPostTransformBOTH)
 }
 
-task transformedTestFU(type: Test, dependsOn: transformFU) {
+task transformVH(type: JavaExec, dependsOn: compileTestKotlin) {
+    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
+    args = [classesPreAtomicFuDir, classesPostTransformVH, "VH"]
+    classpath = sourceSets.test.runtimeClasspath
+    inputs.dir(classesPreAtomicFuDir)
+    outputs.dir(classesPostTransformVH)
+}
+
+task transformedTestFU_6(type: Test, dependsOn: [checkJdk16, transformFU]) {
+    executable = "$System.env.JDK_16/bin/java"
     classpath = files(configurations.testRuntime, classesPostTransformFU)
+    exclude '**/*LFTest.*'
+}
+
+task transformedTestFU_current(type: Test, dependsOn: transformFU) {
+    classpath = files(configurations.testRuntime, classesPostTransformFU)
+    exclude '**/*LFTest.*'
+}
+
+
+task transformedTestBOTH_6(type: Test, dependsOn: [checkJdk16, transformBOTH]) {
+    executable = "$System.env.JDK_16/bin/java"
+    classpath = files(configurations.testRuntime, classesPostTransformBOTH)
+    exclude '**/*LFTest.*'
+}
+
+task transformedTestBOTH_current(type: Test, dependsOn: transformBOTH) {
+    classpath = files(configurations.testRuntime, classesPostTransformBOTH)
     exclude '**/*LFTest.*'
 }
 
@@ -53,14 +81,18 @@ task transformedTestVH(type: Test, dependsOn: transformVH) {
     exclude '**/*LFTest.*'
 }
 
-transformedTestVH.onlyIf { JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal() }
-
-task transformedTestBOTH(type: Test, dependsOn: transformBOTH) {
-    classpath = files(configurations.testRuntime, classesPostTransformBOTH)
-    exclude '**/*LFTest.*'
+transformedTestVH.onlyIf {
+    logger.println(JavaVersion.current())
+    JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()
 }
 
-task testAll(dependsOn: [transformedTestFU, transformedTestVH, transformedTestBOTH]) {}
+
+task testAll(dependsOn: [
+        transformedTestFU_6,
+        transformedTestFU_current,
+        transformedTestBOTH_6,
+        transformedTestBOTH_current,
+        transformedTestVH])
 
 tasks.withType(Test) {
     testLogging {
