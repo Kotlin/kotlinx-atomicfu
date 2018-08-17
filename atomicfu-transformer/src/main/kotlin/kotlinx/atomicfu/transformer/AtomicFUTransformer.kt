@@ -334,10 +334,8 @@ class AtomicFUTransformer(
 
         override fun visitEnd() {
             // skip accessor method - already registered in the previous phase
-            val methodType = Type.getMethodType(desc)
-            getPotentialAccessorType(access, className, methodType)?.let {
-                return
-            }
+            val methodId = MethodId(className, name, desc, accessToInvokeOpcode(access))
+            accessors[methodId]?.let { return }
             // not accessor
             var i = instructions.first
             while (i != null) {
