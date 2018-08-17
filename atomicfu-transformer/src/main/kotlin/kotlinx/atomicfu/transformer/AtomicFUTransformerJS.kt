@@ -7,47 +7,31 @@ import java.io.File
 import java.io.FileReader
 import java.lang.String.format
 
+private const val ATOMIC_CONSTRUCTOR = """atomic\$(ref|int|long|boolean)\$"""
+private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
+private const val RECEIVER = "\$receiver"
+private const val SCOPE = "scope"
+
 class AtomicFUTransformerJS(
-    var inputDir: File,
-    var outputDir: File
-) {
+    inputDir: File,
+    outputDir: File
+) : AtomicFUTransformerBase(inputDir, outputDir){
+
+    override var logger = LoggerFactory.getLogger(AtomicFUTransformerJS::class.java)
 
     private val p = Parser(CompilerEnvirons())
     private val atomicConstructors = mutableSetOf<String>()
 
-    private operator fun File.div(child: String) =
-        File(this, child)
-
-    private fun File.toOutputFile(): File =
-        outputDir / relativeTo(inputDir).toString()
-
-    private var logger = LoggerFactory.getLogger(AtomicFUTransformer::class.java)
-
-    private fun info(message: String, sourceInfo: SourceInfo? = null) {
-        logger.info(format(message, sourceInfo))
+    override fun transform() {
+        info("Transforming to $outputDir")
+        inputDir.walk().filter { it.isFile }.forEach { file ->
+            val outBytes = transformFile(file)
+            val outFile = file.toOutputFile()
+            outFile.mkdirsAndWrite(outBytes)
+        }
     }
 
-    private fun File.mkdirsAndWrite(outBytes: ByteArray) {
-        parentFile.mkdirs()
-        writeBytes(outBytes) // write resulting bytes
-    }
-
-    fun transform() {
-        //if (outputDir == inputDir) {
-            // perform transformation
-            info("Transforming to $outputDir")
-            inputDir.walk().filter { it.isFile }.forEach { file ->
-                val bytes = file.readBytes()
-                val outBytes = transformFile(file, bytes)
-                val outFile = file.toOutputFile()
-                outFile.mkdirsAndWrite(outBytes)
-            }
-//        } else {
-//            info("Nothing to transform -- all classes are up to date")
-//        }
-    }
-
-    private fun transformFile(file: File, bytes: ByteArray): ByteArray {
+    private fun transformFile(file: File): ByteArray {
         val root = p.parse(FileReader(file), null, 0)
         val tv = TransformVisitor()
         val acf = AtomicConstructorDetector()
@@ -57,11 +41,9 @@ class AtomicFUTransformerJS(
     }
 
     inner class AtomicConstructorDetector : NodeVisitor {
-
         override fun visit(node: AstNode?): Boolean {
             if (node is VariableInitializer && node.initializer is PropertyGet) {
-                val regex = Regex("""atomic\$(ref|int|long|boolean)\$""")
-                if (( node.initializer as PropertyGet).property.toSource().matches(regex) ) {
+                if (( node.initializer as PropertyGet).property.toSource().matches(Regex(ATOMIC_CONSTRUCTOR)) ) {
                     atomicConstructors.add(node.target.toSource())
                 }
                 return false
@@ -71,14 +53,13 @@ class AtomicFUTransformerJS(
     }
 
     inner class TransformVisitor : NodeVisitor {
-
         override fun visit(node: AstNode): Boolean {
             // inline atomic operations
             if (node is FunctionCall) {
                 if (node.target is PropertyGet) {
                     val funcName = (node.target as PropertyGet).property
                     var field = (node.target as PropertyGet).target
-                    if (field.toSource() == "\$receiver") {
+                    if (field.toSource() == RECEIVER) {
                         val rr = ReceiverResolver()
                         node.enclosingFunction.visit(rr)
                         if (rr.receiver != null) {
@@ -109,7 +90,7 @@ class AtomicFUTransformerJS(
 
             // remove value property call
             if (node.type == Token.GETPROP) {
-                if ((node as PropertyGet).property.toSource() == "kotlinx\$atomicfu\$value") {
+                if ((node as PropertyGet).property.toSource() == MANGLED_VALUE_PROP) {
                     // A.a.value
                     if (node.target.type == Token.GETPROP) {
                         val clearField = node.target as PropertyGet
@@ -118,7 +99,7 @@ class AtomicFUTransformerJS(
                         node.setLeftAndRight(targetNode, clearProperety)
                     }
                     // other cases with $receiver.kotlinx$atomicfu$value in inline functions
-                    else if (node.target.toSource() == "\$receiver") {
+                    else if (node.target.toSource() == RECEIVER) {
                         val rr = ReceiverResolver()
                         node.enclosingFunction.visit(rr)
                         if (rr.receiver != null) {
@@ -137,7 +118,7 @@ class AtomicFUTransformerJS(
         var receiver: AstNode? = null
         override fun visit(node: AstNode?): Boolean {
             if (node is VariableInitializer) {
-                if (node.target.toSource() == "\$receiver") {
+                if (node.target.toSource() == RECEIVER) {
                     receiver = node.initializer
                     return false
                 }
@@ -152,79 +133,78 @@ class AtomicFUTransformerJS(
         args: List<AstNode>,
         passScope: Boolean
     ): Boolean {
-        var code: String? = null
-        val f = if (passScope) ("scope" + '.' + (field as PropertyGet).property.toSource()) else field.toSource()
-        when (funcName) {
+        val f = if (passScope) (SCOPE + '.' + (field as PropertyGet).property.toSource()) else field.toSource()
+        val code = when (funcName) {
             "getAndSet\$atomicfu" -> {
                 val arg = args[0].toSource()
-                code = "(function(scope) {var oldValue = $f; $f = $arg; return oldValue;})"
+                "(function(scope) {var oldValue = $f; $f = $arg; return oldValue;})"
             }
             "compareAndSet\$atomicfu" -> {
                 val expected = args[0].toSource()
                 val updated = args[1].toSource()
-                code =
-                    "(function(scope) {return $f === $expected ? function() { $f = $updated; return true }() : false})"
+                "(function(scope) {return $f === $expected ? function() { $f = $updated; return true }() : false})"
             }
             "getAndIncrement\$atomicfu" -> {
-                code = "(function(scope) {return $f++;})"
+                "(function(scope) {return $f++;})"
             }
 
             "getAndIncrement\$atomicfu\$long" -> {
-                code = "(function(scope) {var oldValue = $f; $f = $f.inc(); return oldValue;})"
+                "(function(scope) {var oldValue = $f; $f = $f.inc(); return oldValue;})"
             }
 
             "getAndDecrement\$atomicfu" -> {
-                code = "(function(scope) {return $f--;})"
+                "(function(scope) {return $f--;})"
             }
 
             "getAndDecrement\$atomicfu\$long" -> {
-                code = "(function(scope) {var oldValue = $f; $f = $f.dec(); return oldValue;})"
+                "(function(scope) {var oldValue = $f; $f = $f.dec(); return oldValue;})"
             }
 
             "getAndAdd\$atomicfu" -> {
                 val arg = args[0].toSource()
-                code = "(function(scope) {var oldValue = $f; $f += $arg; return oldValue;})"
+                "(function(scope) {var oldValue = $f; $f += $arg; return oldValue;})"
             }
 
             "getAndAdd\$atomicfu\$long" -> {
                 val arg = args[0].toSource()
-                code = "(function(scope) {var oldValue = $f; $f = $f.add($arg); return oldValue;})"
+                "(function(scope) {var oldValue = $f; $f = $f.add($arg); return oldValue;})"
             }
 
             "addAndGet\$atomicfu" -> {
                 val arg = args[0].toSource()
-                code = "(function(scope) {$f += $arg; return $f;})"
+                "(function(scope) {$f += $arg; return $f;})"
             }
 
             "addAndGet\$atomicfu\$long" -> {
                 val arg = args[0].toSource()
-                code = "(function(scope) {$f = $f.add($arg); return $f;})"
+                "(function(scope) {$f = $f.add($arg); return $f;})"
             }
 
             "incrementAndGet\$atomicfu" -> {
-                code = "(function(scope) {return ++$f;})"
+                "(function(scope) {return ++$f;})"
             }
 
             "incrementAndGet\$atomicfu\$long" -> {
-                code = "(function(scope) {return $f = $f.inc();})"
+                "(function(scope) {return $f = $f.inc();})"
             }
 
             "decrementAndGet\$atomicfu" -> {
-                code = "(function(scope) {return --$f;})"
+                "(function(scope) {return --$f;})"
             }
 
             "decrementAndGet\$atomicfu\$long" -> {
-                code = "(function(scope) {return $f = $f.dec();})"
+                "(function(scope) {return $f = $f.dec();})"
             }
+            else -> null
         }
         if (code != null) {
-            this.getNode(code)
+            this.setImpl(code)
             return true
         }
         return false
     }
 
-    private fun FunctionCall.getNode(code: String) {
+    private fun FunctionCall.setImpl(code: String) {
         val p = Parser(CompilerEnvirons())
         val node = p.parse(code, null, 0)
         if (node.firstChild != null) {
@@ -245,55 +225,50 @@ private class ParenthesizedExpressionDerived(val expr: FunctionNode) : Parenthes
 // local FunctionNode parser for atomic operations to avoid internal formatting
 private class FunctionNodeDerived(val fn: FunctionNode) : FunctionNode() {
 
-    override fun toSource(depth: Int): String {
-        val sb = StringBuilder()
-        sb.append("function")
-        sb.append("(")
-        printList(fn.params, sb)
-        sb.append(") ")
-
-        sb.append("{")
+    override fun toSource(depth: Int) = buildString {
+        append("function")
+        append("(")
+        printList(fn.params, this)
+        append(") ")
+        append("{")
         (fn.body as Block).forEach {
-            val sbStmt = StringBuilder()
             when (it.type) {
                 Token.RETURN -> {
                     val retVal = (it as ReturnStatement).returnValue
                     when (retVal.type) {
                         Token.HOOK -> {
                             val cond = retVal as ConditionalExpression
-                            sbStmt.append("return ")
-                            sbStmt.append(cond.testExpression.toSource())
-                            sbStmt.append(" ? ")
+                            append("return ")
+                            append(cond.testExpression.toSource())
+                            append(" ? ")
                             val target = (cond.trueExpression as FunctionCall).target as FunctionNode
                             (cond.trueExpression as FunctionCall).target = FunctionNodeDerived(target)
-                            sbStmt.append(cond.trueExpression.toSource())
-                            sbStmt.append(" : ")
-                            sbStmt.append(cond.falseExpression.toSource())
+                            append(cond.trueExpression.toSource())
+                            append(" : ")
+                            append(cond.falseExpression.toSource())
                         }
                         else -> {
-                            sbStmt.append("return").append(" ").append(retVal.toSource()).append(";")
+                            append("return").append(" ").append(retVal.toSource()).append(";")
                         }
                     }
                 }
                 Token.VAR -> {
                     if (it is VariableDeclaration) {
-                        sbStmt.append("var").append(" ")
-                        printList(it.variables, sbStmt)
+                        append("var").append(" ")
+                        printList(it.variables, this)
                         if (it.isStatement) {
-                            sbStmt.append(";")
+                            append(";")
                         }
                     }
                 }
                 Token.EXPR_VOID -> {
                     if (it is ExpressionStatement) {
-                        sbStmt.append(it.expression.toSource()).append(";")
+                        append(it.expression.toSource()).append(";")
                     }
                 }
             }
-            sb.append(sbStmt.toString())
         }
-        sb.append("}")
-        return sb.toString()
+        append("}")
     }
 }
 

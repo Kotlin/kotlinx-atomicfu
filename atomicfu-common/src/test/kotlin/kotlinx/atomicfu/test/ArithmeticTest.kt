@@ -24,26 +24,26 @@ class ArithmeticTest {
     @Test
     fun testInt() {
         val a = IntArithmetic()
-        check(a._x == 0)
-        check(a.x.getAndSet(3) == 0)
-        check(a.x.compareAndSet(3, 8))
-        a.x.lazySet(1)
-        check(a._x == 1)
-        check(a.x.getAndSet(2) == 1)
-        check(a._x == 2)
-        check(a.x.getAndIncrement() == 2)
-        check(a._x == 3)
-        check(a.x.getAndDecrement() == 3)
-        check(a._x == 2)
-        check(a.x.getAndAdd(2) == 2)
-        check(a._x == 4)
-        check(a.x.addAndGet(3) == 7)
-        check(a._x == 7)
-        check(a.x.incrementAndGet() == 8)
-        check(a._x == 8)
-        check(a.x.decrementAndGet() == 7)
-        check(a._x == 7)
-        a.x.compareAndSet(7, 10)
+        check(a.x == 0)
+        check(a._x.getAndSet(3) == 0)
+        check(a._x.compareAndSet(3, 8))
+        a._x.lazySet(1)
+        check(a.x == 1)
+        check(a._x.getAndSet(2) == 1)
+        check(a.x == 2)
+        check(a._x.getAndIncrement() == 2)
+        check(a.x == 3)
+        check(a._x.getAndDecrement() == 3)
+        check(a.x == 2)
+        check(a._x.getAndAdd(2) == 2)
+        check(a.x == 4)
+        check(a._x.addAndGet(3) == 7)
+        check(a.x == 7)
+        check(a._x.incrementAndGet() == 8)
+        check(a.x == 8)
+        check(a._x.decrementAndGet() == 7)
+        check(a.x == 7)
+        a._x.compareAndSet(7, 10)
     }
 
     @Test
@@ -66,10 +66,6 @@ class ArithmeticTest {
         check(a.z.value == -198452011965886958)
         check(a.z.decrementAndGet() == -198452011965886959)
         check(a.z.value == -198452011965886959)
-//        a.z.plusAssign(34000000000)
-//        check(a.z.value == -198451977965886959)
-//        a.z.minusAssign(1000000000000000000)
-//        check(a.z.value == -1198451977965886959)
     }
 
     @Test
@@ -85,17 +81,16 @@ class ArithmeticTest {
 }
 
 class IntArithmetic {
-    val x = atomic(0)
-    val _x get() = x.value
-    fun aaa() = x.addAndGet(7)
+    val _x = atomic(0)
+    val x get() = _x.value
 }
 
 class LongArithmetic {
     val _x = atomic(4294967296)
+    val x get() = _x.value
     val y = atomic(5000000000)
     val z = atomic(2424920024888888848)
     val max = atomic(9223372036854775807)
-    val x get() = _x.value
 }
 
 class BooleanArithmetic {
