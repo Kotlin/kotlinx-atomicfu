@@ -9,4 +9,5 @@ dependencies {
     compile "org.ow2.asm:asm-util:$asm_version"
     compile "org.slf4j:slf4j-api:$slf4j_version"
     runtime "org.slf4j:slf4j-simple:$slf4j_version"
+    compile "org.mozilla:rhino:1.7.10"
 }
