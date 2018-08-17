@@ -63,7 +63,7 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 ## Dos and Don'ts
 
 * Declare atomic variables as `private val` or `internal val`. You can use just (public) `val` in nested classes, 
-  but make sure they are not accessed outside of your Kotlin source file.
+  but make sure they are not accessed outside of Kotlin module.
 * Only simple operations on atomic variables _directly_ are supported. 
   * Do not read references on atomic variables into local variables,
     e.g. `top.compareAndSet(...)` is Ok, while `val tmp = top; tmp...` is not. 

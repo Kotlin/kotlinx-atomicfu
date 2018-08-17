@@ -263,7 +263,7 @@ class AtomicFUTransformer(
     }
 
     private inner class CollectorCV : CV(null) {
-        override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any? ): FieldVisitor? {
+        override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
             val fieldType = Type.getType(desc)
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
                 val field = FieldId(className, name)
@@ -348,7 +348,6 @@ class AtomicFUTransformer(
         private fun getPotentialExternalAccessorInvokes(i: AbstractInsnNode): AbstractInsnNode? {
             if (i is MethodInsnNode) {
                 val methodId = MethodId(i.owner, i.name, i.desc, i.opcode)
-                val getter = methodId.name
                 // compare owner packages
                 if (methodId.owner.substringBeforeLast('/') != className.substringBeforeLast('/')) {
                     accessors[methodId]?.let { it.hasExternalAccess= true }
@@ -442,11 +441,10 @@ class AtomicFUTransformer(
             }
         }
 
-        override fun visitMethod(access: Int, name: String, desc: String,signature: String?, exceptions: Array<out String>? ): MethodVisitor? {
+        override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
             val method = MethodId(className, name, desc, accessToInvokeOpcode(access))
             if (method in accessors) {
-                // drop accessor
-                return null
+                return null // drop accessor
             }
             val sourceInfo = SourceInfo(method, source)
             val superMV = if (name == "<clinit>" && desc == "()V") {
