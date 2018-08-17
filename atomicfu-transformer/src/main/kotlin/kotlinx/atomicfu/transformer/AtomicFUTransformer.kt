@@ -29,7 +29,6 @@ import org.slf4j.*
 import java.io.*
 import java.net.*
 import java.util.*
-import kotlin.text.*
 
 class TypeInfo(val fuType: Type, val originalType: Type, val transformedType: Type)
 
@@ -323,38 +322,24 @@ class AtomicFUTransformer(
 
     private inner class ReferencesCollectorCV : CV(null) {
         override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
-            return ReferencesCollectorMV(className, access, name, desc, signature, exceptions)
+            // skip accessor method - already registered in the previous phase
+            val methodId = MethodId(className, name, desc, accessToInvokeOpcode(access))
+            accessors[methodId]?.let { return null }
+            return ReferencesCollectorMV(className.ownerPackageName)
         }
     }
 
     private inner class ReferencesCollectorMV(
-        private val className: String,
-        access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?
-    ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
-
-        override fun visitEnd() {
-            // skip accessor method - already registered in the previous phase
-            val methodId = MethodId(className, name, desc, accessToInvokeOpcode(access))
-            accessors[methodId]?.let { return }
-            // not accessor
-            var i = instructions.first
-            while (i != null) {
-                i = getPotentialExternalAccessorInvokes(i)
+        private val packageName: String
+    ) : MethodVisitor(ASM5) {
+        override fun visitMethodInsn(opcode: Int, owner: String, name: String, desc: String, itf: Boolean) {
+            val methodId = MethodId(owner, name, desc, opcode)
+            // compare owner packages
+            if (methodId.owner.ownerPackageName != packageName) {
+                accessors[methodId]?.let { it.hasExternalAccess = true }
             }
-        }
-
-        private fun getPotentialExternalAccessorInvokes(i: AbstractInsnNode): AbstractInsnNode? {
-            if (i is MethodInsnNode) {
-                val methodId = MethodId(i.owner, i.name, i.desc, i.opcode)
-                // compare owner packages
-                if (methodId.owner.substringBeforeLast('/') != className.substringBeforeLast('/')) {
-                    accessors[methodId]?.let { it.hasExternalAccess= true }
-                }
-            }
-            return i.next
         }
     }
-
 
     private inner class TransformerCV(
         cv: ClassVisitor,

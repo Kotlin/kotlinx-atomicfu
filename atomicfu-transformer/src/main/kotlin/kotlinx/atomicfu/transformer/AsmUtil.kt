@@ -19,7 +19,6 @@ package kotlinx.atomicfu.transformer
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.tree.*
 import org.objectweb.asm.util.*
-import java.io.*
 
 val AbstractInsnNode.line: Int? get() {
     var cur = this
@@ -117,3 +116,4 @@ fun AbstractInsnNode.toText(): String {
     return (printer.getText()[0] as String).trim()
 }
 
+val String.ownerPackageName get() = substringBeforeLast('/')
