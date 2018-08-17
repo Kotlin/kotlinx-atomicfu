@@ -113,8 +113,6 @@ class AtomicFUTransformer(
     var variant: Variant = Variant.FU
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
 
-    override var logger = LoggerFactory.getLogger(AtomicFUTransformer::class.java)
-
     private val classLoader = URLClassLoader(
         (listOf(inputDir) + (classpath.map { File(it) } - outputDir))
             .map { it.toURI().toURL() }.toTypedArray()

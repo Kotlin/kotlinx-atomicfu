@@ -4,6 +4,7 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 import java.io.File
 import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 abstract class AtomicFUTransformerBase(
     var inputDir: File,
@@ -15,7 +16,7 @@ abstract class AtomicFUTransformerBase(
     protected fun File.toOutputFile(): File =
         outputDir / relativeTo(inputDir).toString()
 
-    protected abstract var logger: Logger
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     protected fun File.mkdirsAndWrite(outBytes: ByteArray) {
         parentFile.mkdirs()

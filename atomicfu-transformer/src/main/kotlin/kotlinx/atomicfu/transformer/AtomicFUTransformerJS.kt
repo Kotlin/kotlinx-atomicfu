@@ -15,9 +15,7 @@ private const val SCOPE = "scope"
 class AtomicFUTransformerJS(
     inputDir: File,
     outputDir: File
-) : AtomicFUTransformerBase(inputDir, outputDir){
-
-    override var logger = LoggerFactory.getLogger(AtomicFUTransformerJS::class.java)
+) : AtomicFUTransformerBase(inputDir, outputDir) {
 
     private val p = Parser(CompilerEnvirons())
     private val atomicConstructors = mutableSetOf<String>()
