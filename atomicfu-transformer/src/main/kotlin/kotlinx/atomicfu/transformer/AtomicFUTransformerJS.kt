@@ -17,19 +17,20 @@ class AtomicFUTransformerJS(
     outputDir: File
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
 
-    private val p = Parser(CompilerEnvirons())
     private val atomicConstructors = mutableSetOf<String>()
 
     override fun transform() {
         info("Transforming to $outputDir")
-        inputDir.walk().filter { it.isFile }.forEach { file ->
+        inputDir.walk().filter { it.isFile}.forEach { file ->
+            println("Transforming file: " + file.canonicalPath)
             val outBytes = transformFile(file)
-            val outFile = file.toOutputFile()
-            outFile.mkdirsAndWrite(outBytes)
+            outputDir.createNewFile()
+            outputDir.writeBytes(outBytes)
         }
     }
 
     private fun transformFile(file: File): ByteArray {
+        val p = Parser(CompilerEnvirons())
         val root = p.parse(FileReader(file), null, 0)
         val tv = TransformVisitor()
         val acf = AtomicConstructorDetector()
@@ -41,7 +42,7 @@ class AtomicFUTransformerJS(
     inner class AtomicConstructorDetector : NodeVisitor {
         override fun visit(node: AstNode?): Boolean {
             if (node is VariableInitializer && node.initializer is PropertyGet) {
-                if (( node.initializer as PropertyGet).property.toSource().matches(Regex(ATOMIC_CONSTRUCTOR)) ) {
+                if ((node.initializer as PropertyGet).property.toSource().matches(Regex(ATOMIC_CONSTRUCTOR))) {
                     atomicConstructors.add(node.target.toSource())
                 }
                 return false
@@ -208,7 +209,8 @@ class AtomicFUTransformerJS(
         if (node.firstChild != null) {
             val expr = (node.firstChild as ExpressionStatement).expression
             val func = (expr as ParenthesizedExpression).expression as FunctionNode
-            (node.firstChild as ExpressionStatement).expression = ParenthesizedExpressionDerived(FunctionNodeDerived(func))
+            (node.firstChild as ExpressionStatement).expression =
+                ParenthesizedExpressionDerived(FunctionNodeDerived(func))
             this.target = (node.firstChild as ExpressionStatement).expression
             val thisNode = Parser(CompilerEnvirons()).parse("this", null, 0)
             this.arguments = listOf((thisNode.firstChild as ExpressionStatement).expression)
@@ -276,8 +278,6 @@ fun main(args: Array<String>) {
         println("Usage: AtomicFUTransformerKt <dir> [<output>]")
         return
     }
-    val output = File(args[1])
-    output.createNewFile()
-    val t = AtomicFUTransformerJS(File(args[0]), output)
+    val t = AtomicFUTransformerJS(File(args[0]), File(args[1]))
     t.transform()
 }
