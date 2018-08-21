@@ -1,6 +1,7 @@
 package kotlinx.atomicfu.plugin.gradle
 
 import kotlinx.atomicfu.transformer.*
+import org.apache.tools.ant.taskdefs.Java
 import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.file.*
@@ -11,30 +12,48 @@ import org.gradle.api.tasks.compile.*
 import org.gradle.jvm.tasks.*
 import java.io.*
 
+const val COMPILE_ONLY_CONFIGURATION = "compileOnly"
+const val TEST_RUNTIME_CONFIGURATION = "testRuntime"
+
 open class AtomicFUGradlePlugin : Plugin<Project> {
+    lateinit var project: Project
+    private val jsTarget: Boolean
+        get() = project.pluginManager.hasPlugin("kotlin-platform-js") || project.pluginManager.hasPlugin("kotlin2js")
+    private val jvmTarget: Boolean
+        get() = project.pluginManager.hasPlugin("kotlin-platform-jvm") || project.pluginManager.hasPlugin("kotlin")
+
     override fun apply(target: Project) {
+        this.project = target
+        applyDependencies()
         target.configureTransformation()
         (target.tasks.findByName("jar") as? Jar)?.setupJarManifest()
     }
-}
 
-fun Project.configureTransformation() {
-    plugins.matching { it::class.java.canonicalName.startsWith("org.jetbrains.kotlin.gradle.plugin") }.all {
-        val compileTestKotlin = tasks.findByName("compileTestKotlin") as AbstractCompile?
-        compileTestKotlin?.doFirst {
-            compileTestKotlin.classpath = (compileTestKotlin.classpath
-                - mainSourceSet.output.classesDirs
-                + files((mainSourceSet as ExtensionAware).extensions.getByName("classesDirsCopy")))
+    private fun applyDependencies() {
+        val dependencies = project.dependencies
+        val atomicFuPluginVersion = project.extensions.extraProperties.get("atomicfu_version")
+        val platform = when {
+            jsTarget -> "-js"
+            jvmTarget -> ""
+            else -> "-native"
         }
+        val atomicfu = dependencies.create("org.jetbrains.kotlinx:atomicfu$platform:${atomicFuPluginVersion.toString()}")
+        dependencies.add(COMPILE_ONLY_CONFIGURATION, atomicfu)
+        dependencies.add(TEST_RUNTIME_CONFIGURATION, atomicfu)
     }
 
-    afterEvaluate {
-        val jsTarget = pluginManager.hasPlugin("kotlin-platform-js") || pluginManager.hasPlugin("kotlin2js")
-        val jvmTarget = pluginManager.hasPlugin("kotlin-platform-jvm") || pluginManager.hasPlugin("kotlin")
+    fun Project.configureTransformation() {
+        plugins.matching { it::class.java.canonicalName.startsWith("org.jetbrains.kotlin.gradle.plugin") }.all {
+            val compileTestKotlin = tasks.findByName("compileTestKotlin") as AbstractCompile?
+            compileTestKotlin?.doFirst {
+                compileTestKotlin.classpath = (compileTestKotlin.classpath
+                    - mainSourceSet.output.classesDirs
+                    + files((mainSourceSet as ExtensionAware).extensions.getByName("classesDirsCopy")))
+            }
+        }
 
         sourceSets.all { sourceSetParam ->
             val transformedClassesDir = File(project.buildDir, "classes/${sourceSetParam.name}-transformed")
-
             if (jvmTarget) {
                 val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
                 // make copy of original classes directory

@@ -177,13 +177,10 @@ buildscript {
 apply plugin: 'kotlinx-atomicfu'
 ```
 
-Add compile-only dependency on AtomicFU library and run-time dependency for tests:
+To use `compileOnly` and `testRuntime` for automatic dependency adding also apply:
 
 ```groovy
-dependencies {
-    compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
-    testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
-}
+apply plugin: 'java'
 ```
 
 ## JS build setup 
@@ -203,14 +200,6 @@ buildscript {
 apply plugin: 'kotlinx-atomicfu'
 ```
 
-Add compile-only dependency on AtomicFU library and run-time dependency for tests:
-
-```groovy
-dependencies {
-    compileOnly "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
-    testRuntime "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
-}
-```
 
 Also configure compiler options, specifying the path to the ``outputFile`` 
 ```groovy
