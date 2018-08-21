@@ -311,17 +311,7 @@ For Maven add:
     </build>
 ```
 
-For Gradle add:
-
-```groovy
-dependencies {
-    testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
-}
-
-task lockFreedomTest(type: Test, dependsOn: testClasses) {
-    include '**/*LFTest.*'
-}
-```
+For Gradle there nothing else to add.
 
 
 
