@@ -33,16 +33,16 @@ fun Project.configureTransformation() {
         val jvmTarget = pluginManager.hasPlugin("kotlin-platform-jvm") || pluginManager.hasPlugin("kotlin")
 
         sourceSets.all { sourceSetParam ->
-
             val transformedClassesDir = File(project.buildDir, "classes/${sourceSetParam.name}-transformed")
-            // make transformedClassesDir the source path for output.classesDirs
-            (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
 
             if (jvmTarget) {
                 val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
                 // make copy of original classes directory
                 val classesDirsCopy = project.files(classesDirs.toTypedArray()).filter { it.exists() }
                 (sourceSetParam as ExtensionAware).extensions.add("classesDirsCopy", classesDirsCopy)
+
+                // make transformedClassesDir the source path for output.classesDirs
+                (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
 
                 val transformJVMTask = project.tasks.create(
                     sourceSetParam.getTaskName("transform", "classes"),
@@ -62,12 +62,11 @@ fun Project.configureTransformation() {
                 val compileTaskName = sourceSetParam.getCompileTaskName("Kotlin2Js")
                 // manually set by user
                 val compileTaskOutputFile = tasks.getByName(compileTaskName).outputs.files.filter { it.canonicalPath.endsWith(".js") }
-                println("KOTLIN 2 JS OUTPUT FILE " + compileTaskOutputFile.asPath)
                 val copyTask = project.tasks.create(
                     sourceSetParam.getTaskName("copy", "files"),
                     Copy::class.java
                 )
-
+                (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
 
                 // copy all files from original compiled directory except the compileTaskOutputFile with all compiled code from the application
                 copyTask.apply {
