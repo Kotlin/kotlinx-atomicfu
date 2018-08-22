@@ -32,10 +32,9 @@ class AtomicFUTransformerJS(
     private fun transformFile(file: File): ByteArray {
         val p = Parser(CompilerEnvirons())
         val root = p.parse(FileReader(file), null, 0)
-        val tv = TransformVisitor()
-        val acf = AtomicConstructorDetector()
-        root.visit(acf)
-        root.visit(tv)
+        root.visit(AtomicConstructorDetector())
+        root.visit(TransformVisitor())
+        root.visit(AtomicOperationsInliner())
         return root.toSource().toByteArray()
     }
 
@@ -53,29 +52,7 @@ class AtomicFUTransformerJS(
 
     inner class TransformVisitor : NodeVisitor {
         override fun visit(node: AstNode): Boolean {
-            // inline atomic operations
-            if (node is FunctionCall) {
-                if (node.target is PropertyGet) {
-                    val funcName = (node.target as PropertyGet).property
-                    var field = (node.target as PropertyGet).target
-                    if (field.toSource() == RECEIVER) {
-                        val rr = ReceiverResolver()
-                        node.enclosingFunction.visit(rr)
-                        if (rr.receiver != null) {
-                            field = rr.receiver
-                        }
-                    }
-                    var passScope = false
-                    if (field is PropertyGet && field.target.type == Token.THIS) {
-                        passScope = true
-                    }
-                    val args = node.arguments
-                    val inlined = node.inlineAtomicOperation(funcName.toSource(), field, args, passScope)
-                    return !inlined
-                }
-            }
-
-            //remove atomic constructors from classes fields
+            // remove atomic constructors from classes fields
             if (node is FunctionCall) {
                 val functionName = node.target.toSource()
                 if (atomicConstructors.contains(functionName)) {
@@ -86,7 +63,6 @@ class AtomicFUTransformerJS(
                     return true
                 }
             }
-
             // remove value property call
             if (node.type == Token.GETPROP) {
                 if ((node as PropertyGet).property.toSource() == MANGLED_VALUE_PROP) {
@@ -115,7 +91,7 @@ class AtomicFUTransformerJS(
     // receiver data flow
     inner class ReceiverResolver : NodeVisitor {
         var receiver: AstNode? = null
-        override fun visit(node: AstNode?): Boolean {
+        override fun visit(node: AstNode): Boolean {
             if (node is VariableInitializer) {
                 if (node.target.toSource() == RECEIVER) {
                     receiver = node.initializer
@@ -126,12 +102,34 @@ class AtomicFUTransformerJS(
         }
     }
 
-    private fun FunctionCall.inlineAtomicOperation(
-        funcName: String,
-        field: AstNode,
-        args: List<AstNode>,
-        passScope: Boolean
-    ): Boolean {
+    inner class AtomicOperationsInliner : NodeVisitor {
+        override fun visit(node: AstNode?): Boolean {
+            // inline atomic operations
+            if (node is FunctionCall) {
+                if (node.target is PropertyGet) {
+                    val funcName = (node.target as PropertyGet).property
+                    var field = (node.target as PropertyGet).target
+                    if (field.toSource() == RECEIVER) {
+                        val rr = ReceiverResolver()
+                        node.enclosingFunction.visit(rr)
+                        if (rr.receiver != null) {
+                            field = rr.receiver
+                        }
+                    }
+                    var passScope = false
+                    if (field is PropertyGet && field.target.type == Token.THIS) {
+                        passScope = true
+                    }
+                    val args = node.arguments
+                    val inlined = node.inlineAtomicOperation(funcName.toSource(), field, args, passScope)
+                    return !inlined
+                }
+            }
+            return true
+        }
+    }
+
+    private fun FunctionCall.inlineAtomicOperation(funcName: String, field: AstNode, args: List<AstNode>, passScope: Boolean): Boolean {
         val f = if (passScope) (SCOPE + '.' + (field as PropertyGet).property.toSource()) else field.toSource()
         val code = when (funcName) {
             "getAndSet\$atomicfu" -> {
@@ -231,7 +229,7 @@ private class FunctionNodeDerived(val fn: FunctionNode) : FunctionNode() {
         printList(fn.params, this)
         append(") ")
         append("{")
-        (fn.body as Block).forEach {
+        (fn.body as? Block)?.forEach {
             when (it.type) {
                 Token.RETURN -> {
                     val retVal = (it as ReturnStatement).returnValue
