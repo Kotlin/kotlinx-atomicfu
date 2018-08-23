@@ -96,7 +96,7 @@ Declare AtomicFU version:
 
 ```xml
 <properties>
-     <atomicfu.version>0.11.2</atomicfu.version>
+     <atomicfu.version>0.11.3</atomicfu.version>
 </properties> 
 ```
 
@@ -167,7 +167,7 @@ Add and apply AtomicFU plugin:
 
 ```groovy
 buildscript {
-    ext.atomicfu_version = '0.11.2'
+    ext.atomicfu_version = '0.11.3'
 
     dependencies {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
@@ -245,7 +245,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.jetbrains.kotlinx:atomicfu-native:0.11.2'
+    implementation 'org.jetbrains.kotlinx:atomicfu-native:0.11.3'
 }
 
 sourceSets {

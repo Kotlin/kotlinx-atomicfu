@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.11.3
+
+* Fixed lost files during class analysis phase.
+
 ## Version 0.11.2
 
 * Kotlin version 1.2.61
