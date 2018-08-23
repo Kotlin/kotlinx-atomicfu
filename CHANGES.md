@@ -1,5 +1,12 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.11.2
+
+* Kotlin version 1.2.61
+* Kotlin/Native version 0.8.2
+* More user-friendly Gradle plugin for Kotlin/JVM and multi-release jar by default. See updated section in [README.md](README.md#Gradle)
+* Supports `internal` atomic variables that are accessed from a different package in the same module.  
+
 ## Version 0.11.1
 
 * Kotlin version 1.2.60
