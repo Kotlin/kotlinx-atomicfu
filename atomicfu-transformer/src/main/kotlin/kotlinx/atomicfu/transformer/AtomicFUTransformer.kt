@@ -222,11 +222,11 @@ class AtomicFUTransformer(
     }
 
     private fun analyzeFile(file: File) {
-        ClassReader(file.inputStream()).accept(CollectorCV(), SKIP_FRAMES)
+        file.inputStream().use { ClassReader(it).accept(CollectorCV(), SKIP_FRAMES) }
     }
 
     private fun analyzeExternalRefs(file: File) {
-        ClassReader(file.inputStream()).accept(ReferencesCollectorCV(), SKIP_FRAMES)
+        file.inputStream().use { ClassReader(it).accept(ReferencesCollectorCV(), SKIP_FRAMES) }
     }
 
     private fun transformFile(file: File, bytes: ByteArray, vh: Boolean): ByteArray {
