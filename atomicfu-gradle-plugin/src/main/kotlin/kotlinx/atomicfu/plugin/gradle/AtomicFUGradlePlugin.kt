@@ -26,6 +26,12 @@ fun Project.configureTransformation() {
                 - mainSourceSet.output.classesDirs
                 + files((mainSourceSet as ExtensionAware).extensions.getByName("classesDirsCopy")))
         }
+        val compileTestKotlin2Js = tasks.findByName("compileTestKotlin2Js") as AbstractCompile?
+        compileTestKotlin2Js?.doFirst {
+            compileTestKotlin2Js.classpath = (compileTestKotlin2Js.classpath
+                - mainSourceSet.output.classesDirs
+                + files((mainSourceSet as ExtensionAware).extensions.getByName("classesDirsCopy")))
+        }
     }
 
     afterEvaluate {
@@ -33,14 +39,14 @@ fun Project.configureTransformation() {
         val jvmTarget = pluginManager.hasPlugin("kotlin-platform-jvm") || pluginManager.hasPlugin("kotlin")
 
         sourceSets.all { sourceSetParam ->
+            val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
+            // make copy of original classes directory
+            val classesDirsCopy = project.files(classesDirs.toTypedArray()).filter { it.exists() }
+            (sourceSetParam as ExtensionAware).extensions.add("classesDirsCopy", classesDirsCopy)
+
             val transformedClassesDir = File(project.buildDir, "classes/${sourceSetParam.name}-transformed")
 
             if (jvmTarget) {
-                val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
-                // make copy of original classes directory
-                val classesDirsCopy = project.files(classesDirs.toTypedArray()).filter { it.exists() }
-                (sourceSetParam as ExtensionAware).extensions.add("classesDirsCopy", classesDirsCopy)
-
                 // make transformedClassesDir the source path for output.classesDirs
                 (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
 
@@ -91,6 +97,7 @@ fun Project.configureTransformation() {
                 transformJSTask.outputs.file(transformedOutputFile)
                 //now transformJSTask is responsible for compiling this source set into the output directory
                 sourceSetParam.compiledBy(transformJSTask)
+                tasks.findByName("testMochaNode")?.dependsOn(transformJSTask)
             }
         }
     }

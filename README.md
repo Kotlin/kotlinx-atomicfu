@@ -212,15 +212,6 @@ dependencies {
 }
 ```
 
-Also configure compiler options, specifying the path to the ``outputFile`` 
-```groovy
-compileKotlin2Js {
-    kotlinOptions.outputFile = "${project.buildDir}/classes/kotlin/main/output.js"
-    kotlinOptions.moduleKind = "amd"
-    kotlinOptions.sourceMap = true
-}
-```
-
 ## Multiplatform
 
 AtomicFU is also available for [Kotlin/Native](#native). If you write
