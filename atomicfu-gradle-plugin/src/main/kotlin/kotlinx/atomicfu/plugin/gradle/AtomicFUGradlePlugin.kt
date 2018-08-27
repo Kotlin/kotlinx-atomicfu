@@ -85,7 +85,7 @@ fun Project.configureTransformation() {
                     sourceSetParam.getTaskName("transformJS", "files"),
                     AtomicFUTransformJSTask::class.java
                 )
-                val transformedOutputFile = File(transformedClassesDir, "${compileTaskOutputFile.asPath.substringAfterLast('/').substringBeforeLast(".js")}-transformed.js")
+                val transformedOutputFile = File(transformedClassesDir, compileTaskOutputFile.asPath.substringAfterLast('/'))
 
                 // transform compileTaskOutputFile and write to transformed directory
                 transformJSTask.apply {
