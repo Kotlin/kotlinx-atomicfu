@@ -2,15 +2,17 @@ package kotlinx.atomicfu.transformer
 
 import org.mozilla.javascript.*
 import org.mozilla.javascript.ast.*
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileReader
-import java.lang.String.format
+import org.mozilla.javascript.Token
 
 private const val ATOMIC_CONSTRUCTOR = """atomic\$(ref|int|long|boolean)\$"""
 private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
 private const val RECEIVER = "\$receiver"
 private const val SCOPE = "scope"
+private const val FACTORY = "factory"
+private const val REQUIRE = "require"
+private const val KOTLINX_ATOMICFU = "'kotlinx-atomicfu'"
 
 class AtomicFUTransformerJS(
     inputDir: File,
@@ -21,7 +23,7 @@ class AtomicFUTransformerJS(
 
     override fun transform() {
         info("Transforming to $outputDir")
-        inputDir.walk().filter { it.isFile}.forEach { file ->
+        inputDir.walk().filter { it.isFile }.forEach { file ->
             println("Transforming file: " + file.canonicalPath)
             val outBytes = transformFile(file)
             outputDir.createNewFile()
@@ -32,10 +34,66 @@ class AtomicFUTransformerJS(
     private fun transformFile(file: File): ByteArray {
         val p = Parser(CompilerEnvirons())
         val root = p.parse(FileReader(file), null, 0)
+        root.visit(DependencyEraser())
         root.visit(AtomicConstructorDetector())
         root.visit(TransformVisitor())
         root.visit(AtomicOperationsInliner())
         return root.toSource().toByteArray()
+    }
+
+
+    inner class DependencyEraser : NodeVisitor {
+        private fun isAtomicfuDependency(node: AstNode) =
+            (node.type == Token.STRING && node.toSource() == KOTLINX_ATOMICFU)
+
+        override fun visit(node: AstNode): Boolean {
+            when (node.type) {
+                Token.ARRAYLIT -> {
+                    val elements = (node as ArrayLiteral).elements as MutableList
+                    val it = elements.listIterator()
+                    while (it.hasNext()) {
+                        val arg = it.next()
+                        if (isAtomicfuDependency(arg)) {
+                            it.remove()
+                        }
+                    }
+                }
+                Token.CALL -> {
+                    if (node is FunctionCall && node.target.toSource() == FACTORY) {
+                        val it = node.arguments.listIterator()
+                        while (it.hasNext()) {
+                            val arg = it.next()
+                            when (arg.type) {
+                                Token.GETELEM -> {
+                                    if (isAtomicfuDependency((arg as ElementGet).element)) {
+                                        it.remove()
+                                    }
+                                }
+                                Token.CALL -> {
+                                    if ((arg as FunctionCall).target.toSource() == REQUIRE) {
+                                        if (isAtomicfuDependency(arg.arguments[0])) {
+                                            it.remove()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Token.GETELEM -> {
+                    if (isAtomicfuDependency((node as ElementGet).element)) {
+                        val enclosingNode = node.parent
+                        if (node.parent.type == Token.TYPEOF) {
+                            if (enclosingNode.parent.parent.type == Token.IF) {
+                                val ifStatement = enclosingNode.parent.parent as IfStatement
+                                ifStatement.thenPart = Block()
+                            }
+                        }
+                    }
+                }
+            }
+            return true
+        }
     }
 
     inner class AtomicConstructorDetector : NodeVisitor {
@@ -43,6 +101,7 @@ class AtomicFUTransformerJS(
             if (node is VariableInitializer && node.initializer is PropertyGet) {
                 if ((node.initializer as PropertyGet).property.toSource().matches(Regex(ATOMIC_CONSTRUCTOR))) {
                     atomicConstructors.add(node.target.toSource())
+                    node.initializer = null
                 }
                 return false
             }
@@ -129,7 +188,12 @@ class AtomicFUTransformerJS(
         }
     }
 
-    private fun FunctionCall.inlineAtomicOperation(funcName: String, field: AstNode, args: List<AstNode>, passScope: Boolean): Boolean {
+    private fun FunctionCall.inlineAtomicOperation(
+        funcName: String,
+        field: AstNode,
+        args: List<AstNode>,
+        passScope: Boolean
+    ): Boolean {
         val f = if (passScope) (SCOPE + '.' + (field as PropertyGet).property.toSource()) else field.toSource()
         val code = when (funcName) {
             "getAndSet\$atomicfu" -> {
