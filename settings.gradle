@@ -1,9 +1,6 @@
 enableFeaturePreview('GRADLE_METADATA')
 
 include 'atomicfu'
-include 'atomicfu-common'
-include 'atomicfu-js'
-include 'atomicfu-native'
 
 include 'atomicfu-transformer'
 include 'atomicfu-gradle-plugin'
