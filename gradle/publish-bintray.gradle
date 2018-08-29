@@ -6,35 +6,12 @@ apply plugin: 'com.jfrog.bintray'
 
 apply from: project.rootProject.file('gradle/maven-central.gradle')
 
-def isNative = project.name.endsWith("native")
-
-// ------------- tasks
-
-// workaround for tasks created by native plugin
-if (!isNative) {
-    task sourcesJar(type: Jar) {
-        classifier = 'sources'
-        from "src/main/kotlin"
-    }
-
-    // empty xxx-javadoc.jar
-    task javadocJar(type: Jar) {
-        classifier = 'javadoc'
-        from "$buildDir/javadoc" // would not exist
-    }
-}
-
 publishing {
     repositories {
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
     }
     publications {
         maven(MavenPublication) {
-            if (!isNative) {
-                from components.java
-                artifact sourcesJar
-                artifact javadocJar
-            }
             if (project.name.endsWith("-maven-plugin")) {
                 pom.with {
                     packaging = 'maven-plugin'
