@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
  * private val f = atomic<Type>(initial)
  * ```
  */
-public actual fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
+public actual fun <T> atomic(initial: T, trace: Trace): AtomicRef<T> = AtomicRef<T>(initial)
 
 /**
  * Creates atomic [Int] with a given [initial] value.
@@ -43,7 +43,7 @@ public actual fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
  * private val f = atomic(initialInt)
  * ```
  */
-public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
+public actual fun atomic(initial: Int, trace: Trace): AtomicInt = AtomicInt(initial)
 
 /**
  * Creates atomic [Long] with a given [initial] value.
@@ -54,7 +54,7 @@ public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
  * private val f = atomic(initialLong)
  * ```
  */
-public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
+public actual fun atomic(initial: Long, trace: Trace): AtomicLong = AtomicLong(initial)
 
 /**
  * Creates atomic [Boolean] with a given [initial] value.
@@ -65,7 +65,7 @@ public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
  * private val f = atomic(initialBoolean)
  * ```
  */
-public actual fun atomic(initial: Boolean): AtomicBoolean = AtomicBoolean(initial)
+public actual fun atomic(initial: Boolean, trace: Trace): AtomicBoolean = AtomicBoolean(initial)
 
 // ==================================== AtomicRef ====================================
 
