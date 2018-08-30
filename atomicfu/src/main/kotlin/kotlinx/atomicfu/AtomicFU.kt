@@ -299,12 +299,16 @@ public actual class AtomicInt internal constructor(value: Int) {
     /**
      * Performs atomic addition of [delta].
      */
-    public actual inline operator fun plusAssign(delta: Int) { getAndAdd(delta) }
+    public actual inline operator fun plusAssign(delta: Int) {
+        getAndAdd(delta)
+    }
 
     /**
      * Performs atomic subtraction of [delta].
      */
-    public actual inline operator fun minusAssign(delta: Int) { getAndAdd(-delta) }
+    public actual inline operator fun minusAssign(delta: Int) {
+        getAndAdd(-delta)
+    }
 
     override fun toString(): String = value.toString()
 
@@ -424,16 +428,52 @@ public actual class AtomicLong internal constructor(value: Long) {
     /**
      * Performs atomic addition of [delta].
      */
-    public actual inline operator fun plusAssign(delta: Long) { getAndAdd(delta) }
+    public actual inline operator fun plusAssign(delta: Long) {
+        getAndAdd(delta)
+    }
 
     /**
      * Performs atomic subtraction of [delta].
      */
-    public actual inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
+    public actual inline operator fun minusAssign(delta: Long) {
+        getAndAdd(-delta)
+    }
 
     override fun toString(): String = value.toString()
 
     private companion object {
         private val FU = AtomicLongFieldUpdater.newUpdater(AtomicLong::class.java, "value")
     }
+}
+
+// ==================================== AtomicIntArray ====================================
+
+public actual class AtomicIntArray actual constructor(size: Int) {
+    public actual var array = Array(size){ atomic(0) }
+
+    public actual operator fun get(index: Int): AtomicInt = array[index]
+}
+
+// ==================================== AtomicLongArray ====================================
+
+public actual class AtomicLongArray actual constructor(size: Int) {
+    public actual var array = Array(size){ atomic(0L) }
+
+    public actual operator fun get(index: Int): AtomicLong = array[index]
+}
+
+// ==================================== AtomicBooleanArray ====================================
+
+public actual class AtomicBooleanArray actual constructor(size: Int) {
+    public actual var array = Array(size){ atomic(false) }
+
+    public actual operator fun get(index: Int): AtomicBoolean = array[index]
+}
+
+// ==================================== AtomicArray ====================================
+
+public actual class AtomicArray<T> actual constructor(size: Int) {
+    public actual var array = Array(size){ atomic<T?>(null) }
+
+    public actual operator fun get(index: Int): AtomicRef<T?> = array[index]
 }

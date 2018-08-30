@@ -425,3 +425,35 @@ public inline fun AtomicLong.updateAndGet(function: (Long) -> Long): Long {
         if (compareAndSet(cur, upd)) return upd
     }
 }
+
+// ==================================== AtomicIntArray ====================================
+
+public expect class AtomicIntArray(size: Int) {
+    public var array: Array<AtomicInt>
+
+    public operator fun get(index: Int): AtomicInt
+}
+
+// ==================================== AtomicLongArray ====================================
+
+public expect class AtomicLongArray(size: Int) {
+    public var array: Array<AtomicLong>
+
+    public operator fun get(index: Int): AtomicLong
+}
+
+// ==================================== AtomicBooleanArray ====================================
+
+public expect class AtomicBooleanArray(size: Int) {
+    public var array: Array<AtomicBoolean>
+
+    public operator fun get(index: Int): AtomicBoolean
+}
+
+// ==================================== AtomicArray ====================================
+
+public expect class AtomicArray<T>(size: Int) {
+    public var array: Array<AtomicRef<T?>>
+
+    public operator fun get(index: Int): AtomicRef<T?>
+}

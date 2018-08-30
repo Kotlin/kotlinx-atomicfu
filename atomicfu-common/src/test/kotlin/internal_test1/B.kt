@@ -9,13 +9,13 @@ class B {
     fun testInternal() {
         val a = A()
         a.internalField.lazySet(true)
+        check(a.internalField.getAndSet(false))
         check(a.xxx.addAndGet(4) == 9)
-        val b = LocalClass()
-        b.local.lazySet(false)
+        check(a.yyy.compareAndSet(638753975930025820, 3444))
+        check(a.arr[2].compareAndSet(0, 6))
     }
+}
 
-    inner class LocalClass {
-        val local = atomic(false)
-        fun lazySet(v: Boolean) = local.lazySet(v)
-    }
+class D {
+    val da = A()
 }
