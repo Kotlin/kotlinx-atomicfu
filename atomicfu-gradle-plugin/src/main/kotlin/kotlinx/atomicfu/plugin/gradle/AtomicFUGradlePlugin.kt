@@ -10,11 +10,14 @@ import org.gradle.api.tasks.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.jvm.tasks.*
 import java.io.*
+import java.util.*
+
+private const val EXTENSION_NAME = "atomicfu"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
-    override fun apply(target: Project) {
-        target.configureTransformation()
-        (target.tasks.findByName("jar") as? Jar)?.setupJarManifest()
+    override fun apply(project: Project) {
+        project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
+        project.configureTransformation()
     }
 }
 
@@ -37,6 +40,7 @@ fun Project.configureTransformation() {
     afterEvaluate {
         val jsTarget = pluginManager.hasPlugin("kotlin-platform-js") || pluginManager.hasPlugin("kotlin2js")
         val jvmTarget = pluginManager.hasPlugin("kotlin-platform-jvm") || pluginManager.hasPlugin("kotlin")
+        val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
 
         sourceSets.all { sourceSetParam ->
             val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
@@ -59,6 +63,7 @@ fun Project.configureTransformation() {
                     sourceSet = sourceSetParam
                     inputFiles = classesDirsCopy
                     outputDir = transformedClassesDir
+                    config?.let { variant = it.variant }
                 }
                 transformJVMTask.outputs.dir(transformedClassesDir)
                 //now transformJVMTask is responsible for compiling this source set into the classes directory
@@ -97,16 +102,23 @@ fun Project.configureTransformation() {
                 transformJSTask.outputs.file(transformedOutputFile)
                 //now transformJSTask is responsible for compiling this source set into the output directory
                 sourceSetParam.compiledBy(transformJSTask)
+                // todo: fixme: This is fragile hard-coding of external & non-standard task name
                 tasks.findByName("testMochaNode")?.dependsOn(transformJSTask)
             }
         }
+
+        (tasks.findByName("jar") as? Jar)?.setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
     }
 }
 
-fun Jar.setupJarManifest(classifier: String = "") {
-    this.classifier = classifier
-    manifest.attributes.apply {
-        put("Multi-Release", "true")
+fun String.toVariant(): Variant = enumValueOf(toUpperCase(Locale.US))
+
+fun Jar.setupJarManifest(multiRelease: Boolean, classifier: String = "") {
+    this.classifier = classifier // todo: why we overwrite jar's classifier?
+    if (multiRelease) {
+        manifest.attributes.apply {
+            put("Multi-Release", "true")
+        }
     }
 }
 
@@ -116,6 +128,10 @@ val Project.sourceSets: SourceSetContainer
 val Project.mainSourceSet: SourceSet
     get() = sourceSets.getByName("main")
 
+
+class AtomicFUPluginExtension {
+    var variant: String = "FU"
+}
 
 @CacheableTask
 open class AtomicFUTransformTask : ConventionTask() {
@@ -135,7 +151,7 @@ open class AtomicFUTransformTask : ConventionTask() {
     var verbose = false
 
     @Input
-    var variant = Variant.BOTH
+    var variant = "FU"
 
     @TaskAction
     fun transform() {
@@ -148,7 +164,7 @@ open class AtomicFUTransformTask : ConventionTask() {
         inputFiles.files.forEach {
             AtomicFUTransformer(classPath.files.map { it.absolutePath }, it).let { t ->
                 t.outputDir = outputDir
-                t.variant = variant
+                t.variant = variant.toVariant()
                 t.verbose = verbose
                 t.transform()
             }

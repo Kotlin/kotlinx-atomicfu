@@ -19,7 +19,7 @@ The idiomatic way to use atomic operations in Kotlin.
 * [Gradle](#gradle-build-setup) for all platforms and [Maven](#maven-build-setup) for JVM are supported.  
 * [Additional features](#additional-features) include:
   * Support for [JDK9 VarHandle](#varhandles-with-java-9).
-  * Support for [testing of lock-free data structures](#testing-lock-free-data-structures-on-jvm-optional).
+  * Support for [testing of lock-free data structures](#testing-lock-free-data-structures-on-jvm).
 
 ## Example
 
@@ -279,11 +279,21 @@ AtomicFU provides some additional features that you can optionally use.
 
 ### VarHandles with Java 9
 
-AtomicFU also produces code that is using Java 9 
+AtomicFU can produce code that uses Java 9 
 [VarHandle](http://download.java.net/java/jdk9/docs/api/java/lang/invoke/VarHandle.html)
-instead of `AtomicXXXFieldUpdater` and creates [JEP 238](http://openjdk.java.net/jeps/238) multi-release jar file.
+instead of `AtomicXxxFieldUpdater`. Configure transformation `variant` in Gradle build file:
+ 
+```groovy
+atomicfu {
+    variant = "VH"
+}
+``` 
+ 
+It can also create [JEP 238](http://openjdk.java.net/jeps/238) multi-release jar file with both
+`AtomicXxxFieldUpdater` for JDK<=8 and `VarHandle` for for JDK9+ if you 
+set `variant` to `"BOTH"`.
 
-### Testing lock-free data structures on JVM (optional)
+### Testing lock-free data structures on JVM
 
 You can optionally test lock-freedomness of lock-free data structures using `LockFreedomTestEnvironment` class.
 See example in [`LockFreeQueueLFTest`](atomicfu/src/test/kotlin/kotlinx/atomicfu/test/LockFreeQueueLFTest.kt).
