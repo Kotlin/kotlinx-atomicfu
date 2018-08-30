@@ -12,6 +12,8 @@ class B {
         check(a.xxx.addAndGet(4) == 9)
         val b = LocalClass()
         b.local.lazySet(false)
+        val localAarr = a.arr
+        a.arr[2].compareAndSet(0, 6)
     }
 
     inner class LocalClass {
