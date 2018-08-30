@@ -16,7 +16,8 @@ private const val KOTLINX_ATOMICFU = "'kotlinx-atomicfu'"
 
 class AtomicFUTransformerJS(
     inputDir: File,
-    outputDir: File
+    outputDir: File,
+    var requireKotlinxAtomicfu: Boolean = false
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
 
     private val atomicConstructors = mutableSetOf<String>()
@@ -70,7 +71,7 @@ class AtomicFUTransformerJS(
                                     }
                                 }
                                 Token.CALL -> {
-                                    if ((arg as FunctionCall).target.toSource() == REQUIRE) {
+                                    if ((arg as FunctionCall).target.toSource() == REQUIRE && !requireKotlinxAtomicfu) {
                                         if (isAtomicfuDependency(arg.arguments[0])) {
                                             it.remove()
                                         }
@@ -336,10 +337,13 @@ private class FunctionNodeDerived(val fn: FunctionNode) : FunctionNode() {
 
 
 fun main(args: Array<String>) {
-    if (args.size !in 1..2) {
+    if (args.size !in 1..3) {
         println("Usage: AtomicFUTransformerKt <dir> [<output>]")
         return
     }
     val t = AtomicFUTransformerJS(File(args[0]), File(args[1]))
+    if (args.size > 2) {
+        t.requireKotlinxAtomicfu = true
+    }
     t.transform()
 }
