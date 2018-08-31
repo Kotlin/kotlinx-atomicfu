@@ -10,13 +10,16 @@ import org.gradle.api.tasks.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.jvm.tasks.*
 import java.io.*
+import java.util.*
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(target: Project) {
+        target.tasks.create("atomicFu", ConfigTask::class.java)
         target.configureTransformation()
         (target.tasks.findByName("jar") as? Jar)?.setupJarManifest()
     }
 }
+
 
 fun Project.configureTransformation() {
     plugins.matching { it::class.java.canonicalName.startsWith("org.jetbrains.kotlin.gradle.plugin") }.all {
@@ -50,15 +53,19 @@ fun Project.configureTransformation() {
                 // make transformedClassesDir the source path for output.classesDirs
                 (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
 
+                val configTask = tasks.findByName("atomicFu")
+
                 val transformJVMTask = project.tasks.create(
                     sourceSetParam.getTaskName("transform", "classes"),
                     AtomicFUTransformTask::class.java
                 )
                 transformJVMTask.apply {
                     dependsOn(sourceSetParam.classesTaskName).onlyIf { !classesDirsCopy.isEmpty }
+                    dependsOn(configTask)
                     sourceSet = sourceSetParam
                     inputFiles = classesDirsCopy
                     outputDir = transformedClassesDir
+                    configTask?.let { variant = (configTask as ConfigTask).variant }
                 }
                 transformJVMTask.outputs.dir(transformedClassesDir)
                 //now transformJVMTask is responsible for compiling this source set into the classes directory
@@ -117,6 +124,11 @@ val Project.mainSourceSet: SourceSet
     get() = sourceSets.getByName("main")
 
 
+open class ConfigTask : DefaultTask() {
+    @Input
+    var variant: String = "FU"
+}
+
 @CacheableTask
 open class AtomicFUTransformTask : ConventionTask() {
 
@@ -135,7 +147,7 @@ open class AtomicFUTransformTask : ConventionTask() {
     var verbose = false
 
     @Input
-    var variant = Variant.BOTH
+    var variant = "FU"
 
     @TaskAction
     fun transform() {
@@ -148,7 +160,7 @@ open class AtomicFUTransformTask : ConventionTask() {
         inputFiles.files.forEach {
             AtomicFUTransformer(classPath.files.map { it.absolutePath }, it).let { t ->
                 t.outputDir = outputDir
-                t.variant = variant
+                t.variant = enumValueOf(variant.toUpperCase(Locale.US))
                 t.verbose = verbose
                 t.transform()
             }
