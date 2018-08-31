@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.11.4
+
+* JS: Transformer added. It is now a compile-only dependency just like on JVM.   
+* JVM: Default transformation variant is changed back to JDK6-compatible "FU".
+  * `atomicfu { variant = xxx }` configuration section in Gradle can be used to change it.
+
 ## Version 0.11.3
 
 * Fixed lost files during class analysis phase.
