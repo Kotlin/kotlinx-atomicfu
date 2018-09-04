@@ -48,7 +48,7 @@ fun Project.configureTransformation() {
             val classesDirsCopy = project.files(classesDirs.toTypedArray()).filter { it.exists() }
             (sourceSetParam as ExtensionAware).extensions.add("classesDirsCopy", classesDirsCopy)
 
-            val transformedClassesDir = File(project.buildDir, "classes/${sourceSetParam.name}-transformed")
+            val transformedClassesDir = File(project.buildDir, "classes${File.separatorChar}${sourceSetParam.name}-transformed")
 
             if (jvmTarget) {
                 // make transformedClassesDir the source path for output.classesDirs
@@ -83,14 +83,14 @@ fun Project.configureTransformation() {
                 copyTask.apply {
                     dependsOn(compileTaskName)
                     from(tasks.getByName(compileTaskName).outputs.files)
-                    exclude(compileTaskOutputFile.asPath.substringAfterLast('/'))
+                    exclude(compileTaskOutputFile.asPath.substringAfterLast(File.separatorChar))
                     into(transformedClassesDir.canonicalPath)
                 }
                 val transformJSTask = project.tasks.create(
                     sourceSetParam.getTaskName("transformJS", "files"),
                     AtomicFUTransformJSTask::class.java
                 )
-                val transformedOutputFile = File(transformedClassesDir, compileTaskOutputFile.asPath.substringAfterLast('/'))
+                val transformedOutputFile = File(transformedClassesDir, compileTaskOutputFile.asPath.substringAfterLast(File.separatorChar))
 
                 // transform compileTaskOutputFile and write to transformed directory
                 transformJSTask.apply {
