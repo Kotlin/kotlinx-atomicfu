@@ -4,12 +4,17 @@ apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
 apply from: file("$rootProject.projectDir/gradle/test-mocha-js.gradle")
 apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
 
+configurations {
+    transformer
+}
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
     expectedBy project(":atomicfu-common")
     
     testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
-    testCompile project(":atomicfu-transformer")
+
+    transformer project(":atomicfu-transformer")
 }
 
 tasks.withType(compileKotlin2Js.getClass()) {
@@ -40,10 +45,10 @@ repositories.whenObjectAdded {
 def orifinalFile = "$buildDir/classes/kotlin/test/atomicfu-js_test.js"
 def transformedFile = "$buildDir/classes/kotlin/test/atomicfu-js_testTransformed.js"
 
-task transformJS (type: JavaExec, dependsOn: compileKotlin2Js) {
+task transformJS (type: JavaExec, dependsOn: [compileKotlin2Js, tasks.findByPath(":atomicfu-transformer:assemble")]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
     args = [orifinalFile, transformedFile, true]
-    classpath = sourceSets.test.runtimeClasspath
+    classpath = project.files(configurations.transformer.asCollection())
     inputs.file(orifinalFile)
     outputs.file(transformedFile)
 }
