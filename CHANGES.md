@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.11.5
+
+* Gradle plugin for JS: Fixed paths on Windows
+
 ## Version 0.11.4
 
 * JS: Transformer added. It is now a compile-only dependency just like on JVM.   
