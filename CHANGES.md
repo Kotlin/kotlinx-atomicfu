@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.11.6
+
+* Kotlin/Native version 0.9
+
 ## Version 0.11.5
 
 * Gradle plugin for JS: Fixed paths on Windows
