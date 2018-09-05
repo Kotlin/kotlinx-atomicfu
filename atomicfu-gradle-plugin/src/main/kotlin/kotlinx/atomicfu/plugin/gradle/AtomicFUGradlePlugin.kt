@@ -13,105 +13,106 @@ import java.io.*
 import java.util.*
 
 private const val EXTENSION_NAME = "atomicfu"
+private const val ORIGINAL_DIR_NAME = "originalClassesDir"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
-        project.configureTransformation()
+        project.configureOriginalDirTest()
+        project.configureTransformTasks()
     }
 }
 
-fun Project.configureTransformation() {
+fun Project.configureOriginalDirTest() {
     plugins.matching { it::class.java.canonicalName.startsWith("org.jetbrains.kotlin.gradle.plugin") }.all {
         val compileTestKotlin = tasks.findByName("compileTestKotlin") as AbstractCompile?
         compileTestKotlin?.doFirst {
             compileTestKotlin.classpath = (compileTestKotlin.classpath
                 - mainSourceSet.output.classesDirs
-                + files((mainSourceSet as ExtensionAware).extensions.getByName("classesDirsCopy")))
+                + files((mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME)))
         }
         val compileTestKotlin2Js = tasks.findByName("compileTestKotlin2Js") as AbstractCompile?
         compileTestKotlin2Js?.doFirst {
             compileTestKotlin2Js.classpath = (compileTestKotlin2Js.classpath
                 - mainSourceSet.output.classesDirs
-                + files((mainSourceSet as ExtensionAware).extensions.getByName("classesDirsCopy")))
+                + files((mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME)))
         }
     }
+}
 
+fun Project.configureTransformTasks() {
     afterEvaluate {
-        val jsTarget = pluginManager.hasPlugin("kotlin-platform-js") || pluginManager.hasPlugin("kotlin2js")
         val jvmTarget = pluginManager.hasPlugin("kotlin-platform-jvm") || pluginManager.hasPlugin("kotlin")
+        val jsTarget = pluginManager.hasPlugin("kotlin-platform-js") || pluginManager.hasPlugin("kotlin2js")
         val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
-
         sourceSets.all { sourceSetParam ->
             val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
             // make copy of original classes directory
-            val classesDirsCopy = project.files(classesDirs.toTypedArray()).filter { it.exists() }
-            (sourceSetParam as ExtensionAware).extensions.add("classesDirsCopy", classesDirsCopy)
-
-            val transformedClassesDir = File(project.buildDir, "classes${File.separatorChar}${sourceSetParam.name}-transformed")
-
-            if (jvmTarget) {
-                // make transformedClassesDir the source path for output.classesDirs
-                (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
-
-                val transformJVMTask = project.tasks.create(
-                    sourceSetParam.getTaskName("transform", "classes"),
-                    AtomicFUTransformTask::class.java
-                )
-                transformJVMTask.apply {
-                    dependsOn(sourceSetParam.classesTaskName).onlyIf { !classesDirsCopy.isEmpty }
-                    sourceSet = sourceSetParam
-                    inputFiles = classesDirsCopy
-                    outputDir = transformedClassesDir
-                    config?.let { variant = it.variant }
-                }
-                transformJVMTask.outputs.dir(transformedClassesDir)
-                //now transformJVMTask is responsible for compiling this source set into the classes directory
-                sourceSetParam.compiledBy(transformJVMTask)
+            val originalClassesDir = project.files(classesDirs.toTypedArray()).filter { it.exists() }
+            (sourceSetParam as ExtensionAware).extensions.add(ORIGINAL_DIR_NAME, originalClassesDir)
+            val transformedClassesDir = File(project.buildDir, "classes${File.separatorChar}${sourceSetParam.name}-atomicfu")
+            // make transformedClassesDir the source path for output.classesDirs
+            (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
+            val transformTask = when {
+                jvmTarget -> configureJvmTask(sourceSetParam, transformedClassesDir, originalClassesDir, config)
+                jsTarget -> configureJsTask(sourceSetParam, transformedClassesDir, originalClassesDir, config)
+                else -> error("AtomicFUGradlePlugin can be applied to Kotlin/JVM or Kotlin/JS project. " +
+                    "The corresponding plugins were not detected.")
             }
-            if (jsTarget) {
-                val compileTaskName = sourceSetParam.getCompileTaskName("Kotlin2Js")
-                // manually set by user
-                val compileTaskOutputFile = tasks.getByName(compileTaskName).outputs.files.filter { it.canonicalPath.endsWith(".js") }
-                val copyTask = project.tasks.create(
-                    sourceSetParam.getTaskName("copy", "files"),
-                    Copy::class.java
-                )
-                (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
-
-                // copy all files from original compiled directory except the compileTaskOutputFile with all compiled code from the application
-                copyTask.apply {
-                    dependsOn(compileTaskName)
-                    from(tasks.getByName(compileTaskName).outputs.files)
-                    exclude(compileTaskOutputFile.asPath.substringAfterLast(File.separatorChar))
-                    into(transformedClassesDir.canonicalPath)
-                }
-                val transformJSTask = project.tasks.create(
-                    sourceSetParam.getTaskName("transformJS", "files"),
-                    AtomicFUTransformJSTask::class.java
-                )
-                val transformedOutputFile = File(transformedClassesDir, compileTaskOutputFile.asPath.substringAfterLast(File.separatorChar))
-
-                // transform compileTaskOutputFile and write to transformed directory
-                transformJSTask.apply {
-                    dependsOn(copyTask.name)
-                    sourceSet = sourceSetParam
-                    inputFiles = compileTaskOutputFile
-                    outputDir = transformedOutputFile
-                }
-                transformJSTask.outputs.file(transformedOutputFile)
-                //now transformJSTask is responsible for compiling this source set into the output directory
-                sourceSetParam.compiledBy(transformJSTask)
-                // todo: fixme: This is fragile hard-coding of external & non-standard task name
-                tasks.findByName("testMochaNode")?.dependsOn(transformJSTask)
-            }
+            transformTask.outputs.dir(transformedClassesDir)
+            //now transformTask is responsible for compiling this source set into the classes directory
+            sourceSetParam.compiledBy(transformTask)
         }
-
         (tasks.findByName("jar") as? Jar)?.setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
     }
 }
 
 fun String.toVariant(): Variant = enumValueOf(toUpperCase(Locale.US))
+
+fun Project.configureJvmTask(
+    sourceSetParam: SourceSet,
+    transformedClassesDir: File,
+    originalClassesDir: FileCollection,
+    config: AtomicFUPluginExtension?
+): ConventionTask {
+    val transformTask = project.tasks.create(
+        sourceSetParam.getTaskName("transform", "atomicfuClasses"),
+        AtomicFUTransformTask::class.java
+    )
+    transformTask.apply {
+        dependsOn(sourceSetParam.classesTaskName)
+        sourceSet = sourceSetParam
+        inputFiles = originalClassesDir
+        outputDir = transformedClassesDir
+        config?.let {
+            variant = it.variant
+            verbose = it.verbose
+        }
+    }
+    return transformTask
+}
+
+fun Project.configureJsTask(
+    sourceSetParam: SourceSet,
+    transformedClassesDir: File,
+    originalClassesDir: FileCollection,
+    config: AtomicFUPluginExtension?
+): ConventionTask {
+    val transformTask = project.tasks.create(
+        sourceSetParam.getTaskName("transform", "atomicfuJsFiles"),
+        AtomicFUTransformJsTask::class.java
+    )
+    transformTask.apply {
+        dependsOn(sourceSetParam.classesTaskName)
+        sourceSet = sourceSetParam
+        inputFiles = originalClassesDir
+        outputDir = transformedClassesDir
+        config?.let {
+            verbose = it.verbose
+        }
+    }
+    return transformTask
+}
 
 fun Jar.setupJarManifest(multiRelease: Boolean, classifier: String = "") {
     this.classifier = classifier // todo: why we overwrite jar's classifier?
@@ -128,42 +129,35 @@ val Project.sourceSets: SourceSetContainer
 val Project.mainSourceSet: SourceSet
     get() = sourceSets.getByName("main")
 
-
 class AtomicFUPluginExtension {
     var variant: String = "FU"
+    var verbose: Boolean = false
 }
 
 @CacheableTask
 open class AtomicFUTransformTask : ConventionTask() {
-
     var sourceSet: SourceSet? = null
 
     @InputFiles
     lateinit var inputFiles: FileCollection
-
     @OutputDirectory
     lateinit var outputDir: File
-
     @InputFiles
     var classPath: FileCollection = project.files()
-
-    @Input
-    var verbose = false
-
     @Input
     var variant = "FU"
+    @Input
+    var verbose = false
 
     @TaskAction
     fun transform() {
         val dependenciesSourceDirs =
             project.configurations.getByName("compile").dependencies.withType(ProjectDependency::class.java)
                 .map { p -> p.dependencyProject.mainSourceSet.allSource.sourceDirectories }
-
         classPath = dependenciesSourceDirs.fold(sourceSet!!.compileClasspath) { ss, dep -> ss + dep }
-
-        inputFiles.files.forEach {
-            AtomicFUTransformer(classPath.files.map { it.absolutePath }, it).let { t ->
-                t.outputDir = outputDir
+        val cp = classPath.files.map { it.absolutePath }
+        inputFiles.files.forEach { inputDir ->
+            AtomicFUTransformer(cp, inputDir, outputDir).let { t ->
                 t.variant = variant.toVariant()
                 t.verbose = verbose
                 t.transform()
@@ -173,30 +167,27 @@ open class AtomicFUTransformTask : ConventionTask() {
 }
 
 @CacheableTask
-open class AtomicFUTransformJSTask : ConventionTask() {
-
+open class AtomicFUTransformJsTask : ConventionTask() {
     var sourceSet: SourceSet? = null
 
     @InputFiles
     lateinit var inputFiles: FileCollection
-
     @OutputFile
     lateinit var outputDir: File
-
     @InputFiles
     var classPath: FileCollection = project.files()
+    @Input
+    var verbose = false
 
     @TaskAction
     fun transform() {
         val dependenciesSourceDirs =
             project.configurations.getByName("compile").dependencies.withType(ProjectDependency::class.java)
                 .map { p -> p.dependencyProject.mainSourceSet.allSource.sourceDirectories }
-
         classPath = dependenciesSourceDirs.fold(sourceSet!!.compileClasspath) { ss, dep -> ss + dep }
-
-
-        inputFiles.files.forEach {
-            AtomicFUTransformerJS(it, outputDir).let { t ->
+        inputFiles.files.forEach { inputDir ->
+            AtomicFUTransformerJS(inputDir, outputDir).let { t ->
+                t.verbose = verbose
                 t.transform()
             }
         }
