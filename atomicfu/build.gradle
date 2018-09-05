@@ -15,10 +15,6 @@ def classesPostTransformFU = file("$buildDir/classes/kotlin/postTransformedFU")
 def classesPostTransformVH = file("$buildDir/classes/kotlin/postTransformedVH")
 def classesPostTransformBOTH = file("$buildDir/classes/kotlin/postTransformedBOTH")
 
-task configureDirs(dependsOn: compileTestKotlin) {
-    (sourceSets.test.output.classesDirs as ConfigurableFileCollection).setFrom(classesPostTransformFU, classesPostTransformVH, classesPostTransformBOTH)
-}
-
 task checkJdk16() {
     doLast {
         if (!System.env.JDK_16) {
