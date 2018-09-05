@@ -19,18 +19,23 @@ class AtomicFUTransformerJS(
     outputDir: File,
     var requireKotlinxAtomicfu: Boolean = false
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
-
     private val atomicConstructors = mutableSetOf<String>()
 
     override fun transform() {
         info("Transforming to $outputDir")
         inputDir.walk().filter { it.isFile }.forEach { file ->
-            println("Transforming file: " + file.canonicalPath)
-            val outBytes = transformFile(file)
-            outputDir.createNewFile()
-            outputDir.writeBytes(outBytes)
+            val outBytes = if (file.isJsFile()) {
+                println("Transforming file: ${file.canonicalPath}")
+                transformFile(file)
+            } else {
+                file.readBytes()
+            }
+            file.toOutputFile().mkdirsAndWrite(outBytes)
         }
     }
+
+    private fun File.isJsFile() =
+        name.endsWith(".js") && !name.endsWith(".meta.js")
 
     private fun transformFile(file: File): ByteArray {
         val p = Parser(CompilerEnvirons())
@@ -41,7 +46,6 @@ class AtomicFUTransformerJS(
         root.visit(AtomicOperationsInliner())
         return root.toSource().toByteArray()
     }
-
 
     inner class DependencyEraser : NodeVisitor {
         private fun isAtomicfuDependency(node: AstNode) =
@@ -334,7 +338,6 @@ private class FunctionNodeDerived(val fn: FunctionNode) : FunctionNode() {
         append("}")
     }
 }
-
 
 fun main(args: Array<String>) {
     if (args.size !in 1..3) {

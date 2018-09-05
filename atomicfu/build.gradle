@@ -82,7 +82,6 @@ transformedTestVH.onlyIf {
     JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()
 }
 
-
 task testAll(dependsOn: [
         transformedTestFU_6,
         transformedTestFU_current,
