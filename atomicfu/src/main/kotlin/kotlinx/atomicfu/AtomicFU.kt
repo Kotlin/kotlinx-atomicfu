@@ -134,14 +134,17 @@ public actual class AtomicRef<T> internal constructor(value: T) {
 @Suppress("UNCHECKED_CAST")
 public actual class AtomicBoolean internal constructor(v: Boolean) {
 
+    @Volatile
+    private var _value: Int = if (v) 1 else 0
+
     /**
      * Reading/writing this property maps to read/write of volatile variable.
      */
-    @Volatile
-    public actual var value: Boolean = v
+    public actual var value: Boolean
+        get() = _value != 0
         set(value) {
             interceptor.beforeUpdate(this)
-            field = value
+            _value = if (value) 1 else 0
             interceptor.afterSet(this, value)
         }
 
@@ -181,7 +184,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
     override fun toString(): String = value.toString()
 
     private companion object {
-        private val FU = AtomicIntegerFieldUpdater.newUpdater(AtomicBoolean::class.java, "value")
+        private val FU = AtomicIntegerFieldUpdater.newUpdater(AtomicBoolean::class.java, "_value")
     }
 }
 
