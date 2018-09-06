@@ -33,6 +33,13 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                     appendNode('properties').with {
                         appendNode('project.build.sourceEncoding', 'UTF-8')
                     }
+                    appendNode('repositories').with {
+                        appendNode('repository').with {
+                            appendNode('id', 'kotlin-dev')
+                            appendNode('url', 'https://dl.bintray.com/kotlin/kotlin-dev')
+
+                        }
+                    }
                 }
             }
         }
