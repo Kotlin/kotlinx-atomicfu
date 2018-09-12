@@ -200,19 +200,3 @@ tasks.withType(Test) {
 }
 
 jvmTest.dependsOn jvmTestAll
-
-// ==== CONFIGURE NATIVE =====
-
-if (project.hasProperty("teamcity")) {
-    afterEvaluate {
-        for (KotlinTarget target in kotlin.targets) {
-            if (!target.platformType.toString().equalsIgnoreCase("native")) continue
-
-            def testTask = tasks.findByName("${target.name}Test")
-            // todo: null check can be remove when KT-26547 is resolved
-            if (testTask == null) continue
-
-            testTask.args '--ktest_logger=TEAMCITY'
-        }
-    }
-}
