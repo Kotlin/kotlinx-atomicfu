@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+## Version 0.11.7
+
+* Fixed non-transformed AtomicBoolean and its tests
+* AtomicFUGradlePlugin: More consistent task naming & code refactoring
+
 ## Version 0.11.6
 
 * Kotlin/Native version 0.9
