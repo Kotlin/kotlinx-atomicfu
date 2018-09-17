@@ -151,10 +151,6 @@ open class AtomicFUTransformTask : ConventionTask() {
 
     @TaskAction
     fun transform() {
-        val dependenciesSourceDirs =
-            project.configurations.getByName("compile").dependencies.withType(ProjectDependency::class.java)
-                .map { p -> p.dependencyProject.mainSourceSet.allSource.sourceDirectories }
-        classPath = dependenciesSourceDirs.fold(sourceSet!!.compileClasspath) { ss, dep -> ss + dep }
         val cp = classPath.files.map { it.absolutePath }
         inputFiles.files.forEach { inputDir ->
             AtomicFUTransformer(cp, inputDir, outputDir).let { t ->
@@ -174,17 +170,11 @@ open class AtomicFUTransformJsTask : ConventionTask() {
     lateinit var inputFiles: FileCollection
     @OutputFile
     lateinit var outputDir: File
-    @InputFiles
-    var classPath: FileCollection = project.files()
     @Input
     var verbose = false
 
     @TaskAction
     fun transform() {
-        val dependenciesSourceDirs =
-            project.configurations.getByName("compile").dependencies.withType(ProjectDependency::class.java)
-                .map { p -> p.dependencyProject.mainSourceSet.allSource.sourceDirectories }
-        classPath = dependenciesSourceDirs.fold(sourceSet!!.compileClasspath) { ss, dep -> ss + dep }
         inputFiles.files.forEach { inputDir ->
             AtomicFUTransformerJS(inputDir, outputDir).let { t ->
                 t.verbose = verbose
