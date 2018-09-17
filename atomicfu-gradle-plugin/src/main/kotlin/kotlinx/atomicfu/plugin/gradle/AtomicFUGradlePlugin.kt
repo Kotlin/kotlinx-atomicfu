@@ -2,7 +2,6 @@ package kotlinx.atomicfu.plugin.gradle
 
 import kotlinx.atomicfu.transformer.*
 import org.gradle.api.*
-import org.gradle.api.artifacts.*
 import org.gradle.api.file.*
 import org.gradle.api.internal.*
 import org.gradle.api.plugins.*
@@ -19,7 +18,13 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
         project.configureOriginalDirTest()
-        project.configureTransformTasks()
+
+        project.withPlugins("kotlin") {
+            configureTransformTasks(this::configureJvmTask)
+        }
+        project.withPlugins("kotlin2js") {
+            configureTransformTasks(this::configureJsTask)
+        }
     }
 }
 
@@ -40,12 +45,17 @@ fun Project.configureOriginalDirTest() {
     }
 }
 
-fun Project.configureTransformTasks() {
+fun Project.withPlugins(vararg plugins: String, fn: Project.() -> Unit) {
+    plugins.forEach { pluginManager.withPlugin(it) { fn() } }
+}
+
+fun Project.configureTransformTasks(
+        createTransformTask: (sourceSet: SourceSet, transformedDir: File, originalDir: FileCollection, config: AtomicFUPluginExtension?) -> Task
+) {
     afterEvaluate {
-        val jvmTarget = pluginManager.hasPlugin("kotlin-platform-jvm") || pluginManager.hasPlugin("kotlin")
-        val jsTarget = pluginManager.hasPlugin("kotlin-platform-js") || pluginManager.hasPlugin("kotlin2js")
-        val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
         sourceSets.all { sourceSetParam ->
+            val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
+
             val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
             // make copy of original classes directory
             val originalClassesDir = project.files(classesDirs.toTypedArray()).filter { it.exists() }
@@ -53,12 +63,7 @@ fun Project.configureTransformTasks() {
             val transformedClassesDir = File(project.buildDir, "classes${File.separatorChar}${sourceSetParam.name}-atomicfu")
             // make transformedClassesDir the source path for output.classesDirs
             (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
-            val transformTask = when {
-                jvmTarget -> configureJvmTask(sourceSetParam, transformedClassesDir, originalClassesDir, config)
-                jsTarget -> configureJsTask(sourceSetParam, transformedClassesDir, originalClassesDir, config)
-                else -> error("AtomicFUGradlePlugin can be applied to Kotlin/JVM or Kotlin/JS project. " +
-                    "The corresponding plugins were not detected.")
-            }
+            val transformTask = createTransformTask(sourceSetParam, transformedClassesDir, originalClassesDir, config)
             //now transformTask is responsible for compiling this source set into the classes directory
             sourceSetParam.compiledBy(transformTask)
             (tasks.findByName(sourceSetParam.jarTaskName) as? Jar)?.apply {
