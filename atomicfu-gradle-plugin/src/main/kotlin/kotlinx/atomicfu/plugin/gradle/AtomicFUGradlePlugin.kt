@@ -7,9 +7,11 @@ import org.gradle.api.internal.*
 import org.gradle.api.plugins.*
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.compile.*
+import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.*
 import java.io.*
 import java.util.*
+import java.util.concurrent.Callable
 
 private const val EXTENSION_NAME = "atomicfu"
 private const val ORIGINAL_DIR_NAME = "originalClassesDir"
@@ -41,32 +43,35 @@ fun Project.configureTransformTasks(
 
             val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
             // make copy of original classes directory
-            val originalClassesDir = project.files(classesDirs.toTypedArray()).filter { it.exists() }
-            (sourceSetParam as ExtensionAware).extensions.add(ORIGINAL_DIR_NAME, originalClassesDir)
+            val originalClassesDirs: FileCollection = project.files(classesDirs.toTypedArray()).filter { it.exists() }
+            (sourceSetParam as ExtensionAware).extensions.add(ORIGINAL_DIR_NAME, originalClassesDirs)
+
             val transformedClassesDir = File(project.buildDir, "classes${File.separatorChar}${sourceSetParam.name}-atomicfu")
             // make transformedClassesDir the source path for output.classesDirs
             (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
-            val transformTask = createTransformTask(sourceSetParam, transformedClassesDir, originalClassesDir, config)
+            val transformTask = createTransformTask(sourceSetParam, transformedClassesDir, originalClassesDirs, config)
             //now transformTask is responsible for compiling this source set into the classes directory
             sourceSetParam.compiledBy(transformTask)
             (tasks.findByName(sourceSetParam.jarTaskName) as? Jar)?.apply {
                 setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
             }
+
             if (sourceSetParam.name == SourceSet.TEST_SOURCE_SET_NAME) {
-                (tasks.findByName(testTaskName) as? AbstractCompile)?.configureTestCompile()
+                // test should compile and run against original production binaries
+                val mainSourceSet = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+                val originalMainClassesDirs = project.files(
+                        // use Callable because there is no guarantee that main is configured before test
+                        Callable { (mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME) as FileCollection }
+                )
+
+                (tasks.findByName(testTaskName) as? AbstractCompile)?.classpath =
+                        originalMainClassesDirs + sourceSetParam.compileClasspath - mainSourceSet.output.classesDirs
+
+                // todo: fix test runtime classpath for JS?
+                (tasks.findByName(JavaPlugin.TEST_TASK_NAME) as? Test)?.classpath =
+                        originalMainClassesDirs + sourceSetParam.runtimeClasspath - mainSourceSet.output.classesDirs
             }
         }
-    }
-}
-
-fun AbstractCompile.configureTestCompile() {
-    // TODO: modifying classpath in doFirst breaks up-to-date checks
-    // TODO: probably won't work correctly when multiple classes dirs are present (i.e. with Java)
-    doFirst {
-        val mainSourceSet = project.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-        classpath = classpath -
-                mainSourceSet.output.classesDirs +
-                project.files((mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME))
     }
 }
 
