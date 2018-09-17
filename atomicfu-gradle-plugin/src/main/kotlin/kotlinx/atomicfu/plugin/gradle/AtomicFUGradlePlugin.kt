@@ -59,7 +59,6 @@ fun Project.configureTransformTasks() {
                 else -> error("AtomicFUGradlePlugin can be applied to Kotlin/JVM or Kotlin/JS project. " +
                     "The corresponding plugins were not detected.")
             }
-            transformTask.outputs.dir(transformedClassesDir)
             //now transformTask is responsible for compiling this source set into the classes directory
             sourceSetParam.compiledBy(transformTask)
         }
