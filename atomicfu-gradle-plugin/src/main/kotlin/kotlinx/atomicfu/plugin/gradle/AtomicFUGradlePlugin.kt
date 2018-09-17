@@ -61,8 +61,10 @@ fun Project.configureTransformTasks() {
             }
             //now transformTask is responsible for compiling this source set into the classes directory
             sourceSetParam.compiledBy(transformTask)
+            (tasks.findByName(sourceSetParam.jarTaskName) as? Jar)?.apply {
+                setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
+            }
         }
-        (tasks.findByName("jar") as? Jar)?.setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
     }
 }
 
