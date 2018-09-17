@@ -17,30 +17,12 @@ private const val ORIGINAL_DIR_NAME = "originalClassesDir"
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
-        project.configureOriginalDirTest()
 
         project.withPlugins("kotlin") {
-            configureTransformTasks(this::configureJvmTask)
+            configureTransformTasks("compileTestKotlin", this::configureJvmTask)
         }
         project.withPlugins("kotlin2js") {
-            configureTransformTasks(this::configureJsTask)
-        }
-    }
-}
-
-fun Project.configureOriginalDirTest() {
-    plugins.matching { it::class.java.canonicalName.startsWith("org.jetbrains.kotlin.gradle.plugin") }.all {
-        val compileTestKotlin = tasks.findByName("compileTestKotlin") as AbstractCompile?
-        compileTestKotlin?.doFirst {
-            compileTestKotlin.classpath = (compileTestKotlin.classpath
-                - mainSourceSet.output.classesDirs
-                + files((mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME)))
-        }
-        val compileTestKotlin2Js = tasks.findByName("compileTestKotlin2Js") as AbstractCompile?
-        compileTestKotlin2Js?.doFirst {
-            compileTestKotlin2Js.classpath = (compileTestKotlin2Js.classpath
-                - mainSourceSet.output.classesDirs
-                + files((mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME)))
+            configureTransformTasks("compileTestKotlin2Js", this::configureJsTask)
         }
     }
 }
@@ -50,6 +32,7 @@ fun Project.withPlugins(vararg plugins: String, fn: Project.() -> Unit) {
 }
 
 fun Project.configureTransformTasks(
+        testTaskName: String,
         createTransformTask: (sourceSet: SourceSet, transformedDir: File, originalDir: FileCollection, config: AtomicFUPluginExtension?) -> Task
 ) {
     afterEvaluate {
@@ -69,7 +52,21 @@ fun Project.configureTransformTasks(
             (tasks.findByName(sourceSetParam.jarTaskName) as? Jar)?.apply {
                 setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
             }
+            if (sourceSetParam.name == SourceSet.TEST_SOURCE_SET_NAME) {
+                (tasks.findByName(testTaskName) as? AbstractCompile)?.configureTestCompile()
+            }
         }
+    }
+}
+
+fun AbstractCompile.configureTestCompile() {
+    // TODO: modifying classpath in doFirst breaks up-to-date checks
+    // TODO: probably won't work correctly when multiple classes dirs are present (i.e. with Java)
+    doFirst {
+        val mainSourceSet = project.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+        classpath = classpath -
+                mainSourceSet.output.classesDirs +
+                project.files((mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME))
     }
 }
 
@@ -131,9 +128,6 @@ fun Jar.setupJarManifest(multiRelease: Boolean, classifier: String = "") {
 
 val Project.sourceSets: SourceSetContainer
     get() = convention.getPlugin(JavaPluginConvention::class.java).sourceSets
-
-val Project.mainSourceSet: SourceSet
-    get() = sourceSets.getByName("main")
 
 class AtomicFUPluginExtension {
     var variant: String = "FU"
