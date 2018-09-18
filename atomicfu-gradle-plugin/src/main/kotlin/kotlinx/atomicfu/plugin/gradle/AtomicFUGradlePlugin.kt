@@ -9,6 +9,11 @@ import org.gradle.api.tasks.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationToRunnableFiles
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import java.io.*
 import java.util.*
 import java.util.concurrent.Callable
@@ -21,16 +26,81 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
 
         project.withPlugins("kotlin") {
-            configureTransformTasks("compileTestKotlin", this::configureJvmTask)
+            configureTransformTasks("compileTestKotlin") { sourceSet, transformedDir, originalDir, config ->
+                createJvmTransformTask(sourceSet).configureJvmTask(sourceSet.classesTaskName, transformedDir, originalDir, config)
+            }
         }
         project.withPlugins("kotlin2js") {
-            configureTransformTasks("compileTestKotlin2Js", this::configureJsTask)
+            configureTransformTasks("compileTestKotlin2Js") { sourceSet, transformedDir, originalDir, config ->
+                createJsTransformTask(sourceSet).configureJsTask(sourceSet.classesTaskName, transformedDir, originalDir, config)
+            }
+        }
+        project.withPlugins("kotlin-multiplatform") {
+            afterEvaluate {
+                configureMultiplatformPlugin()
+            }
         }
     }
 }
 
 fun Project.withPlugins(vararg plugins: String, fn: Project.() -> Unit) {
     plugins.forEach { pluginManager.withPlugin(it) { fn() } }
+}
+
+fun Project.configureMultiplatformPlugin() {
+    val originalDirsByCompilation = hashMapOf<KotlinCompilation, FileCollection>()
+    project.extensions.findByType(KotlinProjectExtension::class.java)?.let { kotlinExtension ->
+        val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
+
+        val targetsExtension = (kotlinExtension as? ExtensionAware)?.extensions?.findByName("targets")
+        @Suppress("UNCHECKED_CAST")
+        val targets = targetsExtension as NamedDomainObjectContainer<KotlinTarget>
+        targets.all { target ->
+            target.compilations.all { compilation ->
+                val classesDirs = compilation.output.classesDirs as ConfigurableFileCollection
+                // make copy of original classes directory
+                val originalClassesDirs: FileCollection = project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
+                originalDirsByCompilation[compilation] = originalClassesDirs
+
+                val transformedClassesDir = project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
+                // make transformedClassesDir the source path for output.classesDirs
+                classesDirs.setFrom(transformedClassesDir)
+                val transformTask = when (target.platformType) {
+                    KotlinPlatformType.jvm -> {
+                        project.createJvmTransformTask(compilation).configureJvmTask(compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
+                    }
+                    KotlinPlatformType.js -> {
+                        project.createJsTransformTask(compilation).configureJsTask(compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
+                    }
+                    else -> {
+                        // todo KotlinPlatformType.android?
+                        return@all
+                    }
+                }
+                //now transformTask is responsible for compiling this source set into the classes directory
+                classesDirs.builtBy(transformTask)
+                (tasks.findByName(target.artifactsTaskName) as? Jar)?.apply {
+                    setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
+                }
+
+                if (compilation.name == KotlinCompilation.TEST_COMPILATION_NAME) {
+                    // test should compile and run against original production binaries
+                    val mainCompilation = compilation.target.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
+                    val originalMainClassesDirs = project.files(
+                            // use Callable because there is no guarantee that main is configured before test
+                            Callable { originalDirsByCompilation[mainCompilation]!! }
+                    )
+
+                    (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
+                            originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
+
+                    (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
+                            originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+                }
+
+            }
+        }
+    }
 }
 
 fun Project.configureTransformTasks(
@@ -77,19 +147,26 @@ fun Project.configureTransformTasks(
 
 fun String.toVariant(): Variant = enumValueOf(toUpperCase(Locale.US))
 
-fun Project.configureJvmTask(
-    sourceSetParam: SourceSet,
+fun Project.createJvmTransformTask(compilation: KotlinCompilation) =
+        tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformTask::class.java)
+
+fun Project.createJsTransformTask(compilation: KotlinCompilation) =
+        tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformJsTask::class.java)
+
+fun Project.createJvmTransformTask(sourceSet: SourceSet) =
+        tasks.create(sourceSet.getTaskName("transform", "atomicfuClasses"), AtomicFUTransformTask::class.java)
+
+fun Project.createJsTransformTask(sourceSet: SourceSet) =
+        tasks.create(sourceSet.getTaskName("transform", "atomicfuJsFiles"), AtomicFUTransformJsTask::class.java)
+
+fun AtomicFUTransformTask.configureJvmTask(
+    classesTaskName: String,
     transformedClassesDir: File,
     originalClassesDir: FileCollection,
     config: AtomicFUPluginExtension?
-): ConventionTask {
-    val transformTask = project.tasks.create(
-        sourceSetParam.getTaskName("transform", "atomicfuClasses"),
-        AtomicFUTransformTask::class.java
-    )
-    transformTask.apply {
-        dependsOn(sourceSetParam.classesTaskName)
-        sourceSet = sourceSetParam
+): ConventionTask =
+    apply {
+        dependsOn(classesTaskName)
         inputFiles = originalClassesDir
         outputDir = transformedClassesDir
         config?.let {
@@ -97,30 +174,21 @@ fun Project.configureJvmTask(
             verbose = it.verbose
         }
     }
-    return transformTask
-}
 
-fun Project.configureJsTask(
-    sourceSetParam: SourceSet,
+fun AtomicFUTransformJsTask.configureJsTask(
+    classesTaskName: String,
     transformedClassesDir: File,
     originalClassesDir: FileCollection,
     config: AtomicFUPluginExtension?
-): ConventionTask {
-    val transformTask = project.tasks.create(
-        sourceSetParam.getTaskName("transform", "atomicfuJsFiles"),
-        AtomicFUTransformJsTask::class.java
-    )
-    transformTask.apply {
-        dependsOn(sourceSetParam.classesTaskName)
-        sourceSet = sourceSetParam
+): ConventionTask =
+    apply {
+        dependsOn(classesTaskName)
         inputFiles = originalClassesDir
         outputDir = transformedClassesDir
         config?.let {
             verbose = it.verbose
         }
     }
-    return transformTask
-}
 
 fun Jar.setupJarManifest(multiRelease: Boolean, classifier: String = "") {
     this.classifier = classifier // todo: why we overwrite jar's classifier?
@@ -141,8 +209,6 @@ class AtomicFUPluginExtension {
 
 @CacheableTask
 open class AtomicFUTransformTask : ConventionTask() {
-    var sourceSet: SourceSet? = null
-
     @InputFiles
     lateinit var inputFiles: FileCollection
     @OutputDirectory
@@ -169,8 +235,6 @@ open class AtomicFUTransformTask : ConventionTask() {
 
 @CacheableTask
 open class AtomicFUTransformJsTask : ConventionTask() {
-    var sourceSet: SourceSet? = null
-
     @InputFiles
     lateinit var inputFiles: FileCollection
     @OutputDirectory
