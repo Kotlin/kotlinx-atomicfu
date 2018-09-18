@@ -25,24 +25,44 @@ if (!isMultiplatform) {
     }
 }
 
+task stubSources(type: Jar) {
+    classifier = 'sources'
+}
+
+task stubJavadoc(type: Jar) {
+    classifier = 'javadoc'
+}
+
 publishing {
     repositories {
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
     }
-    publications {
-        maven(MavenPublication) {
-            if (!isMultiplatform) {
+    publications.all {
+        pom.withXml(configureMavenCentralMetadata)
+    }
+
+    if (!isMultiplatform) {
+        publications {
+            maven(MavenPublication) {
                 from components.java
                 artifact sourcesJar
                 artifact javadocJar
-            }
-            if (project.name.endsWith("-maven-plugin")) {
-                pom.with {
-                    packaging = 'maven-plugin'
+
+                if (project.name.endsWith("-maven-plugin")) {
+                    pom.packaging = 'maven-plugin'
                 }
             }
-            pom.withXml(configureMavenCentralMetadata)
         }
+    } else {
+        afterEvaluate {
+            kotlin.targets.forEach { target ->
+                def targetPublication = publications.findByName(target.name)
+                if (targetPublication != null) {
+                    targetPublication.artifact stubJavadoc
+                }
+            }
+        }
+
     }
 }
 
