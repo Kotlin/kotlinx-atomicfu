@@ -7,4 +7,4 @@ include 'atomicfu-native'
 
 include 'atomicfu-transformer'
 include 'atomicfu-gradle-plugin'
-include 'atomicfu-maven-plugin'
+//include 'atomicfu-maven-plugin'
