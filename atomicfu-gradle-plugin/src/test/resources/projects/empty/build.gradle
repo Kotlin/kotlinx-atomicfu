@@ -1,0 +1,2 @@
+apply plugin: 'kotlinx-atomicfu'
+apply plugin: 'base'

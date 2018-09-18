@@ -1,0 +1,21 @@
+apply plugin: 'kotlinx-atomicfu'
+apply plugin: 'kotlin'
+
+dependencies {
+    compileOnly atomicfuJvm
+    testRuntime atomicfuJvm
+
+    compile 'org.jetbrains.kotlin:kotlin-stdlib'
+
+    testCompile 'org.jetbrains.kotlin:kotlin-test'
+    testCompile 'org.jetbrains.kotlin:kotlin-test-junit'
+    testCompile 'junit:junit:4.12'
+}
+
+compileTestKotlin.doLast {
+    file("$buildDir/test_compile_classpath.txt").text = classpath.join("\n")
+}
+
+test.doLast {
+    file("$buildDir/test_runtime_classpath.txt").text = classpath.join("\n")
+}

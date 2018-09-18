@@ -1,7 +1,47 @@
 apply plugin: 'kotlin'
+apply plugin: 'java-gradle-plugin'
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile project(":atomicfu-transformer")
     compile gradleApi()
+    compile project(":atomicfu-transformer")
+    compile 'org.jetbrains.kotlin:kotlin-stdlib'
+
+    testCompile gradleTestKit()
+    testCompile 'org.jetbrains.kotlin:kotlin-test'
+    testCompile 'org.jetbrains.kotlin:kotlin-test-junit'
+    testCompile 'junit:junit:4.12'
+}
+
+configurations {
+    testPluginClasspath
+}
+
+dependencies {
+    testPluginClasspath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+}
+
+evaluationDependsOn(':atomicfu')
+def atomicfu = project(':atomicfu')
+def atomicfuJvmJarTask = atomicfu.tasks.getByName(atomicfu.kotlin.targets.jvm.artifactsTaskName)
+def atomicfuJsJarTask = atomicfu.tasks.getByName(atomicfu.kotlin.targets.js.artifactsTaskName)
+
+// Write the plugin's classpath to a file to share with the tests
+task createClasspathManifest {
+    dependsOn(atomicfuJvmJarTask)
+    dependsOn(atomicfuJsJarTask)
+
+    def outputDir = file("$buildDir/$name")
+    outputs.dir outputDir
+
+    doLast {
+        outputDir.mkdirs()
+        file("$outputDir/plugin-classpath.txt").text = (sourceSets.main.runtimeClasspath + configurations.testPluginClasspath).join("\n")
+        file("$outputDir/atomicfu-jvm.txt").text = atomicfuJvmJarTask.archivePath
+        file("$outputDir/atomicfu-js.txt").text = atomicfuJsJarTask.archivePath
+    }
+}
+
+// Add the classpath file to the test runtime classpath
+dependencies {
+    testRuntime files(createClasspathManifest)
 }

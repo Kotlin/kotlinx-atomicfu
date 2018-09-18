@@ -1,0 +1,57 @@
+package kotlinx.atomicfu.plugin.gradle
+
+import org.gradle.testkit.runner.TaskOutcome
+import org.junit.Test
+import java.io.File
+
+class JvmProjectTest : BaseKotlinGradleTest() {
+    @Test
+    fun testKotlinPlugin() =
+        project("jvm-simple") {
+            doSimpleTest()
+        }
+
+    @Test
+    fun testKotlinPlatformJvmPlugin() =
+        project("jvm-simple") {
+            projectDir.resolve("build.gradle").modify {
+                it.checkedReplace("apply plugin: 'kotlin'", "apply plugin: 'kotlin-platform-jvm'")
+            }
+            doSimpleTest()
+        }
+
+    private fun Project.doSimpleTest() {
+        val tasksToCheck = arrayOf(
+            ":compileKotlin",
+            ":compileTestKotlin",
+            ":transformAtomicfuClasses",
+            ":transformTestAtomicfuClasses"
+        )
+
+        build("build") {
+            checkOutcomes(TaskOutcome.SUCCESS, *tasksToCheck)
+
+            val testCompileClasspathFiles = projectDir.resolve("build/test_compile_classpath.txt")
+                    .readLines().asSequence().flatMap { File(it).walk().filter(File::isFile) }.toHashSet()
+
+            val testRuntimeClasspathFiles = projectDir.resolve("build/test_runtime_classpath.txt")
+                    .readLines().asSequence().flatMap { File(it).walk().filter(File::isFile) }.toHashSet()
+
+            projectDir.resolve("build/classes/kotlin/main/IntArithmetic.class").let {
+                it.checkExists()
+                check(it in testCompileClasspathFiles) { "Original '$it' is missing from test compile classpath" }
+                check(it in testRuntimeClasspathFiles) { "Original '$it' is missing from test runtime classpath" }
+            }
+
+            projectDir.resolve("build/classes/main-atomicfu/IntArithmetic.class").let {
+                it.checkExists()
+                check(it !in testCompileClasspathFiles) { "Transformed '$it' is present in test compile classpath" }
+                check(it !in testRuntimeClasspathFiles) { "Transformed '$it' is present in test runtime classpath" }
+            }
+        }
+
+        build("build") {
+            checkOutcomes(TaskOutcome.UP_TO_DATE, *tasksToCheck)
+        }
+    }
+}
