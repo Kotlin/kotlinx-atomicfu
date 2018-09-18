@@ -173,7 +173,7 @@ open class AtomicFUTransformJsTask : ConventionTask() {
 
     @InputFiles
     lateinit var inputFiles: FileCollection
-    @OutputFile
+    @OutputDirectory
     lateinit var outputDir: File
     @Input
     var verbose = false
