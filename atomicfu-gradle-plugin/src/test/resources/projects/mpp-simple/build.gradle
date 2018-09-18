@@ -1,0 +1,65 @@
+apply plugin: 'kotlinx-atomicfu'
+apply plugin: 'kotlin-multiplatform'
+
+kotlin {
+    targets {
+        fromPreset(presets.jvm, 'jvm')
+        fromPreset(presets.js, 'js')
+    }
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation 'org.jetbrains.kotlin:kotlin-stdlib-common'
+            compileOnly atomicfuMetadata
+
+        }
+        commonTest.dependencies {
+            implementation 'org.jetbrains.kotlin:kotlin-test-common'
+            implementation 'org.jetbrains.kotlin:kotlin-test-annotations-common'
+            runtimeOnly atomicfuMetadata
+
+        }
+        jsMain.dependencies {
+            implementation 'org.jetbrains.kotlin:kotlin-stdlib-js'
+            compileOnly atomicfuJs
+
+        }
+        jsTest.dependencies {
+            implementation 'org.jetbrains.kotlin:kotlin-test-js'
+            runtimeOnly atomicfuJs
+        }
+        jvmMain.dependencies {
+            implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+            compileOnly atomicfuJvm
+        }
+        jvmTest.dependencies {
+            implementation 'org.jetbrains.kotlin:kotlin-test'
+            implementation 'org.jetbrains.kotlin:kotlin-test-junit'
+            implementation "junit:junit:4.12"
+            runtimeOnly atomicfuJvm
+        }
+    }
+}
+
+def File classpathFile(String platform, String fileName) {
+    def dir = file("$buildDir/classpath/$platform")
+    dir.mkdirs()
+    return file("$dir/$fileName")
+}
+
+compileTestKotlinJvm.doLast {
+    classpathFile("jvm", "test_compile.txt").text = classpath.files.join("\n")
+}
+
+jvmTest.doLast {
+    classpathFile("jvm", "test_runtime.txt").text = classpath.files.join("\n")
+}
+
+
+compileTestKotlinJs.doLast {
+    classpathFile("js", "test_compile.txt").text = classpath.files.join("\n")
+}
+
+jsTest.doLast {
+    classpathFile("js", "test_runtime.txt").text = classpath.files.join("\n")
+}
