@@ -200,3 +200,9 @@ tasks.withType(Test) {
 }
 
 jvmTest.dependsOn jvmTestAll
+
+afterEvaluate {
+    publishing.publications.jvm.artifactId = 'atomicfu'
+    publishing.publications.js.artifactId = 'atomicfu-js'
+    publishing.publications.metadata.artifactId = 'atomicfu-common'
+}
