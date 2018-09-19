@@ -114,8 +114,7 @@ fun Project.configureJsTask(
     return transformTask
 }
 
-fun Jar.setupJarManifest(multiRelease: Boolean, classifier: String = "") {
-    this.classifier = classifier // todo: why we overwrite jar's classifier?
+fun Jar.setupJarManifest(multiRelease: Boolean) {
     if (multiRelease) {
         manifest.attributes.apply {
             put("Multi-Release", "true")
@@ -172,7 +171,7 @@ open class AtomicFUTransformJsTask : ConventionTask() {
 
     @InputFiles
     lateinit var inputFiles: FileCollection
-    @OutputFile
+    @OutputDirectory
     lateinit var outputDir: File
     @InputFiles
     var classPath: FileCollection = project.files()
