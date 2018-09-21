@@ -27,7 +27,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
 
         project.withPlugins("kotlin") {
             configureTransformTasks("compileTestKotlin") { sourceSet, transformedDir, originalDir, config ->
-                createJvmTransformTask(sourceSet).configureJvmTask(sourceSet.classesTaskName, transformedDir, originalDir, config)
+                createJvmTransformTask(sourceSet).configureJvmTask(sourceSet.compileClasspath, sourceSet.classesTaskName, transformedDir, originalDir, config)
             }
         }
         project.withPlugins("kotlin2js") {
@@ -67,7 +67,7 @@ fun Project.configureMultiplatformPlugin() {
                 classesDirs.setFrom(transformedClassesDir)
                 val transformTask = when (target.platformType) {
                     KotlinPlatformType.jvm -> {
-                        project.createJvmTransformTask(compilation).configureJvmTask(compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
+                        project.createJvmTransformTask(compilation).configureJvmTask(compilation.compileDependencyFiles, compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
                     }
                     KotlinPlatformType.js -> {
                         project.createJsTransformTask(compilation).configureJsTask(compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
@@ -160,6 +160,7 @@ fun Project.createJsTransformTask(sourceSet: SourceSet) =
         tasks.create(sourceSet.getTaskName("transform", "atomicfuJsFiles"), AtomicFUTransformJsTask::class.java)
 
 fun AtomicFUTransformTask.configureJvmTask(
+    classpath: FileCollection,
     classesTaskName: String,
     transformedClassesDir: File,
     originalClassesDir: FileCollection,
@@ -167,6 +168,7 @@ fun AtomicFUTransformTask.configureJvmTask(
 ): ConventionTask =
     apply {
         dependsOn(classesTaskName)
+        classPath = classpath
         inputFiles = originalClassesDir
         outputDir = transformedClassesDir
         config?.let {
@@ -211,12 +213,16 @@ class AtomicFUPluginExtension {
 open class AtomicFUTransformTask : ConventionTask() {
     @InputFiles
     lateinit var inputFiles: FileCollection
+
     @OutputDirectory
     lateinit var outputDir: File
+
     @InputFiles
-    var classPath: FileCollection = project.files()
+    lateinit var classPath: FileCollection
+
     @Input
     var variant = "FU"
+
     @Input
     var verbose = false
 
