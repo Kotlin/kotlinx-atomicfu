@@ -14,13 +14,33 @@ import java.util.*
 
 private const val EXTENSION_NAME = "atomicfu"
 private const val ORIGINAL_DIR_NAME = "originalClassesDir"
+private const val COMPILE_ONLY_CONFIGURATION = "compileOnly"
+private const val TEST_RUNTIME_CONFIGURATION = "testRuntime"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
+        project.applyDependencies()
         project.configureOriginalDirTest()
         project.configureTransformTasks()
     }
+}
+
+val Project.jsTarget: Boolean
+    get() = pluginManager.hasPlugin("kotlin-platform-js") || pluginManager.hasPlugin("kotlin2js")
+val Project.jvmTarget: Boolean
+    get() = pluginManager.hasPlugin("kotlin-platform-jvm") || pluginManager.hasPlugin("kotlin")
+
+fun Project.applyDependencies() {
+    val atomicFuPluginVersion = buildscript.configurations.findByName("classpath")?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
+    val platform = when {
+        jsTarget -> "-js"
+        jvmTarget -> ""
+        else -> "-native"
+    }
+    val atomicfu = dependencies.create("org.jetbrains.kotlinx:atomicfu$platform:${atomicFuPluginVersion.toString()}")
+    dependencies.add(COMPILE_ONLY_CONFIGURATION, atomicfu)
+    dependencies.add(TEST_RUNTIME_CONFIGURATION, atomicfu)
 }
 
 fun Project.configureOriginalDirTest() {
@@ -42,8 +62,6 @@ fun Project.configureOriginalDirTest() {
 
 fun Project.configureTransformTasks() {
     afterEvaluate {
-        val jvmTarget = pluginManager.hasPlugin("kotlin-platform-jvm") || pluginManager.hasPlugin("kotlin")
-        val jsTarget = pluginManager.hasPlugin("kotlin-platform-js") || pluginManager.hasPlugin("kotlin2js")
         val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
         sourceSets.all { sourceSetParam ->
             val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
