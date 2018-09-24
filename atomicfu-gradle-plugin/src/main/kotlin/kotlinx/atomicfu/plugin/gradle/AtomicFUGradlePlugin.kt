@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationToRunnableFiles
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformPlugin
 import java.io.*
 import java.util.*
 import java.util.concurrent.Callable
@@ -56,6 +57,10 @@ fun Project.configureMultiplatformPlugin() {
         @Suppress("UNCHECKED_CAST")
         val targets = targetsExtension as NamedDomainObjectContainer<KotlinTarget>
         targets.all { target ->
+            if (target.name == KotlinMultiplatformPlugin.METADATA_TARGET_NAME) {
+                return@all // skip the metadata targets
+            }
+
             target.compilations.all { compilation ->
                 val classesDirs = compilation.output.classesDirs as ConfigurableFileCollection
                 // make copy of original classes directory
