@@ -41,7 +41,6 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                         appendNode('repository').with {
                             appendNode('id', 'kotlin-dev')
                             appendNode('url', 'https://dl.bintray.com/kotlin/kotlin-dev')
-
                         }
                     }
                 }
