@@ -3,6 +3,9 @@ apply plugin: 'kotlin-platform-js'
 apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
 apply from: file("$rootProject.projectDir/gradle/test-mocha-js.gradle")
 apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
+apply from: rootProject.file('gradle/compile-options.gradle')
+
+ext.configureKotlin(org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile)
 
 configurations {
     transformer

@@ -1,5 +1,9 @@
 apply plugin: 'kotlin-platform-common'
 
+apply from: rootProject.file('gradle/compile-options.gradle')
+
+ext.configureKotlin(org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon)
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test-common:$kotlin_version"
