@@ -181,7 +181,7 @@ class AtomicFUTransformerJS(
                         }
                     }
                     var passScope = false
-                    if (field is PropertyGet && field.target.type == Token.THIS) {
+                    if (field.isItThisNode()) {
                         passScope = true
                     }
                     val args = node.arguments
@@ -192,6 +192,23 @@ class AtomicFUTransformerJS(
             return true
         }
     }
+    
+    private fun AstNode.isItThisNode(): Boolean {
+        return if (this is PropertyGet) {
+            if (this.target.type == Token.THIS) true else this.target.isItThisNode()
+        } else {
+            false
+        }
+    }
+    
+    private fun PropertyGet.resolvePropName(): String {
+        val target = this.target
+        return if (target is PropertyGet) {
+            "${target.resolvePropName()}.${property.toSource()}"
+        } else {
+            property.toSource()
+        }
+    }
 
     private fun FunctionCall.inlineAtomicOperation(
         funcName: String,
@@ -199,7 +216,7 @@ class AtomicFUTransformerJS(
         args: List<AstNode>,
         passScope: Boolean
     ): Boolean {
-        val f = if (passScope) (SCOPE + '.' + (field as PropertyGet).property.toSource()) else field.toSource()
+        val f = if (passScope) (SCOPE + '.' + (field as PropertyGet).resolvePropName()) else field.toSource()
         val code = when (funcName) {
             "getAndSet\$atomicfu" -> {
                 val arg = args[0].toSource()
