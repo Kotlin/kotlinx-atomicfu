@@ -203,63 +203,63 @@ class AtomicFUTransformerJS(
         val code = when (funcName) {
             "getAndSet\$atomicfu" -> {
                 val arg = args[0].toSource()
-                "(function(scope) {var oldValue = $f; $f = $arg; return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f = $arg; return oldValue;})"
             }
             "compareAndSet\$atomicfu" -> {
-                val expected = args[0].toSource()
+                val expected = args[0].scopedSource()
                 val updated = args[1].toSource()
-                "(function(scope) {return $f === $expected ? function() { $f = $updated; return true }() : false})"
+                "(function($SCOPE) {return $f === $expected ? function() { $f = $updated; return true }() : false})"
             }
             "getAndIncrement\$atomicfu" -> {
-                "(function(scope) {return $f++;})"
+                "(function($SCOPE) {return $f++;})"
             }
 
             "getAndIncrement\$atomicfu\$long" -> {
-                "(function(scope) {var oldValue = $f; $f = $f.inc(); return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f = $f.inc(); return oldValue;})"
             }
 
             "getAndDecrement\$atomicfu" -> {
-                "(function(scope) {return $f--;})"
+                "(function($SCOPE) {return $f--;})"
             }
 
             "getAndDecrement\$atomicfu\$long" -> {
-                "(function(scope) {var oldValue = $f; $f = $f.dec(); return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f = $f.dec(); return oldValue;})"
             }
 
             "getAndAdd\$atomicfu" -> {
                 val arg = args[0].toSource()
-                "(function(scope) {var oldValue = $f; $f += $arg; return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f += $arg; return oldValue;})"
             }
 
             "getAndAdd\$atomicfu\$long" -> {
                 val arg = args[0].toSource()
-                "(function(scope) {var oldValue = $f; $f = $f.add($arg); return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f = $f.add($arg); return oldValue;})"
             }
 
             "addAndGet\$atomicfu" -> {
                 val arg = args[0].toSource()
-                "(function(scope) {$f += $arg; return $f;})"
+                "(function($SCOPE) {$f += $arg; return $f;})"
             }
 
             "addAndGet\$atomicfu\$long" -> {
                 val arg = args[0].toSource()
-                "(function(scope) {$f = $f.add($arg); return $f;})"
+                "(function($SCOPE) {$f = $f.add($arg); return $f;})"
             }
 
             "incrementAndGet\$atomicfu" -> {
-                "(function(scope) {return ++$f;})"
+                "(function($SCOPE) {return ++$f;})"
             }
 
             "incrementAndGet\$atomicfu\$long" -> {
-                "(function(scope) {return $f = $f.inc();})"
+                "(function($SCOPE) {return $f = $f.inc();})"
             }
 
             "decrementAndGet\$atomicfu" -> {
-                "(function(scope) {return --$f;})"
+                "(function($SCOPE) {return --$f;})"
             }
 
             "decrementAndGet\$atomicfu\$long" -> {
-                "(function(scope) {return $f = $f.dec();})"
+                "(function($SCOPE) {return $f = $f.dec();})"
             }
             else -> null
         }
@@ -282,6 +282,13 @@ class AtomicFUTransformerJS(
             val thisNode = Parser(CompilerEnvirons()).parse("this", null, 0)
             this.arguments = listOf((thisNode.firstChild as ExpressionStatement).expression)
         }
+    }
+    
+    private fun AstNode.scopedSource(): String {
+        if (this.type == Token.THIS) {
+            return this.toSource().replaceFirst("this", SCOPE)
+        }
+        return this.toSource()
     }
 }
 
