@@ -69,6 +69,9 @@ fun AbstractInsnNode.isAload(index: Int) =
 fun AbstractInsnNode.isGetField(owner: String) =
     this is FieldInsnNode && this.opcode == GETFIELD && this.owner == owner
 
+fun AbstractInsnNode.isGetStatic(owner: String) =
+        this is FieldInsnNode && this.opcode == GETSTATIC && this.owner == owner
+
 fun AbstractInsnNode.isAreturn() =
     this.opcode == ARETURN
 
