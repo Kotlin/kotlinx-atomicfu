@@ -1,5 +1,16 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.11.11
+
+* Kotlin version Kotlin version 1.3.0-rc-146 (with K/N).
+* Gradle plugin supports projects that use `kotlin-multiplatform` plugin.
+* Disable Gradle metadata publishing for all but native modules.
+* JS transformer is more robust and retains line numbers (see #25).
+
+# Version 0.11.10
+
+* Kotlin version 1.3.0-rc-57 & Kotlin/Native 0.9.2
+
 # Version 0.11.9
 
 * Kotlin/Native version 1.3.0-rc-116 (0.9.3)
