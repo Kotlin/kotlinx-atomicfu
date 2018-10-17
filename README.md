@@ -103,7 +103,7 @@ Add and apply AtomicFU plugin:
 
 ```groovy
 buildscript {
-    ext.atomicfu_version = '0.11.7'
+    ext.atomicfu_version = '0.11.9'
 
     dependencies {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
@@ -140,7 +140,7 @@ This library is available for Kotlin/Native (`atomicfu-native`).
 It is a regular library and you should declare a normal dependency, no plugin is needed nor available.
 Only single-threaded code (JS-style) is currently supported. 
 
-Kotlin/Native supports only Gradle version 4.7 or later 
+Kotlin/Native supports only Gradle version 4.7 
 and you should use `kotlin-platform-native` plugin.
 
 First of all, you'll need to enable Gradle metadata in your
@@ -174,7 +174,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.jetbrains.kotlinx:atomicfu-native:0.11.3'
+    implementation 'org.jetbrains.kotlinx:atomicfu-native:0.11.9'
 }
 
 sourceSets {
@@ -209,7 +209,7 @@ Declare AtomicFU version:
 
 ```xml
 <properties>
-     <atomicfu.version>0.11.7</atomicfu.version>
+     <atomicfu.version>0.11.9</atomicfu.version>
 </properties> 
 ```
 
@@ -329,8 +329,4 @@ execution of tests with the original (non-transformed) classes for Maven:
     </build>
 ```
 
-For Gradle there nothing else to add. Tests are always run using original (non-transformed) classes.
-
-
-
-
+For Gradle there is nothing else to add. Tests are always run using original (non-transformed) classes.

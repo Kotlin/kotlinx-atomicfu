@@ -25,7 +25,6 @@ private const val ORIGINAL_DIR_NAME = "originalClassesDir"
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
-
         project.withPlugins("kotlin") {
             configureTransformTasks("compileTestKotlin") { sourceSet, transformedDir, originalDir, config ->
                 createJvmTransformTask(sourceSet).configureJvmTask(sourceSet.compileClasspath, sourceSet.classesTaskName, transformedDir, originalDir, config)
@@ -92,8 +91,8 @@ fun Project.configureMultiplatformPlugin() {
                     // test should compile and run against original production binaries
                     val mainCompilation = compilation.target.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
                     val originalMainClassesDirs = project.files(
-                            // use Callable because there is no guarantee that main is configured before test
-                            Callable { originalDirsByCompilation[mainCompilation]!! }
+                        // use Callable because there is no guarantee that main is configured before test
+                        Callable { originalDirsByCompilation[mainCompilation]!! }
                     )
 
                     (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
@@ -109,18 +108,16 @@ fun Project.configureMultiplatformPlugin() {
 }
 
 fun Project.configureTransformTasks(
-        testTaskName: String,
-        createTransformTask: (sourceSet: SourceSet, transformedDir: File, originalDir: FileCollection, config: AtomicFUPluginExtension?) -> Task
+    testTaskName: String,
+    createTransformTask: (sourceSet: SourceSet, transformedDir: File, originalDir: FileCollection, config: AtomicFUPluginExtension?) -> Task
 ) {
     afterEvaluate {
         sourceSets.all { sourceSetParam ->
             val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
-
             val classesDirs = (sourceSetParam.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
             // make copy of original classes directory
             val originalClassesDirs: FileCollection = project.files(classesDirs.toTypedArray()).filter { it.exists() }
             (sourceSetParam as ExtensionAware).extensions.add(ORIGINAL_DIR_NAME, originalClassesDirs)
-
             val transformedClassesDir = File(project.buildDir, "classes${File.separatorChar}${sourceSetParam.name}-atomicfu")
             // make transformedClassesDir the source path for output.classesDirs
             (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
@@ -135,8 +132,8 @@ fun Project.configureTransformTasks(
                 // test should compile and run against original production binaries
                 val mainSourceSet = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
                 val originalMainClassesDirs = project.files(
-                        // use Callable because there is no guarantee that main is configured before test
-                        Callable { (mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME) as FileCollection }
+                    // use Callable because there is no guarantee that main is configured before test
+                    Callable { (mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME) as FileCollection }
                 )
 
                 (tasks.findByName(testTaskName) as? AbstractCompile)?.classpath =
@@ -153,16 +150,16 @@ fun Project.configureTransformTasks(
 fun String.toVariant(): Variant = enumValueOf(toUpperCase(Locale.US))
 
 fun Project.createJvmTransformTask(compilation: KotlinCompilation) =
-        tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformTask::class.java)
+    tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformTask::class.java)
 
 fun Project.createJsTransformTask(compilation: KotlinCompilation) =
-        tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformJsTask::class.java)
+    tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformJsTask::class.java)
 
 fun Project.createJvmTransformTask(sourceSet: SourceSet) =
-        tasks.create(sourceSet.getTaskName("transform", "atomicfuClasses"), AtomicFUTransformTask::class.java)
+    tasks.create(sourceSet.getTaskName("transform", "atomicfuClasses"), AtomicFUTransformTask::class.java)
 
 fun Project.createJsTransformTask(sourceSet: SourceSet) =
-        tasks.create(sourceSet.getTaskName("transform", "atomicfuJsFiles"), AtomicFUTransformJsTask::class.java)
+    tasks.create(sourceSet.getTaskName("transform", "atomicfuJsFiles"), AtomicFUTransformJsTask::class.java)
 
 fun AtomicFUTransformTask.configureJvmTask(
     classpath: FileCollection,
@@ -218,16 +215,12 @@ class AtomicFUPluginExtension {
 open class AtomicFUTransformTask : ConventionTask() {
     @InputFiles
     lateinit var inputFiles: FileCollection
-
     @OutputDirectory
     lateinit var outputDir: File
-
     @InputFiles
     lateinit var classPath: FileCollection
-
     @Input
     var variant = "FU"
-
     @Input
     var verbose = false
 

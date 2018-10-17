@@ -65,6 +65,10 @@ configurations {
     transformer
 }
 
+apply from: rootProject.file('gradle/compile-options.gradle')
+
+ext.configureKotlin(org.jetbrains.kotlin.gradle.tasks.KotlinCompile)
+
 dependencies {
     transformer project(":atomicfu-transformer")
 }

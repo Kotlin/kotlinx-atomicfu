@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.11.9
+
+* Kotlin/Native version 1.3.0-rc-116 (0.9.3)
+* Kotlin version 1.2.71
+* Incremental JS compilation is fixed in plugin
+
 ## Version 0.11.7
 
 * Fixed non-transformed AtomicBoolean and its tests
