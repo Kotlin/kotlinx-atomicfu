@@ -53,6 +53,12 @@ kotlin {
             dependsOn nativeMain
         }
     }
+    targets {
+        configure([linux64, macos64, windows64, iosArm32, iosArm64, iosX64]) {
+            def compileTask = tasks.getByName(compilations.main.compileKotlinTaskName)
+            compileTask.kotlinOptions.freeCompilerArgs += ["-module-name", "atomicfu-native"]
+        }
+    }
 }
 
 configurations {
@@ -97,7 +103,7 @@ repositories.whenObjectAdded {
 def originalJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test.js"
 def transformedJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test_transformed.js"
 
-task transformJS (type: JavaExec, dependsOn: [compileTestKotlinJs]) {
+task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
     args = [originalJsFile, transformedJsFile, true]
     classpath = configurations.transformer
@@ -202,7 +208,17 @@ tasks.withType(Test) {
 jvmTest.dependsOn jvmTestAll
 
 afterEvaluate {
-    publishing.publications.jvm.artifactId = 'atomicfu'
-    publishing.publications.js.artifactId = 'atomicfu-js'
-    publishing.publications.metadata.artifactId = 'atomicfu-common'
+    publishing.publications {
+        jvm.artifactId = 'atomicfu'
+        js.artifactId = 'atomicfu-js'
+        metadata.artifactId = 'atomicfu-common'
+        kotlinMultiplatform.artifactId = 'atomicfu-native'
+
+        configure([metadata, jvm, js]) {
+            gradleModuleMetadataFile = null
+            tasks.matching { it.name == "generateMetadataFileFor${name.capitalize()}Publication" }.all {
+                onlyIf { false }
+            }
+        }
+    }
 }
