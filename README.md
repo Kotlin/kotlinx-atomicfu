@@ -329,8 +329,4 @@ execution of tests with the original (non-transformed) classes for Maven:
     </build>
 ```
 
-For Gradle there nothing else to add. Tests are always run using original (non-transformed) classes.
-
-
-
-
+For Gradle there is nothing else to add. Tests are always run using original (non-transformed) classes.
