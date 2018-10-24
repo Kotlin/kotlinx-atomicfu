@@ -57,6 +57,17 @@ public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
 public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
 
 /**
+ * Creates atomic [ULong] with a given [initial] value.
+ *
+ * It can only be used in initialize of private read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialULong)
+ * ```
+ */
+public actual fun atomic(initial: ULong): AtomicULong = AtomicULong(initial)
+
+/**
  * Creates atomic [Boolean] with a given [initial] value.
  *
  * It can only be used in initialize of private read-only property, like this:
@@ -316,7 +327,7 @@ public actual class AtomicInt internal constructor(value: Int) {
 // ==================================== AtomicLong ====================================
 
 /**
- * Atomic reference to a [Long] variable with volatile reads/writes via
+ * Atomic reference to a [ULong] variable with volatile reads/writes via
  * [value] property and various atomic read-modify-write operations
  * like [compareAndSet] and others.
  */
@@ -435,5 +446,144 @@ public actual class AtomicLong internal constructor(value: Long) {
 
     private companion object {
         private val FU = AtomicLongFieldUpdater.newUpdater(AtomicLong::class.java, "value")
+    }
+}
+
+// ==================================== AtomicLong ====================================
+
+/**
+ * Atomic reference to a [Long] variable with volatile reads/writes via
+ * [value] property and various atomic read-modify-write operations
+ * like [compareAndSet] and others.
+ */
+@ExperimentalUnsignedTypes
+public actual class AtomicULong internal constructor(value: ULong) {
+    /**
+     * Reads/writes of this property maps to read/write of volatile variable.
+     */
+    @Volatile
+    private var _value: Long = value.toLong()
+
+    public actual var value: ULong
+        set(value) {
+            interceptor.beforeUpdate(this)
+            _value = value.toLong()
+            interceptor.afterSet(this, value)
+        }
+    get() = _value.toULong()
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.lazySet].
+     */
+    public actual fun lazySet(value: ULong) {
+        interceptor.beforeUpdate(this)
+        FU.lazySet(this, value.toLong())
+        interceptor.afterSet(this, value)
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.compareAndSet].
+     */
+    public actual fun compareAndSet(expect: ULong, update: ULong): Boolean {
+        interceptor.beforeUpdate(this)
+        val result = FU.compareAndSet(this, expect.toLong(), update.toLong())
+        if (result) interceptor.afterRMW(this, expect, update)
+        return result
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndSet].
+     */
+    public actual fun getAndSet(value: ULong): ULong {
+        interceptor.beforeUpdate(this)
+        val oldValue = FU.getAndSet(this, value.toLong()).toULong()
+        interceptor.afterRMW(this, oldValue, value)
+        return oldValue.toULong()
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndIncrement].
+     */
+    public actual fun getAndIncrement(): ULong {
+        interceptor.beforeUpdate(this)
+        val oldValue = FU.getAndIncrement(this).toULong()
+        interceptor.afterRMW(this, oldValue, oldValue + 1.toULong())
+        return oldValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndDecrement].
+     */
+    public actual fun getAndDecrement(): ULong {
+        interceptor.beforeUpdate(this)
+        val oldValue = FU.getAndDecrement(this).toULong()
+        interceptor.afterRMW(this, oldValue, oldValue - 1.toULong())
+        return oldValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndAdd].
+     */
+    public actual fun getAndAdd(delta: ULong): ULong {
+        interceptor.beforeUpdate(this)
+        val oldValue = FU.getAndAdd(this, delta.toLong()).toULong()
+        interceptor.afterRMW(this, oldValue, oldValue + delta)
+        return oldValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.addAndGet].
+     */
+    public actual fun addAndGet(delta: ULong): ULong {
+        interceptor.beforeUpdate(this)
+        val newValue = FU.addAndGet(this, delta.toLong()).toULong()
+        interceptor.afterRMW(this, newValue - delta, newValue)
+        return newValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndAdd].
+     */
+    public actual fun getAndSubtract(delta: ULong): ULong {
+        interceptor.beforeUpdate(this)
+        val oldValue = FU.getAndAdd(this, -delta.toLong()).toULong()
+        interceptor.afterRMW(this, oldValue, oldValue - delta)
+        return oldValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.addAndGet].
+     */
+    public actual fun subtractAndGet(delta: ULong): ULong {
+        interceptor.beforeUpdate(this)
+        val newValue = FU.addAndGet(this, -delta.toLong()).toULong()
+        interceptor.afterRMW(this, newValue + delta, newValue)
+        return newValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.incrementAndGet].
+     */
+    public actual fun incrementAndGet(): ULong {
+        interceptor.beforeUpdate(this)
+        val newValue = FU.incrementAndGet(this).toULong()
+        interceptor.afterRMW(this, newValue - 1.toULong(), newValue)
+        return newValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.decrementAndGet].
+     */
+    public actual fun decrementAndGet(): ULong {
+        interceptor.beforeUpdate(this)
+        val newValue = FU.decrementAndGet(this).toULong()
+        interceptor.afterRMW(this, newValue + 1.toULong(), newValue)
+        return newValue
+    }
+
+    override fun toString(): String = value.toString()
+
+    private companion object {
+        private val FU = AtomicLongFieldUpdater.newUpdater(AtomicULong::class.java, "_value")
     }
 }

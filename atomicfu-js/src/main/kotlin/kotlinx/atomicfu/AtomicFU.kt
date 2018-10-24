@@ -27,6 +27,9 @@ public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
 @JsName("atomic\$long\$")
 public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
 
+@JsName("atomic\$ulong\$")
+public actual fun atomic(initial: ULong): AtomicULong = AtomicULong(initial)
+
 @JsName("atomic\$boolean\$")
 public actual fun atomic(initial: Boolean): AtomicBoolean = AtomicBoolean(initial)
 
@@ -186,6 +189,69 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual inline operator fun plusAssign(delta: Long) { getAndAdd(delta) }
 
     public actual inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
+
+    override fun toString(): String = value.toString()
+}
+
+// ==================================== AtomicULong ====================================
+
+public actual class AtomicULong internal constructor(value: ULong) {
+    @JsName("kotlinx\$atomicfu\$value")
+    public actual var value: ULong = value
+
+    public actual inline fun lazySet(value: ULong) { this.value = value }
+
+    @JsName("compareAndSet\$atomicfu")
+    public actual fun compareAndSet(expect: ULong, update: ULong): Boolean {
+        if (value != expect) return false
+        value = update
+        return true
+    }
+
+    @JsName("getAndSet\$atomicfu")
+    public actual fun getAndSet(value: ULong): ULong {
+        val oldValue = this.value
+        this.value = value
+        return oldValue
+    }
+
+    @JsName("getAndIncrement\$atomicfu\$ulong")
+    public actual fun getAndIncrement(): ULong = value++
+
+    @JsName("getAndDecrement\$atomicfu\$ulong")
+    public actual fun getAndDecrement(): ULong = value--
+
+    @JsName("getAndAdd\$atomicfu\$ulong")
+    public actual fun getAndAdd(delta: ULong): ULong {
+        val oldValue = value
+        value += delta
+        return oldValue
+    }
+
+    @JsName("addAndGet\$atomicfu\$ulong")
+    public actual fun addAndGet(delta: ULong): ULong {
+        value += delta
+        return value
+    }
+
+    @JsName("getAndSubtract\$atomicfu\$ulong")
+    public actual fun getAndSubtract(delta: ULong): ULong {
+        val oldValue = value
+        value -= delta
+        return oldValue
+    }
+
+    @JsName("subtractAndGet\$atomicfu\$ulong")
+    public actual fun subtractAndGet(delta: ULong): ULong {
+        value -= delta
+        return value
+    }
+
+    @JsName("incrementAndGet\$atomicfu\$ulong")
+    public actual fun incrementAndGet(): ULong = ++value
+
+    @JsName("decrementAndGet\$atomicfu\$ulong")
+    public actual fun decrementAndGet(): ULong = --value
 
     override fun toString(): String = value.toString()
 }

@@ -69,6 +69,28 @@ class ArithmeticTest {
     }
 
     @Test
+    fun testULong() {
+        val a = ULongArithmetic()
+        check(a.z.value == 2424920024888888848UL)
+        a.z.lazySet(8424920024888888848UL)
+        check(a.z.value == 8424920024888888848UL)
+        check(a.z.getAndSet(8924920024888888848UL) == 8424920024888888848UL)
+        check(a.z.value == 8924920024888888848UL)
+        check(a.z.incrementAndGet() == 8924920024888888849UL)
+        check(a.z.value == 8924920024888888849UL)
+        check(a.z.getAndDecrement() == 8924920024888888849UL)
+        check(a.z.value == 8924920024888888848UL)
+        check(a.z.getAndAdd(100000000000000000UL) == 8924920024888888848UL)
+        check(a.z.value == 9024920024888888848UL)
+        check(a.z.incrementAndGet() == 9024920024888888849UL)
+        check(a.z.decrementAndGet() == 9024920024888888848UL)
+        check(a.z.value == 9024920024888888848UL)
+        check(a.z.getAndSubtract(1UL) == 9024920024888888848UL)
+        check(a.z.value == 9024920024888888847UL)
+        check(a.z.subtractAndGet(10UL) == 9024920024888888837UL)
+    }
+
+    @Test
     fun testBoolean() {
         val a = BooleanArithmetic()
         check(!a.x)
@@ -91,6 +113,10 @@ class LongArithmetic {
     val y = atomic(5000000000)
     val z = atomic(2424920024888888848)
     val max = atomic(9223372036854775807)
+}
+
+class ULongArithmetic {
+    val z = atomic(2424920024888888848UL)
 }
 
 class BooleanArithmetic {

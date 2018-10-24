@@ -50,6 +50,17 @@ public expect fun atomic(initial: Int): AtomicInt
 public expect fun atomic(initial: Long): AtomicLong
 
 /**
+ * Creates atomic [ULong] with a given [initial] value.
+ *
+ * It can only be used in initialize of private read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialULong)
+ * ```
+ */
+public expect fun atomic(initial: ULong): AtomicULong
+
+/**
  * Creates atomic [Boolean] with a given [initial] value.
  *
  * It can only be used in initialize of private read-only property, like this:
@@ -419,6 +430,127 @@ public inline fun AtomicLong.getAndUpdate(function: (Long) -> Long): Long {
  * Updates variable atomically using the specified [function] of its value and returns its new value.
  */
 public inline fun AtomicLong.updateAndGet(function: (Long) -> Long): Long {
+    while (true) {
+        val cur = value
+        val upd = function(cur)
+        if (compareAndSet(cur, upd)) return upd
+    }
+}
+
+// ==================================== AtomicULong ====================================
+
+/**
+ * Atomic reference to a [ULong] variable with volatile reads/writes via
+ * [value] property and various atomic read-modify-write operations
+ * like [compareAndSet] and others.
+ */
+public expect class AtomicULong {
+    /**
+     * Reads/writes of this property maps to read/write of volatile variable.
+     */
+    public var value: ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.lazySet].
+     */
+    public fun lazySet(value: ULong)
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.compareAndSet].
+     */
+    public fun compareAndSet(expect: ULong, update: ULong): Boolean
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndSet].
+     */
+    public fun getAndSet(value: ULong): ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndIncrement].
+     */
+    public fun getAndIncrement(): ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndDecrement].
+     */
+    public fun getAndDecrement(): ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndAdd].
+     */
+    public fun getAndAdd(delta: ULong): ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.addAndGet].
+     */
+    public fun addAndGet(delta: ULong): ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndAdd].
+     */
+    public fun getAndSubtract(delta: ULong): ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.addAndGet].
+     */
+    public fun subtractAndGet(delta: ULong): ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.incrementAndGet].
+     */
+    public fun incrementAndGet(): ULong
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.decrementAndGet].
+     */
+    public fun decrementAndGet(): ULong
+}
+
+/**
+ * Performs atomic addition of [delta].
+ */
+public inline operator fun AtomicULong.plusAssign(delta: ULong) { getAndAdd(delta) }
+
+/**
+ * Performs atomic subtraction of [delta].
+ */
+public inline operator fun AtomicULong.minusAssign(delta: ULong) { getAndSubtract(delta) }
+
+/**
+ * Infinite loop that reads this atomic variable and performs the specified [action] on its value.
+ */
+public inline fun AtomicULong.loop(action: (ULong) -> Unit): Nothing {
+    while (true) {
+        action(value)
+    }
+}
+
+/**
+ * Updates variable atomically using the specified [function] of its value.
+ */
+public inline fun AtomicULong.update(function: (ULong) -> ULong) {
+    while (true) {
+        val cur = value
+        val upd = function(cur)
+        if (compareAndSet(cur, upd)) return
+    }
+}
+
+/**
+ * Updates variable atomically using the specified [function] of its value and returns its old value.
+ */
+public inline fun AtomicULong.getAndUpdate(function: (ULong) -> ULong): ULong {
+    while (true) {
+        val cur = value
+        val upd = function(cur)
+        if (compareAndSet(cur, upd)) return cur
+    }
+}
+
+/**
+ * Updates variable atomically using the specified [function] of its value and returns its new value.
+ */
+public inline fun AtomicULong.updateAndGet(function: (ULong) -> ULong): ULong {
     while (true) {
         val cur = value
         val upd = function(cur)

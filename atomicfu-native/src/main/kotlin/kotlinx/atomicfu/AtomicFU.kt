@@ -21,6 +21,7 @@ package kotlinx.atomicfu
 public actual fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
 public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
 public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
+public actual fun atomic(initial: ULong): AtomicULong = AtomicULong(initial)
 public actual fun atomic(initial: Boolean): AtomicBoolean = AtomicBoolean(initial)
 
 // ==================================== AtomicRef ====================================
@@ -155,6 +156,58 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual inline operator fun plusAssign(delta: Long) { getAndAdd(delta) }
 
     public actual inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
+
+    override fun toString(): String = value.toString()
+}
+
+// ==================================== AtomicULong ====================================
+
+public actual class AtomicULong internal constructor(value: ULong) {
+    public actual var value: ULong = value
+
+    public actual inline fun lazySet(value: ULong) { this.value = value }
+
+    public actual fun compareAndSet(expect: ULong, update: ULong): Boolean {
+        if (value != expect) return false
+        value = update
+        return true
+    }
+
+    public actual fun getAndSet(value: ULong): ULong {
+        val oldValue = this.value
+        this.value = value
+        return oldValue
+    }
+
+    public actual fun getAndIncrement(): ULong = value++
+
+    public actual fun getAndDecrement(): ULong = value--
+
+    public actual fun getAndAdd(delta: ULong): ULong {
+        val oldValue = value
+        value += delta
+        return oldValue
+    }
+
+    public actual fun addAndGet(delta: ULong): ULong {
+        value += delta
+        return value
+    }
+
+    public actual fun getAndSubtract(delta: ULong): ULong {
+        val oldValue = value
+        value -= delta
+        return oldValue
+    }
+
+    public actual fun subtractAndGet(delta: ULong): ULong {
+        value -= delta
+        return value
+    }
+
+    public actual fun incrementAndGet(): ULong = ++value
+
+    public actual fun decrementAndGet(): ULong = --value
 
     override fun toString(): String = value.toString()
 }
