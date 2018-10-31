@@ -16,6 +16,8 @@
 
 package kotlinx.atomicfu
 
+import kotlin.js.JsName
+
 /**
  * Creates atomic reference with a given [initial] value.
  *
@@ -428,32 +430,41 @@ public inline fun AtomicLong.updateAndGet(function: (Long) -> Long): Long {
 
 // ==================================== AtomicIntArray ====================================
 
-public expect class AtomicIntArray(size: Int) {
-    public var array: Array<AtomicInt>
+@JsName("AtomicIntArray\$int")
+public class AtomicIntArray(size: Int) {
+    private var array = Array(size){ atomic(0) }
 
-    public operator fun get(index: Int): AtomicInt
+    @JsName("get\$atomicfu")
+    public operator fun get(index: Int): AtomicInt = array[index]
 }
 
 // ==================================== AtomicLongArray ====================================
 
-public expect class AtomicLongArray(size: Int) {
-    public var array: Array<AtomicLong>
+@JsName("AtomicLongArray\$long")
+public class AtomicLongArray (size: Int) {
+    private var array = Array(size){ atomic(0L) }
 
-    public operator fun get(index: Int): AtomicLong
+    @JsName("get\$atomicfu")
+    public operator fun get(index: Int): AtomicLong = array[index]
 }
 
 // ==================================== AtomicBooleanArray ====================================
 
-public expect class AtomicBooleanArray(size: Int) {
-    public var array: Array<AtomicBoolean>
+@JsName("AtomicBooleanArray\$boolean")
+public class AtomicBooleanArray (size: Int) {
+    private var array = Array(size){ atomic(false) }
 
-    public operator fun get(index: Int): AtomicBoolean
+    @JsName("get\$atomicfu")
+    public operator fun get(index: Int): AtomicBoolean = array[index]
 }
+
 
 // ==================================== AtomicArray ====================================
 
-public expect class AtomicArray<T>(size: Int) {
-    public var array: Array<AtomicRef<T?>>
+@JsName("AtomicRefArray\$ref")
+public class AtomicArray<T> (size: Int) {
+    private var array = Array(size){ atomic<T?>(null) }
 
-    public operator fun get(index: Int): AtomicRef<T?>
+    @JsName("get\$atomicfu")
+    public operator fun get(index: Int): AtomicRef<T?> = array[index]
 }

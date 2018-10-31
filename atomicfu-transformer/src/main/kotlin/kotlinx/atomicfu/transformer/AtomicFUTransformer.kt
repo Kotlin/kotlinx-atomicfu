@@ -399,17 +399,11 @@ class AtomicFUTransformer(
                         val wrapper = WRAPPER[primitiveType]!!
                         getstatic(wrapper, "TYPE", CLASS_TYPE.descriptor)
                     }
-                    if (!f.isStatic) {
-                        invokevirtual(
-                            LOOKUP, "findVarHandle",
-                            getMethodDescriptor(VH_TYPE, CLASS_TYPE, STRING_TYPE, CLASS_TYPE), false
-                        )
-                    } else {
-                        invokevirtual(
-                            LOOKUP, "findStaticVarHandle",
-                            getMethodDescriptor(VH_TYPE, CLASS_TYPE, STRING_TYPE, CLASS_TYPE), false
-                        )
-                    }
+                    val findVHName = if (f.isStatic) "findStaticVarHandle" else "findVarHandle"
+                    invokevirtual(
+                        LOOKUP, findVHName,
+                        getMethodDescriptor(VH_TYPE, CLASS_TYPE, STRING_TYPE, CLASS_TYPE), false
+                    )
                     putstatic(className, f.fuName, VH_TYPE.descriptor)
                 } else {
                     // create VarHandle for array
@@ -727,6 +721,48 @@ class AtomicFUTransformer(
             return fixupLoadedAtomicVar(f, ldCopy)
         }
 
+        private fun putPrimitiveTypeWrapper(factoryInsn: MethodInsnNode, f: FieldInfo, next: FieldInsnNode): AbstractInsnNode? {
+            // generate wrapper class for static fields of primitive type
+            val factoryArg = Type.getMethodType(factoryInsn.desc).argumentTypes[0]
+            generateRefVolatileClass(f, factoryArg)
+            val firstInitInsn = FlowAnalyzer(next).getInitStart()
+            // remove calling atomic factory for static field and following putstatic
+            val afterPutStatic = next.next
+            instructions.remove(factoryInsn)
+            instructions.remove(next)
+            initRefVolatile(f, factoryArg, firstInitInsn, afterPutStatic)
+            return afterPutStatic
+        }
+
+        private fun putJucaAtomicArray(arrayfactoryInsn: MethodInsnNode, arrayType: TypeInfo, f: FieldInfo, next: FieldInsnNode): AbstractInsnNode? {
+            // replace with invoking j.u.c.a.Atomic*Array constructor
+            val jucaAtomicArrayDesc = arrayType.fuType.descriptor
+            // go to invoke of new class AFU_PKG/Atomic*Array
+            val newPos = arrayfactoryInsn.previous.previous.previous
+            (newPos as TypeInsnNode).desc = descToName(jucaAtomicArrayDesc)
+            arrayfactoryInsn.owner = descToName(jucaAtomicArrayDesc)
+            //fix the following putfield
+            next.desc = jucaAtomicArrayDesc
+            next.name = f.name
+            transformed = true
+            return next.next
+        }
+
+        private fun putPureArray(arrayfactoryInsn: MethodInsnNode, arrayType: TypeInfo, f: FieldInfo, next: FieldInsnNode): AbstractInsnNode? {
+            // remove invoking AFU_PKG/Atomic*Array constructor
+            instructions.remove(arrayfactoryInsn.previous.previous.previous)
+            // remove dup
+            instructions.remove(arrayfactoryInsn.previous.previous)
+            // create pure array of given size and put it
+            val newarray = if (f.signature == null) IntInsnNode(NEWARRAY, ARRAY_ELEMENT_TYPE[arrayType.originalType]!!)
+            else TypeInsnNode(ANEWARRAY, descToName(f.getPrimitiveType(vh).elementType.descriptor))
+            instructions.set(arrayfactoryInsn, newarray)
+            next.desc = f.getPrimitiveType(vh).descriptor
+            next.name = f.name
+            transformed = true
+            return next.next
+        }
+
         private fun transform(i: AbstractInsnNode): AbstractInsnNode? {
             when (i) {
                 is MethodInsnNode -> {
@@ -741,43 +777,14 @@ class AtomicFUTransformer(
                             val isArray = AFU_CLASSES[i.owner]?.let { it.originalType.sort == ARRAY } ?: false
                             // in FU mode wrap values of top-level primitive atomics into corresponding *RefVolatile class
                             if (!vh && f.isStatic && !isArray) {
-                                // generate wrapper class for static fields of primitive type
-                                val factoryArg = Type.getMethodType(i.desc).argumentTypes[0]
-                                generateRefVolatileClass(f, factoryArg)
-                                val firstInitInsn = FlowAnalyzer(next).getInitStart()
-                                // remove calling atomic factory for static field and following putstatic
-                                val afterPutStatic = next.next
-                                instructions.remove(i)
-                                instructions.remove(next)
-                                initRefVolatile(f, factoryArg, firstInitInsn, afterPutStatic)
-                                return afterPutStatic
+                                return putPrimitiveTypeWrapper(i, f, next)
                             }
                             if (isArray) {
                                 val array = AFU_CLASSES[i.owner]!!
                                 if (!vh) {
-                                    // replace with invoking j.u.c.a.Atomic*Array constructor
-                                    val jucaAtomicArrayDesc = array.fuType.descriptor
-                                    // go to invoke of new class AFU_PKG/Atomic*Array
-                                    val newPos = i.previous.previous.previous
-                                    (newPos as TypeInsnNode).desc = descToName(jucaAtomicArrayDesc)
-                                    i.owner = descToName(jucaAtomicArrayDesc)
-                                    //fix the following putfield
-                                    next.desc = jucaAtomicArrayDesc
-                                    next.name = f.name
-                                    transformed = true
-                                    return next.next
+                                    return putJucaAtomicArray(i, array, f, next)
                                 } else {
-                                    // remove invoking AFU_PKG/Atomic*Array constructor
-                                    instructions.remove(i.previous.previous.previous)
-                                    // remove dup
-                                    instructions.remove(i.previous.previous)
-                                    // create pure array of given size and put it
-                                    val newarray = if (f.signature == null) IntInsnNode(NEWARRAY, ARRAY_ELEMENT_TYPE[array.originalType]!!)
-                                    else TypeInsnNode(ANEWARRAY, descToName(f.getPrimitiveType(vh).elementType.descriptor))
-                                    instructions.set(i, newarray)
-                                    next.desc = f.getPrimitiveType(vh).descriptor
-                                    next.name = f.name
-                                    return next.next
+                                    return putPureArray(i, array, f, next)
                                 }
                             }
                             instructions.remove(i)
@@ -844,7 +851,7 @@ class AtomicFUTransformer(
         // generates a ref class with volatile field of primitive type inside
         private fun generateRefVolatileClass(f: FieldInfo, arg: Type) {
             val cw = ClassWriter(0)
-            cw.visit(50, ACC_PUBLIC or ACC_SYNTHETIC, f.refVolatileClassName, null, "java/lang/Object", null)
+            cw.visit(V1_6, ACC_PUBLIC or ACC_SYNTHETIC, f.refVolatileClassName, null, "java/lang/Object", null)
             //creating class constructor
             val cons = cw.visitMethod(ACC_PUBLIC, "<init>", "(${arg.descriptor})V", null, null)
             code(cons) {
