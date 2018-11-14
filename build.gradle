@@ -3,8 +3,6 @@ buildscript {
     repositories {
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         maven { url 'https://dl.bintray.com/jetbrains/kotlin-native-dependencies' }
     }
     
@@ -19,8 +17,6 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
-        maven { url 'https://kotlin.bintray.com/kotlin-eap' }
     }
 
     def deployVersion = properties['DeployVersion']
