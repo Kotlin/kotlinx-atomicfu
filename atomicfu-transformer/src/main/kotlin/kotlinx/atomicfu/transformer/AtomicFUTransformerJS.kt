@@ -7,7 +7,7 @@ import java.io.FileReader
 import org.mozilla.javascript.Token
 
 private const val ATOMIC_CONSTRUCTOR = """atomic\$(ref|int|long|boolean)\$"""
-private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean)"""
+private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean|ofNulls)"""
 private const val MANGLED_VALUE_PROP = "kotlinx\\\$atomicfu\\\$value"
 private const val RECEIVER = "\$receiver"
 private const val SCOPE = "scope"
@@ -299,7 +299,8 @@ class AtomicFUTransformerJS(
             "compareAndSet\$atomicfu" -> {
                 val expected = args[0].scopedSource()
                 val updated = args[1].scopedSource()
-                "(function($SCOPE) {return $f === $expected ? function() { $f = $updated; return true }() : false})"
+                val equals = if (expected == "null") "==" else "==="
+                "(function($SCOPE) {return $f $equals $expected ? function() { $f = $updated; return true }() : false})"
             }
             "getAndIncrement\$atomicfu" -> {
                 "(function($SCOPE) {return $f++;})"

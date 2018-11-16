@@ -50,7 +50,8 @@ private val AFU_CLASSES: Map<String, TypeInfo> = mapOf(
     "$AFU_PKG/AtomicIntArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerArray"), INT_ARRAY_TYPE, INT_ARRAY_TYPE),
     "$AFU_PKG/AtomicLongArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicLongArray"), LONG_ARRAY_TYPE, LONG_ARRAY_TYPE),
     "$AFU_PKG/AtomicBooleanArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerArray"), BOOLEAN_ARRAY_TYPE, INT_ARRAY_TYPE),
-    "$AFU_PKG/AtomicArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicReferenceArray"), REF_ARRAY_TYPE, REF_ARRAY_TYPE)
+    "$AFU_PKG/AtomicArray" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicReferenceArray"), REF_ARRAY_TYPE, REF_ARRAY_TYPE),
+    "$AFU_PKG/AtomicFU_commonKt" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicReferenceArray"), REF_ARRAY_TYPE, REF_ARRAY_TYPE)
 )
 
 private val WRAPPER: Map<Type, String> = mapOf(
@@ -91,7 +92,8 @@ private val FACTORIES: Set<MethodId> = setOf(
     MethodId("$AFU_PKG/AtomicIntArray", "<init>", "(I)V", INVOKESPECIAL),
     MethodId("$AFU_PKG/AtomicLongArray", "<init>", "(I)V", INVOKESPECIAL),
     MethodId("$AFU_PKG/AtomicBooleanArray", "<init>", "(I)V", INVOKESPECIAL),
-    MethodId("$AFU_PKG/AtomicArray", "<init>", "(I)V", INVOKESPECIAL)
+    MethodId("$AFU_PKG/AtomicArray", "<init>", "(I)V", INVOKESPECIAL),
+    MethodId("$AFU_PKG/AtomicFU_commonKt", "atomicArrayOfNulls", "(I)L$AFU_PKG/AtomicArray;", INVOKESTATIC)
 )
 
 private operator fun Int.contains(bit: Int) = this and bit != 0
@@ -735,10 +737,21 @@ class AtomicFUTransformer(
         private fun putJucaAtomicArray(arrayfactoryInsn: MethodInsnNode, arrayType: TypeInfo, f: FieldInfo, next: FieldInsnNode): AbstractInsnNode? {
             // replace with invoking j.u.c.a.Atomic*Array constructor
             val jucaAtomicArrayDesc = arrayType.fuType.descriptor
-            // go to invoke of new class AFU_PKG/Atomic*Array
-            val newPos = arrayfactoryInsn.previous.previous.previous
-            (newPos as TypeInsnNode).desc = descToName(jucaAtomicArrayDesc)
-            arrayfactoryInsn.owner = descToName(jucaAtomicArrayDesc)
+            val initStart = FlowAnalyzer(next).getInitStart().next
+            if (initStart.opcode == NEW) {
+                // change descriptor of NEW instruction
+                (initStart as TypeInsnNode).desc = descToName(jucaAtomicArrayDesc)
+                arrayfactoryInsn.owner = descToName(jucaAtomicArrayDesc)
+            } else {
+                // array initialisation starts from bipush size, then static array factory was called (atomicArrayOfNulls)
+                // add NEW j.u.c.a.Atomic*Array instruction
+                val newInsn = TypeInsnNode(NEW, descToName(jucaAtomicArrayDesc))
+                instructions.insert(initStart.previous, newInsn)
+                instructions.insert(newInsn, InsnNode(DUP))
+                val jucaArrayFactory = MethodInsnNode(INVOKESPECIAL, descToName(jucaAtomicArrayDesc), "<init>", "(I)V", false)
+                instructions.set(arrayfactoryInsn, jucaArrayFactory)
+            }
+
             //fix the following putfield
             next.desc = jucaAtomicArrayDesc
             next.name = f.name
@@ -747,10 +760,13 @@ class AtomicFUTransformer(
         }
 
         private fun putPureArray(arrayfactoryInsn: MethodInsnNode, arrayType: TypeInfo, f: FieldInfo, next: FieldInsnNode): AbstractInsnNode? {
-            // remove invoking AFU_PKG/Atomic*Array constructor
-            instructions.remove(arrayfactoryInsn.previous.previous.previous)
-            // remove dup
-            instructions.remove(arrayfactoryInsn.previous.previous)
+            val initStart = FlowAnalyzer(next).getInitStart().next
+            if (initStart.opcode == NEW) {
+                // remove dup
+                instructions.remove(initStart.next)
+                // remove NEW AFU_PKG/Atomic*Array instruction
+                instructions.remove(initStart)
+            }
             // create pure array of given size and put it
             val newarray = if (f.signature == null) IntInsnNode(NEWARRAY, ARRAY_ELEMENT_TYPE[arrayType.originalType]!!)
             else TypeInsnNode(ANEWARRAY, descToName(f.getPrimitiveType(vh).elementType.descriptor))

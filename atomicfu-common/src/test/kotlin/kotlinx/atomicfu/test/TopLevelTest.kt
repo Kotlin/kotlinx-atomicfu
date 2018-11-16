@@ -31,6 +31,8 @@ private val booleanArr = AtomicBooleanArray(4)
 private val refArr = AtomicArray<ANode<BNode<CNode>>>(5)
 private val anyRefArr = AtomicArray<Any>(10)
 
+private val stringAtomicNullArr = atomicArrayOfNulls<String>(10)
+
 class TopLevelPrimitiveTest {
     @Test
     fun testTopLevelInt() {
@@ -96,6 +98,14 @@ class TopLevelPrimitiveTest {
         val l = IntArray(4){i -> i}
         any.lazySet(l)
         check((any.value as IntArray)[2] == 2)
+    }
+
+    @Test
+    fun testTopLevelArrayOfNulls() {
+        check(stringAtomicNullArr[0].value == null)
+        check(stringAtomicNullArr[0].compareAndSet(null, "aa"))
+        stringAtomicNullArr[1].lazySet("aa")
+        check(stringAtomicNullArr[0].value == stringAtomicNullArr[1].value)
     }
 }
 

@@ -78,7 +78,23 @@ class ArrayTest {
         val l1 = listOf(listOf("a", "bb", "ccc"), listOf("a", "bb"))
         val l2 = listOf(listOf("1", "22", "333"), listOf("1", "22"))
         A.genericArr[2].lazySet(l1)
-        check(A.genericArr[2].compareAndSet(l1, l2))
+        check(A.genericArr[2].compareAndSet(l1, l2  ))
+    }
+
+    @Test
+    fun extendedApiTest() {
+        val ea = ExtendedApiAtomicArrays()
+        check(ea.stringAtomicNullArray[0].value == null)
+        check(ea.stringAtomicNullArray[0].compareAndSet(null, "aaa"))
+
+        check(ea.genAtomicNullArr[3].value == null)
+        val l1 = listOf("a", "bb", "ccc")
+        val l2 = listOf("dddd")
+        val l3 = listOf("a", "bb", "ccc", "dddd")
+        check(ea.genAtomicNullArr[3].compareAndSet(null, l1))
+        check(ea.genAtomicNullArr[3].compareAndSet(l1, l2))
+        ea.genAtomicNullArr[2].lazySet(l3)
+        check(ea.genAtomicNullArr[3].value!![0] == ea.genAtomicNullArr[2].value!![3])
     }
 }
 
@@ -87,9 +103,13 @@ class AtomicArrayClass {
     val longArr = AtomicLongArray(5)
     val booleanArr = AtomicBooleanArray(4)
     val refArr = AtomicArray<ARef>(5)
-
     val genericArr = AtomicArray<List<List<String>>>(11)
     val a1 = atomic(ARef(1))
+}
+
+class ExtendedApiAtomicArrays {
+    val stringAtomicNullArray = atomicArrayOfNulls<String>(10)
+    val genAtomicNullArr = atomicArrayOfNulls<List<String>>(7)
 }
 
 data class ARef(val n: Int)

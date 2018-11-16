@@ -62,6 +62,13 @@ public expect fun atomic(initial: Long): AtomicLong
  */
 public expect fun atomic(initial: Boolean): AtomicBoolean
 
+
+/**
+ * Creates array of AtomicRef<T> of specified size, where each element is initialised with null value
+ */
+@JsName("AtomicLongArray\$ofNulls")
+public fun <T> atomicArrayOfNulls(size: Int): AtomicArray<T?> = AtomicArray(size)
+
 // ==================================== AtomicRef ====================================
 
 /**
@@ -430,6 +437,9 @@ public inline fun AtomicLong.updateAndGet(function: (Long) -> Long): Long {
 
 // ==================================== AtomicIntArray ====================================
 
+/**
+ * Creates a new array of AtomicInt values of the specified size, where each element is initialised with 0
+ */
 @JsName("AtomicIntArray\$int")
 public class AtomicIntArray(size: Int) {
     private val array = Array(size) { atomic(0) }
@@ -440,6 +450,9 @@ public class AtomicIntArray(size: Int) {
 
 // ==================================== AtomicLongArray ====================================
 
+/**
+ * Creates a new array of AtomicLong values of the specified size, where each element is initialised with 0L
+ */
 @JsName("AtomicLongArray\$long")
 public class AtomicLongArray(size: Int) {
     private val array = Array(size) { atomic(0L) }
@@ -450,6 +463,9 @@ public class AtomicLongArray(size: Int) {
 
 // ==================================== AtomicBooleanArray ====================================
 
+/**
+ * Creates a new array of AtomicBoolean values of the specified size, where each element is initialised with false
+ */
 @JsName("AtomicBooleanArray\$boolean")
 public class AtomicBooleanArray(size: Int) {
     private val array = Array(size) { atomic(false) }
@@ -462,7 +478,7 @@ public class AtomicBooleanArray(size: Int) {
 // ==================================== AtomicArray ====================================
 
 @JsName("AtomicRefArray\$ref")
-public class AtomicArray<T>(size: Int) {
+public class AtomicArray<T> internal constructor(size: Int) {
     private val array = Array(size) { atomic<T?>(null) }
 
     @JsName("get\$atomicfu")
