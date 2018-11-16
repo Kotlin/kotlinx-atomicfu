@@ -74,8 +74,12 @@ class ArrayTest {
         check(A.refArr[3].value!!.n == 3)
         val a = A.a1.value
         check(A.refArr[3].compareAndSet(a3, a))
-    }
 
+        val l1 = listOf(listOf("a", "bb", "ccc"), listOf("a", "bb"))
+        val l2 = listOf(listOf("1", "22", "333"), listOf("1", "22"))
+        A.genericArr[2].lazySet(l1)
+        check(A.genericArr[2].compareAndSet(l1, l2))
+    }
 }
 
 class AtomicArrayClass {
@@ -84,6 +88,7 @@ class AtomicArrayClass {
     val booleanArr = AtomicBooleanArray(4)
     val refArr = AtomicArray<ARef>(5)
 
+    val genericArr = AtomicArray<List<List<String>>>(11)
     val a1 = atomic(ARef(1))
 }
 

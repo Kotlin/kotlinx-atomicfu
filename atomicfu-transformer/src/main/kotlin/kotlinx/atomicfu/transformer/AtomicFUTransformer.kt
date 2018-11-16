@@ -41,7 +41,6 @@ private val LONG_ARRAY_TYPE = Type.getType("[J")
 private val BOOLEAN_ARRAY_TYPE = Type.getType("[Z")
 private val REF_ARRAY_TYPE = Type.getType("[Ljava/lang/Object;")
 
-
 private val AFU_CLASSES: Map<String, TypeInfo> = mapOf(
     "$AFU_PKG/AtomicInt" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicIntegerFieldUpdater"), INT_TYPE, INT_TYPE),
     "$AFU_PKG/AtomicLong" to TypeInfo(Type.getObjectType("$JUCA_PKG/AtomicLongFieldUpdater"), LONG_TYPE, LONG_TYPE),
@@ -130,19 +129,18 @@ class FieldInfo(val fieldId: FieldId, val fieldType: Type, val signature: String
     val staticRefVolatileField = refVolatileClassName.substringAfterLast("/").decapitalize()
 
     fun getPrimitiveType(vh: Boolean): Type {
-        signature?.let {if (isGenericArrayOwner(signature)) return Type.getType("[" + getGenericType(it))}
+        signature?.let {
+            if (isGenericArrayOwner(signature))
+                return Type.getType("[" + getGenericType(it))
+        }
         return if (vh) typeInfo.originalType else typeInfo.transformedType
     }
+
     private fun mangleInternal(fieldName: String): String = "$fieldName\$internal"
 
     private fun getGenericType(signature: String) = signature.substringAfter('<').substringBefore('>')
 
-    private fun isGenericArrayOwner(signature: String): Boolean {
-        AFU_CLASSES[signature.substringBefore('<')]?.let {
-            return it.originalType == REF_ARRAY_TYPE
-        }
-        return false
-    }
+    private fun isGenericArrayOwner(signature: String) = AFU_CLASSES[signature.substringBefore('<')]?.originalType == REF_ARRAY_TYPE
 
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }

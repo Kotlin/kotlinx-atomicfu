@@ -432,7 +432,7 @@ public inline fun AtomicLong.updateAndGet(function: (Long) -> Long): Long {
 
 @JsName("AtomicIntArray\$int")
 public class AtomicIntArray(size: Int) {
-    private var array = Array(size){ atomic(0) }
+    private val array = Array(size) { atomic(0) }
 
     @JsName("get\$atomicfu")
     public operator fun get(index: Int): AtomicInt = array[index]
@@ -441,8 +441,8 @@ public class AtomicIntArray(size: Int) {
 // ==================================== AtomicLongArray ====================================
 
 @JsName("AtomicLongArray\$long")
-public class AtomicLongArray (size: Int) {
-    private var array = Array(size){ atomic(0L) }
+public class AtomicLongArray(size: Int) {
+    private val array = Array(size) { atomic(0L) }
 
     @JsName("get\$atomicfu")
     public operator fun get(index: Int): AtomicLong = array[index]
@@ -451,8 +451,8 @@ public class AtomicLongArray (size: Int) {
 // ==================================== AtomicBooleanArray ====================================
 
 @JsName("AtomicBooleanArray\$boolean")
-public class AtomicBooleanArray (size: Int) {
-    private var array = Array(size){ atomic(false) }
+public class AtomicBooleanArray(size: Int) {
+    private val array = Array(size) { atomic(false) }
 
     @JsName("get\$atomicfu")
     public operator fun get(index: Int): AtomicBoolean = array[index]
@@ -462,8 +462,8 @@ public class AtomicBooleanArray (size: Int) {
 // ==================================== AtomicArray ====================================
 
 @JsName("AtomicRefArray\$ref")
-public class AtomicArray<T> (size: Int) {
-    private var array = Array(size){ atomic<T?>(null) }
+public class AtomicArray<T>(size: Int) {
+    private val array = Array(size) { atomic<T?>(null) }
 
     @JsName("get\$atomicfu")
     public operator fun get(index: Int): AtomicRef<T?> = array[index]
