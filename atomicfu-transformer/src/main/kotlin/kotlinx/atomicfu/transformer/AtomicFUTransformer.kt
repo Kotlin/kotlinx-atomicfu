@@ -112,7 +112,11 @@ data class FieldId(val owner: String, val name: String) {
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
-class FieldInfo(val fieldId: FieldId, val fieldType: Type, val signature: String?, val isStatic: Boolean = false) {
+class FieldInfo(
+    val fieldId: FieldId,
+    val fieldType: Type,
+    val isStatic: Boolean = false
+) {
     val owner = fieldId.owner
     val ownerType: Type = Type.getObjectType(owner)
     val typeInfo = AFU_CLASSES[fieldType.internalName]!!
@@ -130,19 +134,9 @@ class FieldInfo(val fieldId: FieldId, val fieldType: Type, val signature: String
     val refVolatileClassName = "${owner.replace('.', '/')}${name.capitalize()}RefVolatile"
     val staticRefVolatileField = refVolatileClassName.substringAfterLast("/").decapitalize()
 
-    fun getPrimitiveType(vh: Boolean): Type {
-        signature?.let {
-            if (isGenericArrayOwner(signature))
-                return Type.getType("[" + getGenericType(it))
-        }
-        return if (vh) typeInfo.originalType else typeInfo.transformedType
-    }
+    fun getPrimitiveType(vh: Boolean): Type = if (vh) typeInfo.originalType else typeInfo.transformedType
 
     private fun mangleInternal(fieldName: String): String = "$fieldName\$internal"
-
-    private fun getGenericType(signature: String) = signature.substringAfter('<').substringBefore('>')
-
-    private fun isGenericArrayOwner(signature: String) = AFU_CLASSES[signature.substringBefore('<')]?.originalType == REF_ARRAY_TYPE
 
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }
@@ -239,8 +233,8 @@ class AtomicFUTransformer(
         }
     }
 
-    private fun registerField(field: FieldId, fieldType: Type, signature: String?, isStatic: Boolean): FieldInfo {
-        val result = fields.getOrPut(field) { FieldInfo(field, fieldType, signature, isStatic) }
+    private fun registerField(field: FieldId, fieldType: Type, isStatic: Boolean): FieldInfo {
+        val result = fields.getOrPut(field) { FieldInfo(field, fieldType, isStatic) }
         if (result.fieldType != fieldType) abort("$field type mismatch between $fieldType and ${result.fieldType}")
         return result
     }
@@ -253,7 +247,7 @@ class AtomicFUTransformer(
                 info("$field field found")
                 if (ACC_PUBLIC in access) error("$field field cannot be public")
                 if (ACC_FINAL !in access) error("$field field must be final")
-                registerField(field, fieldType, signature, (ACC_STATIC in access))
+                registerField(field, fieldType, (ACC_STATIC in access))
             }
             return null
         }
@@ -288,7 +282,7 @@ class AtomicFUTransformer(
                 val fieldType = Type.getType(fi.desc)
                 val accessorMethod = MethodId(className, name, desc, accessToInvokeOpcode(access))
                 info("$field accessor $name found")
-                val fieldInfo = registerField(field, fieldType, signature, isStatic)
+                val fieldInfo = registerField(field, fieldType, isStatic)
                 fieldInfo.accessors += accessorMethod
                 accessors[accessorMethod] = fieldInfo
             }
@@ -302,9 +296,11 @@ class AtomicFUTransformer(
             if (access and ACC_FINAL != 0 && methodType.argumentTypes.isEmpty()) {
                 // accessor for top-level atomic
                 Type.getObjectType(className)
-            } else
-            if (methodType.argumentTypes.size == 1 && methodType.argumentTypes[0].sort == OBJECT)
-                methodType.argumentTypes[0] else null
+            } else {
+                // accessor for top-level atomic
+                if (methodType.argumentTypes.size == 1 && methodType.argumentTypes[0].sort == OBJECT)
+                    methodType.argumentTypes[0] else null
+            }
         } else {
             // if it not static, then it must be final
             if (access and ACC_FINAL != 0 && methodType.argumentTypes.isEmpty())
@@ -438,7 +434,13 @@ class AtomicFUTransformer(
             }
         }
 
-        override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
+        override fun visitMethod(
+            access: Int,
+            name: String,
+            desc: String,
+            signature: String?,
+            exceptions: Array<out String>?
+        ): MethodVisitor? {
             val method = MethodId(className, name, desc, accessToInvokeOpcode(access))
             if (method in accessors) {
                 return null // drop accessor
@@ -759,7 +761,12 @@ class AtomicFUTransformer(
             return next.next
         }
 
-        private fun putPureArray(arrayfactoryInsn: MethodInsnNode, arrayType: TypeInfo, f: FieldInfo, next: FieldInsnNode): AbstractInsnNode? {
+        private fun putPureArray(
+            arrayFactoryInsn: MethodInsnNode,
+            arrayType: TypeInfo,
+            f: FieldInfo,
+            next: FieldInsnNode
+        ): AbstractInsnNode? {
             val initStart = FlowAnalyzer(next).getInitStart().next
             if (initStart.opcode == NEW) {
                 // remove dup
@@ -768,10 +775,13 @@ class AtomicFUTransformer(
                 instructions.remove(initStart)
             }
             // create pure array of given size and put it
-            val newarray = if (f.signature == null) IntInsnNode(NEWARRAY, ARRAY_ELEMENT_TYPE[arrayType.originalType]!!)
-            else TypeInsnNode(ANEWARRAY, descToName(f.getPrimitiveType(vh).elementType.descriptor))
-            instructions.set(arrayfactoryInsn, newarray)
-            next.desc = f.getPrimitiveType(vh).descriptor
+            val primitiveType = f.getPrimitiveType(vh)
+            val primitiveElementType = ARRAY_ELEMENT_TYPE[arrayType.originalType]
+            val newArray =
+                if (primitiveElementType != null) IntInsnNode(NEWARRAY, primitiveElementType)
+                else TypeInsnNode(ANEWARRAY, descToName(primitiveType.elementType.descriptor))
+            instructions.set(arrayFactoryInsn, newArray)
+            next.desc = primitiveType.descriptor
             next.name = f.name
             transformed = true
             return next.next
