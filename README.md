@@ -19,6 +19,7 @@ The idiomatic way to use atomic operations in Kotlin.
 * [Gradle](#gradle-build-setup) for all platforms and [Maven](#maven-build-setup) for JVM are supported.  
 * [Additional features](#additional-features) include:
   * Support for [JDK9 VarHandle](#varhandles-with-java-9).
+  * Support for [arrays of atomic values](#arrays-of-atomic-values).
   * Support for [testing of lock-free data structures](#testing-lock-free-data-structures-on-jvm).
 
 ## Example
@@ -292,6 +293,21 @@ atomicfu {
 It can also create [JEP 238](http://openjdk.java.net/jeps/238) multi-release jar file with both
 `AtomicXxxFieldUpdater` for JDK<=8 and `VarHandle` for for JDK9+ if you 
 set `variant` to `"BOTH"`.
+
+### Arrays of atomic values
+
+You can declare arrays of all supported atomic value types. 
+By default arrays are transformed into the corresponding `java.util.concurrent.atomic.Atomic*Array` instances.
+
+If you configure `variant = "VH"` an array will be transformed to plain array using [VarHandle](http://download.java.net/java/jdk9/docs/api/java/lang/invoke/VarHandle.html) to support atomic operations.
+  
+```kotlin
+val a = atomicArrayOfNulls<T>(size) // similar to Array constructor
+
+val x = a[i].value // read value
+a[i].value = x // set value
+a[i].compareAndSet(expect, update) // do atomic operations
+```
 
 ### Testing lock-free data structures on JVM
 
