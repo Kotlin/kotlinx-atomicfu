@@ -5,18 +5,24 @@ import org.mozilla.javascript.ast.*
 import java.io.File
 import java.io.FileReader
 import org.mozilla.javascript.Token
+import java.util.regex.*
 
 private const val ATOMIC_CONSTRUCTOR = """atomic\$(ref|int|long|boolean)\$"""
 private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean|ofNulls)"""
-private const val MANGLED_VALUE_PROP = "kotlinx\\\$atomicfu\\\$value"
+private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
+
 private const val RECEIVER = "\$receiver"
 private const val SCOPE = "scope"
 private const val FACTORY = "factory"
 private const val REQUIRE = "require"
 private const val KOTLINX_ATOMICFU = "'kotlinx-atomicfu'"
+private const val MODULE_KOTLINX_ATOMICFU = "\$module\$kotlinx_atomicfu"
 private const val ARRAY = "Array"
 private const val FILL = "fill"
 private const val GET_ELEMENT = "get\\\$atomicfu"
+
+private val MANGLE_VALUE_REGEX = Regex(".${Pattern.quote(MANGLED_VALUE_PROP)}")
+private val ARRAY_GET_VALUE_REGEX = Regex(".$GET_ELEMENT\\((\\d+)\\).${Pattern.quote(MANGLED_VALUE_PROP)}")
 
 class AtomicFUTransformerJS(
     inputDir: File,
@@ -55,8 +61,8 @@ class AtomicFUTransformerJS(
     // erase getting value of atomic field
     private fun AstNode.eraseGetValue(): String {
         val res = this.toSource()
-        val primitiveGetValue = Regex(".$MANGLED_VALUE_PROP")
-        val arrayGetValue = Regex(".$GET_ELEMENT\\((\\d+)\\).$MANGLED_VALUE_PROP")
+        val primitiveGetValue = MANGLE_VALUE_REGEX
+        val arrayGetValue = ARRAY_GET_VALUE_REGEX
         return res.replace(arrayGetValue) { matchResult -> "[${matchResult.groupValues[1]}]" }
                   .replace(primitiveGetValue) { "" }
     }
@@ -65,15 +71,30 @@ class AtomicFUTransformerJS(
         private fun isAtomicfuDependency(node: AstNode) =
             (node.type == Token.STRING && node.toSource() == KOTLINX_ATOMICFU)
 
+        private fun isAtomicfuModule(node: AstNode) =
+            (node.type == Token.NAME && node.toSource() == MODULE_KOTLINX_ATOMICFU)
+
         override fun visit(node: AstNode): Boolean {
             when (node.type) {
                 Token.ARRAYLIT -> {
+                    // erasing 'kotlinx-atomicfu' from the list of defined dependencies
                     val elements = (node as ArrayLiteral).elements as MutableList
                     val it = elements.listIterator()
                     while (it.hasNext()) {
                         val arg = it.next()
                         if (isAtomicfuDependency(arg)) {
                             it.remove()
+                        }
+                    }
+                }
+                Token.FUNCTION -> {
+                    // erasing 'kotlinx-atomicfu' module passed as parameter
+                    if (node is FunctionNode) {
+                        val it = node.params.listIterator()
+                        while (it.hasNext()) {
+                            if (isAtomicfuModule(it.next()) && !requireKotlinxAtomicfu) {
+                                it.remove()
+                            }
                         }
                     }
                 }
@@ -84,13 +105,15 @@ class AtomicFUTransformerJS(
                             val arg = it.next()
                             when (arg.type) {
                                 Token.GETELEM -> {
+                                    // erasing 'kotlinx-atomicfu' dependency as factory argument
                                     if (isAtomicfuDependency((arg as ElementGet).element)) {
                                         it.remove()
                                     }
                                 }
                                 Token.CALL -> {
-                                    if ((arg as FunctionCall).target.toSource() == REQUIRE && !requireKotlinxAtomicfu) {
-                                        if (isAtomicfuDependency(arg.arguments[0])) {
+                                    // erasing require of 'kotlinx-atomicfu' dependency
+                                    if ((arg as FunctionCall).target.toSource() == REQUIRE) {
+                                        if (isAtomicfuDependency(arg.arguments[0]) && !requireKotlinxAtomicfu) {
                                             it.remove()
                                         }
                                     }
@@ -102,10 +125,30 @@ class AtomicFUTransformerJS(
                 Token.GETELEM -> {
                     if (isAtomicfuDependency((node as ElementGet).element)) {
                         val enclosingNode = node.parent
-                        if (node.parent.type == Token.TYPEOF) {
+                        // erasing the check whether 'kotlinx-atomicfu' is defined
+                        if (enclosingNode.type == Token.TYPEOF) {
                             if (enclosingNode.parent.parent.type == Token.IF) {
                                 val ifStatement = enclosingNode.parent.parent as IfStatement
-                                ifStatement.thenPart = Block()
+                                val falseKeyword = KeywordLiteral()
+                                falseKeyword.type = Token.FALSE
+                                ifStatement.condition = falseKeyword
+                                val oneLineBlock = Block()
+                                oneLineBlock.addStatement(EmptyLine())
+                                ifStatement.thenPart = oneLineBlock
+                            }
+                        }
+
+                    }
+                }
+                Token.BLOCK -> {
+                    // erasing importsForInline for 'kotlinx-atomicfu'
+                    for (stmt in node) {
+                        if (stmt is ExpressionStatement) {
+                            val expr = stmt.expression
+                            if (expr is Assignment && expr.left is ElementGet) {
+                                if (isAtomicfuDependency((expr.left as ElementGet).element)) {
+                                    node.replaceChild(stmt, EmptyLine())
+                                }
                             }
                         }
                     }
@@ -117,6 +160,19 @@ class AtomicFUTransformerJS(
 
     inner class AtomicConstructorDetector : NodeVisitor {
         override fun visit(node: AstNode?): Boolean {
+            if (node is Block) {
+                for (stmt in node) {
+                    if (stmt is VariableDeclaration) {
+                        val varInit = stmt.variables[0] as VariableInitializer
+                        if (varInit.initializer is PropertyGet) {
+                            if ((varInit.initializer as PropertyGet).property.toSource().matches(Regex(ATOMIC_CONSTRUCTOR))) {
+                                atomicConstructors.add(varInit.target.toSource())
+                                node.replaceChild(stmt, EmptyLine())
+                            }
+                        }
+                    }
+                }
+            }
             if (node is VariableInitializer && node.initializer is PropertyGet) {
                 val initializer = (node.initializer as PropertyGet).property.toSource()
                 if (initializer.matches(Regex(ATOMIC_CONSTRUCTOR))) {
@@ -183,10 +239,18 @@ class AtomicFUTransformerJS(
                     }
                 }
             }
+            // remove value property call
             if (node.type == Token.GETPROP) {
                 if ((node as PropertyGet).property.toSource() == MANGLED_VALUE_PROP) {
-                    // $receiver.kotlinx$atomicfu$value in inline functions
-                    if (node.target.toSource() == RECEIVER) {
+                    // A.a.value
+                    if (node.target.type == Token.GETPROP) {
+                        val clearField = node.target as PropertyGet
+                        val targetNode = clearField.target
+                        val clearProperety = clearField.property
+                        node.setLeftAndRight(targetNode, clearProperety)
+                    }
+                    // other cases with $receiver.kotlinx$atomicfu$value in inline functions
+                    else if (node.target.toSource() == RECEIVER) {
                         val rr = ReceiverResolver()
                         node.enclosingFunction.visit(rr)
                         if (rr.receiver != null) {
@@ -429,6 +493,10 @@ private class FunctionNodeDerived(val fn: FunctionNode) : FunctionNode() {
         }
         append("}")
     }
+}
+
+private class EmptyLine: EmptyExpression() {
+    override fun toSource(depth: Int) = "\n"
 }
 
 fun main(args: Array<String>) {
