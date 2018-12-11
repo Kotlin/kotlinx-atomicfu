@@ -57,12 +57,13 @@ task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
     def pluginDescriptorFile = new File(outputDir, 'META-INF/maven/plugin.xml')
 
     workingDir projectDir
-    commandLine 'sh', './mvnw',
-            '--errors',
-            '--batch-mode',
-            '--file', pomFile,
-            'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'
-
+    boolean isWindows = System.getProperty("os.name").toLowerCase().indexOf("windows") >= 0
+    def args = isWindows ? ['cmd', '/c', 'mvnw.cmd'] : ['sh', './mvnw']
+    args.addAll(['--errors',
+                 '--batch-mode',
+                 '--file', pomFile.toString(),
+                 'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'])
+    commandLine args
     doLast {
         assert pluginDescriptorFile.file, "$pluginDescriptorFile: was not generated"
         logger.info("Plugin descriptor is generated in $pluginDescriptorFile")
