@@ -1,5 +1,12 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.12.0
+
+* Kotlin version 1.3.11.
+* Support top-level atomic variables.
+* Support arrays of atomic variables.
+* Project is built with kotlin-multiplatform plugin.
+
 # Version 0.11.11
 
 * Kotlin version Kotlin version 1.3.0-rc-146 (with K/N).
