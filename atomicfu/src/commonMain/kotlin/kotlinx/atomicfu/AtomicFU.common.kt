@@ -16,6 +16,8 @@
 
 package kotlinx.atomicfu
 
+import kotlin.js.JsName
+
 /**
  * Creates atomic reference with a given [initial] value.
  *
@@ -59,6 +61,13 @@ public expect fun atomic(initial: Long): AtomicLong
  * ```
  */
 public expect fun atomic(initial: Boolean): AtomicBoolean
+
+
+/**
+ * Creates array of AtomicRef<T> of specified size, where each element is initialised with null value
+ */
+@JsName("AtomicLongArray\$ofNulls")
+public fun <T> atomicArrayOfNulls(size: Int): AtomicArray<T?> = AtomicArray(size)
 
 // ==================================== AtomicRef ====================================
 
@@ -424,4 +433,54 @@ public inline fun AtomicLong.updateAndGet(function: (Long) -> Long): Long {
         val upd = function(cur)
         if (compareAndSet(cur, upd)) return upd
     }
+}
+
+// ==================================== AtomicIntArray ====================================
+
+/**
+ * Creates a new array of AtomicInt values of the specified size, where each element is initialised with 0
+ */
+@JsName("AtomicIntArray\$int")
+public class AtomicIntArray(size: Int) {
+    private val array = Array(size) { atomic(0) }
+
+    @JsName("get\$atomicfu")
+    public operator fun get(index: Int): AtomicInt = array[index]
+}
+
+// ==================================== AtomicLongArray ====================================
+
+/**
+ * Creates a new array of AtomicLong values of the specified size, where each element is initialised with 0L
+ */
+@JsName("AtomicLongArray\$long")
+public class AtomicLongArray(size: Int) {
+    private val array = Array(size) { atomic(0L) }
+
+    @JsName("get\$atomicfu")
+    public operator fun get(index: Int): AtomicLong = array[index]
+}
+
+// ==================================== AtomicBooleanArray ====================================
+
+/**
+ * Creates a new array of AtomicBoolean values of the specified size, where each element is initialised with false
+ */
+@JsName("AtomicBooleanArray\$boolean")
+public class AtomicBooleanArray(size: Int) {
+    private val array = Array(size) { atomic(false) }
+
+    @JsName("get\$atomicfu")
+    public operator fun get(index: Int): AtomicBoolean = array[index]
+}
+
+
+// ==================================== AtomicArray ====================================
+
+@JsName("AtomicRefArray\$ref")
+public class AtomicArray<T> internal constructor(size: Int) {
+    private val array = Array(size) { atomic<T?>(null) }
+
+    @JsName("get\$atomicfu")
+    public operator fun get(index: Int): AtomicRef<T?> = array[index]
 }

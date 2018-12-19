@@ -20,13 +20,14 @@ import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.tree.*
 import org.objectweb.asm.util.*
 
-val AbstractInsnNode.line: Int? get() {
-    var cur = this
-    while (true) {
-        if (cur is LineNumberNode) return cur.line
-        cur = cur.previous ?: return null
+val AbstractInsnNode.line: Int?
+    get() {
+        var cur = this
+        while (true) {
+            if (cur is LineNumberNode) return cur.line
+            cur = cur.previous ?: return null
+        }
     }
-}
 
 fun AbstractInsnNode.atIndex(insnList: InsnList?): String {
     var cur = insnList?.first
@@ -39,21 +40,23 @@ fun AbstractInsnNode.atIndex(insnList: InsnList?): String {
     return "inst #$index: "
 }
 
-val AbstractInsnNode.nextUseful: AbstractInsnNode? get() {
-    var cur: AbstractInsnNode? = next
-    while (cur.isUseless()) cur = cur!!.next
-    return cur
-}
+val AbstractInsnNode.nextUseful: AbstractInsnNode?
+    get() {
+        var cur: AbstractInsnNode? = next
+        while (cur.isUseless()) cur = cur!!.next
+        return cur
+    }
 
-val AbstractInsnNode?.thisOrPrevUseful: AbstractInsnNode? get() {
-    var cur: AbstractInsnNode? = this
-    while (cur.isUseless()) cur = cur!!.previous
-    return cur
-}
+val AbstractInsnNode?.thisOrPrevUseful: AbstractInsnNode?
+    get() {
+        var cur: AbstractInsnNode? = this
+        while (cur.isUseless()) cur = cur!!.previous
+        return cur
+    }
 
 private fun AbstractInsnNode?.isUseless() = this is LabelNode || this is LineNumberNode || this is FrameNode
 
-fun InsnList.listUseful(limit: Int = Int.MAX_VALUE) : List<AbstractInsnNode> {
+fun InsnList.listUseful(limit: Int = Int.MAX_VALUE): List<AbstractInsnNode> {
     val result = ArrayList<AbstractInsnNode>(limit)
     var cur = first
     while (cur != null && result.size < limit) {
@@ -68,6 +71,9 @@ fun AbstractInsnNode.isAload(index: Int) =
 
 fun AbstractInsnNode.isGetField(owner: String) =
     this is FieldInsnNode && this.opcode == GETFIELD && this.owner == owner
+
+fun AbstractInsnNode.isGetStatic(owner: String) =
+    this is FieldInsnNode && this.opcode == GETSTATIC && this.owner == owner
 
 fun AbstractInsnNode.isAreturn() =
     this.opcode == ARETURN

@@ -5,15 +5,24 @@ import org.mozilla.javascript.ast.*
 import java.io.File
 import java.io.FileReader
 import org.mozilla.javascript.Token
+import java.util.regex.*
 
 private const val ATOMIC_CONSTRUCTOR = """atomic\$(ref|int|long|boolean)\$"""
+private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean|ofNulls)"""
 private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
+
 private const val RECEIVER = "\$receiver"
 private const val SCOPE = "scope"
 private const val FACTORY = "factory"
 private const val REQUIRE = "require"
 private const val KOTLINX_ATOMICFU = "'kotlinx-atomicfu'"
 private const val MODULE_KOTLINX_ATOMICFU = "\$module\$kotlinx_atomicfu"
+private const val ARRAY = "Array"
+private const val FILL = "fill"
+private const val GET_ELEMENT = "get\\\$atomicfu"
+
+private val MANGLE_VALUE_REGEX = Regex(".${Pattern.quote(MANGLED_VALUE_PROP)}")
+private val ARRAY_GET_VALUE_REGEX = Regex(".$GET_ELEMENT\\((\\d+)\\).${Pattern.quote(MANGLED_VALUE_PROP)}")
 
 class AtomicFUTransformerJS(
     inputDir: File,
@@ -21,6 +30,7 @@ class AtomicFUTransformerJS(
     var requireKotlinxAtomicfu: Boolean = false
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
     private val atomicConstructors = mutableSetOf<String>()
+    private val atomicArrayConstructors = mutableMapOf<String, String?>()
 
     override fun transform() {
         info("Transforming to $outputDir")
@@ -45,7 +55,16 @@ class AtomicFUTransformerJS(
         root.visit(AtomicConstructorDetector())
         root.visit(TransformVisitor())
         root.visit(AtomicOperationsInliner())
-        return root.toSource().toByteArray()
+        return root.eraseGetValue().toByteArray()
+    }
+
+    // erase getting value of atomic field
+    private fun AstNode.eraseGetValue(): String {
+        val res = this.toSource()
+        val primitiveGetValue = MANGLE_VALUE_REGEX
+        val arrayGetValue = ARRAY_GET_VALUE_REGEX
+        return res.replace(arrayGetValue) { matchResult -> "[${matchResult.groupValues[1]}]" }
+                  .replace(primitiveGetValue) { "" }
     }
 
     inner class DependencyEraser : NodeVisitor {
@@ -154,6 +173,24 @@ class AtomicFUTransformerJS(
                     }
                 }
             }
+            if (node is VariableInitializer && node.initializer is PropertyGet) {
+                val initializer = (node.initializer as PropertyGet).property.toSource()
+                if (initializer.matches(Regex(ATOMIC_CONSTRUCTOR))) {
+                    atomicConstructors.add(node.target.toSource())
+                    node.initializer = null
+                }
+                if (initializer.matches(Regex(ATOMIC_ARRAY_CONSTRUCTOR))) {
+                    val initialValue = when (initializer.substringAfterLast('$')) {
+                        "int" -> "0"
+                        "long" -> "0"
+                        "boolean" -> "false"
+                        else -> null
+                    }
+                    atomicArrayConstructors[node.target.toSource()] = initialValue
+                    node.initializer = null
+                }
+                return false
+            }
             return true
         }
     }
@@ -166,9 +203,40 @@ class AtomicFUTransformerJS(
                 if (atomicConstructors.contains(functionName)) {
                     if (node.parent is Assignment) {
                         val valueNode = node.arguments[0]
-                        (node.parent as InfixExpression).setRight(valueNode)
+                        (node.parent as InfixExpression).right = valueNode
                     }
                     return true
+                } else if (atomicArrayConstructors.contains(functionName)) {
+                    val arrayConstructor = Name()
+                    arrayConstructor.identifier = ARRAY
+                    node.target = arrayConstructor
+                    atomicArrayConstructors[functionName]?.let {
+                        val arrayConsCall = FunctionCall()
+                        arrayConsCall.target = node.target
+                        arrayConsCall.arguments = node.arguments
+                        val target = PropertyGet()
+                        val fill = Name()
+                        fill.identifier = FILL
+                        target.target = arrayConsCall
+                        target.property = fill
+                        node.target = target
+                        val initialValue = Name()
+                        initialValue.identifier = it
+                        node.arguments = listOf(initialValue)
+                    }
+                    return true
+                } else if (node.target is PropertyGet) {
+                    if ((node.target as PropertyGet).target is FunctionCall) {
+                        val atomicOperationTarget = node.target as PropertyGet
+                        val funcCall = atomicOperationTarget.target as FunctionCall
+                        if (funcCall.target is PropertyGet) {
+                            val getterCall = (funcCall.target as PropertyGet).property
+                            if (Regex(GET_ELEMENT).matches(getterCall.toSource())) {
+                                val getter = getArrayElement(funcCall)
+                                atomicOperationTarget.target = getter
+                            }
+                        }
+                    }
                 }
             }
             // remove value property call
@@ -194,7 +262,27 @@ class AtomicFUTransformerJS(
             }
             return true
         }
+
+        private fun getArrayElement(getterCall: FunctionCall): AstNode {
+            val index = getterCall.arguments[0]
+            val arrayField = (getterCall.target as PropertyGet).target
+            // whether this field is static or not
+            val isStatic = arrayField !is PropertyGet
+            val arrName = if (isStatic) arrayField else (arrayField as PropertyGet).property
+            val getter = ElementGet(arrName, index)
+            return if (isStatic) { //intArr[index]
+                getter
+            } else { //A.intArr[0]
+                val call = PropertyGet()
+                call.target = (arrayField as PropertyGet).target
+                val name = Name()
+                name.identifier = getter.toSource()
+                call.property = name
+                call
+            }
+        }
     }
+
 
     // receiver data flow
     inner class ReceiverResolver : NodeVisitor {
@@ -275,7 +363,8 @@ class AtomicFUTransformerJS(
             "compareAndSet\$atomicfu" -> {
                 val expected = args[0].scopedSource()
                 val updated = args[1].scopedSource()
-                "(function($SCOPE) {return $f === $expected ? function() { $f = $updated; return true }() : false})"
+                val equals = if (expected == "null") "==" else "==="
+                "(function($SCOPE) {return $f $equals $expected ? function() { $f = $updated; return true }() : false})"
             }
             "getAndIncrement\$atomicfu" -> {
                 "(function($SCOPE) {return $f++;})"

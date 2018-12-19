@@ -299,12 +299,16 @@ public actual class AtomicInt internal constructor(value: Int) {
     /**
      * Performs atomic addition of [delta].
      */
-    public actual inline operator fun plusAssign(delta: Int) { getAndAdd(delta) }
+    public actual inline operator fun plusAssign(delta: Int) {
+        getAndAdd(delta)
+    }
 
     /**
      * Performs atomic subtraction of [delta].
      */
-    public actual inline operator fun minusAssign(delta: Int) { getAndAdd(-delta) }
+    public actual inline operator fun minusAssign(delta: Int) {
+        getAndAdd(-delta)
+    }
 
     override fun toString(): String = value.toString()
 
@@ -424,12 +428,16 @@ public actual class AtomicLong internal constructor(value: Long) {
     /**
      * Performs atomic addition of [delta].
      */
-    public actual inline operator fun plusAssign(delta: Long) { getAndAdd(delta) }
+    public actual inline operator fun plusAssign(delta: Long) {
+        getAndAdd(delta)
+    }
 
     /**
      * Performs atomic subtraction of [delta].
      */
-    public actual inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
+    public actual inline operator fun minusAssign(delta: Long) {
+        getAndAdd(-delta)
+    }
 
     override fun toString(): String = value.toString()
 

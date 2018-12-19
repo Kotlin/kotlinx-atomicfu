@@ -158,3 +158,4 @@ public actual class AtomicLong internal constructor(value: Long) {
 
     override fun toString(): String = value.toString()
 }
+
