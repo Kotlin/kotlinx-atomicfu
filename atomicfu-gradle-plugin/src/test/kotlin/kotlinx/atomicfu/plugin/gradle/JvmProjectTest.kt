@@ -13,7 +13,7 @@ class JvmProjectTest : BaseKotlinGradleTest() {
 
     @Test
     fun testKotlinPlatformJvmPlugin() =
-        project("jvm-simple") {
+        project("jvm-simple", "-platform") {
             projectDir.resolve("build.gradle").modify {
                 it.checkedReplace("apply plugin: 'kotlin'", "apply plugin: 'kotlin-platform-jvm'")
             }
@@ -31,11 +31,8 @@ class JvmProjectTest : BaseKotlinGradleTest() {
         build("build") {
             checkOutcomes(TaskOutcome.SUCCESS, *tasksToCheck)
 
-            val testCompileClasspathFiles = projectDir.resolve("build/test_compile_classpath.txt")
-                    .readLines().asSequence().flatMap { File(it).walk().filter(File::isFile) }.toHashSet()
-
-            val testRuntimeClasspathFiles = projectDir.resolve("build/test_runtime_classpath.txt")
-                    .readLines().asSequence().flatMap { File(it).walk().filter(File::isFile) }.toHashSet()
+            val testCompileClasspathFiles = filesFrom("build/test_compile_classpath.txt")
+            val testRuntimeClasspathFiles = filesFrom("build/test_runtime_classpath.txt")
 
             projectDir.resolve("build/classes/kotlin/main/IntArithmetic.class").let {
                 it.checkExists()
@@ -54,4 +51,9 @@ class JvmProjectTest : BaseKotlinGradleTest() {
             checkOutcomes(TaskOutcome.UP_TO_DATE, *tasksToCheck)
         }
     }
+
+    private fun Project.filesFrom(name: String) = projectDir.resolve(name)
+        .readLines().asSequence().flatMap { listFiles(it) }.toHashSet()
+
+    private fun listFiles(dir: String): Sequence<File> = File(dir).walk().filter { it.isFile }
 }

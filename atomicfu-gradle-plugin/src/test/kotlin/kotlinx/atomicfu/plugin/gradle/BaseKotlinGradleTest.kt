@@ -8,17 +8,10 @@ import java.io.File
 abstract class BaseKotlinGradleTest {
     private lateinit var workingDir: File
 
-    @Before
-    fun setUp() {
-        workingDir = Files.createTempDir()
-    }
-
-    @After
-    fun tearDown() {
+    fun project(name: String, suffix: String = "", fn: Project.() -> Unit) {
+        workingDir = File("build${File.separator}test-$name$suffix").absoluteFile
         workingDir.deleteRecursively()
-    }
-
-    fun project(name: String, fn: Project.() -> Unit) {
+        workingDir.mkdirs()
         val testResources = File("src/test/resources")
         val originalProjectDir = testResources.resolve("projects/$name").apply { checkExists() }
         val projectDir = workingDir.resolve(name).apply { mkdirs() }
