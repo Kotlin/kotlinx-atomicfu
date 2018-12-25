@@ -26,7 +26,7 @@ private const val TEST_IMPLEMENTATION = "testImplementation"
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
-        val atomicFuPluginVersion = project.buildscript.configurations.findByName("classpath")?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
+        val atomicFuPluginVersion = project.rootProject.buildscript.configurations.findByName("classpath")?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         project.withPlugins("kotlin") {
             atomicFuPluginVersion?.let {
                 dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("", it))
@@ -48,6 +48,12 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         project.withPlugins("kotlin-native") {
             atomicFuPluginVersion?.let {
                 dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-native", it))
+            }
+        }
+        project.withPlugins("kotlin-platform-common") {
+            atomicFuPluginVersion?.let {
+                dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("-common", it))
+                dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-common", it))
             }
         }
         project.withPlugins("kotlin-multiplatform") {
