@@ -52,7 +52,7 @@ fun Project.withPlugins(vararg plugins: String, fn: Project.() -> Unit) {
 }
 
 fun Project.configureMultiplatformPlugin() {
-    val originalDirsByCompilation = hashMapOf<KotlinCompilation, FileCollection>()
+    val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
     project.extensions.findByType(KotlinProjectExtension::class.java)?.let { kotlinExtension ->
         val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
 
@@ -153,10 +153,10 @@ fun Project.configureTransformTasks(
 
 fun String.toVariant(): Variant = enumValueOf(toUpperCase(Locale.US))
 
-fun Project.createJvmTransformTask(compilation: KotlinCompilation) =
+fun Project.createJvmTransformTask(compilation: KotlinCompilation<*>) =
     tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformTask::class.java)
 
-fun Project.createJsTransformTask(compilation: KotlinCompilation) =
+fun Project.createJsTransformTask(compilation: KotlinCompilation<*>) =
     tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformJsTask::class.java)
 
 fun Project.createJvmTransformTask(sourceSet: SourceSet) =
