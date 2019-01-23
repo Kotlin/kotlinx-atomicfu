@@ -4,3 +4,16 @@
 
 apply plugin: 'kotlinx-atomicfu'
 apply plugin: 'base'
+
+buildscript {
+    repositories {
+        maven { url "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven" }
+    }
+    
+}
+
+allprojects {
+    repositories {
+        maven { url "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven" }
+    }
+}

@@ -5,6 +5,20 @@
 apply plugin: 'kotlinx-atomicfu'
 apply plugin: 'kotlin-multiplatform'
 
+buildscript {
+    repositories {
+        maven { url "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven" }
+    }
+
+}
+
+allprojects {
+    repositories {
+        maven { url "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven" }
+    }
+}
+
+
 kotlin {
     targets {
         fromPreset(presets.jvm, 'jvm')
