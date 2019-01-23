@@ -51,6 +51,11 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                             appendNode('id', 'kotlin-dev')
                             appendNode('url', 'https://kotlin.bintray.com/kotlin-dev')
                         }
+
+                        appendNode('repository').with {
+                            appendNode('id', 'kotlin-teamcity-channel')
+                            appendNode('url', "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven")
+                        }
                     }
                 }
             }
