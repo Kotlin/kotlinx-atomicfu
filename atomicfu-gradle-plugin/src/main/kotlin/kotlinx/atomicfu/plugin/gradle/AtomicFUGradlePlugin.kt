@@ -72,7 +72,9 @@ fun Project.configureMultiplatformPlugin() {
 
                 val transformedClassesDir = project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
                 // make transformedClassesDir the source path for output.classesDirs
-                classesDirs.setFrom(transformedClassesDir)
+                if (target.platformType != KotlinPlatformType.native) { // do not change source path for unprocessed native output
+                    classesDirs.setFrom(transformedClassesDir)
+                }
                 val transformTask = when (target.platformType) {
                     KotlinPlatformType.jvm -> {
                         project.createJvmTransformTask(compilation).configureJvmTask(compilation.compileDependencyFiles, compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
