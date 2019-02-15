@@ -362,64 +362,64 @@ class AtomicFUTransformerJS(
         val code = when (funcName) {
             "getAndSet\$atomicfu" -> {
                 val arg = args[0].toSource()
-                "(function($SCOPE) {var oldValue = $f; $f = $arg; return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f = $arg; return oldValue;})()"
             }
             "compareAndSet\$atomicfu" -> {
                 val expected = args[0].scopedSource()
                 val updated = args[1].scopedSource()
                 val equals = if (expected == "null") "==" else "==="
-                "(function($SCOPE) {return $f $equals $expected ? function() { $f = $updated; return true }() : false})"
+                "(function($SCOPE) {return $f $equals $expected ? function() { $f = $updated; return true }() : false})()"
             }
             "getAndIncrement\$atomicfu" -> {
-                "(function($SCOPE) {return $f++;})"
+                "(function($SCOPE) {return $f++;})()"
             }
 
             "getAndIncrement\$atomicfu\$long" -> {
-                "(function($SCOPE) {var oldValue = $f; $f = $f.inc(); return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f = $f.inc(); return oldValue;})()"
             }
 
             "getAndDecrement\$atomicfu" -> {
-                "(function($SCOPE) {return $f--;})"
+                "(function($SCOPE) {return $f--;})()"
             }
 
             "getAndDecrement\$atomicfu\$long" -> {
-                "(function($SCOPE) {var oldValue = $f; $f = $f.dec(); return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f = $f.dec(); return oldValue;})()"
             }
 
             "getAndAdd\$atomicfu" -> {
                 val arg = args[0].scopedSource()
-                "(function($SCOPE) {var oldValue = $f; $f += $arg; return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f += $arg; return oldValue;})()"
             }
 
             "getAndAdd\$atomicfu\$long" -> {
                 val arg = args[0].scopedSource()
-                "(function($SCOPE) {var oldValue = $f; $f = $f.add($arg); return oldValue;})"
+                "(function($SCOPE) {var oldValue = $f; $f = $f.add($arg); return oldValue;})()"
             }
 
             "addAndGet\$atomicfu" -> {
                 val arg = args[0].scopedSource()
-                "(function($SCOPE) {$f += $arg; return $f;})"
+                "(function($SCOPE) {$f += $arg; return $f;})()"
             }
 
             "addAndGet\$atomicfu\$long" -> {
                 val arg = args[0].scopedSource()
-                "(function($SCOPE) {$f = $f.add($arg); return $f;})"
+                "(function($SCOPE) {$f = $f.add($arg); return $f;})()"
             }
 
             "incrementAndGet\$atomicfu" -> {
-                "(function($SCOPE) {return ++$f;})"
+                "(function($SCOPE) {return ++$f;})()"
             }
 
             "incrementAndGet\$atomicfu\$long" -> {
-                "(function($SCOPE) {return $f = $f.inc();})"
+                "(function($SCOPE) {return $f = $f.inc();})()"
             }
 
             "decrementAndGet\$atomicfu" -> {
-                "(function($SCOPE) {return --$f;})"
+                "(function($SCOPE) {return --$f;})()"
             }
 
             "decrementAndGet\$atomicfu\$long" -> {
-                "(function($SCOPE) {return $f = $f.dec();})"
+                "(function($SCOPE) {return $f = $f.dec();})()"
             }
             else -> null
         }
@@ -435,67 +435,10 @@ class AtomicFUTransformerJS(
         val node = p.parse(code, null, 0)
         if (node.firstChild != null) {
             val expr = (node.firstChild as ExpressionStatement).expression
-            val func = (expr as ParenthesizedExpression).expression as FunctionNode
-            (node.firstChild as ExpressionStatement).expression =
-                ParenthesizedExpressionDerived(FunctionNodeDerived(func))
-            this.target = (node.firstChild as ExpressionStatement).expression
+            this.target = (expr as FunctionCall).target
             val thisNode = Parser(CompilerEnvirons()).parse("this", null, 0)
             this.arguments = listOf((thisNode.firstChild as ExpressionStatement).expression)
         }
-    }
-}
-
-private class ParenthesizedExpressionDerived(val expr: FunctionNode) : ParenthesizedExpression() {
-    override fun toSource(depth: Int): String = "(" + expr.toSource(0) + ")"
-}
-
-// local FunctionNode parser for atomic operations to avoid internal formatting
-private class FunctionNodeDerived(val fn: FunctionNode) : FunctionNode() {
-
-    override fun toSource(depth: Int) = buildString {
-        append("function")
-        append("(")
-        printList(fn.params, this)
-        append(") ")
-        append("{")
-        (fn.body as? Block)?.forEach {
-            when (it.type) {
-                Token.RETURN -> {
-                    val retVal = (it as ReturnStatement).returnValue
-                    when (retVal.type) {
-                        Token.HOOK -> {
-                            val cond = retVal as ConditionalExpression
-                            append("return ")
-                            append(cond.testExpression.toSource())
-                            append(" ? ")
-                            val target = (cond.trueExpression as FunctionCall).target as FunctionNode
-                            (cond.trueExpression as FunctionCall).target = FunctionNodeDerived(target)
-                            append(cond.trueExpression.toSource())
-                            append(" : ")
-                            append(cond.falseExpression.toSource())
-                        }
-                        else -> {
-                            append("return").append(" ").append(retVal.toSource()).append(";")
-                        }
-                    }
-                }
-                Token.VAR -> {
-                    if (it is VariableDeclaration) {
-                        append("var").append(" ")
-                        printList(it.variables, this)
-                        if (it.isStatement) {
-                            append(";")
-                        }
-                    }
-                }
-                Token.EXPR_VOID -> {
-                    if (it is ExpressionStatement) {
-                        append(it.expression.toSource()).append(";")
-                    }
-                }
-            }
-        }
-        append("}")
     }
 }
 
