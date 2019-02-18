@@ -1,5 +1,15 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.12.2
+
+* Fixed to skip changing source path for unprocessed native output (see #51).
+* Fixed inlining of atomic operations on JS (see #52).
+
+# Version 0.12.1
+
+* Gradle 4.10 with metadata version 0.4.
+* No metadata for everything except native.
+
 # Version 0.12.0
 
 * Kotlin version 1.3.11.
