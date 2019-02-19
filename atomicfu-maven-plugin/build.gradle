@@ -66,6 +66,8 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
     }
 }
 
+def mavenRepoLocal = System.getProperty("maven.repo.local")
+
 // runs the plugin description generator
 task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
     def pluginDescriptorFile = new File(outputDir, 'META-INF/maven/plugin.xml')
@@ -73,6 +75,8 @@ task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
     workingDir projectDir
     boolean isWindows = System.getProperty("os.name").toLowerCase().indexOf("windows") >= 0
     def args = isWindows ? ['cmd', '/c', 'mvnw.cmd'] : ['sh', './mvnw']
+    if (mavenRepoLocal != null)
+        args.add("-Dmaven.repo.local=${new File(mavenRepoLocal).getAbsolutePath()}")
     args.addAll(['--errors',
                  '--batch-mode',
                  '--file', pomFile.toString(),
