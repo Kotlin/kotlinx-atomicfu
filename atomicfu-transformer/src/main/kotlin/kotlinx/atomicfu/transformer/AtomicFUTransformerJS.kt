@@ -15,6 +15,9 @@ private const val ATOMIC_CONSTRUCTOR = """(atomic\$(ref|int|long|boolean)\$|Atom
 private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean|ofNulls)"""
 private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
 
+private const val TRACE_CONSTRUCTOR = "atomicfu\\\$Trace\\\$"
+private const val TRACE_APPEND = "atomicfu\\\$Trace\\\$append\\\$"
+
 private const val RECEIVER = "\$receiver"
 private const val SCOPE = "scope"
 private const val FACTORY = "factory"
@@ -40,6 +43,7 @@ class AtomicFUTransformerJS(
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
     private val atomicConstructors = mutableSetOf<String>()
     private val atomicArrayConstructors = mutableMapOf<String, String?>()
+    private val traceConstructors = mutableSetOf<String>()
 
     override fun transform() {
         info("Transforming to $outputDir")
@@ -201,6 +205,9 @@ class AtomicFUTransformerJS(
                             if (initializer.matches(Regex(kotlinxAtomicfuModuleName(ATOMIC_CONSTRUCTOR)))) {
                                 atomicConstructors.add(varInit.target.toSource())
                                 node.replaceChild(stmt, EmptyLine())
+                            } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName(TRACE_CONSTRUCTOR)))) {
+                                traceConstructors.add(varInit.target.toSource())
+                                node.replaceChild(stmt, EmptyLine())
                             } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName(LOCKS)))){
                                 node.replaceChild(stmt, EmptyLine())
                             }
@@ -300,6 +307,29 @@ class AtomicFUTransformerJS(
                         val rr = ReceiverResolver()
                         node.enclosingFunction.visit(rr)
                         rr.receiver?.let { node.target = it }
+                    }
+                }
+            }
+            if (node is Block) {
+                for (stmt in node) {
+                    if (stmt is ExpressionStatement) {
+                        if (stmt.expression is Assignment) {
+                            // erase field initialisation
+                            val assignment = stmt.expression as Assignment
+                            if (assignment.right is FunctionCall) {
+                                val functionName = (assignment.right as FunctionCall).target.toSource()
+                                if (traceConstructors.contains(functionName)) {
+                                    node.replaceChild(stmt, EmptyLine())
+                                }
+                            }
+                        }
+                        if (stmt.expression is FunctionCall) {
+                            // erase append(text) call
+                            val funcNode = (stmt.expression as FunctionCall).target
+                            if (funcNode is PropertyGet && funcNode.property.toSource().matches(Regex(TRACE_APPEND))) {
+                                node.replaceChild(stmt, EmptyLine())
+                            }
+                        }
                     }
                 }
             }

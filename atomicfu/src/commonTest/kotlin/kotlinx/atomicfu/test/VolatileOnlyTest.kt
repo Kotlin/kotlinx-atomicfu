@@ -17,4 +17,4 @@ class VolatileOnlyTest {
         _int.value = 42
         assertEquals(42, _int.value)
     }
-}   
+}

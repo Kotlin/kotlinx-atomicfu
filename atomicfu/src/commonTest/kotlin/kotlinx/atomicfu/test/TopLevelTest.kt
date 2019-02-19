@@ -95,14 +95,6 @@ class TopLevelPrimitiveTest {
         abcNode.value = ANode(BNode(CNode(88)))
         check(abcNode.value.b.c.d == 88)
     }
-
-    @Test
-    fun testTopLevelArrayOfNulls() {
-        check(stringAtomicNullArr[0].value == null)
-        check(stringAtomicNullArr[0].compareAndSet(null, "aa"))
-        stringAtomicNullArr[1].lazySet("aa")
-        check(stringAtomicNullArr[0].value == stringAtomicNullArr[1].value)
-    }
 }
 
 class TopLevelArrayTest {
@@ -158,6 +150,13 @@ class TopLevelArrayTest {
         check(!booleanArr[2].getAndSet(true))
         check(booleanArr[0].value && booleanArr[1].value && booleanArr[2].value)
     }
+    @Test
+    fun testTopLevelArrayOfNulls() {
+        check(stringAtomicNullArr[0].value == null)
+        check(stringAtomicNullArr[0].compareAndSet(null, "aa"))
+        stringAtomicNullArr[1].lazySet("aa")
+        check(stringAtomicNullArr[0].value == stringAtomicNullArr[1].value)
+    }
 
     @Suppress("UNCHECKED_CAST")
     @Test
@@ -180,7 +179,6 @@ class TopLevelArrayTest {
         check(anyRefArr[5].compareAndSet(l, a2))
         check((anyRefArr[5].value as ANode<BNode<CNode>>).b.c.d == 2)
     }
-
 }
 
 data class ANode<T>(val b: T)

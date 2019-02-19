@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmName("AtomicFU")
@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
  * private val f = atomic<Type>(initial)
  * ```
  */
-public actual fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
+public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = AtomicRef<T>(initial, trace)
 
 /**
  * Creates atomic [Int] with a given [initial] value.
@@ -31,7 +31,7 @@ public actual fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
  * private val f = atomic(initialInt)
  * ```
  */
-public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
+public actual fun atomic(initial: Int, trace: TraceBase): AtomicInt = AtomicInt(initial, trace)
 
 /**
  * Creates atomic [Long] with a given [initial] value.
@@ -42,7 +42,7 @@ public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
  * private val f = atomic(initialLong)
  * ```
  */
-public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
+public actual fun atomic(initial: Long, trace: TraceBase): AtomicLong = AtomicLong(initial, trace)
 
 /**
  * Creates atomic [Boolean] with a given [initial] value.
@@ -53,7 +53,7 @@ public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
  * private val f = atomic(initialBoolean)
  * ```
  */
-public actual fun atomic(initial: Boolean): AtomicBoolean = AtomicBoolean(initial)
+public actual fun atomic(initial: Boolean, trace: TraceBase): AtomicBoolean = AtomicBoolean(initial, trace)
 
 // ==================================== AtomicRef ====================================
 
@@ -63,7 +63,7 @@ public actual fun atomic(initial: Boolean): AtomicBoolean = AtomicBoolean(initia
  * like [compareAndSet] and others.
  */
 @Suppress("UNCHECKED_CAST")
-public actual class AtomicRef<T> internal constructor(value: T) {
+public actual class AtomicRef<T> internal constructor(value: T, val trace: TraceBase) {
     /**
      * Reading/writing this property maps to read/write of volatile variable.
      */
@@ -72,6 +72,7 @@ public actual class AtomicRef<T> internal constructor(value: T) {
         set(value) {
             interceptor.beforeUpdate(this)
             field = value
+            if (trace !== TraceBase.None) trace { "set($value)" }
             interceptor.afterSet(this, value)
         }
 
@@ -81,6 +82,7 @@ public actual class AtomicRef<T> internal constructor(value: T) {
     public actual fun lazySet(value: T) {
         interceptor.beforeUpdate(this)
         FU.lazySet(this, value)
+        if (trace !== TraceBase.None) trace { "lazySet($value)" }
         interceptor.afterSet(this, value)
     }
 
@@ -90,7 +92,10 @@ public actual class AtomicRef<T> internal constructor(value: T) {
     public actual fun compareAndSet(expect: T, update: T): Boolean {
         interceptor.beforeUpdate(this)
         val result = FU.compareAndSet(this, expect, update)
-        if (result) interceptor.afterRMW(this, expect, update)
+        if (result) {
+            if (trace !== TraceBase.None) trace { "CAS($expect, $update)" }
+            interceptor.afterRMW(this, expect, update)
+        }
         return result
     }
 
@@ -100,6 +105,7 @@ public actual class AtomicRef<T> internal constructor(value: T) {
     public actual fun getAndSet(value: T): T {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndSet(this, value) as T
+        if (trace !== TraceBase.None) trace { "getAndSet($value):$oldValue" }
         interceptor.afterRMW(this, oldValue, value)
         return oldValue
     }
@@ -120,7 +126,7 @@ public actual class AtomicRef<T> internal constructor(value: T) {
  * like [compareAndSet] and others.
  */
 @Suppress("UNCHECKED_CAST")
-public actual class AtomicBoolean internal constructor(v: Boolean) {
+public actual class AtomicBoolean internal constructor(v: Boolean, val trace: TraceBase) {
 
     @Volatile
     private var _value: Int = if (v) 1 else 0
@@ -133,6 +139,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
         set(value) {
             interceptor.beforeUpdate(this)
             _value = if (value) 1 else 0
+            if (trace !== TraceBase.None) trace { "set($value)" }
             interceptor.afterSet(this, value)
         }
 
@@ -143,6 +150,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
         interceptor.beforeUpdate(this)
         val v = if (value) 1 else 0
         FU.lazySet(this, v)
+        if (trace !== TraceBase.None) trace { "lazySet($value)" }
         interceptor.afterSet(this, value)
     }
 
@@ -154,7 +162,10 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
         val e = if (expect) 1 else 0
         val u = if (update) 1 else 0
         val result = FU.compareAndSet(this, e, u)
-        if (result) interceptor.afterRMW(this, expect, update)
+        if (result) {
+            if (trace !== TraceBase.None) trace { "CAS($expect, $update)" }
+            interceptor.afterRMW(this, expect, update)
+        }
         return result
     }
 
@@ -165,6 +176,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
         interceptor.beforeUpdate(this)
         val v = if (value) 1 else 0
         val oldValue = FU.getAndSet(this, v)
+        if (trace !== TraceBase.None) trace { "getAndSet($value):$oldValue" }
         interceptor.afterRMW(this, (oldValue == 1), value)
         return oldValue == 1
     }
@@ -183,7 +195,7 @@ public actual class AtomicBoolean internal constructor(v: Boolean) {
  * [value] property and various atomic read-modify-write operations
  * like [compareAndSet] and others.
  */
-public actual class AtomicInt internal constructor(value: Int) {
+public actual class AtomicInt internal constructor(value: Int, val trace: TraceBase) {
     /**
      * Reads/writes of this property maps to read/write of volatile variable.
      */
@@ -192,6 +204,7 @@ public actual class AtomicInt internal constructor(value: Int) {
         set(value) {
             interceptor.beforeUpdate(this)
             field = value
+            if (trace !== TraceBase.None) trace { "set($value)" }
             interceptor.afterSet(this, value)
         }
 
@@ -201,6 +214,7 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun lazySet(value: Int) {
         interceptor.beforeUpdate(this)
         FU.lazySet(this, value)
+        if (trace !== TraceBase.None) trace { "lazySet($value)" }
         interceptor.afterSet(this, value)
     }
 
@@ -210,7 +224,10 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun compareAndSet(expect: Int, update: Int): Boolean {
         interceptor.beforeUpdate(this)
         val result = FU.compareAndSet(this, expect, update)
-        if (result) interceptor.afterRMW(this, expect, update)
+        if (result) {
+            if (trace !== TraceBase.None) trace { "CAS($expect, $update)" }
+            interceptor.afterRMW(this, expect, update)
+        }
         return result
     }
 
@@ -220,6 +237,7 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun getAndSet(value: Int): Int {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndSet(this, value)
+        if (trace !== TraceBase.None) trace { "getAndSet($value):$oldValue" }
         interceptor.afterRMW(this, oldValue, value)
         return oldValue
     }
@@ -230,6 +248,7 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun getAndIncrement(): Int {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndIncrement(this)
+        if (trace !== TraceBase.None) trace { "getAndInc():$oldValue" }
         interceptor.afterRMW(this, oldValue, oldValue + 1)
         return oldValue
     }
@@ -240,6 +259,7 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun getAndDecrement(): Int {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndDecrement(this)
+        if (trace !== TraceBase.None) trace { "getAndDec():$oldValue" }
         interceptor.afterRMW(this, oldValue, oldValue - 1)
         return oldValue
     }
@@ -250,6 +270,7 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun getAndAdd(delta: Int): Int {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndAdd(this, delta)
+        if (trace !== TraceBase.None) trace { "getAndAdd($delta):$oldValue" }
         interceptor.afterRMW(this, oldValue, oldValue + delta)
         return oldValue
     }
@@ -260,6 +281,7 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun addAndGet(delta: Int): Int {
         interceptor.beforeUpdate(this)
         val newValue = FU.addAndGet(this, delta)
+        if (trace !== TraceBase.None) trace { "addAndGet($delta):$newValue" }
         interceptor.afterRMW(this, newValue - delta, newValue)
         return newValue
     }
@@ -270,6 +292,7 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun incrementAndGet(): Int {
         interceptor.beforeUpdate(this)
         val newValue = FU.incrementAndGet(this)
+        if (trace !== TraceBase.None) trace { "incAndGet():$newValue" }
         interceptor.afterRMW(this, newValue - 1, newValue)
         return newValue
     }
@@ -280,6 +303,7 @@ public actual class AtomicInt internal constructor(value: Int) {
     public actual fun decrementAndGet(): Int {
         interceptor.beforeUpdate(this)
         val newValue = FU.decrementAndGet(this)
+        if (trace !== TraceBase.None) trace { "decAndGet():$newValue" }
         interceptor.afterRMW(this, newValue + 1, newValue)
         return newValue
     }
@@ -312,7 +336,7 @@ public actual class AtomicInt internal constructor(value: Int) {
  * [value] property and various atomic read-modify-write operations
  * like [compareAndSet] and others.
  */
-public actual class AtomicLong internal constructor(value: Long) {
+public actual class AtomicLong internal constructor(value: Long, val trace: TraceBase) {
     /**
      * Reads/writes of this property maps to read/write of volatile variable.
      */
@@ -321,6 +345,7 @@ public actual class AtomicLong internal constructor(value: Long) {
         set(value) {
             interceptor.beforeUpdate(this)
             field = value
+            if (trace !== TraceBase.None) trace { "set($value)" }
             interceptor.afterSet(this, value)
         }
 
@@ -330,6 +355,7 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun lazySet(value: Long) {
         interceptor.beforeUpdate(this)
         FU.lazySet(this, value)
+        if (trace !== TraceBase.None) trace { "lazySet($value)" }
         interceptor.afterSet(this, value)
     }
 
@@ -339,7 +365,10 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun compareAndSet(expect: Long, update: Long): Boolean {
         interceptor.beforeUpdate(this)
         val result = FU.compareAndSet(this, expect, update)
-        if (result) interceptor.afterRMW(this, expect, update)
+        if (result) {
+            if (trace !== TraceBase.None) trace { "CAS($expect, $update)" }
+            interceptor.afterRMW(this, expect, update)
+        }
         return result
     }
 
@@ -349,6 +378,7 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun getAndSet(value: Long): Long {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndSet(this, value)
+        if (trace !== TraceBase.None) trace { "getAndSet($value):$oldValue" }
         interceptor.afterRMW(this, oldValue, value)
         return oldValue
     }
@@ -359,6 +389,7 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun getAndIncrement(): Long {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndIncrement(this)
+        if (trace !== TraceBase.None) trace { "getAndInc():$oldValue" }
         interceptor.afterRMW(this, oldValue, oldValue + 1)
         return oldValue
     }
@@ -369,6 +400,7 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun getAndDecrement(): Long {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndDecrement(this)
+        if (trace !== TraceBase.None) trace { "getAndDec():$oldValue" }
         interceptor.afterRMW(this, oldValue, oldValue - 1)
         return oldValue
     }
@@ -379,6 +411,7 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun getAndAdd(delta: Long): Long {
         interceptor.beforeUpdate(this)
         val oldValue = FU.getAndAdd(this, delta)
+        if (trace !== TraceBase.None) trace { "getAndAdd($delta):$oldValue" }
         interceptor.afterRMW(this, oldValue, oldValue + delta)
         return oldValue
     }
@@ -389,6 +422,7 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun addAndGet(delta: Long): Long {
         interceptor.beforeUpdate(this)
         val newValue = FU.addAndGet(this, delta)
+        if (trace !== TraceBase.None) trace { "addAndGet($delta):$newValue" }
         interceptor.afterRMW(this, newValue - delta, newValue)
         return newValue
     }
@@ -399,6 +433,7 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun incrementAndGet(): Long {
         interceptor.beforeUpdate(this)
         val newValue = FU.incrementAndGet(this)
+        if (trace !== TraceBase.None) trace { "incAndGet():$newValue" }
         interceptor.afterRMW(this, newValue - 1, newValue)
         return newValue
     }
@@ -409,6 +444,7 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual fun decrementAndGet(): Long {
         interceptor.beforeUpdate(this)
         val newValue = FU.decrementAndGet(this)
+        if (trace !== TraceBase.None) trace { "decAndGet():$newValue" }
         interceptor.afterRMW(this, newValue + 1, newValue)
         return newValue
     }

@@ -69,8 +69,8 @@ class ArrayTest {
     @Test
     fun testRefArray() {
         val A = AtomicArrayClass()
-        val a2 = ARef(2)
-        val a3 = ARef(3)
+        val a2 = IntBox(2)
+        val a3 = IntBox(3)
         A.refArr[0].value = a2
         check(A.refArr[0].value!!.n == 2)
         check(A.refArr[0].compareAndSet(a2, a3))
@@ -112,11 +112,11 @@ class AtomicArrayClass {
     val intArr = AtomicIntArray(10)
     val longArr = AtomicLongArray(10)
     val booleanArr = AtomicBooleanArray(10)
-    val refArr = AtomicArray<ARef>(10)
+    val refArr = AtomicArray<IntBox>(10)
     val genericArr = AtomicArray<List<List<String>>>(10)
     val mapArr = atomicArrayOfNulls<Map<List<String>, String>>(10)
     val anyArr = atomicArrayOfNulls<Any?>(10)
-    val a = atomic(ARef(8))
+    val a = atomic(IntBox(8))
 }
 
 class ExtendedApiAtomicArrays {
@@ -124,5 +124,5 @@ class ExtendedApiAtomicArrays {
     val genAtomicNullArr = atomicArrayOfNulls<List<String>>(7)
 }
 
-data class ARef(val n: Int)
+data class IntBox(val n: Int)
 
