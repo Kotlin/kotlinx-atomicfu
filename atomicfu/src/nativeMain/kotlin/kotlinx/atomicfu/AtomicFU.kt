@@ -12,10 +12,10 @@ import kotlin.native.concurrent.FreezableAtomicReference as KAtomicRef
 import kotlin.native.concurrent.isFrozen
 import kotlin.native.concurrent.freeze
 
-public actual fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(KAtomicRef(initial))
-public actual fun atomic(initial: Int): AtomicInt = AtomicInt(KAtomicInt(initial))
-public actual fun atomic(initial: Long): AtomicLong = AtomicLong(KAtomicLong(initial))
-public actual fun atomic(initial: Boolean): AtomicBoolean = AtomicBoolean(KAtomicInt(if (initial) 1 else 0))
+public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = AtomicRef<T>(KAtomicRef(initial))
+public actual fun atomic(initial: Int, trace: TraceBase): AtomicInt = AtomicInt(KAtomicInt(initial))
+public actual fun atomic(initial: Long, trace: TraceBase): AtomicLong = AtomicLong(KAtomicLong(initial))
+public actual fun atomic(initial: Boolean, trace: TraceBase): AtomicBoolean = AtomicBoolean(KAtomicInt(if (initial) 1 else 0))
 
 // ==================================== AtomicRef ====================================
 
@@ -30,7 +30,7 @@ public actual inline class AtomicRef<T> internal constructor(@PublishedApi inter
 
     public actual inline fun lazySet(value: T) {
         if (a.isFrozen) value.freeze()
-        a.value = value 
+        a.value = value
     }
 
     public actual inline fun compareAndSet(expect: T, update: T): Boolean {

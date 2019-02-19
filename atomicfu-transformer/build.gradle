@@ -6,7 +6,7 @@ apply plugin: 'kotlin'
 
 apply from: rootProject.file('gradle/compile-options.gradle')
 
-ext.configureKotlin(org.jetbrains.kotlin.gradle.tasks.KotlinCompile)
+ext.configureKotlin()
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

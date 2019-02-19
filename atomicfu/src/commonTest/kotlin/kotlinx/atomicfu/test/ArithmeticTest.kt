@@ -6,7 +6,6 @@ package kotlinx.atomicfu.test
 
 import kotlinx.atomicfu.*
 import kotlin.test.*
-import kotlin.math.*
 
 class ArithmeticTest {
     @Test
@@ -66,6 +65,15 @@ class ArithmeticTest {
         check(a._x.compareAndSet(true, false))
         check(!a.x)
     }
+
+    @Test
+    fun testDeepReference() {
+        val a = DeepReference()
+        check(a.abcderef.value.b.c.d.e.n == 5)
+        val new = ARef(BRef(CRef(DRef(ERef(7)))))
+        a.abcderef.lazySet(new)
+        check(a.abcderef.value.b.c.d.e.n == 7)
+    }
 }
 
 class IntArithmetic {
@@ -85,3 +93,13 @@ class BooleanArithmetic {
     val _x = atomic(false)
     val x get() = _x.value
 }
+
+class DeepReference {
+    val abcderef = atomic(ARef(BRef(CRef(DRef(ERef(5))))))
+}
+
+data class ARef(val b: BRef)
+data class BRef(val c: CRef)
+data class CRef(val d: DRef)
+data class DRef(val e: ERef)
+data class ERef(val n: Int)
