@@ -15,7 +15,7 @@ import kotlin.js.JsName
  * private val f = atomic<Type>(initial)
  * ```
  */
-public expect fun <T> atomic(initial: T): AtomicRef<T>
+public expect fun <T> atomic(initial: T, trace: Trace = NO_TRACE): AtomicRef<T>
 
 /**
  * Creates atomic [Int] with a given [initial] value.
@@ -26,7 +26,7 @@ public expect fun <T> atomic(initial: T): AtomicRef<T>
  * private val f = atomic(initialInt)
  * ```
  */
-public expect fun atomic(initial: Int): AtomicInt
+public expect fun atomic(initial: Int, trace: Trace = NO_TRACE): AtomicInt
 
 /**
  * Creates atomic [Long] with a given [initial] value.
@@ -37,7 +37,7 @@ public expect fun atomic(initial: Int): AtomicInt
  * private val f = atomic(initialLong)
  * ```
  */
-public expect fun atomic(initial: Long): AtomicLong
+public expect fun atomic(initial: Long, trace: Trace = NO_TRACE): AtomicLong
 
 /**
  * Creates atomic [Boolean] with a given [initial] value.
@@ -48,7 +48,7 @@ public expect fun atomic(initial: Long): AtomicLong
  * private val f = atomic(initialBoolean)
  * ```
  */
-public expect fun atomic(initial: Boolean): AtomicBoolean
+public expect fun atomic(initial: Boolean, trace: Trace = NO_TRACE): AtomicBoolean
 
 
 /**
@@ -247,7 +247,7 @@ public expect class AtomicInt {
     /**
      * Maps to [AtomicIntegerFieldUpdater.addAndGet].
      */
-    public fun addAndGet(delta: Int): Int 
+    public fun addAndGet(delta: Int): Int
 
     /**
      * Maps to [AtomicIntegerFieldUpdater.incrementAndGet].

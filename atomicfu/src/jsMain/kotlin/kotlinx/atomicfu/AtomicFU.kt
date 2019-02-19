@@ -7,16 +7,16 @@
 package kotlinx.atomicfu
 
 @JsName("atomic\$ref\$")
-public actual fun <T> atomic(initial: T): AtomicRef<T> = AtomicRef<T>(initial)
+public actual fun <T> atomic(initial: T, trace: Trace): AtomicRef<T> = AtomicRef<T>(initial)
 
 @JsName("atomic\$int\$")
-public actual fun atomic(initial: Int): AtomicInt = AtomicInt(initial)
+public actual fun atomic(initial: Int, trace: Trace): AtomicInt = AtomicInt(initial)
 
 @JsName("atomic\$long\$")
-public actual fun atomic(initial: Long): AtomicLong = AtomicLong(initial)
+public actual fun atomic(initial: Long, trace: Trace): AtomicLong = AtomicLong(initial)
 
 @JsName("atomic\$boolean\$")
-public actual fun atomic(initial: Boolean): AtomicBoolean = AtomicBoolean(initial)
+public actual fun atomic(initial: Boolean, trace: Trace): AtomicBoolean = AtomicBoolean(initial)
 
 // ==================================== AtomicRef ====================================
 

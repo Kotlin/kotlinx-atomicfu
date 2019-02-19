@@ -347,3 +347,30 @@ execution of tests with the original (non-transformed) classes for Maven:
 ```
 
 For Gradle there is nothing else to add. Tests are always run using original (non-transformed) classes.
+
+### Multiplatform debug using atomicfu trace
+
+You can debug your tests tracing atomic operations with a special trace object:
+```kotlin
+private val t = trace()
+private val a = atomic(0, t)
+
+fun dec(): Int {
+    t { "current value = ${a.value}" } 
+    return a.getAndDecrement()
+}
+```
+All trace messages regarding atomic variable `a` are stored in a cyclic array `trace` inside `t`. 
+ 
+You can optionally set the size of trace's message array and format function:
+```kotlin
+private val t = trace(size = 64) {   
+    index, // index of a trace message 
+    text   // text passed when invoking t { text }
+    -> "$index: [${Thread.currentThread().name}] $text" 
+} 
+```
+`trace` is only seen before transformation and completely erased after on Kotlin/JVM and Kotlin/JS.
+
+
+

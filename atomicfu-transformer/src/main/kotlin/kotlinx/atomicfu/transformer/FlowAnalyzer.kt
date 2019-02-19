@@ -10,7 +10,7 @@ import org.objectweb.asm.tree.*
 import kotlin.math.abs
 
 class FlowAnalyzer(
-    private val start: AbstractInsnNode?
+        private val start: AbstractInsnNode?
 ) {
     private var cur: AbstractInsnNode? = null
 
@@ -46,15 +46,28 @@ class FlowAnalyzer(
         abort("Flow control falls after the end of the method")
     }
 
-    // from putfield/putstatic up to the start of initialisation
+    // returns instruction preceding pushing arguments to the atomic factory
     fun getInitStart(): AbstractInsnNode {
-        var i = start!!.previous
+        var i = start
         depth = -1
-        while (depth != 0 && i != null) {
+        while (i != null) {
             executeOne(i, false)
+            if (depth == 0) return i
             i = i.previous
         }
-        return i
+        abort("Backward flow control falls after the beginning of the method")
+    }
+
+    fun getValueArgInitLast(): AbstractInsnNode {
+        var i = start
+        val valueArgSize = Type.getArgumentTypes((start as MethodInsnNode).desc)[0].size
+        depth = -1
+        while(i != null) {
+            executeOne(i, false)
+            i = i.previous
+            if (depth == -valueArgSize) return i
+        }
+        abort("Backward flow control falls after the beginning of the method")
     }
 
     // forward is true when instructions are executed in forward order from top to bottom
