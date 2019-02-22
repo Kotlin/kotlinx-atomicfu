@@ -75,7 +75,7 @@ fun Project.withPlugins(vararg plugins: String, fn: Project.() -> Unit) {
 }
 
 fun Project.configureMultiplatformPlugin(version: String?) {
-    val originalDirsByCompilation = hashMapOf<KotlinCompilation, FileCollection>()
+    val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
     val sourceSetsByCompilation = hashMapOf<KotlinSourceSet, MutableList<KotlinCompilation>>()
     project.extensions.findByType(KotlinProjectExtension::class.java)?.let { kotlinExtension ->
         val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
@@ -122,7 +122,9 @@ fun Project.configureMultiplatformPlugin(version: String?) {
 
                 val transformedClassesDir = project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
                 // make transformedClassesDir the source path for output.classesDirs
-                classesDirs.setFrom(transformedClassesDir)
+                if (target.platformType != KotlinPlatformType.native) { // do not change source path for unprocessed native output
+                    classesDirs.setFrom(transformedClassesDir)
+                }
                 val transformTask = when (target.platformType) {
                     KotlinPlatformType.jvm -> {
                         project.createJvmTransformTask(compilation).configureJvmTask(compilation.compileDependencyFiles, compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
@@ -202,10 +204,10 @@ fun Project.configureTransformTasks(
 
 fun String.toVariant(): Variant = enumValueOf(toUpperCase(Locale.US))
 
-fun Project.createJvmTransformTask(compilation: KotlinCompilation) =
+fun Project.createJvmTransformTask(compilation: KotlinCompilation<*>) =
     tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformTask::class.java)
 
-fun Project.createJsTransformTask(compilation: KotlinCompilation) =
+fun Project.createJsTransformTask(compilation: KotlinCompilation<*>) =
     tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformJsTask::class.java)
 
 fun Project.createJvmTransformTask(sourceSet: SourceSet) =

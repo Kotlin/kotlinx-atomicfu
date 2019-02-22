@@ -46,6 +46,16 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                             appendNode('id', 'kotlin-eap')
                             appendNode('url', 'https://kotlin.bintray.com/kotlin-eap')
                         }
+
+                        appendNode('repository').with {
+                            appendNode('id', 'kotlin-dev')
+                            appendNode('url', 'https://kotlin.bintray.com/kotlin-dev')
+                        }
+
+                        appendNode('repository').with {
+                            appendNode('id', 'kotlin-teamcity-channel')
+                            appendNode('url', "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven")
+                        }
                     }
                 }
             }
@@ -56,6 +66,9 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
     }
 }
 
+String mavenUserHome = System.getProperty("maven.user.home")
+String mavenRepoLocal = System.getProperty("maven.repo.local")
+
 // runs the plugin description generator
 task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
     def pluginDescriptorFile = new File(outputDir, 'META-INF/maven/plugin.xml')
@@ -63,10 +76,14 @@ task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
     workingDir projectDir
     boolean isWindows = System.getProperty("os.name").toLowerCase().indexOf("windows") >= 0
     def args = isWindows ? ['cmd', '/c', 'mvnw.cmd'] : ['sh', './mvnw']
-    args.addAll(['--errors',
-                 '--batch-mode',
-                 '--file', pomFile.toString(),
-                 'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'])
+    if (mavenUserHome != null) args.add("-Dmaven.user.home=${new File(mavenUserHome).getAbsolutePath()}")
+    if (mavenRepoLocal != null) args.add("-Dmaven.repo.local=${new File(mavenRepoLocal).getAbsolutePath()}")
+    args.addAll([
+        '--errors',
+        '--batch-mode',
+        '--file', pomFile.toString(),
+        'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'
+    ])
     commandLine args
     doLast {
         assert pluginDescriptorFile.file, "$pluginDescriptorFile: was not generated"

@@ -238,11 +238,8 @@ afterEvaluate {
         metadata.artifactId = 'atomicfu-common'
         kotlinMultiplatform.artifactId = 'atomicfu-native'
 
-        configure([metadata, jvm, js]) {
-            gradleModuleMetadataFile = null
-            tasks.matching { it.name == "generateMetadataFileFor${name.capitalize()}Publication" }.all {
-                onlyIf { false }
-            }
+        configure([metadata, jvm, js]) { pub ->
+            pub.moduleDescriptorGenerator = null
         }
     }
 }
