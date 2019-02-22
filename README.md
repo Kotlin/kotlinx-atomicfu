@@ -1,7 +1,7 @@
 # AtomicFU 
 
-[![JetBrains incubator project](http://jb.gg/badges/incubator.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
-[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
+[![JetBrains incubator project](https://jb.gg/badges/incubator.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.atomicfu/images/download.svg) ](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu/_latestVersion)
 
 The idiomatic way to use atomic operations in Kotlin. 
@@ -281,7 +281,7 @@ AtomicFU provides some additional features that you can optionally use.
 ### VarHandles with Java 9
 
 AtomicFU can produce code that uses Java 9 
-[VarHandle](http://download.java.net/java/jdk9/docs/api/java/lang/invoke/VarHandle.html)
+[VarHandle](https://docs.oracle.com/javase/9/docs/api/java/lang/invoke/VarHandle.html)
 instead of `AtomicXxxFieldUpdater`. Configure transformation `variant` in Gradle build file:
  
 ```groovy
@@ -290,7 +290,7 @@ atomicfu {
 }
 ``` 
  
-It can also create [JEP 238](http://openjdk.java.net/jeps/238) multi-release jar file with both
+It can also create [JEP 238](https://openjdk.java.net/jeps/238) multi-release jar file with both
 `AtomicXxxFieldUpdater` for JDK<=8 and `VarHandle` for for JDK9+ if you 
 set `variant` to `"BOTH"`.
 
@@ -299,7 +299,8 @@ set `variant` to `"BOTH"`.
 You can declare arrays of all supported atomic value types. 
 By default arrays are transformed into the corresponding `java.util.concurrent.atomic.Atomic*Array` instances.
 
-If you configure `variant = "VH"` an array will be transformed to plain array using [VarHandle](http://download.java.net/java/jdk9/docs/api/java/lang/invoke/VarHandle.html) to support atomic operations.
+If you configure `variant = "VH"` an array will be transformed to plain array using 
+[VarHandle](https://docs.oracle.com/javase/9/docs/api/java/lang/invoke/VarHandle.html) to support atomic operations.
   
 ```kotlin
 val a = atomicArrayOfNulls<T>(size) // similar to Array constructor
