@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation.Companion.MAIN_COMPILATION_NAME
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformPlugin
-import org.jetbrains.kotlin.gradle.plugin.mpp.allKotlinSourceSets
 import java.io.*
 import java.util.*
 import java.util.concurrent.Callable
@@ -76,7 +75,7 @@ fun Project.withPlugins(vararg plugins: String, fn: Project.() -> Unit) {
 
 fun Project.configureMultiplatformPlugin(version: String?) {
     val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
-    val sourceSetsByCompilation = hashMapOf<KotlinSourceSet, MutableList<KotlinCompilation>>()
+    val sourceSetsByCompilation = hashMapOf<KotlinSourceSet, MutableList<KotlinCompilation<*>>>()
     project.extensions.findByType(KotlinProjectExtension::class.java)?.let { kotlinExtension ->
         val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
 
