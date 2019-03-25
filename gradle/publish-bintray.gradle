@@ -37,32 +37,34 @@ task stubJavadoc(type: Jar) {
     classifier = 'javadoc'
 }
 
-publishing {
-    repositories {
-        maven { url = 'https://kotlin.bintray.com/kotlinx' }
-    }
-    publications.all {
-        pom.withXml(configureMavenCentralMetadata)
-    }
+afterEvaluate {
+    publishing {
+        repositories {
+            maven { url = 'https://kotlin.bintray.com/kotlinx' }
+        }
+        publications.all {
+            pom.withXml(configureMavenCentralMetadata)
+        }
 
-    if (!isMultiplatform) {
-        publications {
-            maven(MavenPublication) {
-                from components.java
-                artifact sourcesJar
-                artifact javadocJar
+        if (!isMultiplatform) {
+            publications {
+                maven(MavenPublication) {
+                    from components.java
+                    artifact sourcesJar
+                    artifact javadocJar
 
-                if (project.name.endsWith("-maven-plugin")) {
-                    pom.packaging = 'maven-plugin'
+                    if (project.name.endsWith("-maven-plugin")) {
+                        pom.packaging = 'maven-plugin'
+                    }
                 }
             }
-        }
-    } else {
-        afterEvaluate {
-            kotlin.targets.forEach { target ->
-                def targetPublication = publications.findByName(target.name)
-                if (targetPublication != null) {
-                    targetPublication.artifact stubJavadoc
+        } else {
+            afterEvaluate {
+                kotlin.targets.forEach { target ->
+                    def targetPublication = publications.findByName(target.name)
+                    if (targetPublication != null) {
+                        targetPublication.artifact stubJavadoc
+                    }
                 }
             }
         }
