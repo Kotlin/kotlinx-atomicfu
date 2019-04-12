@@ -23,7 +23,7 @@ private const val AFU_PKG = "kotlinx/atomicfu"
 private const val JUCA_PKG = "java/util/concurrent/atomic"
 private const val JLI_PKG = "java/lang/invoke"
 private const val ATOMIC = "atomic"
-private const val TRACE = "$AFU_PKG/Trace"
+private const val TRACE = "$AFU_PKG/BaseTrace"
 
 private val INT_ARRAY_TYPE = Type.getType("[I")
 private val LONG_ARRAY_TYPE = Type.getType("[J")
@@ -79,8 +79,8 @@ private val TRACE_FORMAT_FUNC = "L$FUNCTION_2ARGS"
 private val TRACE_DEFAULT_ARGS = "I${OBJECT_TYPE.descriptor}"
 private const val DEFAULT = "\$default"
 
-private val TRACE_FACTORY = MethodId(TRACE_CLS, "trace", "(I$TRACE_FORMAT_FUNC)L$TRACE;", INVOKESTATIC)
-private val TRACE_DEFAULT_FACTORY = MethodId(TRACE_CLS, "trace$DEFAULT", "(I$TRACE_FORMAT_FUNC$TRACE_DEFAULT_ARGS)L$TRACE;", INVOKESTATIC)
+private val TRACE_FACTORY = MethodId(TRACE_CLS, "Trace", "(I$TRACE_FORMAT_FUNC)L$TRACE;", INVOKESTATIC)
+private val TRACE_DEFAULT_FACTORY = MethodId(TRACE_CLS, "Trace$DEFAULT", "(I$TRACE_FORMAT_FUNC$TRACE_DEFAULT_ARGS)L$TRACE;", INVOKESTATIC)
 
 private val FACTORIES: Set<MethodId> = setOf(
     MethodId(AFU_CLS, ATOMIC, "(Ljava/lang/Object;)L$AFU_PKG/AtomicRef;", INVOKESTATIC),

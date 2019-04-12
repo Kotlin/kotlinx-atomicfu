@@ -2,14 +2,14 @@ package kotlinx.atomicfu.test
 
 import internal_test2.Updater
 import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.trace
+import kotlinx.atomicfu.Trace
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CounterWithDefaultTrace {
     private val a = atomic(0)
 
-    private val defaultTrace = trace()
+    private val defaultTrace = Trace()
     private val a1 = atomic(5, defaultTrace)
 
     fun inc(): Int {
@@ -28,7 +28,7 @@ class CounterWithDefaultTrace {
 }
 
 class CounterWithCustomSizeTrace {
-    private val t = trace(30)
+    private val t = Trace(30)
     private val a = atomic(0, t)
 
     fun dec(): Int {
@@ -39,7 +39,7 @@ class CounterWithCustomSizeTrace {
 }
 
 class CounterWithCustomSizeAndFuncTrace {
-    private val t = trace(30) { id, text -> "$id: $text"}
+    private val t = Trace(30) { id, text -> "$id: $text"}
     private val a = atomic(0)
 
     fun dec(): Int {

@@ -4,7 +4,7 @@ import kotlinx.atomicfu.*
 import kotlin.test.Test
 
 class Counter {
-    private val t = trace(64) { index, text -> "$index: [${Thread.currentThread().name}] $text" }
+    private val t = Trace(64) { index, text -> "$index: [${Thread.currentThread().name}] $text" }
     private val a = atomic(0, t)
 
     fun inc(): Int {
@@ -19,7 +19,7 @@ class Counter {
 
 class CounterDefaultAtomic {
     private val a = atomic(0)
-    private val trace = trace(64)
+    private val trace = Trace(64)
 
     fun inc(): Int {
         trace { "inc() invoked" }

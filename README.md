@@ -352,7 +352,7 @@ For Gradle there is nothing else to add. Tests are always run using original (no
 
 You can debug your tests tracing atomic operations with a special trace object:
 ```kotlin
-private val t = trace()
+private val t = Trace()
 private val a = atomic(0, t)
 
 fun dec(): Int {
@@ -364,7 +364,7 @@ All trace messages regarding atomic variable `a` are stored in a cyclic array `t
  
 You can optionally set the size of trace's message array and format function:
 ```kotlin
-private val t = trace(size = 64) {   
+private val t = Trace(size = 64) {   
     index, // index of a trace message 
     text   // text passed when invoking t { text }
     -> "$index: [${Thread.currentThread().name}] $text" 

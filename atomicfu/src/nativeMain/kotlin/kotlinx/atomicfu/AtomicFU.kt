@@ -6,10 +6,10 @@
 
 package kotlinx.atomicfu
 
-public actual fun <T> atomic(initial: T, trace: Trace): AtomicRef<T> = AtomicRef<T>(initial)
-public actual fun atomic(initial: Int, trace: Trace): AtomicInt = AtomicInt(initial)
-public actual fun atomic(initial: Long, trace: Trace): AtomicLong = AtomicLong(initial)
-public actual fun atomic(initial: Boolean, trace: Trace): AtomicBoolean = AtomicBoolean(initial)
+public actual fun <T> atomic(initial: T, trace: BaseTrace): AtomicRef<T> = AtomicRef<T>(initial)
+public actual fun atomic(initial: Int, trace: BaseTrace): AtomicInt = AtomicInt(initial)
+public actual fun atomic(initial: Long, trace: BaseTrace): AtomicLong = AtomicLong(initial)
+public actual fun atomic(initial: Boolean, trace: BaseTrace): AtomicBoolean = AtomicBoolean(initial)
 
 // ==================================== AtomicRef ====================================
 

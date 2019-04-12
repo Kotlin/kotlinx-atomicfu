@@ -10,7 +10,7 @@ import org.objectweb.asm.tree.*
 import kotlin.math.abs
 
 class FlowAnalyzer(
-        private val start: AbstractInsnNode?
+    private val start: AbstractInsnNode?
 ) {
     private var cur: AbstractInsnNode? = null
 

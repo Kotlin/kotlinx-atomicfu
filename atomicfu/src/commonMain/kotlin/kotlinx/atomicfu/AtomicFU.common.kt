@@ -15,7 +15,7 @@ import kotlin.js.JsName
  * private val f = atomic<Type>(initial)
  * ```
  */
-public expect fun <T> atomic(initial: T, trace: Trace = NO_TRACE): AtomicRef<T>
+public expect fun <T> atomic(initial: T, trace: BaseTrace = NO_TRACE): AtomicRef<T>
 
 /**
  * Creates atomic [Int] with a given [initial] value.
@@ -26,7 +26,7 @@ public expect fun <T> atomic(initial: T, trace: Trace = NO_TRACE): AtomicRef<T>
  * private val f = atomic(initialInt)
  * ```
  */
-public expect fun atomic(initial: Int, trace: Trace = NO_TRACE): AtomicInt
+public expect fun atomic(initial: Int, trace: BaseTrace = NO_TRACE): AtomicInt
 
 /**
  * Creates atomic [Long] with a given [initial] value.
@@ -37,7 +37,7 @@ public expect fun atomic(initial: Int, trace: Trace = NO_TRACE): AtomicInt
  * private val f = atomic(initialLong)
  * ```
  */
-public expect fun atomic(initial: Long, trace: Trace = NO_TRACE): AtomicLong
+public expect fun atomic(initial: Long, trace: BaseTrace = NO_TRACE): AtomicLong
 
 /**
  * Creates atomic [Boolean] with a given [initial] value.
@@ -48,7 +48,7 @@ public expect fun atomic(initial: Long, trace: Trace = NO_TRACE): AtomicLong
  * private val f = atomic(initialBoolean)
  * ```
  */
-public expect fun atomic(initial: Boolean, trace: Trace = NO_TRACE): AtomicBoolean
+public expect fun atomic(initial: Boolean, trace: BaseTrace = NO_TRACE): AtomicBoolean
 
 
 /**
