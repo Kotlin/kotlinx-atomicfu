@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.12.3
+
+* Updated to Kotlin 1.3.30
+
 # Version 0.12.2
 
 * Fixed to skip changing source path for unprocessed native output (see #51).
