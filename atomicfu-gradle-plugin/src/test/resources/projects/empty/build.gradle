@@ -4,3 +4,7 @@
 
 apply plugin: 'kotlinx-atomicfu'
 apply plugin: 'base'
+
+repositories {
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+}
