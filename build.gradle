@@ -3,13 +3,33 @@
  */
 
 buildscript {
+    /*
+     * These property group is used to build kotlinx.atomicfu against Kotlin compiler snapshot.
+     * How does it work:
+     * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version,
+     * Additionally, mavenLocal and Sonatype snapshots are added to repository list (the former is required for AFU and public
+     * the latter is required for compiler snapshots).
+     * DO NOT change the name of these properties without adapting kotlinx.train build chain.
+     */
+    def prop = rootProject.properties['build_snapshot_train']
+    ext.build_snapshot_train = prop != null && prop != ""
+    if (build_snapshot_train) {
+        ext.kotlin_version = rootProject.properties['kotlin_snapshot_version']
+        if (kotlin_version == null) {
+            throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
+        }
+        repositories {
+            mavenLocal()
+            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        }
+    }
+
     repositories {
         jcenter()
-        maven { url "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven" }
         maven { url "https://plugins.gradle.org/m2/" }
-        maven { url 'https://dl.bintray.com/jetbrains/kotlin-native-dependencies' }
-        maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlin-eap" }
+        maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
     }
     
     dependencies {
@@ -20,9 +40,17 @@ buildscript {
 }
 
 allprojects {
+    if (build_snapshot_train) {
+        kotlin_version = rootProject.properties['kotlin_snapshot_version']
+        repositories {
+            mavenLocal()
+            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        }
+    }
+
+    println "Using Kotlin $kotlin_version for project $it"
     repositories {
         jcenter()
-        maven { url "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven" }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://kotlin.bintray.com/kotlin-dev" }
     }
@@ -35,6 +63,8 @@ allprojects {
         apply from: rootProject.file("gradle/publish-bintray.gradle")
     }
 }
+
+println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 
 // main deployment task
 task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))

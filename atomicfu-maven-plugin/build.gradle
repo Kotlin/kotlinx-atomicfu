@@ -19,6 +19,7 @@ dependencies {
 
 def pomFile = file("$buildDir/pom.xml")
 def outputDir = compileKotlin.destinationDir
+def buildSnapshots = rootProject.properties['build_snapshot_train'] != null
 
 evaluationDependsOn(':atomicfu-transformer')
 
@@ -52,9 +53,11 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                             appendNode('url', 'https://kotlin.bintray.com/kotlin-dev')
                         }
 
-                        appendNode('repository').with {
-                            appendNode('id', 'kotlin-teamcity-channel')
-                            appendNode('url', "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven")
+                        if (buildSnapshots) {
+                            appendNode('repository').with {
+                                appendNode('id', 'kotlin-snapshots')
+                                appendNode('url', "https://oss.sonatype.org/content/repositories/snapshots")
+                            }
                         }
                     }
                 }
