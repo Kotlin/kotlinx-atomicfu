@@ -65,6 +65,24 @@ allprojects {
 }
 
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
+if (build_snapshot_train) {
+    afterEvaluate {
+        println "Manifest of kotlin-compiler-embeddable.jar for atomicfu"
+        configure(subprojects.findAll { it.name == "atomicfu" }) {
+            configurations.matching { it.name == "kotlinCompilerClasspath" }.all {
+                resolvedConfiguration.getFiles().findAll { it.name.contains("kotlin-compiler-embeddable") }.each {
+                    def manifest = zipTree(it).matching {
+                        include 'META-INF/MANIFEST.MF'
+                    }.getFiles().first()
+
+                    manifest.readLines().each {
+                        println it
+                    }
+                }
+            }
+        }
+    }
+}
 
 // main deployment task
 task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
