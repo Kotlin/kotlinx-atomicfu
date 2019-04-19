@@ -29,53 +29,64 @@ private const val TEST_IMPLEMENTATION = "testImplementation"
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
-        val atomicFuPluginVersion = project.rootProject.buildscript.configurations.findByName("classpath")
-            ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
-        project.withPlugins("kotlin") {
-            atomicFuPluginVersion?.let {
-                dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("", it))
-                dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("", it))
-            }
-            configureTransformTasks("compileTestKotlin") { sourceSet, transformedDir, originalDir, config ->
-                createJvmTransformTask(sourceSet).configureJvmTask(
-                    sourceSet.compileClasspath,
-                    sourceSet.classesTaskName,
-                    transformedDir,
-                    originalDir,
-                    config
-                )
-            }
+        project.configureTasks()
+        project.configureDependencies()
+    }
+}
+
+private fun Project.configureTasks() {
+    withPlugins("kotlin") {
+        configureTransformTasks("compileTestKotlin") { sourceSet, transformedDir, originalDir, config ->
+            createJvmTransformTask(sourceSet).configureJvmTask(
+                sourceSet.compileClasspath,
+                sourceSet.classesTaskName,
+                transformedDir,
+                originalDir,
+                config
+            )
         }
-        project.withPlugins("kotlin2js") {
-            atomicFuPluginVersion?.let {
-                dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("-js", it))
-                dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-js", it))
-            }
-            configureTransformTasks("compileTestKotlin2Js") { sourceSet, transformedDir, originalDir, config ->
-                createJsTransformTask(sourceSet).configureJsTask(
-                    sourceSet.classesTaskName,
-                    transformedDir,
-                    originalDir,
-                    config
-                )
-            }
+    }
+    withPlugins("kotlin2js") {
+        configureTransformTasks("compileTestKotlin2Js") { sourceSet, transformedDir, originalDir, config ->
+            createJsTransformTask(sourceSet).configureJsTask(
+                sourceSet.classesTaskName,
+                transformedDir,
+                originalDir,
+                config
+            )
         }
-        project.withPlugins("kotlin-native") {
-            atomicFuPluginVersion?.let {
-                dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-native", it))
-            }
-        }
-        project.withPlugins("kotlin-platform-common") {
-            atomicFuPluginVersion?.let {
-                dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("-common", it))
-                dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-common", it))
-            }
-        }
-        project.withPlugins("kotlin-multiplatform") {
-            configureMultiplatformPlugin(atomicFuPluginVersion)
+    }
+    withPlugins("kotlin-multiplatform") {
+        afterEvaluate {
+            configureMultiplatformPluginTasks()
         }
     }
 }
+
+private fun Project.configureDependencies() {
+    val version = project.rootProject.buildscript.configurations.findByName("classpath")
+        ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version ?: return
+    withPlugins("kotlin") {
+        dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("", version))
+        dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("", version))
+    }
+    withPlugins("kotlin2js") {
+        dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("-js", version))
+        dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-js", version))
+    }
+    withPlugins("kotlin-native") {
+        dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-native", version))
+    }
+    withPlugins("kotlin-platform-common") {
+        dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("-common", version))
+        dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-common", version))
+    }
+    withPlugins("kotlin-multiplatform") {
+        configureMultiplatformPluginDependencies(version)
+    }
+}
+
+private fun Project.config() = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
 
 private fun getAtomicfuDependencyNotation(platform: String, version: String) =
     "org.jetbrains.kotlinx:atomicfu$platform:$version"
@@ -84,105 +95,112 @@ fun Project.withPlugins(vararg plugins: String, fn: Project.() -> Unit) {
     plugins.forEach { pluginManager.withPlugin(it) { fn() } }
 }
 
-fun Project.configureMultiplatformPlugin(version: String?) {
-    val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
-    val sourceSetsByCompilation = hashMapOf<KotlinSourceSet, MutableList<KotlinCompilation<*>>>()
-    project.extensions.findByType(KotlinProjectExtension::class.java)?.let { kotlinExtension ->
-        val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
-
+fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
+    extensions.findByType(KotlinProjectExtension::class.java)?.let { kotlinExtension ->
         val targetsExtension = (kotlinExtension as? ExtensionAware)?.extensions?.findByName("targets")
         @Suppress("UNCHECKED_CAST")
         val targets = targetsExtension as NamedDomainObjectContainer<KotlinTarget>
-
         // find all compilations given sourceSet belongs to
-        targets.all { target ->
-            target.compilations.forEach { compilation ->
-                compilation.allKotlinSourceSets.forEach { sourceSet ->
-                    sourceSetsByCompilation.getOrPut(sourceSet) { mutableListOf() }.add(compilation)
-                }
-            }
+        targets.all { target -> fn(target) }
+    }
+}
+
+fun Project.configureMultiplatformPluginTasks() {
+    val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
+    val config = config()
+    withKotlinTargets { target ->
+        if (target.name == KotlinMultiplatformPlugin.METADATA_TARGET_NAME) {
+            return@withKotlinTargets // skip the metadata targets
         }
+        target.compilations.all compilations@{ compilation ->
+            val classesDirs = compilation.output.classesDirs
+            // make copy of original classes directory
+            val originalClassesDirs: FileCollection =
+                project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
+            originalDirsByCompilation[compilation] = originalClassesDirs
 
-        // if a sourceSet belongs to several compilations than it is from common module otherwise it's platform = compilation.platformType
-        sourceSetsByCompilation.forEach { (sourceSet, compilations) ->
-            val platform = compilations[0].platformType.name
-            val platformExt = when {
-                compilations.size > 1 -> "-common"
-                platform == "jvm" -> ""
-                else -> "-$platform"
+            val transformedClassesDir =
+                project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
+            // make transformedClassesDir the source path for output.classesDirs
+            if (target.platformType != KotlinPlatformType.native) { // do not change source path for unprocessed native output
+                classesDirs.setFrom(transformedClassesDir)
             }
-            val configurationName = when (platform) {
-                "native" -> sourceSet.implementationConfigurationName
-                else -> if (compilations[0].name == MAIN_COMPILATION_NAME) sourceSet.compileOnlyConfigurationName else sourceSet.implementationConfigurationName
-            }
-            version?.let {
-                project.dependencies.add(configurationName, getAtomicfuDependencyNotation(platformExt, version))
-            }
-        }
-
-        targets.all { target ->
-            if (target.name == KotlinMultiplatformPlugin.METADATA_TARGET_NAME) {
-                return@all // skip the metadata targets
-            }
-            target.compilations.all compilations@{ compilation ->
-                val classesDirs = compilation.output.classesDirs
-                // make copy of original classes directory
-                val originalClassesDirs: FileCollection =
-                    project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
-                originalDirsByCompilation[compilation] = originalClassesDirs
-
-                val transformedClassesDir =
-                    project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
-                // make transformedClassesDir the source path for output.classesDirs
-                if (target.platformType != KotlinPlatformType.native) { // do not change source path for unprocessed native output
-                    classesDirs.setFrom(transformedClassesDir)
-                }
-                val transformTask = when (target.platformType) {
-                    KotlinPlatformType.jvm -> {
-                        project.createJvmTransformTask(compilation).configureJvmTask(
-                            compilation.compileDependencyFiles,
-                            compilation.compileAllTaskName,
-                            transformedClassesDir,
-                            originalClassesDirs,
-                            config
-                        )
-                    }
-                    KotlinPlatformType.js -> {
-                        project.createJsTransformTask(compilation).configureJsTask(
-                            compilation.compileAllTaskName,
-                            transformedClassesDir,
-                            originalClassesDirs,
-                            config
-                        )
-                    }
-                    else -> {
-                        // todo KotlinPlatformType.android?
-                        return@compilations
-                    }
-                }
-                //now transformTask is responsible for compiling this source set into the classes directory
-                classesDirs.builtBy(transformTask)
-                (tasks.findByName(target.artifactsTaskName) as? Jar)?.apply {
-                    setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
-                }
-
-                if (compilation.name == KotlinCompilation.TEST_COMPILATION_NAME) {
-                    // test should compile and run against original production binaries
-                    val mainCompilation =
-                        compilation.target.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
-                    val originalMainClassesDirs = project.files(
-                        // use Callable because there is no guarantee that main is configured before test
-                        Callable { originalDirsByCompilation[mainCompilation]!! }
+            val transformTask = when (target.platformType) {
+                KotlinPlatformType.jvm -> {
+                    project.createJvmTransformTask(compilation).configureJvmTask(
+                        compilation.compileDependencyFiles,
+                        compilation.compileAllTaskName,
+                        transformedClassesDir,
+                        originalClassesDirs,
+                        config
                     )
-
-                    (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
-                        originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
-
-                    (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
-                        originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+                }
+                KotlinPlatformType.js -> {
+                    project.createJsTransformTask(compilation).configureJsTask(
+                        compilation.compileAllTaskName,
+                        transformedClassesDir,
+                        originalClassesDirs,
+                        config
+                    )
+                }
+                else -> {
+                    // todo KotlinPlatformType.android?
+                    return@compilations
                 }
             }
+            //now transformTask is responsible for compiling this source set into the classes directory
+            classesDirs.builtBy(transformTask)
+            (tasks.findByName(target.artifactsTaskName) as? Jar)?.apply {
+                setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
+            }
+
+            if (compilation.name == KotlinCompilation.TEST_COMPILATION_NAME) {
+                // test should compile and run against original production binaries
+                val mainCompilation =
+                    compilation.target.compilations.getByName(MAIN_COMPILATION_NAME)
+                val originalMainClassesDirs = project.files(
+                    // use Callable because there is no guarantee that main is configured before test
+                    Callable { originalDirsByCompilation[mainCompilation]!! }
+                )
+
+                (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
+                    originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
+
+                (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
+                    originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+            }
         }
+    }
+}
+
+fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, MutableList<KotlinCompilation<*>>> {
+    val sourceSetsByCompilation = hashMapOf<KotlinSourceSet, MutableList<KotlinCompilation<*>>>()
+    withKotlinTargets { target ->
+        target.compilations.forEach { compilation ->
+            compilation.allKotlinSourceSets.forEach { sourceSet ->
+                sourceSetsByCompilation.getOrPut(sourceSet) { mutableListOf() }.add(compilation)
+            }
+        }
+    }
+    return sourceSetsByCompilation
+}
+
+fun Project.configureMultiplatformPluginDependencies(version: String) {
+    val sourceSetsByCompilation = sourceSetsByCompilation()
+    // if a sourceSet belongs to several compilations than it is from common module otherwise it's platform = compilation.platformType
+    sourceSetsByCompilation.forEach { (sourceSet, compilations) ->
+        val platform = compilations[0].platformType.name
+        val platformExt = when {
+            compilations.size > 1 -> "-common"
+            platform == "jvm" -> ""
+            else -> "-$platform"
+        }
+        val configurationName = when {
+            platform == "native" -> sourceSet.implementationConfigurationName
+            compilations[0].name == MAIN_COMPILATION_NAME -> sourceSet.compileOnlyConfigurationName
+            else -> sourceSet.implementationConfigurationName
+        }
+        dependencies.add(configurationName, getAtomicfuDependencyNotation(platformExt, version))
     }
 }
 

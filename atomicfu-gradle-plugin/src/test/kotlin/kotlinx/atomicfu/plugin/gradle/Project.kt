@@ -80,13 +80,12 @@ class Project(val projectDir: File) {
                     }
                 }
 
-                allprojects {
-                    repositories {
-                        jcenter()
-                        mavenCentral()
-                        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
-                        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
-                    }
+                repositories {
+                    jcenter()
+                    mavenCentral()
+                    maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+                    maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+                    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
                 }
 
                 def atomicfuJvm = files(${readFileList("atomicfu-jvm.txt")})

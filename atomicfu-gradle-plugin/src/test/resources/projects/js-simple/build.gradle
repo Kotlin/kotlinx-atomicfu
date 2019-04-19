@@ -5,10 +5,6 @@
 apply plugin: 'kotlinx-atomicfu'
 apply plugin: 'kotlin2js'
 
-repositories {
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-}
-
 dependencies {
     compileOnly atomicfuJs
     testRuntime atomicfuJs
