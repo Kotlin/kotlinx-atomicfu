@@ -60,9 +60,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
             }
         }
         project.withPlugins("kotlin-multiplatform") {
-            afterEvaluate {
-                configureMultiplatformPlugin(atomicFuPluginVersion)
-            }
+            configureMultiplatformPlugin(atomicFuPluginVersion)
         }
     }
 }
@@ -93,7 +91,7 @@ fun Project.configureMultiplatformPlugin(version: String?) {
         }
 
         // if a sourceSet belongs to several compilations than it is from common module otherwise it's platform = compilation.platformType
-        sourceSetsByCompilation.forEach { sourceSet, compilations ->
+        sourceSetsByCompilation.forEach { (sourceSet, compilations) ->
             val platform = compilations[0].platformType.name
             val platformExt = when {
                 compilations.size > 1 -> "-common"
@@ -113,8 +111,8 @@ fun Project.configureMultiplatformPlugin(version: String?) {
             if (target.name == KotlinMultiplatformPlugin.METADATA_TARGET_NAME) {
                 return@all // skip the metadata targets
             }
-            target.compilations.all { compilation ->
-                val classesDirs = compilation.output.classesDirs as ConfigurableFileCollection
+            target.compilations.all compilations@{ compilation ->
+                val classesDirs = compilation.output.classesDirs
                 // make copy of original classes directory
                 val originalClassesDirs: FileCollection = project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
                 originalDirsByCompilation[compilation] = originalClassesDirs
@@ -133,7 +131,7 @@ fun Project.configureMultiplatformPlugin(version: String?) {
                     }
                     else -> {
                         // todo KotlinPlatformType.android?
-                        return@all
+                        return@compilations
                     }
                 }
                 //now transformTask is responsible for compiling this source set into the classes directory
