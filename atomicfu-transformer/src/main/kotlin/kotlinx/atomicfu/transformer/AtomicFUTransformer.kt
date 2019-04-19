@@ -145,6 +145,7 @@ class AtomicFUTransformer(
 
     private val fields = mutableMapOf<FieldId, FieldInfo>()
     private val accessors = mutableMapOf<MethodId, FieldInfo>()
+    private val removeMethods = mutableSetOf<MethodId>()
 
     override fun transform() {
         info("Analyzing in $inputDir")
@@ -240,8 +241,19 @@ class AtomicFUTransformer(
             return null
         }
 
-        override fun visitMethod( access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
-            val methodType = Type.getMethodType(desc)
+        override fun visitMethod(
+            access: Int,
+            name: String,
+            desc: String,
+            signature: String?,
+            exceptions: Array<out String>?
+        ): MethodVisitor? {
+            val methodType = getMethodType(desc)
+            if (methodType.argumentTypes.any { it in AFU_TYPES }) {
+                val methodId = MethodId(className, name, desc, accessToInvokeOpcode(access))
+                info("$methodId method to be removed")
+                removeMethods += methodId
+            }
             getPotentialAccessorType(access, className, methodType)?.let { onType ->
                 return AccessorCollectorMV(onType.internalName, access, name, desc, signature, exceptions)
             }
@@ -261,8 +273,8 @@ class AtomicFUTransformer(
                 insns[2].isAreturn() ||
                 insns.size == 2 &&
                 insns[0].isGetStatic(className) &&
-                insns[1].isAreturn())
-            {
+                insns[1].isAreturn()
+            ) {
                 val isStatic = insns.size == 2
                 val fi = (if (isStatic) insns[0] else insns[1]) as FieldInsnNode
                 val fieldName = fi.name
@@ -297,10 +309,16 @@ class AtomicFUTransformer(
     }
 
     private inner class ReferencesCollectorCV : CV(null) {
-        override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
-            // skip accessor method - already registered in the previous phase
+        override fun visitMethod(
+            access: Int,
+            name: String,
+            desc: String,
+            signature: String?,
+            exceptions: Array<out String>?
+        ): MethodVisitor? {
             val methodId = MethodId(className, name, desc, accessToInvokeOpcode(access))
-            accessors[methodId]?.let { return null }
+            if (methodId in accessors) return null // skip accessor method - already registered in the previous phase
+            if (methodId in removeMethods) return null // skip method to be removed
             return ReferencesCollectorMV(className.ownerPackageName)
         }
     }
@@ -337,7 +355,7 @@ class AtomicFUTransformer(
             super.visitSource(source, debug)
         }
 
-        override fun visitField( access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
+        override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
             val fieldType = Type.getType(desc)
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
                 val fieldId = FieldId(className, name)
@@ -429,11 +447,10 @@ class AtomicFUTransformer(
             signature: String?,
             exceptions: Array<out String>?
         ): MethodVisitor? {
-            val method = MethodId(className, name, desc, accessToInvokeOpcode(access))
-            if (method in accessors) {
-                return null // drop accessor
-            }
-            val sourceInfo = SourceInfo(method, source)
+            val methodId = MethodId(className, name, desc, accessToInvokeOpcode(access))
+            if (methodId in accessors) return null // drop accessor
+            if (methodId in removeMethods) return null // drop this method
+            val sourceInfo = SourceInfo(methodId, source)
             val superMV = if (name == "<clinit>" && desc == "()V") {
                 if (access and ACC_STATIC == 0) abort("<clinit> method not marked as static")
                 // defer writing class initialization method
@@ -683,7 +700,7 @@ class AtomicFUTransformer(
                     val v = j.`var`
                     val next = j.next
                     instructions.remove(ld)
-                    val lv = localVar(v)
+                    val lv = localVar(v, j)
                     if (lv != null) {
                         // Stored to a local variable with an entry in LVT (typically because of inline function)
                         if (lv.desc != f.fieldType.descriptor)
@@ -835,6 +852,12 @@ class AtomicFUTransformer(
                             }
                             transformed = true
                             return fixupLoadedAtomicVar(f, j)
+                        }
+                        methodId in removeMethods -> {
+                            abort(
+                                "invocation of method $methodId on atomic types. " +
+                                        "Make the later method 'inline' to use it", i
+                            )
                         }
                         i.opcode == INVOKEVIRTUAL && i.owner in AFU_CLASSES -> {
                             abort("standalone invocation of $methodId that was not traced to previous field load", i)

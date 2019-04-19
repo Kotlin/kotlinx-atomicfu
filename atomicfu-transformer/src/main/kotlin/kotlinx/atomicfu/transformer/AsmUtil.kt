@@ -70,8 +70,8 @@ fun AbstractInsnNode.isReturn() =
     this.opcode == RETURN
 
 @Suppress("UNCHECKED_CAST")
-fun MethodNode.localVar(v: Int): LocalVariableNode? =
-    (localVariables as List<LocalVariableNode>).firstOrNull { it.index == v }
+fun MethodNode.localVar(v: Int, node: AbstractInsnNode): LocalVariableNode? =
+    (localVariables as List<LocalVariableNode>).firstOrNull { it.index == v && node.next === it.start }
 
 inline fun forVarLoads(v: Int, start: LabelNode, end: LabelNode, block: (VarInsnNode) -> AbstractInsnNode?) {
     var cur: AbstractInsnNode? = start
