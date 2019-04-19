@@ -18,9 +18,10 @@ The idiomatic way to use atomic operations in Kotlin.
   * This enables writing [common](#common) Kotlin code with atomics that compiles for JVM, JS, and Native.
 * [Gradle](#gradle-build-setup) for all platforms and [Maven](#maven-build-setup) for JVM are supported.  
 * [Additional features](#additional-features) include:
-  * Support for [JDK9 VarHandle](#varhandles-with-java-9).
-  * Support for [arrays of atomic values](#arrays-of-atomic-values).
-  * Support for [testing of lock-free data structures](#testing-lock-free-data-structures-on-jvm).
+  * [JDK9 VarHandle](#varhandles-with-java-9).
+  * [Arrays of atomic values](#arrays-of-atomic-values).
+  * [User-defined extensions on atomics](#user-defined-extensions-on-atomics)
+  * [Testing of lock-free data structures](#testing-lock-free-data-structures-on-jvm).
 
 ## Example
 
@@ -99,8 +100,9 @@ Building with Gradle is supported for all platforms.
 
 ### JVM
 
-You will need Gradle 4.0 or later for the following snippets to work.
-Add and apply AtomicFU plugin:
+You will need Gradle 4.10 or later.
+Add and apply AtomicFU plugin. It adds all the corresponding dependencies
+and transformations automatically:
 
 ```groovy
 buildscript {
@@ -114,89 +116,31 @@ buildscript {
 apply plugin: 'kotlinx-atomicfu'
 ```
 
-Add compile-only dependency on AtomicFU library and run-time dependency for tests:
-
-```groovy
-dependencies {
-    compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
-    testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
-}
-```
-  
 ### JS 
 
 Configure add apply plugin just like for [JVM](#jvm). 
-The only change is that JS version of the library (`atomicfu-js`) shall be used in dependencies:
-
-```groovy
-dependencies {
-    compileOnly "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
-    testRuntime "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
-}
-```
 
 ### Native
 
 This library is available for Kotlin/Native (`atomicfu-native`).
-It is a regular library and you should declare a normal dependency, no plugin is needed nor available.
 Only single-threaded code (JS-style) is currently supported. 
-
-Kotlin/Native supports only Gradle version 4.7 
-and you should use `kotlin-platform-native` plugin.
-
-First of all, you'll need to enable Gradle metadata in your
-`settings.gradle` file:
+Kotlin/Native supports only Gradle version 4.10. 
+You'll need to enable Gradle metadata in your `settings.gradle` file:
 
 ```groovy
 enableFeaturePreview('GRADLE_METADATA')
 ```
 
-Then, you'll need to apply the corresponding plugin and add appropriate dependencies in your
-`build.gradle` file:
-
-```groovy
-buildscript {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'https://dl.bintray.com/jetbrains/kotlin-native-dependencies' }
-    }
-
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
-    }
-
-}
-
-apply plugin: 'kotlin-platform-native'
-
-repositories {
-    jcenter()
-}
-
-dependencies {
-    implementation 'org.jetbrains.kotlinx:atomicfu-native:0.12.2'
-}
-
-sourceSets {
-    main {
-        component {
-            targets = ["ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64"] 
-            outputKinds = [EXECUTABLE]
-        }
-    }
-}
-```
+Then, you'll need to apply the corresponding plugin just like for [JVM](#jvm). 
 
 Since Kotlin/Native does not generally provide binary compatibility between versions, 
-you should use the same version of Kotlin/Native compiler as was used to build AtomicFU. 
-Add an appropriate `kotlin_native_version` to your `gradle.properties` file. 
-See [gradle.properties](gradle.properties) in AtomicFU project.
+you should use the same version of Kotlin compiler as was used to build AtomicFU. 
+See [gradle.properties](gradle.properties) in AtomicFU project for its `kotlin_version`.
 
 ### Common
 
 If you write a common code that should get compiled or different platforms, add `org.jetbrains.kotlinx:atomicfu-common`
-to your common code dependencies:
+to your common code dependencies or apply `kotlinx-atomicfu` plugin that adds this dependency automatically:
 
 ```groovy
 dependencies {
@@ -308,6 +252,16 @@ val a = atomicArrayOfNulls<T>(size) // similar to Array constructor
 val x = a[i].value // read value
 a[i].value = x // set value
 a[i].compareAndSet(expect, update) // do atomic operations
+```
+
+### User-defined extensions on atomics
+
+You can define you own extension functions on `AtomicXxx` types but they must be `inline` and they cannot
+be public and be used outside of the module they are defined in. For example:
+
+```kotlin
+@Suppress("NOTHING_TO_INLINE")
+private inline fun AtomicBoolean.tryAcquire(): Boolean = compareAndSet(false, true)
 ```
 
 ### Testing lock-free data structures on JVM
