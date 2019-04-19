@@ -29,14 +29,21 @@ private const val TEST_IMPLEMENTATION = "testImplementation"
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
-        val atomicFuPluginVersion = project.rootProject.buildscript.configurations.findByName("classpath")?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
+        val atomicFuPluginVersion = project.rootProject.buildscript.configurations.findByName("classpath")
+            ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         project.withPlugins("kotlin") {
             atomicFuPluginVersion?.let {
                 dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation("", it))
                 dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("", it))
             }
             configureTransformTasks("compileTestKotlin") { sourceSet, transformedDir, originalDir, config ->
-                createJvmTransformTask(sourceSet).configureJvmTask(sourceSet.compileClasspath, sourceSet.classesTaskName, transformedDir, originalDir, config)
+                createJvmTransformTask(sourceSet).configureJvmTask(
+                    sourceSet.compileClasspath,
+                    sourceSet.classesTaskName,
+                    transformedDir,
+                    originalDir,
+                    config
+                )
             }
         }
         project.withPlugins("kotlin2js") {
@@ -45,7 +52,12 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
                 dependencies.add(TEST_IMPLEMENTATION, getAtomicfuDependencyNotation("-js", it))
             }
             configureTransformTasks("compileTestKotlin2Js") { sourceSet, transformedDir, originalDir, config ->
-                createJsTransformTask(sourceSet).configureJsTask(sourceSet.classesTaskName, transformedDir, originalDir, config)
+                createJsTransformTask(sourceSet).configureJsTask(
+                    sourceSet.classesTaskName,
+                    transformedDir,
+                    originalDir,
+                    config
+                )
             }
         }
         project.withPlugins("kotlin-native") {
@@ -65,7 +77,8 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
     }
 }
 
-private fun getAtomicfuDependencyNotation(platform: String, version: String) = "org.jetbrains.kotlinx:atomicfu$platform:$version"
+private fun getAtomicfuDependencyNotation(platform: String, version: String) =
+    "org.jetbrains.kotlinx:atomicfu$platform:$version"
 
 fun Project.withPlugins(vararg plugins: String, fn: Project.() -> Unit) {
     plugins.forEach { pluginManager.withPlugin(it) { fn() } }
@@ -114,20 +127,33 @@ fun Project.configureMultiplatformPlugin(version: String?) {
             target.compilations.all compilations@{ compilation ->
                 val classesDirs = compilation.output.classesDirs
                 // make copy of original classes directory
-                val originalClassesDirs: FileCollection = project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
+                val originalClassesDirs: FileCollection =
+                    project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
                 originalDirsByCompilation[compilation] = originalClassesDirs
 
-                val transformedClassesDir = project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
+                val transformedClassesDir =
+                    project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
                 // make transformedClassesDir the source path for output.classesDirs
                 if (target.platformType != KotlinPlatformType.native) { // do not change source path for unprocessed native output
                     classesDirs.setFrom(transformedClassesDir)
                 }
                 val transformTask = when (target.platformType) {
                     KotlinPlatformType.jvm -> {
-                        project.createJvmTransformTask(compilation).configureJvmTask(compilation.compileDependencyFiles, compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
+                        project.createJvmTransformTask(compilation).configureJvmTask(
+                            compilation.compileDependencyFiles,
+                            compilation.compileAllTaskName,
+                            transformedClassesDir,
+                            originalClassesDirs,
+                            config
+                        )
                     }
                     KotlinPlatformType.js -> {
-                        project.createJsTransformTask(compilation).configureJsTask(compilation.compileAllTaskName, transformedClassesDir, originalClassesDirs, config)
+                        project.createJsTransformTask(compilation).configureJsTask(
+                            compilation.compileAllTaskName,
+                            transformedClassesDir,
+                            originalClassesDirs,
+                            config
+                        )
                     }
                     else -> {
                         // todo KotlinPlatformType.android?
@@ -142,17 +168,18 @@ fun Project.configureMultiplatformPlugin(version: String?) {
 
                 if (compilation.name == KotlinCompilation.TEST_COMPILATION_NAME) {
                     // test should compile and run against original production binaries
-                    val mainCompilation = compilation.target.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
+                    val mainCompilation =
+                        compilation.target.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
                     val originalMainClassesDirs = project.files(
                         // use Callable because there is no guarantee that main is configured before test
                         Callable { originalDirsByCompilation[mainCompilation]!! }
                     )
 
                     (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
-                            originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
+                        originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
 
                     (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
-                            originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+                        originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
                 }
             }
         }
@@ -170,7 +197,8 @@ fun Project.configureTransformTasks(
             // make copy of original classes directory
             val originalClassesDirs: FileCollection = project.files(classesDirs.toTypedArray()).filter { it.exists() }
             (sourceSetParam as ExtensionAware).extensions.add(ORIGINAL_DIR_NAME, originalClassesDirs)
-            val transformedClassesDir = File(project.buildDir, "classes${File.separatorChar}${sourceSetParam.name}-atomicfu")
+            val transformedClassesDir =
+                File(project.buildDir, "classes${File.separatorChar}${sourceSetParam.name}-atomicfu")
             // make transformedClassesDir the source path for output.classesDirs
             (sourceSetParam.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
             val transformTask = createTransformTask(sourceSetParam, transformedClassesDir, originalClassesDirs, config)
@@ -189,11 +217,11 @@ fun Project.configureTransformTasks(
                 )
 
                 (tasks.findByName(testTaskName) as? AbstractCompile)?.classpath =
-                        originalMainClassesDirs + sourceSetParam.compileClasspath - mainSourceSet.output.classesDirs
+                    originalMainClassesDirs + sourceSetParam.compileClasspath - mainSourceSet.output.classesDirs
 
                 // todo: fix test runtime classpath for JS?
                 (tasks.findByName(JavaPlugin.TEST_TASK_NAME) as? Test)?.classpath =
-                        originalMainClassesDirs + sourceSetParam.runtimeClasspath - mainSourceSet.output.classesDirs
+                    originalMainClassesDirs + sourceSetParam.runtimeClasspath - mainSourceSet.output.classesDirs
             }
         }
     }
@@ -202,10 +230,16 @@ fun Project.configureTransformTasks(
 fun String.toVariant(): Variant = enumValueOf(toUpperCase(Locale.US))
 
 fun Project.createJvmTransformTask(compilation: KotlinCompilation<*>) =
-    tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformTask::class.java)
+    tasks.create(
+        "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
+        AtomicFUTransformTask::class.java
+    )
 
 fun Project.createJsTransformTask(compilation: KotlinCompilation<*>) =
-    tasks.create("transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu", AtomicFUTransformJsTask::class.java)
+    tasks.create(
+        "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
+        AtomicFUTransformJsTask::class.java
+    )
 
 fun Project.createJvmTransformTask(sourceSet: SourceSet) =
     tasks.create(sourceSet.getTaskName("transform", "atomicfuClasses"), AtomicFUTransformTask::class.java)
