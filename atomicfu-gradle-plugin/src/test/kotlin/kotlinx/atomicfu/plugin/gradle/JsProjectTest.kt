@@ -12,17 +12,17 @@ class JsProjectTest : BaseKotlinGradleTest() {
     @Test
     fun testKotlin2JsPlugin() = project("js-simple") {
         val tasksToCheck = arrayOf(
-                ":compileKotlin2Js",
-                ":compileTestKotlin2Js",
-                ":transformAtomicfuJsFiles",
-                ":transformTestAtomicfuJsFiles"
+            ":compileKotlin2Js",
+            ":compileTestKotlin2Js",
+            ":transformAtomicfuJsFiles",
+            ":transformTestAtomicfuJsFiles"
         )
 
         build("build") {
             checkOutcomes(TaskOutcome.SUCCESS, *tasksToCheck)
 
             val testCompileClasspathFiles = projectDir.resolve("build/test_compile_classpath.txt")
-                    .readLines().asSequence().flatMap { File(it).walk().filter(File::isFile) }.toHashSet()
+                .readLines().asSequence().flatMap { File(it).walk().filter(File::isFile) }.toHashSet()
 
             projectDir.resolve("build/classes/kotlin/main/js-simple.js").let {
                 it.checkExists()
@@ -30,7 +30,7 @@ class JsProjectTest : BaseKotlinGradleTest() {
                 // todo: check test runtime classpath when js test tasks are supported in plugin
             }
 
-            projectDir.resolve("build/classes/main-atomicfu/js-simple.js").let {
+            projectDir.resolve("build/classes/atomicfu/main/js-simple.js").let {
                 it.checkExists()
                 check(it !in testCompileClasspathFiles) { "Transformed '$it' is present in test compile classpath" }
             }

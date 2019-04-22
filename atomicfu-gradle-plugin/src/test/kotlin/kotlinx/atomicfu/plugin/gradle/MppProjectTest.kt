@@ -27,10 +27,10 @@ class MppProjectTest : BaseKotlinGradleTest() {
 
             fun checkPlatform(platform: String, fileInMainName: String) {
                 val testCompileClasspathFiles = projectDir.resolve("build/classpath/$platform/test_compile.txt")
-                        .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
+                    .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
 
                 val testRuntimeClasspathFiles = projectDir.resolve("build/classpath/$platform/test_runtime.txt")
-                        .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
+                    .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
 
                 projectDir.resolve("build/classes/kotlin/$platform/main/$fileInMainName").let {
                     it.checkExists()
@@ -50,8 +50,8 @@ class MppProjectTest : BaseKotlinGradleTest() {
             checkPlatform("js", "mpp-simple.js")
         }
 
-       build("build") {
+        build("build") {
             checkOutcomes(TaskOutcome.UP_TO_DATE, *tasksToCheck)
-       }
+        }
     }
 }
