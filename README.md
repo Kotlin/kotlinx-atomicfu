@@ -106,7 +106,7 @@ and transformations automatically:
 
 ```groovy
 buildscript {
-    ext.atomicfu_version = '0.12.4'
+    ext.atomicfu_version = '0.12.5'
 
     dependencies {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
@@ -154,7 +154,7 @@ Declare AtomicFU version:
 
 ```xml
 <properties>
-     <atomicfu.version>0.12.4</atomicfu.version>
+     <atomicfu.version>0.12.5</atomicfu.version>
 </properties> 
 ```
 

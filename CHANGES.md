@@ -1,8 +1,11 @@
 # Change log for kotlinx.atomicfu
 
-# Version 0.12.4
+# Version 0.12.5
 
 * Fixed Gradle plugin compatibility with `kotlin-multiplatform` plugin.
+
+# Version 0.12.4
+
 * Gradle plugin automatically adds dependencies. 
 * Added support for inline extensions on `AtomicXxx` types.
 
