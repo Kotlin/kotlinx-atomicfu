@@ -102,6 +102,12 @@ class ArrayTest {
         ea.genAtomicNullArr[2].lazySet(l3)
         check(ea.genAtomicNullArr[3].value!![0] == ea.genAtomicNullArr[2].value!![3])
     }
+
+    @Test
+    fun transformInMethodTest() {
+        val holder = AtomicArrayWithMethod()
+        holder.set("Hello", 0)
+    }
 }
 
 class AtomicArrayClass {
@@ -117,6 +123,15 @@ class AtomicArrayClass {
 class ExtendedApiAtomicArrays {
     val stringAtomicNullArray = atomicArrayOfNulls<String>(10)
     val genAtomicNullArr = atomicArrayOfNulls<List<String>>(7)
+}
+
+class AtomicArrayWithMethod {
+    val refArray = atomicArrayOfNulls<String>(5)
+
+    fun set(data: String, index: Int) {
+        val result = refArray[index].compareAndSet(null, data)
+        if (!result) error("Double set")
+    }
 }
 
 data class ARef(val n: Int)
