@@ -26,60 +26,71 @@ private const val IMPLEMENTATION_CONFIGURATION = "implementation"
 private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
-    override fun apply(project: Project) {
-        project.extensions.add(EXTENSION_NAME, AtomicFUPluginExtension())
-        project.configureDependencies()
-        project.configureTasks()
+    override fun apply(project: Project) = project.run {
+        val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
+            ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
+        extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
+        configureDependencies()
+        configureTasks()
     }
 }
 
 private fun Project.configureDependencies() {
-    val version = project.rootProject.buildscript.configurations.findByName("classpath")
-        ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version ?: return
-    withPlugin("kotlin") {
-        dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JVM, version))
+    withPluginWhenEvaluatedDependencies("kotlin") { version ->
+        dependencies.add(
+            if (config.transformJvm) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
+            getAtomicfuDependencyNotation(Platform.JVM, version)
+        )
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JVM, version))
     }
-    withPlugin("kotlin2js") {
-        dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JS, version))
+    withPluginWhenEvaluatedDependencies("kotlin2js") { version ->
+        dependencies.add(
+            if (config.transformJs) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
+            getAtomicfuDependencyNotation(Platform.JS, version)
+        )
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JS, version))
     }
-    withPlugin("kotlin-native") {
+    withPluginWhenEvaluatedDependencies("kotlin-native") { version ->
         dependencies.add(IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.NATIVE, version))
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.NATIVE, version))
     }
-    withPlugin("kotlin-platform-common") {
+    withPluginWhenEvaluatedDependencies("kotlin-platform-common") { version ->
         dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation(Platform.COMMON, version))
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.COMMON, version))
     }
-    withPlugin("kotlin-multiplatform") {
+    withPluginWhenEvaluatedDependencies("kotlin-multiplatform") { version ->
         configureMultiplatformPluginDependencies(version)
     }
 }
 
 private fun Project.configureTasks() {
-    withPluginAfterEvaluate("kotlin") {
-        configureTransformTasks("compileTestKotlin") { sourceSet, transformedDir, originalDir, config ->
-            createJvmTransformTask(sourceSet).configureJvmTask(
-                sourceSet.compileClasspath,
-                sourceSet.classesTaskName,
-                transformedDir,
-                originalDir,
-                config
-            )
+    val config = config
+    withPluginWhenEvaluated("kotlin") {
+        if (config.transformJvm) {
+            configureTransformTasks("compileTestKotlin") { sourceSet, transformedDir, originalDir ->
+                createJvmTransformTask(sourceSet).configureJvmTask(
+                    sourceSet.compileClasspath,
+                    sourceSet.classesTaskName,
+                    transformedDir,
+                    originalDir,
+                    config
+                )
+            }
         }
     }
-    withPluginAfterEvaluate("kotlin2js") {
-        configureTransformTasks("compileTestKotlin2Js") { sourceSet, transformedDir, originalDir, config ->
-            createJsTransformTask(sourceSet).configureJsTask(
-                sourceSet.classesTaskName,
-                transformedDir,
-                originalDir,
-                config
-            )
+    withPluginWhenEvaluated("kotlin2js") {
+        if (config.transformJs) {
+            configureTransformTasks("compileTestKotlin2Js") { sourceSet, transformedDir, originalDir ->
+                createJsTransformTask(sourceSet).configureJsTask(
+                    sourceSet.classesTaskName,
+                    transformedDir,
+                    originalDir,
+                    config
+                )
+            }
         }
     }
-    withPluginAfterEvaluate("kotlin-multiplatform") {
+    withPluginWhenEvaluated("kotlin-multiplatform") {
         configureMultiplatformPluginTasks()
     }
 }
@@ -105,25 +116,29 @@ private fun String.sourceSetNameToType(): CompilationType? = when (this) {
     else -> null
 }
 
-private fun Project.config(): AtomicFUPluginExtension? =
-    extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
+private val Project.config: AtomicFUPluginExtension
+    get() = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension ?: AtomicFUPluginExtension(null)
 
 private fun getAtomicfuDependencyNotation(platform: Platform, version: String): String =
     "org.jetbrains.kotlinx:atomicfu${platform.suffix}:$version"
 
-fun Project.withPlugin(plugin: String, fn: Project.() -> Unit) {
-    pluginManager.withPlugin(plugin) { fn() }
+// Note "afterEvaluate" does nothing when the project is already in executed state, so we need
+// a special check for this case
+fun <T> Project.whenEvaluated(fn: Project.() -> T) {
+    if (state.executed) {
+        fn()
+    } else {
+        afterEvaluate { fn() }
+    }
 }
 
-fun Project.withPluginAfterEvaluate(plugin: String, fn: Project.() -> Unit) {
-    withPlugin(plugin) {
-        // Note "afterEvaluate" does nothing when the project is already in executed state, so we need
-        // a special check for this case
-        if (state.executed) {
-            fn()
-        } else {
-            afterEvaluate(fn)
-        }
+fun Project.withPluginWhenEvaluated(plugin: String, fn: Project.() -> Unit) {
+    pluginManager.withPlugin(plugin) { whenEvaluated(fn) }
+}
+
+fun Project.withPluginWhenEvaluatedDependencies(plugin: String, fn: Project.(version: String) -> Unit) {
+    withPluginWhenEvaluated(plugin) {
+        config.dependenciesVersion?.let { fn(it) }
     }
 }
 
@@ -139,7 +154,7 @@ fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
 
 fun Project.configureMultiplatformPluginTasks() {
     val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
-    val config = config()
+    val config = config
     withKotlinTargets { target ->
         if (target.platformType == KotlinPlatformType.common || target.platformType == KotlinPlatformType.native) {
             return@withKotlinTargets // skip the common & native targets -- no transformation for them
@@ -154,9 +169,9 @@ fun Project.configureMultiplatformPluginTasks() {
             originalDirsByCompilation[compilation] = originalClassesDirs
             val transformedClassesDir =
                 project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
-            classesDirs.setFrom(transformedClassesDir)
             val transformTask = when (target.platformType) {
                 KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
+                    if (!config.transformJvm) return@compilations // skip when transformation is turned off
                     project.createJvmTransformTask(compilation).configureJvmTask(
                         compilation.compileDependencyFiles,
                         compilation.compileAllTaskName,
@@ -166,6 +181,7 @@ fun Project.configureMultiplatformPluginTasks() {
                     )
                 }
                 KotlinPlatformType.js -> {
+                    if (!config.transformJs) return@compilations // skip when transformation is turned off
                     project.createJsTransformTask(compilation).configureJsTask(
                         compilation.compileAllTaskName,
                         transformedClassesDir,
@@ -176,9 +192,10 @@ fun Project.configureMultiplatformPluginTasks() {
                 else -> error("Unsupported transformation platform '${target.platformType}'")
             }
             //now transformTask is responsible for compiling this source set into the classes directory
+            classesDirs.setFrom(transformedClassesDir)
             classesDirs.builtBy(transformTask)
             (tasks.findByName(target.artifactsTaskName) as? Jar)?.apply {
-                setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
+                setupJarManifest(multiRelease = config.variant.toVariant() == Variant.BOTH)
             }
             // test should compile and run against original production binaries
             if (compilationType == CompilationType.TEST) {
@@ -241,12 +258,12 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
 
 fun Project.configureTransformTasks(
     testTaskName: String,
-    createTransformTask: (sourceSet: SourceSet, transformedDir: File, originalDir: FileCollection, config: AtomicFUPluginExtension?) -> Task
+    createTransformTask: (sourceSet: SourceSet, transformedDir: File, originalDir: FileCollection) -> Task
 ) {
+    val config = config
     sourceSets.all { sourceSet ->
         val compilationType = sourceSet.name.sourceSetNameToType()
             ?: return@all // skip unknown types
-        val config = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension
         val classesDirs = (sourceSet.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
         // make copy of original classes directory
         val originalClassesDirs: FileCollection = project.files(classesDirs.toTypedArray()).filter { it.exists() }
@@ -255,11 +272,11 @@ fun Project.configureTransformTasks(
             project.buildDir.resolve("classes/atomicfu/${sourceSet.name}")
         // make transformedClassesDir the source path for output.classesDirs
         (sourceSet.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
-        val transformTask = createTransformTask(sourceSet, transformedClassesDir, originalClassesDirs, config)
+        val transformTask = createTransformTask(sourceSet, transformedClassesDir, originalClassesDirs)
         //now transformTask is responsible for compiling this source set into the classes directory
         sourceSet.compiledBy(transformTask)
         (tasks.findByName(sourceSet.jarTaskName) as? Jar)?.apply {
-            setupJarManifest(multiRelease = config?.variant?.toVariant() == Variant.BOTH)
+            setupJarManifest(multiRelease = config.variant.toVariant() == Variant.BOTH)
         }
         // test should compile and run against original production binaries
         if (compilationType == CompilationType.TEST) {
@@ -304,32 +321,28 @@ fun AtomicFUTransformTask.configureJvmTask(
     classesTaskName: String,
     transformedClassesDir: File,
     originalClassesDir: FileCollection,
-    config: AtomicFUPluginExtension?
+    config: AtomicFUPluginExtension
 ): ConventionTask =
     apply {
         dependsOn(classesTaskName)
         classPath = classpath
         inputFiles = originalClassesDir
         outputDir = transformedClassesDir
-        config?.let {
-            variant = it.variant
-            verbose = it.verbose
-        }
+        variant = config.variant
+        verbose = config.verbose
     }
 
 fun AtomicFUTransformJsTask.configureJsTask(
     classesTaskName: String,
     transformedClassesDir: File,
     originalClassesDir: FileCollection,
-    config: AtomicFUPluginExtension?
+    config: AtomicFUPluginExtension
 ): ConventionTask =
     apply {
         dependsOn(classesTaskName)
         inputFiles = originalClassesDir
         outputDir = transformedClassesDir
-        config?.let {
-            verbose = it.verbose
-        }
+        verbose = config.verbose
     }
 
 fun Jar.setupJarManifest(multiRelease: Boolean, classifier: String = "") {
@@ -344,7 +357,10 @@ fun Jar.setupJarManifest(multiRelease: Boolean, classifier: String = "") {
 val Project.sourceSets: SourceSetContainer
     get() = convention.getPlugin(JavaPluginConvention::class.java).sourceSets
 
-class AtomicFUPluginExtension {
+class AtomicFUPluginExtension(pluginVersion: String?) {
+    var dependenciesVersion = pluginVersion
+    var transformJvm = true
+    var transformJs = true
     var variant: String = "FU"
     var verbose: Boolean = false
 }

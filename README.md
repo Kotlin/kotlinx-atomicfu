@@ -102,7 +102,8 @@ Building with Gradle is supported for all platforms.
 
 You will need Gradle 4.10 or later.
 Add and apply AtomicFU plugin. It adds all the corresponding dependencies
-and transformations automatically:
+and transformations automatically. 
+See [additional configuration](#additional-configuration) if that needs tweaking.
 
 ```groovy
 buildscript {
@@ -145,6 +146,20 @@ to your common code dependencies or apply `kotlinx-atomicfu` plugin that adds th
 ```groovy
 dependencies {
     compile "org.jetbrains.kotlinx:atomicfu-common:$atomicfu_version"
+}
+```
+
+### Additional configuration
+
+There are the following additional parameters (with their defaults):
+
+```groovy
+atomicfu {
+  dependenciesVersion = '0.12.5' // set to null to turn-off auto dependencies
+  transformJvm = true // set to false to turn off JVM transformation
+  transformJs = true // set to false to turn off JS transformation
+  variant = "FU" // JVM transformation variant: FU,VH, or BOTH 
+  verbose = false // set to true to be more verbose  
 }
 ```
 
