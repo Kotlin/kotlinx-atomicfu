@@ -107,7 +107,7 @@ See [additional configuration](#additional-configuration) if that needs tweaking
 
 ```groovy
 buildscript {
-    ext.atomicfu_version = '0.12.5'
+    ext.atomicfu_version = '0.12.6'
 
     dependencies {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
@@ -155,7 +155,7 @@ There are the following additional parameters (with their defaults):
 
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.12.5' // set to null to turn-off auto dependencies
+  dependenciesVersion = '0.12.6' // set to null to turn-off auto dependencies
   transformJvm = true // set to false to turn off JVM transformation
   transformJs = true // set to false to turn off JS transformation
   variant = "FU" // JVM transformation variant: FU,VH, or BOTH 
@@ -169,7 +169,7 @@ Declare AtomicFU version:
 
 ```xml
 <properties>
-     <atomicfu.version>0.12.5</atomicfu.version>
+     <atomicfu.version>0.12.6</atomicfu.version>
 </properties> 
 ```
 

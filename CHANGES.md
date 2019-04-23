@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.12.6
+
+* Support additional configuration for dependencies and transforms.
+* Get array field fixed (see #61).
+
 # Version 0.12.5
 
 * Fixed Gradle plugin compatibility with `kotlin-multiplatform` plugin.
