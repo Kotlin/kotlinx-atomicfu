@@ -4,7 +4,6 @@
 
 package internal_test1
 
-import kotlinx.atomicfu.*
 import kotlinx.atomicfu.test.A
 import kotlin.test.*
 
@@ -16,7 +15,7 @@ class B {
         check(a.internalField.getAndSet(false))
         check(a.xxx.addAndGet(4) == 9)
         check(a.yyy.compareAndSet(638753975930025820, 3444))
-        check(a.arr[2].compareAndSet(0, 6))
+        check(a.intArr[2].compareAndSet(0, 6))
     }
 }
 

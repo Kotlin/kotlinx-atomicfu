@@ -6,6 +6,8 @@ package kotlinx.atomicfu.test
 
 import kotlinx.atomicfu.*
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class ArrayTest {
     @Test
@@ -97,10 +99,26 @@ class ArrayTest {
         val l1 = listOf("a", "bb", "ccc")
         val l2 = listOf("dddd")
         val l3 = listOf("a", "bb", "ccc", "dddd")
-        check(ea.genAtomicNullArr[3].compareAndSet(null, l1))
+        ea.genAtomicNullArr[3].compareAndSet(null, l1)
         check(ea.genAtomicNullArr[3].compareAndSet(l1, l2))
         ea.genAtomicNullArr[2].lazySet(l3)
         check(ea.genAtomicNullArr[3].value!![0] == ea.genAtomicNullArr[2].value!![3])
+    }
+
+    @Test
+    fun getArrayFieldTest() {
+        val aes = ArrayElementSetters()
+        assertTrue(aes.setInt(2, 5))
+        assertFalse(aes.setInt(2, 10))
+        assertTrue(aes.setBoolean(1, true))
+        assertTrue(aes.setRef(1, ARef(29472395)))
+        assertFalse(aes.setRef(1, ARef(81397)))
+    }
+
+    @Test
+    fun transformInMethodTest() {
+        val holder = AtomicArrayWithMethod()
+        holder.set("Hello", 0)
     }
 }
 
@@ -119,5 +137,23 @@ class ExtendedApiAtomicArrays {
     val genAtomicNullArr = atomicArrayOfNulls<List<String>>(7)
 }
 
+class ArrayElementSetters {
+    private val intArr = AtomicIntArray(3)
+    private val booleanArr = AtomicBooleanArray(4)
+    private val refArr = atomicArrayOfNulls<ARef>(5)
+
+    fun setInt(index: Int, data: Int) = intArr[index].compareAndSet(0, data)
+    fun setBoolean(index: Int, data: Boolean) = booleanArr[index].compareAndSet(false, data)
+    fun setRef(index: Int, data: ARef) = refArr[index].compareAndSet(null, data)
+}
+
 data class ARef(val n: Int)
 
+class AtomicArrayWithMethod {
+    val refArray = atomicArrayOfNulls<String>(5)
+
+    fun set(data: String, index: Int) {
+        val result = refArray[index].compareAndSet(null, data)
+        if (!result) error("Double set")
+    }
+}

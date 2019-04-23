@@ -897,26 +897,14 @@ class AtomicFUTransformer(
                                 GETSTATIC, f.owner, f.fuName,
                                 if (vh) VH_TYPE.descriptor else f.fuType.descriptor
                             )
+                            // set original name for an array in FU mode
                             if (!vh && f.getPrimitiveType(vh).sort == ARRAY) {
                                 j.opcode = if (!f.isStatic) GETFIELD else GETSTATIC
                                 j.name = f.name
                             }
                             instructions.set(i, j)
                             if (vh && f.getPrimitiveType(vh).sort == ARRAY) {
-                                val getPureArray =
-                                    FieldInsnNode(GETFIELD, f.owner, f.name, f.getPrimitiveType(vh).descriptor)
-                                if (!f.isStatic) {
-                                    // swap className reference and VarHandle
-                                    val swap = InsnNode(SWAP)
-                                    instructions.insert(j, swap)
-                                    instructions.insert(swap, getPureArray)
-
-                                } else {
-                                    getPureArray.opcode = GETSTATIC
-                                    instructions.insert(j, getPureArray)
-                                }
-                                transformed = true
-                                return fixupLoadedAtomicVar(f, getPureArray)
+                                return insertPureArray(j, f)
                             }
                             transformed = true
                             return fixupLoadedAtomicVar(f, j)
@@ -937,18 +925,38 @@ class AtomicFUTransformer(
                     if ((i.opcode == GETFIELD || i.opcode == GETSTATIC) && fieldId in fields) {
                         // Convert GETFIELD to GETSTATIC on var handle / field updater
                         val f = fields[fieldId]!!
-                        if (f.getPrimitiveType(vh).sort != ARRAY) {
+                        val isArray = f.getPrimitiveType(vh).sort == ARRAY
+                        if (!isArray || vh) {
                             if (i.desc != f.fieldType.descriptor) return i.next // already converted get/setfield
                             i.opcode = GETSTATIC
+                            i.name = f.fuName
                         }
-                        i.name = f.fuName
                         i.desc = if (vh) VH_TYPE.descriptor else f.fuType.descriptor
+                        if (vh && f.getPrimitiveType(vh).sort == ARRAY) {
+                            return insertPureArray(i, f)
+                        }
                         transformed = true
                         return fixupLoadedAtomicVar(f, i)
                     }
                 }
             }
             return i.next
+        }
+
+        private fun insertPureArray(getVarHandleInsn: FieldInsnNode, f: FieldInfo): AbstractInsnNode? {
+            val getPureArray = FieldInsnNode(GETFIELD, f.owner, f.name, f.getPrimitiveType(vh).descriptor)
+            if (!f.isStatic) {
+                // swap className reference and VarHandle
+                val swap = InsnNode(SWAP)
+                instructions.insert(getVarHandleInsn, swap)
+                instructions.insert(swap, getPureArray)
+
+            } else {
+                getPureArray.opcode = GETSTATIC
+                instructions.insert(getVarHandleInsn, getPureArray)
+            }
+            transformed = true
+            return fixupLoadedAtomicVar(f, getPureArray)
         }
 
         // generates a ref class with volatile field of primitive type inside
