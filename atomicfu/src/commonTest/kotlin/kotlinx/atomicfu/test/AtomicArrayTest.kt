@@ -5,9 +5,7 @@
 package kotlinx.atomicfu.test
 
 import kotlinx.atomicfu.*
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class ArrayTest {
     @Test
@@ -99,10 +97,12 @@ class ArrayTest {
         val l1 = listOf("a", "bb", "ccc")
         val l2 = listOf("dddd")
         val l3 = listOf("a", "bb", "ccc", "dddd")
-        ea.genAtomicNullArr[3].compareAndSet(null, l1)
+        check(ea.genAtomicNullArr[3].compareAndSet(null, l1))
+        assertEquals(l1, ea.genAtomicNullArr[3].value)
         check(ea.genAtomicNullArr[3].compareAndSet(l1, l2))
+        assertEquals(l2, ea.genAtomicNullArr[3].value)
         ea.genAtomicNullArr[2].lazySet(l3)
-        check(ea.genAtomicNullArr[3].value!![0] == ea.genAtomicNullArr[2].value!![3])
+        assertEquals(l3, ea.genAtomicNullArr[2].value)
     }
 
     @Test
