@@ -926,10 +926,15 @@ class AtomicFUTransformer(
                         // Convert GETFIELD to GETSTATIC on var handle / field updater
                         val f = fields[fieldId]!!
                         val isArray = f.getPrimitiveType(vh).sort == ARRAY
+                        // GETSTATIC for all fields except FU arrays
                         if (!isArray || vh) {
                             if (i.desc != f.fieldType.descriptor) return i.next // already converted get/setfield
                             i.opcode = GETSTATIC
                             i.name = f.fuName
+                        }
+                        // for FU arrays with external access change name to mangled one
+                        if (!vh && isArray && f.hasExternalAccess) {
+                            i.name = f.name
                         }
                         i.desc = if (vh) VH_TYPE.descriptor else f.fuType.descriptor
                         if (vh && f.getPrimitiveType(vh).sort == ARRAY) {
