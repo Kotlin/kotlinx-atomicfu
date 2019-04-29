@@ -26,7 +26,8 @@ private const val FILL = "fill"
 private const val GET_ELEMENT = "get\\\$atomicfu"
 
 private val MANGLE_VALUE_REGEX = Regex(".${Pattern.quote(MANGLED_VALUE_PROP)}")
-private val ARRAY_GET_VALUE_REGEX = Regex(".$GET_ELEMENT\\((\\d+)\\).${Pattern.quote(MANGLED_VALUE_PROP)}")
+// matches index until the first occurence of ')', parenthesised index expressions not supported
+private val ARRAY_GET_ELEMENT_REGEX = Regex(".$GET_ELEMENT\\((.*)\\)")
 
 class AtomicFUTransformerJS(
     inputDir: File,
@@ -64,11 +65,32 @@ class AtomicFUTransformerJS(
 
     // erase getting value of atomic field
     private fun AstNode.eraseGetValue(): String {
-        val res = this.toSource()
+        var res = this.toSource()
         val primitiveGetValue = MANGLE_VALUE_REGEX
-        val arrayGetValue = ARRAY_GET_VALUE_REGEX
-        return res.replace(arrayGetValue) { matchResult -> "[${matchResult.groupValues[1]}]" }
-                  .replace(primitiveGetValue) { "" }
+        val arrayGetElement = ARRAY_GET_ELEMENT_REGEX
+        while (res.contains(arrayGetElement)) {
+            res = res.replace(arrayGetElement) { matchResult ->
+                val greedyToLastClosingParen = matchResult.groupValues[1]
+                var balance = 1
+                var indexEndPos = 0
+                for (i in 0 until greedyToLastClosingParen.length) {
+                    val c = greedyToLastClosingParen[i]
+                    if (c == '(') balance++
+                    if (c == ')') balance--
+                    if (balance == 0) {
+                        indexEndPos = i
+                        break
+                    }
+                }
+                val closingParen = indexEndPos == greedyToLastClosingParen.lastIndex
+                if (balance == 1) {
+                    "[$greedyToLastClosingParen]"
+                } else {
+                    "[${greedyToLastClosingParen.substring(0, indexEndPos)}]${greedyToLastClosingParen.substring(indexEndPos + 1)}${if (!closingParen) ")" else ""}"
+                }
+            }
+        }
+        return res.replace(primitiveGetValue) { "" }
     }
 
     inner class DependencyEraser : NodeVisitor {
