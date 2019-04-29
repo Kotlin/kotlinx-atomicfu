@@ -78,7 +78,7 @@ class ArrayTest {
         val r0 = A.refArr[0].value
         A.refArr[3].value = r0
         check(A.refArr[3].value!!.n == 3)
-        val a = A.a1.value
+        val a = A.a.value
         check(A.refArr[3].compareAndSet(a3, a))
 
         val l1 = listOf(listOf("a", "bb", "ccc"), listOf("a", "bb"))
@@ -106,32 +106,16 @@ class ArrayTest {
         ea.genAtomicNullArr[2].lazySet(l3)
         assertEquals(l3, ea.genAtomicNullArr[2].value)
     }
-
-    @Test
-    fun getArrayFieldTest() {
-        val aes = ArrayElementSetters()
-        assertTrue(aes.setInt(2, 5))
-        assertFalse(aes.setInt(2, 10))
-        assertTrue(aes.setBoolean(1, true))
-        assertTrue(aes.setRef(1, ARef(29472395)))
-        assertFalse(aes.setRef(1, ARef(81397)))
-    }
-
-    @Test
-    fun transformInMethodTest() {
-        val holder = AtomicArrayWithMethod()
-        holder.set("Hello", 0)
-    }
 }
 
 class AtomicArrayClass {
-    val intArr = AtomicIntArray(3)
-    val longArr = AtomicLongArray(5)
-    val booleanArr = AtomicBooleanArray(4)
-    val refArr = AtomicArray<ARef>(5)
-    val genericArr = AtomicArray<List<List<String>>>(11)
+    val intArr = AtomicIntArray(10)
+    val longArr = AtomicLongArray(10)
+    val booleanArr = AtomicBooleanArray(10)
+    val refArr = AtomicArray<ARef>(10)
+    val genericArr = AtomicArray<List<List<String>>>(10)
     val cgArr = atomicArrayOfNulls<Map<List<String>, String>>(10)
-    val a1 = atomic(ARef(1))
+    val a = atomic(ARef(8))
 }
 
 class ExtendedApiAtomicArrays {
@@ -139,23 +123,5 @@ class ExtendedApiAtomicArrays {
     val genAtomicNullArr = atomicArrayOfNulls<List<String>>(7)
 }
 
-class ArrayElementSetters {
-    private val intArr = AtomicIntArray(3)
-    private val booleanArr = AtomicBooleanArray(4)
-    private val refArr = atomicArrayOfNulls<ARef>(5)
-
-    fun setInt(index: Int, data: Int) = intArr[index].compareAndSet(0, data)
-    fun setBoolean(index: Int, data: Boolean) = booleanArr[index].compareAndSet(false, data)
-    fun setRef(index: Int, data: ARef) = refArr[index].compareAndSet(null, data)
-}
-
 data class ARef(val n: Int)
 
-class AtomicArrayWithMethod {
-    val refArray = atomicArrayOfNulls<String>(5)
-
-    fun set(data: String, index: Int) {
-        val result = refArray[index].compareAndSet(null, data)
-        if (!result) error("Double set")
-    }
-}
