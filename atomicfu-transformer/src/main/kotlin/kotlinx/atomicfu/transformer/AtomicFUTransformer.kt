@@ -575,6 +575,7 @@ class AtomicFUTransformer(
         ): AbstractInsnNode? {
             val typeInfo = if (!onArrayElement) AFU_CLASSES[iv.owner]!! else f.typeInfo
             if (iv.name == "getValue" || iv.name == "setValue") {
+                val setInsn = iv.name == "setValue"
                 if (!onArrayElement) {
                     instructions.remove(ld) // drop getstatic (we don't need field updater)
                     val primitiveType = f.getPrimitiveType(vh)
@@ -600,7 +601,7 @@ class AtomicFUTransformer(
                     var methodType = getMethodType(iv.desc)
                     if (f.typeInfo.originalType != f.typeInfo.transformedType && !vh) {
                         val ret = f.typeInfo.transformedType.elementType
-                        iv.desc = getMethodDescriptor(ret, *methodType.argumentTypes)
+                        iv.desc = if (setInsn) getMethodDescriptor(methodType.returnType, ret) else getMethodDescriptor(ret, *methodType.argumentTypes)
                         methodType = getMethodType(iv.desc)
                     }
                     iv.name = iv.name.substring(0, 3)

@@ -62,6 +62,8 @@ class ArrayTest {
         A.booleanArr[0].lazySet(true)
         check(!A.booleanArr[2].getAndSet(true))
         check(A.booleanArr[0].value && A.booleanArr[1].value && A.booleanArr[2].value)
+        A.booleanArr[0].value = false
+        check(!A.booleanArr[0].value)
     }
 
     @Test
