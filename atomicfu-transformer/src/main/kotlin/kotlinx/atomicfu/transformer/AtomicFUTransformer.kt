@@ -175,13 +175,14 @@ class AtomicFUTransformer(
     private fun analyzeFiles(): Boolean {
         var inpFilesTime = 0L
         var outFilesTime = 0L
+        val files = inputDir.walk().filter { it.isFile }.toList()
         // 1 phase: visit methods and fields, register all accessors
-        inputDir.walk().filter { it.isFile }.forEach { file ->
+        files.forEach { file ->
             inpFilesTime = inpFilesTime.coerceAtLeast(file.lastModified())
             if (file.isClassFile()) analyzeFile(file)
         }
         // 2 phase: visit method bodies for external references to fields
-        inputDir.walk().filter { it.isFile }.forEach { file ->
+        files.forEach { file ->
             if (file.isClassFile()) analyzeExternalRefs(file)
             outFilesTime = outFilesTime.coerceAtLeast(file.toOutputFile().lastModified())
         }
@@ -478,8 +479,12 @@ class AtomicFUTransformer(
             exceptions: Array<out String>?
         ): MethodVisitor? {
             val methodId = MethodId(className, name, desc, accessToInvokeOpcode(access))
-            if (methodId in accessors) return null // drop accessor
-            if (methodId in removeMethods) return null // drop this method
+            if (methodId in accessors || methodId in removeMethods) {
+                // drop these methods
+                // todo: should remove those methods from kotlin metadata, too
+                transformed = true
+                return null
+            }
             val sourceInfo = SourceInfo(methodId, source)
             val superMV = if (name == "<clinit>" && desc == "()V") {
                 if (access and ACC_STATIC == 0) abort("<clinit> method not marked as static")
