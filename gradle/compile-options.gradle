@@ -6,8 +6,8 @@
 ext.configureKotlin = { type ->
     tasks.withType(type).all {
         kotlinOptions {
-            apiVersion = "1.2"
-            languageVersion = "1.2"
+            apiVersion = "1.3"
+            languageVersion = "1.3"
         }
     }
 }

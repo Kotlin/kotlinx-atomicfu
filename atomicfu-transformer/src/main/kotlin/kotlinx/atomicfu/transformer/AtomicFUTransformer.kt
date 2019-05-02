@@ -96,7 +96,7 @@ private inline fun insns(block: InstructionAdapter.() -> Unit): InsnList {
     return node.instructions
 }
 
-data class FieldId(val owner: String, val name: String) {
+data class FieldId(val owner: String, val name: String, val desc: String) {
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
@@ -149,21 +149,30 @@ class AtomicFUTransformer(
 
     override fun transform() {
         info("Analyzing in $inputDir")
-        val succ = analyzeFiles()
+        val files = inputDir.walk().filter { it.isFile }.toList()
+        val needTransform = analyzeFiles(files)
         if (hasErrors) throw Exception("Encountered errors while collecting fields")
-        if (succ || outputDir == inputDir) {
+        if (needTransform || outputDir == inputDir) {
+            // visit method bodies for external references to fields
+            analyzeExternalRefs(files)
             // perform transformation
             info("Transforming to $outputDir")
             val vh = variant == Variant.VH
-            inputDir.walk().filter { it.isFile }.forEach { file ->
+            files.forEach { file ->
                 val bytes = file.readBytes()
                 val outBytes = if (file.isClassFile()) transformFile(file, bytes, vh) else bytes
-                val outFile = file.toOutputFile()
-                outFile.mkdirsAndWrite(outBytes)
-                if (variant == Variant.BOTH && outBytes !== bytes) {
-                    val vhBytes = transformFile(file, bytes, true)
-                    val vhFile = outputDir / "META-INF" / "versions" / "9" / file.relativeTo(inputDir).toString()
-                    vhFile.mkdirsAndWrite(vhBytes)
+                if (outBytes != null) {
+                    // write output only if successfully transformed, so that it retries again on restart
+                    val outFile = file.toOutputFile()
+                    outFile.mkdirsAndWrite(outBytes)
+                    if (variant == Variant.BOTH && outBytes !== bytes) {
+                        val vhBytes = transformFile(file, bytes, true)
+                        if (vhBytes != null) {
+                            val vhFile =
+                                outputDir / "META-INF" / "versions" / "9" / file.relativeTo(inputDir).toString()
+                            vhFile.mkdirsAndWrite(vhBytes)
+                        }
+                    }
                 }
             }
             if (hasErrors) throw Exception("Encountered errors while transforming")
@@ -172,21 +181,24 @@ class AtomicFUTransformer(
         }
     }
 
-    private fun analyzeFiles(): Boolean {
-        var inpFilesTime = 0L
-        var outFilesTime = 0L
-        val files = inputDir.walk().filter { it.isFile }.toList()
-        // 1 phase: visit methods and fields, register all accessors
+    // returns 'true' if files need to be transformed
+    // 1 phase: visit methods and fields, register all accessors, collect times
+    private fun analyzeFiles(files: List<File>): Boolean {
+        var needTransform = false
         files.forEach { file ->
-            inpFilesTime = inpFilesTime.coerceAtLeast(file.lastModified())
+            val inpTime = file.lastModified()
+            val outTime = file.toOutputFile().lastModified()
+            if (inpTime > outTime) needTransform = true
             if (file.isClassFile()) analyzeFile(file)
         }
-        // 2 phase: visit method bodies for external references to fields
+        return needTransform
+    }
+
+    // 2 phase: visit method bodies for external references to fields
+    private fun analyzeExternalRefs(files: List<File>) {
         files.forEach { file ->
             if (file.isClassFile()) analyzeExternalRefs(file)
-            outFilesTime = outFilesTime.coerceAtLeast(file.toOutputFile().lastModified())
         }
-        return inpFilesTime > outFilesTime
     }
 
     private fun analyzeFile(file: File) {
@@ -197,7 +209,7 @@ class AtomicFUTransformer(
         file.inputStream().use { ClassReader(it).accept(ReferencesCollectorCV(), SKIP_FRAMES) }
     }
 
-    private fun transformFile(file: File, bytes: ByteArray, vh: Boolean): ByteArray {
+    private fun transformFile(file: File, bytes: ByteArray, vh: Boolean): ByteArray? {
         transformed = false
         val cw = CW()
         val cv = TransformerCV(cw, vh)
@@ -210,6 +222,8 @@ class AtomicFUTransformer(
         } catch (e: Exception) {
             error("Failed to transform: $e", cv.sourceInfo)
             e.printStackTrace(System.out)
+            hasErrors = true
+            return null // signal failure
         }
         return bytes
     }
@@ -246,7 +260,7 @@ class AtomicFUTransformer(
         ): FieldVisitor? {
             val fieldType = getType(desc)
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
-                val field = FieldId(className, name)
+                val field = FieldId(className, name, desc)
                 info("$field field found")
                 if (ACC_PUBLIC in access) error("$field field cannot be public")
                 if (ACC_FINAL !in access) error("$field field must be final")
@@ -292,7 +306,7 @@ class AtomicFUTransformer(
                 val isStatic = insns.size == 2
                 val fi = (if (isStatic) insns[0] else insns[1]) as FieldInsnNode
                 val fieldName = fi.name
-                val field = FieldId(className, fieldName)
+                val field = FieldId(className, fieldName, fi.desc)
                 val fieldType = getType(fi.desc)
                 val accessorMethod = MethodId(className, name, desc, accessToInvokeOpcode(access))
                 info("$field accessor $name found")
@@ -358,6 +372,8 @@ class AtomicFUTransformer(
         private var source: String? = null
         var sourceInfo: SourceInfo? = null
 
+        private var metadata: AnnotationNode? = null
+
         private var originalClinit: MethodNode? = null
         private var newClinit: MethodNode? = null
 
@@ -378,7 +394,7 @@ class AtomicFUTransformer(
         ): FieldVisitor? {
             val fieldType = getType(desc)
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
-                val fieldId = FieldId(className, name)
+                val fieldId = FieldId(className, name, desc)
                 val f = fields[fieldId]!!
                 val protection = when {
                     // reference to wrapper class (primitive atomics) or reference to to j.u.c.a.Atomic*Array (atomic array)
@@ -502,7 +518,25 @@ class AtomicFUTransformer(
             return mv
         }
 
+        override fun visitAnnotation(desc: String?, visible: Boolean): AnnotationVisitor {
+            if (desc == KOTLIN_METADATA_DESC) {
+                check(visible) { "Expected run-time visible $KOTLIN_METADATA_DESC annotation" }
+                check(metadata == null) { "Only one $KOTLIN_METADATA_DESC annotation is expected" }
+                return AnnotationNode(desc).also { metadata = it }
+            }
+            return super.visitAnnotation(desc, visible)
+        }
+
         override fun visitEnd() {
+            // remove unused methods from metadata
+            metadata?.let {
+                val mt = MetadataTransformer(
+                    removeFields = fields.keys,
+                    removeMethods = accessors.keys + removeMethods
+                )
+                if (mt.transformMetadata(it)) transformed = true
+                it.accept(cv.visitAnnotation(KOTLIN_METADATA_DESC, true))
+            }
             // collect class initialization
             if (originalClinit != null || newClinit != null) {
                 val newClinit = newClinit
@@ -566,7 +600,7 @@ class AtomicFUTransformer(
 
         private fun FieldInsnNode.checkPutFieldOrPutStatic(): FieldId? {
             if (opcode != PUTFIELD && opcode != PUTSTATIC) return null
-            val fieldId = FieldId(owner, name)
+            val fieldId = FieldId(owner, name, desc)
             return if (fieldId in fields) fieldId else null
         }
 
@@ -927,7 +961,7 @@ class AtomicFUTransformer(
                     }
                 }
                 is FieldInsnNode -> {
-                    val fieldId = FieldId(i.owner, i.name)
+                    val fieldId = FieldId(i.owner, i.name, i.desc)
                     if ((i.opcode == GETFIELD || i.opcode == GETSTATIC) && fieldId in fields) {
                         // Convert GETFIELD to GETSTATIC on var handle / field updater
                         val f = fields[fieldId]!!

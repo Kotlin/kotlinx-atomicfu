@@ -53,6 +53,11 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                             appendNode('url', 'https://kotlin.bintray.com/kotlin-dev')
                         }
 
+                        appendNode('repository').with {
+                            appendNode('id', 'kotlinx')
+                            appendNode('url', 'https://kotlin.bintray.com/kotlinx')
+                        }
+
                         if (buildSnapshots) {
                             appendNode('repository').with {
                                 appendNode('id', 'kotlin-snapshots')
