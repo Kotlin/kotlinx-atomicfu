@@ -25,7 +25,7 @@ task preparePublishNpm(type: Copy, dependsOn: [compileKotlinJs]) {
     from(npmTemplateDir) {
         expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
     }
-    from("$buildDir/classes/kotlin/main")
+    from(compileKotlinJs.destinationDir)
     into npmDeployDir
 }
 
