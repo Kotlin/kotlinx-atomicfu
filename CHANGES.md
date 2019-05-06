@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.12.7
+
+* Fixed BooleanArray setValue.
+* Fixed removal of inline methods on atomicfu types from bytecode.
+* Adjust kotlin.Metadata in JVM classes to remove atomicfu references completely. 
+
 # Version 0.12.6
 
 * Support additional configuration for dependencies and transforms.
