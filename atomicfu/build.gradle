@@ -114,6 +114,7 @@ dependencies {
 
 tasks.withType(compileKotlinJs.getClass()) {
     kotlinOptions {
+        freeCompilerArgs += ["-Xir-produce-klib-dir"]
         moduleKind = "umd"
         sourceMap = true
         metaInfo = true
@@ -125,6 +126,14 @@ compileKotlinJs {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
         outputFile = new File(outputFile.parent, baseName + ".js")
+    }
+}
+
+compileTestKotlinJs {
+    kotlinOptions {
+        freeCompilerArgs += ["-Xir-produce-js"]
+        moduleKind = "umd"
+        sourceMap = true
     }
 }
 
