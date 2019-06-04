@@ -49,6 +49,7 @@ def File classpathFile(String platform, String fileName) {
     return file("$dir/$fileName")
 }
 
+
 compileTestKotlinJvm.doLast {
     classpathFile("jvm", "test_compile.txt").text = classpath.files.join("\n")
 }
@@ -62,6 +63,6 @@ compileTestKotlinJs.doLast {
     classpathFile("js", "test_compile.txt").text = classpath.files.join("\n")
 }
 
-jsTest.doLast {
-    classpathFile("js", "test_runtime.txt").text = classpath.files.join("\n")
-}
+jsTest.dependsOn(":compileTestKotlinJs")
+jsTest.dependsOn(":transformJsTestAtomicfu")
+check.dependsOn(":jsTest")

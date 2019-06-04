@@ -17,31 +17,29 @@ class MppProjectTest : BaseKotlinGradleTest() {
             ":transformJvmMainAtomicfu",
             ":transformJvmTestAtomicfu",
             ":compileKotlinJs",
-            ":compileTestKotlinJs",
-            ":transformJsMainAtomicfu",
-            ":transformJsTestAtomicfu"
+            ":transformJsMainAtomicfu"
         )
 
         build("build") {
             checkOutcomes(TaskOutcome.SUCCESS, *tasksToCheck)
 
             fun checkPlatform(platform: String, fileInMainName: String) {
+                val isJs = platform == "js"
                 val testCompileClasspathFiles = projectDir.resolve("build/classpath/$platform/test_compile.txt")
                     .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
-
-                val testRuntimeClasspathFiles = projectDir.resolve("build/classpath/$platform/test_runtime.txt")
+                val testRuntimeClasspathFiles = if (isJs) emptySet<File>() else projectDir.resolve("build/classpath/$platform/test_runtime.txt")
                     .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
 
                 projectDir.resolve("build/classes/kotlin/$platform/main/$fileInMainName").let {
                     it.checkExists()
                     check(it in testCompileClasspathFiles) { "Original '$it' is missing from $platform test compile classpath" }
-                    check(it in testRuntimeClasspathFiles) { "Original '$it' is missing from $platform test runtime classpath" }
+                    if (!isJs) check(it in testRuntimeClasspathFiles) { "Original '$it' is missing from $platform test runtime classpath" }
                 }
 
                 projectDir.resolve("build/classes/atomicfu/jvm/main/IntArithmetic.class").let {
                     it.checkExists()
                     check(it !in testCompileClasspathFiles) { "Transformed '$it' is present in $platform test compile classpath" }
-                    check(it !in testRuntimeClasspathFiles) { "Transformed '$it' is present in $platform test runtime classpath" }
+                    if (!isJs) check(it !in testRuntimeClasspathFiles) { "Transformed '$it' is present in $platform test runtime classpath" }
                 }
 
             }
