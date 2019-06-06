@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.12.8
+
+* Fixed getting array elements by named index.
+* Fixed broken npm publishing.
+
 # Version 0.12.7
 
 * Fixed BooleanArray setValue.
