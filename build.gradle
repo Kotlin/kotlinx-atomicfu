@@ -2,6 +2,8 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+import org.jetbrains.kotlin.konan.target.HostManager
+
 buildscript {
     /*
      * These property group is used to build kotlinx.atomicfu against Kotlin compiler snapshot.
@@ -40,6 +42,8 @@ buildscript {
 }
 
 allprojects {
+    // the only place where HostManager could be instantiated
+    project.ext.hostManager = new HostManager()
     if (build_snapshot_train) {
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
         repositories {
