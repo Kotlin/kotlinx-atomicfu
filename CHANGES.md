@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.12.10
+
+* Updated to Kotlin 1.3.50
+
 # Version 0.12.9
 
 * Updated to Kotlin 1.3.40
