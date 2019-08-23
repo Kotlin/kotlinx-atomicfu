@@ -7,10 +7,10 @@
 package kotlinx.atomicfu
 
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.atomic.LongAdder
-import java.util.concurrent.locks.LockSupport
+import java.util.concurrent.atomic.*
+import java.util.concurrent.locks.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 private const val PAUSE_EVERY_N_STEPS = 1000
 private const val STALL_LIMIT_MS = 15_000L // 15s
@@ -25,7 +25,8 @@ private const val MAX_PARK_NANOS = 1_000_000L // part for at most 1ms just in ca
  * that are written with [atomic] variables.
  */
 public open class LockFreedomTestEnvironment(
-    private val name: String
+    private val name: String,
+    private val allowSuspendedThreads: Int = 0
 ) {
     private val interceptor = Interceptor()
     private val threads = mutableListOf<TestThread>()
@@ -33,6 +34,10 @@ public open class LockFreedomTestEnvironment(
     private val uncaughtException = AtomicReference<Throwable?>()
     private var started = false
     private var performedResumes = 0
+
+    @Volatile
+    private var completed = false
+    private val onCompletion = mutableListOf<() -> Unit>()
 
     private val ueh = Thread.UncaughtExceptionHandler { t, e ->
         synchronized(System.out) {
@@ -47,6 +52,7 @@ public open class LockFreedomTestEnvironment(
     // status == STATUS_DONE - done working
     private val status = AtomicInteger()
     private val globalPauseProgress = AtomicInteger()
+    private val suspendedThreads = ArrayList<TestThread>()
 
     @Volatile
     private var isActive = true
@@ -60,7 +66,8 @@ public open class LockFreedomTestEnvironment(
     public fun performTest(seconds: Int, progress: () -> Unit = {}) {
         check(isActive) { "Can perform test at most once on this instance" }
         println("=== $name")
-        check(threads.size >= 2) { "Must define at least two test threads" }
+        val minThreads = 2 + allowSuspendedThreads
+        check(threads.size >= minThreads) { "Must define at least $minThreads test threads" }
         lockAndSetInterceptor(interceptor)
         started = true
         var nextTime = System.currentTimeMillis()
@@ -69,23 +76,41 @@ public open class LockFreedomTestEnvironment(
             thread.lastOpTime = nextTime
             thread.start()
         }
-        var second = 0
-        while (true) {
-            waitUntil(nextTime)
-            println("--- $second: Performed ${performedOps.sum()} operations${resumeStr()}")
-            progress()
-            checkStalled()
-            if (++second > seconds) break
-            nextTime += 1000L
+        try {
+            var second = 0
+            while (uncaughtException.get() == null) {
+                waitUntil(nextTime)
+                println("--- $second: Performed ${performedOps.sum()} operations${resumeStr()}")
+                progress()
+                checkStalled()
+                if (++second > seconds) break
+                nextTime += 1000L
+            }
+        } finally {
+            complete()
         }
-        // shutdown all non-paused threads first
+        println("------ Done with ${performedOps.sum()} operations${resumeStr()}")
+        progress()
+    }
+
+    private fun complete() {
         val shutdownDeadline = System.currentTimeMillis() + STALL_LIMIT_MS
-        isActive = false
-        while (System.currentTimeMillis() < shutdownDeadline) {
-            if (!hasActiveNonPausedThread()) break
-            checkStalled()
-            Thread.sleep(SHUTDOWN_CHECK_MS)
+        try {
+            completed = true
+            onCompletion.forEach { it() }
+            // shutdown all non-paused threads first
+            isActive = false
+            while (System.currentTimeMillis() < shutdownDeadline) {
+                if (!hasActiveNonPausedThread()) break
+                checkStalled()
+                Thread.sleep(SHUTDOWN_CHECK_MS)
+            }
+        } finally {
+            shutdown(shutdownDeadline)
         }
+    }
+
+    private fun shutdown(shutdownDeadline: Long) {
         // shutdown paused threads (if any)
         val curStatus = status.getAndSet(STATUS_DONE)
         if (curStatus < 0) LockSupport.unpark(threads[curStatus.inv()])
@@ -93,12 +118,12 @@ public open class LockFreedomTestEnvironment(
             val remaining = shutdownDeadline - System.currentTimeMillis()
             if (remaining > 0) it.join(remaining)
         }
+        // abort waiting threads (if still any left)
+        threads.forEach { it.abortWait() }
         // cleanup & be done
         unlockAndResetInterceptor(interceptor)
         uncaughtException.get()?.let { throw it }
         threads.find { it.isAlive }?.let { dumpThreadsError("A thread is still alive: $it")}
-        println("------ Done with ${performedOps.sum()} operations${resumeStr()}")
-        progress()
     }
 
     private fun checkStalled() {
@@ -138,21 +163,33 @@ public open class LockFreedomTestEnvironment(
     }
 
     /**
+     * Returns true when test was completed.
+     * Sets to true before calling [onCompletion] blocks.
+     */
+    public val isCompleted: Boolean get() = completed
+
+    /**
+     * Performs a given block of code on test's completion
+     */
+    public fun onCompletion(block: () -> Unit) {
+        onCompletion += block
+    }
+
+    /**
      * Creates a new test thread in this environment that is executes a given lock-free [operation]
      * in a loop while this environment [isActive].
      */
-    public inline fun testThread(name: String? = null, crossinline operation: TestThread.() -> Unit) =
-        object : TestThread(name) {
-            override fun operation() {
-                operation.invoke(this)
-            }
-        }
+    public fun testThread(name: String? = null, operation: suspend TestThread.() -> Unit): TestThread =
+        TestThread(name, operation)
 
     /**
      * Test thread.
      */
     @Suppress("LeakingThis")
-    public abstract inner class TestThread(name: String?) : Thread(composeThreadName(name)) {
+    public inner class TestThread internal constructor(
+        name: String?,
+        private val operation: suspend TestThread.() -> Unit
+    ) : Thread(composeThreadName(name)) {
         internal val index: Int
 
         internal @Volatile var lastOpTime = 0L
@@ -171,15 +208,11 @@ public open class LockFreedomTestEnvironment(
             threads += this
         }
 
-        public final override fun run() {
+        public override fun run() {
             while (isActive) {
-                ensureLockFree {
-                    operation()
-                }
+                callOperation()
             }
         }
-
-        public abstract fun operation()
 
         /**
          * Use it to insert an arbitrary intermission between lock-free operations.
@@ -190,15 +223,6 @@ public open class LockFreedomTestEnvironment(
                 finally { beforeLockFreeOperation() }
         }
 
-        /**
-         * Wrapper around lock-free operations.
-         */
-        private inline fun <T> ensureLockFree(operation: () -> T): T {
-            beforeLockFreeOperation()
-            return try { operation() }
-                finally { afterLockFreeOperation() }
-        }
-
         @PublishedApi
         internal fun beforeLockFreeOperation() {
             operationEpoch = getPausedEpoch()
@@ -206,17 +230,20 @@ public open class LockFreedomTestEnvironment(
 
         @PublishedApi
         internal fun afterLockFreeOperation() {
-            if (operationEpoch > progressEpoch) {
-                progressEpoch = operationEpoch
-                val total = globalPauseProgress.incrementAndGet()
-                if (total >= threads.size - 1) {
-                    check(total == threads.size - 1)
-                    check(globalPauseProgress.compareAndSet(threads.size - 1, 0))
-                    resumeImpl()
-                }
-            }
+            makeProgress(operationEpoch)
             lastOpTime = System.currentTimeMillis()
             performedOps.add(1)
+        }
+
+        private fun makeProgress(epoch: Int) {
+            if (epoch <= progressEpoch) return
+            progressEpoch = epoch
+            val total = globalPauseProgress.incrementAndGet()
+            if (total >= threads.size - 1) {
+                check(total == threads.size - 1)
+                check(globalPauseProgress.compareAndSet(threads.size - 1, 0))
+                resumeImpl()
+            }
         }
 
         /**
@@ -248,9 +275,131 @@ public open class LockFreedomTestEnvironment(
                 }
             }
         }
+
+        // ----- Lightweight support for suspending operations -----
+
+        private fun callOperation() {
+            beforeLockFreeOperation()
+            beginRunningOperation()
+            val result = operation.startCoroutineUninterceptedOrReturn(this, completion)
+            when {
+                result === Unit -> afterLockFreeOperation() // operation completed w/o suspension -- done
+                result === COROUTINE_SUSPENDED -> waitUntilCompletion() // operation had suspended
+                else -> error("Unexpected result of operation: $result")
+            }
+            try {
+                doneRunningOperation()
+            } catch(e: IllegalStateException) {
+                throw IllegalStateException("${e.message}; original start result=$result", e)
+            }
+        }
+
+        private var runningOperation = false
+        private var result: Result<Any?>? = null
+        private var continuation: Continuation<Any?>? = null
+
+        private fun waitUntilCompletion() {
+            try {
+                while (true) {
+                    afterLockFreeOperation()
+                    val result: Result<Any?> = waitForResult()
+                    val continuation = takeContinuation()
+                    if (continuation == null) { // done
+                        check(result.getOrThrow() === Unit)
+                        return
+                    }
+                    removeSuspended(this)
+                    beforeLockFreeOperation()
+                    continuation.resumeWith(result)
+                }
+            } finally {
+                removeSuspended(this)
+            }
+        }
+
+        private fun beginRunningOperation() {
+            runningOperation = true
+            result = null
+            continuation = null
+        }
+
+        @Synchronized
+        private fun doneRunningOperation() {
+            check(runningOperation) { "Should be running operation" }
+            check(result == null && continuation == null) {
+                "Callback invoked with result=$result, continuation=$continuation"
+            }
+            runningOperation = false
+        }
+
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        @Synchronized
+        private fun resumeWith(result: Result<Any?>, continuation: Continuation<Any?>?) {
+            check(runningOperation) { "Should be running operation" }
+            check(this.result == null && this.continuation == null) {
+                "Resumed again with result=$result, continuation=$continuation, when this: result=${this.result}, continuation=${this.continuation}"
+            }
+            this.result = result
+            this.continuation = continuation
+            (this as Object).notifyAll()
+        }
+
+        @Suppress("RESULT_CLASS_IN_RETURN_TYPE", "PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        @Synchronized
+        private fun waitForResult(): Result<Any?> {
+            while (true) {
+                val result = this.result
+                if (result != null) return result
+                val index = addSuspended(this)
+                if (index < allowSuspendedThreads) {
+                    // This suspension was permitted, so assume progress is happening while it is suspended
+                    makeProgress(getPausedEpoch())
+                }
+                (this as Object).wait(10) // at most 10 ms
+            }
+        }
+
+        @Synchronized
+        private fun takeContinuation(): Continuation<Any?>? =
+            continuation.also {
+                this.result = null
+                this.continuation = null
+            }
+
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+        @Synchronized
+        fun abortWait() {
+            this.result = Result.failure(IllegalStateException("Aborted at the end of test"))
+            (this as Object).notifyAll()
+        }
+
+        private val interceptor: CoroutineContext = object : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+            override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
+                Continuation<T>(this) {
+                    @Suppress("UNCHECKED_CAST")
+                    resumeWith(it, continuation as Continuation<Any?>)
+                }
+        }
+
+        private val completion = Continuation<Unit>(interceptor) {
+            resumeWith(it, null)
+        }
     }
 
     // ---------- Implementation ----------
+
+    @Synchronized
+    private fun addSuspended(thread: TestThread): Int {
+        val index = suspendedThreads.indexOf(thread)
+        if (index >= 0) return index
+        suspendedThreads.add(thread)
+        return suspendedThreads.size - 1
+    }
+
+    @Synchronized
+    private fun removeSuspended(thread: TestThread) {
+        suspendedThreads.remove(thread)
+    }
 
     private fun getPausedEpoch(): Int {
         while (true) {
