@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.12.11
+
+* Support suspending functions in LockFreedomTestEnvironment.
+
 # Version 0.12.10
 
 * Updated to Kotlin 1.3.50
