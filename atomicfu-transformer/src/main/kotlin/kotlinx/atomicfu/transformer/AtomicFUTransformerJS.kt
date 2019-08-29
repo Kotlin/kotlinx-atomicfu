@@ -279,10 +279,7 @@ class AtomicFUTransformerJS(
                     else if (node.target.toSource() == RECEIVER) {
                         val rr = ReceiverResolver()
                         node.enclosingFunction.visit(rr)
-                        if (rr.receiver != null) {
-                            val field = rr.receiver as PropertyGet
-                            node.setLeftAndRight(field.target, field.property)
-                        }
+                        rr.receiver?.let { node.target = it }
                     }
                 }
             }
@@ -348,10 +345,16 @@ class AtomicFUTransformerJS(
     }
 
     private fun AstNode.isThisNode(): Boolean {
-        return if (this is PropertyGet) {
-            if (target.type == Token.THIS) true else target.isThisNode()
-        } else {
-            (this.type == Token.THIS)
+        return when(this) {
+            is PropertyGet -> {
+                target.isThisNode()
+            }
+            is FunctionCall -> {
+                target.isThisNode()
+            }
+            else -> {
+                (this.type == Token.THIS)
+            }
         }
     }
 
@@ -365,14 +368,24 @@ class AtomicFUTransformerJS(
     }
 
     private fun AstNode.scopedSource(): String {
-        return if (this.isThisNode() && this is PropertyGet) {
-            val property = resolvePropName()
-            "$SCOPE.$property"
-        } else if (this.type == Token.THIS) {
-            SCOPE
-        } else {
-            this.toSource()
+        if (this.isThisNode()) {
+            if (this is PropertyGet) {
+                val property = resolvePropName()
+                return "$SCOPE.$property"
+            } else if (this is FunctionCall && this.target is PropertyGet) {
+                // check that this function call is getting array element
+                if (this.target is PropertyGet) {
+                    val funcName = (this.target as PropertyGet).property.toSource()
+                    if (Regex(GET_ELEMENT).matches(funcName)) {
+                        val property = (this.target as PropertyGet).resolvePropName()
+                        return "$SCOPE.$property(${this.arguments[0].toSource()})"
+                    }
+                }
+            } else if (this.type == Token.THIS) {
+                return SCOPE
+            }
         }
+        return this.toSource()
     }
 
     private fun FunctionCall.inlineAtomicOperation(

@@ -86,7 +86,7 @@ class ArrayTest {
         A.genericArr[2].lazySet(l1)
         check(A.genericArr[2].compareAndSet(l1, l2))
 
-        A.cgArr[0].value = mapOf(listOf("A", "B") to "C")
+        A.mapArr[0].value = mapOf(listOf("A", "B") to "C")
     }
 
     @Test
@@ -114,7 +114,8 @@ class AtomicArrayClass {
     val booleanArr = AtomicBooleanArray(10)
     val refArr = AtomicArray<ARef>(10)
     val genericArr = AtomicArray<List<List<String>>>(10)
-    val cgArr = atomicArrayOfNulls<Map<List<String>, String>>(10)
+    val mapArr = atomicArrayOfNulls<Map<List<String>, String>>(10)
+    val anyArr = atomicArrayOfNulls<Any?>(10)
     val a = atomic(ARef(8))
 }
 
