@@ -676,14 +676,8 @@ class AtomicFUTransformer(
             }
             // An operation other than getValue/setValue is used
             if (f.isArray && iv.name == "get") { // "operator get" that retrieves array element, further ops apply to it
-                // save stack start of atomic operation args
-                val args = iv.next
-                // remove getter of array element
-                instructions.remove(iv)
                 // fixup atomic operation on this array element
-                val nextAtomicOperation = FlowAnalyzer(args).execute() as MethodInsnNode
-                val fixedAtomicOperation = fixupInvokeVirtual(ld, true, nextAtomicOperation, f)
-                return fixedAtomicOperation!!.next
+                return fixupLoadedArrayElement(f, ld, iv)
             } else {
                 // non-trivial atomic operation
                 check(f.isArray == onArrayElement) { "Atomic operations can be performed on atomic elements only" }
@@ -806,33 +800,65 @@ class AtomicFUTransformer(
 
         private fun fixupLoadedAtomicVar(f: FieldInfo, ld: FieldInsnNode): AbstractInsnNode? {
             val j = FlowAnalyzer(ld.next).execute()
-            when (j) {
+            return fixupOperationOnAtomicVar(j, f, ld, null)
+        }
+
+        private fun fixupLoadedArrayElement(f: FieldInfo, ld: FieldInsnNode, getter: MethodInsnNode): AbstractInsnNode? {
+            // contains array field load (in vh case: + swap and pure type array load) and array element index
+            // this array element information is only used in case the reference to this element is stored (copied and inserted at the point of loading)
+            val arrayElementInfo = mutableListOf<AbstractInsnNode>()
+            if (vh) {
+                arrayElementInfo.add(ld.previous.previous) // getstatic VarHandle field
+                arrayElementInfo.add(ld.previous) // swap
+            }
+            var i: AbstractInsnNode = ld
+            while (i != getter) {
+                arrayElementInfo.add(i)
+                i = i.next
+            }
+            // start of array element operation arguments
+            val args = getter.next
+            // remove array element getter
+            instructions.remove(getter)
+            val arrayElementOperation = FlowAnalyzer(args).execute()
+            return fixupOperationOnAtomicVar(arrayElementOperation, f, ld, arrayElementInfo)
+        }
+
+        private fun fixupOperationOnAtomicVar(operation: AbstractInsnNode, f: FieldInfo, ld: FieldInsnNode, arrayElementInfo: List<AbstractInsnNode>?): AbstractInsnNode? {
+            when (operation) {
                 is MethodInsnNode -> {
                     // invoked virtual method on atomic var -- fixup & done with it
-                    debug("invoke $f.${j.name}", sourceInfo.copy(i = j))
-                    return fixupInvokeVirtual(ld, false, j, f)
+                    debug("invoke $f.${operation.name}", sourceInfo.copy(i = operation))
+                    return fixupInvokeVirtual(ld, arrayElementInfo != null, operation, f)
                 }
                 is VarInsnNode -> {
+                    val onArrayElement = arrayElementInfo != null
+                    check(f.isArray == onArrayElement)
                     // was stored to local -- needs more processing:
                     // store owner ref into the variable instead
-                    val v = j.`var`
-                    val next = j.next
-                    instructions.remove(ld)
-                    val lv = localVar(v, j)
+                    val v = operation.`var`
+                    val next = operation.next
+                    if (onArrayElement) {
+                        // leave just owner class load insn on stack
+                        arrayElementInfo!!.forEach { instructions.remove(it) }
+                    } else {
+                        instructions.remove(ld)
+                    }
+                    val lv = localVar(v, operation)
                     if (lv != null) {
                         // Stored to a local variable with an entry in LVT (typically because of inline function)
-                        if (lv.desc != f.fieldType.descriptor)
+                        if (lv.desc != f.fieldType.descriptor && !onArrayElement)
                             abort("field $f was stored to a local variable #$v \"${lv.name}\" with unexpected type: ${lv.desc}")
                         // correct local variable descriptor
                         lv.desc = f.ownerType.descriptor
                         lv.signature = null
                         // process all loads of this variable in the corresponding local variable range
                         forVarLoads(v, lv.start, lv.end) { otherLd ->
-                            fixupVarLoad(f, ld, otherLd)
+                            fixupLoad(f, ld, otherLd, arrayElementInfo)
                         }
                     } else {
                         // Spilled temporarily to a local variable w/o an entry in LVT -> fixup only one load
-                        fixupVarLoad(f, ld, nextVarLoad(v, next))
+                        fixupLoad(f, ld, nextVarLoad(v, next), arrayElementInfo)
                     }
                     return next
                 }
@@ -840,10 +866,57 @@ class AtomicFUTransformer(
             }
         }
 
+        private fun fixupLoad(f: FieldInfo, ld: FieldInsnNode, otherLd: VarInsnNode, arrayElementInfo: List<AbstractInsnNode>?): AbstractInsnNode? =
+            if (arrayElementInfo != null) {
+                fixupArrayElementLoad(f, ld, otherLd, arrayElementInfo)
+            } else {
+                fixupVarLoad(f, ld, otherLd)
+            }
+
         private fun fixupVarLoad(f: FieldInfo, ld: FieldInsnNode, otherLd: VarInsnNode): AbstractInsnNode? {
             val ldCopy = ld.clone(null) as FieldInsnNode
             instructions.insert(otherLd, ldCopy)
             return fixupLoadedAtomicVar(f, ldCopy)
+        }
+
+        private fun fixupArrayElementLoad(f: FieldInfo, ld: FieldInsnNode, otherLd: VarInsnNode, arrayElementInfo: List<AbstractInsnNode>): AbstractInsnNode? {
+            // index instructions from array element info: drop owner class load instruction (in vh case together with preceding getting VH + swap)
+            val index = arrayElementInfo.drop(if (vh) 3 else 1)
+            // previously stored array element reference is loaded -> arrayElementInfo should be cloned and inserted at the point of this load
+            // before cloning make sure that index instructions contain just loads and simple arithmetic, without any invocations and complex data flow
+            for (indexInsn in index) {
+                checkDataFlowComplexity(indexInsn)
+            }
+            // start of atomic operation arguments
+            val args = otherLd.next
+            val operationOnArrayElement = FlowAnalyzer(args).execute()
+            val arrayElementInfoCopy = mutableListOf<AbstractInsnNode>()
+            arrayElementInfo.forEach { arrayElementInfoCopy.add(it.clone(null)) }
+            arrayElementInfoCopy.forEach { instructions.insertBefore(args, it) }
+            return fixupOperationOnAtomicVar(operationOnArrayElement, f, ld, arrayElementInfo)
+        }
+
+        fun checkDataFlowComplexity(i: AbstractInsnNode) {
+            when (i) {
+                is MethodInsnNode -> {
+                    abort("No method invocations are allowed for calculation of an array element index " +
+                        "at the point of loading the reference to this element.\n" +
+                        "Extract index calculation to the local variable.", i)
+                }
+                is LdcInsnNode -> { /* ok loading const */ }
+                else -> {
+                    when(i.opcode) {
+                        IADD, ISUB, IMUL, IDIV, IREM, IAND, IOR, IXOR, ISHL, ISHR, IUSHR -> { /* simple arithmetics */ }
+                        ICONST_M1, ICONST_0, ICONST_1, ICONST_2, ICONST_3, ICONST_4, ICONST_5, ILOAD, IALOAD -> { /* int loads */ }
+                        GETFIELD, GETSTATIC -> { /* getting fields */ }
+                        else -> {
+                            abort("Complex data flow is not allowed for calculation of an array element index " +
+                                "at the point of loading the reference to this element.\n" +
+                                "Extract index calculation to the local variable.", i)
+                        }
+                    }
+                }
+            }
         }
 
         private fun putPrimitiveTypeWrapper(
@@ -885,7 +958,6 @@ class AtomicFUTransformer(
                     MethodInsnNode(INVOKESPECIAL, descToName(jucaAtomicArrayDesc), "<init>", "(I)V", false)
                 instructions.set(arrayfactoryInsn, jucaArrayFactory)
             }
-
             //fix the following putfield
             next.desc = jucaAtomicArrayDesc
             next.name = f.name
