@@ -20,6 +20,8 @@ private const val SCOPE = "scope"
 private const val FACTORY = "factory"
 private const val REQUIRE = "require"
 private const val KOTLINX_ATOMICFU = "'kotlinx-atomicfu'"
+private const val KOTLIN_TYPE_CHECK = "Kotlin.isType"
+private const val ATOMIC_REF = "AtomicRef"
 private const val MODULE_KOTLINX_ATOMICFU = "\$module\$kotlinx_atomicfu"
 private const val ARRAY = "Array"
 private const val FILL = "fill"
@@ -266,8 +268,10 @@ class AtomicFUTransformerJS(
                 }
             }
             // remove value property call
-            if (node.type == Token.GETPROP) {
-                if ((node as PropertyGet).property.toSource() == MANGLED_VALUE_PROP) {
+            if (node is PropertyGet) {
+                if (node.property.toSource() == MANGLED_VALUE_PROP) {
+                    // check whether atomic operation is performed on the type casted atomic field
+                    node.target.eraseAtomicFieldFromUncheckedCast()?.let { node.target = it }
                     // A.a.value
                     if (node.target.type == Token.GETPROP) {
                         val clearField = node.target as PropertyGet
@@ -335,6 +339,7 @@ class AtomicFUTransformerJS(
                             field = rr.receiver
                         }
                     }
+                    field.eraseAtomicFieldFromUncheckedCast()?.let { field = it }
                     val args = node.arguments
                     val inlined = node.inlineAtomicOperation(funcName.toSource(), field, args)
                     return !inlined
@@ -342,6 +347,21 @@ class AtomicFUTransformerJS(
             }
             return true
         }
+    }
+
+    private fun AstNode.eraseAtomicFieldFromUncheckedCast(): AstNode? {
+        if (this is ParenthesizedExpression && expression is ConditionalExpression) {
+            val testExpression = (expression as ConditionalExpression).testExpression
+            if (testExpression is FunctionCall && testExpression.target.toSource() == KOTLIN_TYPE_CHECK) {
+                // type check
+                val typeToCast = testExpression.arguments[1]
+                if ((typeToCast as Name).identifier == ATOMIC_REF) {
+                    // unchecked type cast -> erase atomic field itself
+                    return (testExpression.arguments[0] as Assignment).right
+                }
+            }
+        }
+        return null
     }
 
     private fun AstNode.isThisNode(): Boolean {
