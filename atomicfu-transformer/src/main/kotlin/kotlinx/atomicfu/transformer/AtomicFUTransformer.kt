@@ -28,6 +28,8 @@ private val INT_ARRAY_TYPE = getType("[I")
 private val LONG_ARRAY_TYPE = getType("[J")
 private val BOOLEAN_ARRAY_TYPE = getType("[Z")
 private val REF_ARRAY_TYPE = getType("[Ljava/lang/Object;")
+private val REF_TYPE = getType("L$AFU_PKG/AtomicRef;")
+private val ATOMIC_ARRAY_TYPE = getType("L$AFU_PKG/AtomicArray;")
 
 private val AFU_CLASSES: Map<String, TypeInfo> = mapOf(
     "$AFU_PKG/AtomicInt" to TypeInfo(getObjectType("$JUCA_PKG/AtomicIntegerFieldUpdater"), INT_TYPE, INT_TYPE),
@@ -798,12 +800,29 @@ class AtomicFUTransformer(
             iv.desc = getMethodDescriptor(ret, OBJECT_TYPE, *args)
         }
 
+        private fun tryEraseUncheckedCast(getter: AbstractInsnNode) {
+            if (getter.next.opcode == DUP && getter.next.next.opcode == IFNONNULL) {
+                // unchecked cast upon AtomicRef var is performed
+                // erase compiler check for this var being not null:
+                // (remove all insns from ld till the non null branch label)
+                val ifnonnull = (getter.next.next as JumpInsnNode)
+                var i: AbstractInsnNode = getter.next
+                while (!(i is LabelNode && i.label == ifnonnull.label.label)) {
+                    val next = i.next
+                    instructions.remove(i)
+                    i = next
+                }
+            }
+        }
+
         private fun fixupLoadedAtomicVar(f: FieldInfo, ld: FieldInsnNode): AbstractInsnNode? {
+            if (f.fieldType == REF_TYPE) tryEraseUncheckedCast(ld)
             val j = FlowAnalyzer(ld.next).execute()
             return fixupOperationOnAtomicVar(j, f, ld, null)
         }
 
         private fun fixupLoadedArrayElement(f: FieldInfo, ld: FieldInsnNode, getter: MethodInsnNode): AbstractInsnNode? {
+            if (f.fieldType == ATOMIC_ARRAY_TYPE) tryEraseUncheckedCast(getter)
             // contains array field load (in vh case: + swap and pure type array load) and array element index
             // this array element information is only used in case the reference to this element is stored (copied and inserted at the point of loading)
             val arrayElementInfo = mutableListOf<AbstractInsnNode>()
@@ -880,6 +899,7 @@ class AtomicFUTransformer(
         }
 
         private fun fixupArrayElementLoad(f: FieldInfo, ld: FieldInsnNode, otherLd: VarInsnNode, arrayElementInfo: List<AbstractInsnNode>): AbstractInsnNode? {
+            if (f.fieldType == ATOMIC_ARRAY_TYPE) tryEraseUncheckedCast(otherLd)
             // index instructions from array element info: drop owner class load instruction (in vh case together with preceding getting VH + swap)
             val index = arrayElementInfo.drop(if (vh) 3 else 1)
             // previously stored array element reference is loaded -> arrayElementInfo should be cloned and inserted at the point of this load
