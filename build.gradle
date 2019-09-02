@@ -37,7 +37,6 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
     }
 }
 
@@ -90,4 +89,4 @@ if (build_snapshot_train) {
 }
 
 // main deployment task
-task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
+task deploy(dependsOn: getTasksByName("publish", true) + getTasksByName("publishNpm", true))
