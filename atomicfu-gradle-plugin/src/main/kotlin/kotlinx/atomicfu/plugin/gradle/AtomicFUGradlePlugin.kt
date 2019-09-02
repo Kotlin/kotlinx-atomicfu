@@ -345,8 +345,7 @@ fun AtomicFUTransformJsTask.configureJsTask(
         verbose = config.verbose
     }
 
-fun Jar.setupJarManifest(multiRelease: Boolean, classifier: String = "") {
-    this.classifier = classifier // todo: why we overwrite jar's classifier?
+fun Jar.setupJarManifest(multiRelease: Boolean) {
     if (multiRelease) {
         manifest.attributes.apply {
             put("Multi-Release", "true")
