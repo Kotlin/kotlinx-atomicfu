@@ -232,9 +232,5 @@ afterEvaluate {
         js.artifactId = 'atomicfu-js'
         metadata.artifactId = 'atomicfu-common'
         kotlinMultiplatform.artifactId = 'atomicfu-native'
-
-        configure([metadata, jvm, js]) { pub ->
-            pub.moduleDescriptorGenerator = null
-        }
     }
 }

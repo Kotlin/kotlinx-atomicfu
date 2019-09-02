@@ -21,6 +21,9 @@ abstract class BaseKotlinGradleTest {
         val projectDir = workingDir.resolve(name).apply { mkdirs() }
         originalProjectDir.listFiles().forEach { it.copyRecursively(projectDir.resolve(it.name)) }
 
+        // Add an empty setting.gradle
+        projectDir.resolve("settings.gradle").writeText("// this file is intentionally left empty")
+
         Project(projectDir = projectDir).fn()
     }
 }

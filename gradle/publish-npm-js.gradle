@@ -29,7 +29,7 @@ task preparePublishNpm(type: Copy, dependsOn: [compileKotlinJs]) {
     into npmDeployDir
 }
 
-task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
+task performPublishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
     workingDir = npmDeployDir
     def deployArgs = ['publish',
                       "--//registry.npmjs.org/:_authToken=$authToken",
@@ -42,4 +42,17 @@ task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
             args = deployArgs
         }
     }
+
+    if (authToken == "") {
+        enabled = false // skip npm publishing when token is not set
+    }
 }
+
+task publishNpm(dependsOn: performPublishNpm) {
+    doFirst {
+        if (!performPublishNpm.enabled) {
+            println("NOTE: publishNpm is skipped because 'kotlin.npmjs.auth.token' is not set")
+        }
+    }
+}
+
