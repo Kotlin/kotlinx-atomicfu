@@ -97,11 +97,24 @@ public open class LockFreedomTestEnvironment(
         val shutdownDeadline = System.currentTimeMillis() + STALL_LIMIT_MS
         try {
             completed = true
+            // perform custom completion blocks. For testing of things like channels, these custom completion
+            // blocks close all the channels, so that all suspended coroutines shall get resumed.
             onCompletion.forEach { it() }
-            // shutdown all non-paused threads first
+            // signal shutdown to all threads (non-paused threads will terminate)
             isActive = false
+            // wait for threads to terminate
             while (System.currentTimeMillis() < shutdownDeadline) {
-                if (!hasActiveNonPausedThread()) break
+                // Check all threads while shutting down:
+                // All terminated threads are considered to make progress for the purpose of resuming stalled ones
+                var hasActiveNonPausedThread = false
+                for (t in threads) {
+                    when {
+                        !t.isAlive -> t.makeProgress(getPausedEpoch()) // not alive - makes progress
+                        t.index.inv() == status.get() -> {} // active, paused -- skip
+                        else -> hasActiveNonPausedThread = true
+                    }
+                }
+                if (!hasActiveNonPausedThread) break
                 checkStalled()
                 Thread.sleep(SHUTDOWN_CHECK_MS)
             }
@@ -111,7 +124,7 @@ public open class LockFreedomTestEnvironment(
     }
 
     private fun shutdown(shutdownDeadline: Long) {
-        // shutdown paused threads (if any)
+        // forcefully unpause paused threads to shut them down (if any left)
         val curStatus = status.getAndSet(STATUS_DONE)
         if (curStatus < 0) LockSupport.unpark(threads[curStatus.inv()])
         threads.forEach {
@@ -131,9 +144,6 @@ public open class LockFreedomTestEnvironment(
         val stalled = threads.filter { it.lastOpTime < stallLimit }
         if (stalled.isNotEmpty()) dumpThreadsError("Progress stalled in threads ${stalled.map { it.name }}")
     }
-
-    private fun hasActiveNonPausedThread(): Boolean =
-        threads.any { it.isAlive && it.index.inv() != status.get() }
 
     private fun resumeStr(): String {
         val resumes = performedResumes
@@ -235,7 +245,7 @@ public open class LockFreedomTestEnvironment(
             performedOps.add(1)
         }
 
-        private fun makeProgress(epoch: Int) {
+        internal fun makeProgress(epoch: Int) {
             if (epoch <= progressEpoch) return
             progressEpoch = epoch
             val total = globalPauseProgress.incrementAndGet()
