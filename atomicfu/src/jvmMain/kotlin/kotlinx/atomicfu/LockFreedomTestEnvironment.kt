@@ -94,6 +94,7 @@ public open class LockFreedomTestEnvironment(
     }
 
     private fun complete() {
+        val activeNonPausedThreads: MutableMap<TestThread, Array<StackTraceElement>> = mutableMapOf()
         val shutdownDeadline = System.currentTimeMillis() + STALL_LIMIT_MS
         try {
             completed = true
@@ -106,21 +107,30 @@ public open class LockFreedomTestEnvironment(
             while (System.currentTimeMillis() < shutdownDeadline) {
                 // Check all threads while shutting down:
                 // All terminated threads are considered to make progress for the purpose of resuming stalled ones
-                var hasActiveNonPausedThread = false
+                activeNonPausedThreads.clear()
                 for (t in threads) {
                     when {
                         !t.isAlive -> t.makeProgress(getPausedEpoch()) // not alive - makes progress
                         t.index.inv() == status.get() -> {} // active, paused -- skip
-                        else -> hasActiveNonPausedThread = true
+                        else -> {
+                            val stackTrace = t.stackTrace
+                            if (t.isAlive) activeNonPausedThreads[t] = stackTrace
+                        }
                     }
                 }
-                if (!hasActiveNonPausedThread) break
+                if (activeNonPausedThreads.isEmpty()) break
                 checkStalled()
                 Thread.sleep(SHUTDOWN_CHECK_MS)
+            }
+            activeNonPausedThreads.forEach { (t, stackTrack) ->
+                println("=== $t had failed to shutdown in time")
+                stackTrack.forEach { println("\tat $it") }
             }
         } finally {
             shutdown(shutdownDeadline)
         }
+        // if no other exception was throws & we had threads that did not shut down -- still fails
+        if (activeNonPausedThreads.isNotEmpty()) error("Some threads had failed to shutdown in time")
     }
 
     private fun shutdown(shutdownDeadline: Long) {
