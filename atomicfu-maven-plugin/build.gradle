@@ -20,6 +20,7 @@ dependencies {
 def pomFile = file("$buildDir/pom.xml")
 def outputDir = compileKotlin.destinationDirectory
 def buildSnapshots = rootProject.properties['build_snapshot_train'] != null
+def kotlinCompiler = rootProject.properties['kotlinCompilerRepo']
 
 evaluationDependsOn(':atomicfu-transformer')
 
@@ -48,6 +49,11 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                             appendNode('url', 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev')
                         }
 
+                        }
+
+                        appendNode('repository').with {
+                            appendNode('id', 'teamcity')
+                            appendNode('url', kotlinCompiler)
                         if (buildSnapshots) {
                             appendNode('repository').with {
                                 appendNode('id', 'kotlin-snapshots')
