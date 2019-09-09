@@ -20,6 +20,7 @@ dependencies {
 def pomFile = file("$buildDir/pom.xml")
 def outputDir = compileKotlin.destinationDir
 def buildSnapshots = rootProject.properties['build_snapshot_train'] != null
+def kotlinCompiler = rootProject.properties['kotlinCompilerRepo']
 
 evaluationDependsOn(':atomicfu-transformer')
 
@@ -56,6 +57,11 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                         appendNode('repository').with {
                             appendNode('id', 'kotlinx')
                             appendNode('url', 'https://kotlin.bintray.com/kotlinx')
+                        }
+
+                        appendNode('repository').with {
+                            appendNode('id', 'teamcity')
+                            appendNode('url', kotlinCompiler)
                         }
 
                         if (buildSnapshots) {
