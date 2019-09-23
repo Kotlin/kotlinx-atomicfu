@@ -8,12 +8,14 @@ apply from: rootProject.file("gradle/targets.gradle")
 
 project.ext.nativeMainSets = []
 project.ext.nativeTestSets = []
+project.ext.nativeCompilations = []
 
 kotlin {
     targets.metaClass.addTarget = { preset ->
         def target = delegate.fromPreset(preset, preset.name)
         project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
         project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
+        project.ext.nativeCompilations.add(target.compilations['main'])
     }
 
     targets {
@@ -74,9 +76,23 @@ kotlin {
         }
         nativeMain { dependsOn commonMain }
 
+        nativeTest {}
+
         if (!project.ext.ideaActive) {
             configure(nativeMainSets) {
                 dependsOn nativeMain
+            }
+
+            configure(nativeTestSets) {
+                dependsOn nativeTest
+            }
+        }
+    }
+
+    configure(project.ext.nativeCompilations) {
+        cinterops {
+            interop {
+                defFile 'src/nativeInterop/cinterop/interop.def'
             }
         }
     }

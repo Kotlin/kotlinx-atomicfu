@@ -1,0 +1,45 @@
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+typedef struct lock_support {
+    volatile int locked;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+} lock_support_t;
+
+typedef struct mutex_node {
+    lock_support_t* mutex;
+    struct mutex_node* next;
+} mutex_node_t;
+
+lock_support_t* lock_support_init() {
+    lock_support_t * ls = (lock_support_t *) malloc(sizeof(lock_support_t));
+    ls->locked = 0;
+    pthread_mutex_init(&ls->mutex, NULL);
+    pthread_cond_init(&ls->cond, NULL);
+    return ls;
+}
+
+mutex_node_t* mutex_node_init(mutex_node_t* mutexNode) {
+    mutexNode->mutex = lock_support_init();
+    mutexNode->next = NULL;
+    return mutexNode;
+}
+
+void lock(lock_support_t* ls) {
+    pthread_mutex_lock(&ls->mutex);
+    while (ls->locked == 1) { // wait till locked are available
+        pthread_cond_wait(&ls->cond, &ls->mutex);
+    }
+    ls->locked = 1;
+    pthread_mutex_unlock(&ls->mutex);
+}
+
+void unlock(lock_support_t* ls) {
+    pthread_mutex_lock(&ls->mutex);
+    ls->locked = 0;
+    pthread_cond_broadcast(&ls->cond);
+    pthread_mutex_unlock(&ls->mutex);
+}
