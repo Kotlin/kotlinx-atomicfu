@@ -71,7 +71,19 @@ fun AbstractInsnNode.isReturn() =
 
 @Suppress("UNCHECKED_CAST")
 fun MethodNode.localVar(v: Int, node: AbstractInsnNode): LocalVariableNode? =
-    (localVariables as List<LocalVariableNode>).firstOrNull { it.index == v && node.next === it.start }
+    (localVariables as List<LocalVariableNode>).firstOrNull { it.index == v && verifyLocalVarScopeStart(v, node, it.start)}
+
+// checks that the store instruction is followed by the label equal to the local variable scope start from the local variables table
+private fun verifyLocalVarScopeStart(v: Int, node: AbstractInsnNode, scopeStart: LabelNode): Boolean {
+    var i = node.next
+    while (i != null) {
+        // check that no other variable is stored into the same slot v before finding the scope start label
+        if (i is VarInsnNode && i.`var` == v) return false
+        if (i is LabelNode && i === scopeStart) return true
+        i = i.next
+    }
+    return false
+}
 
 inline fun forVarLoads(v: Int, start: LabelNode, end: LabelNode, block: (VarInsnNode) -> AbstractInsnNode?) {
     var cur: AbstractInsnNode? = start
