@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.13.1
+
+* Better diagnostics when LockFreedomTestEnvironment fails to shutdown.
+* Fixed looking for local variables scope labels.
+
 # Version 0.13.0
 
 * Gradle version 5.6.1 with Gradle metadata format version 1.0 (stable) for native modules.
