@@ -211,6 +211,10 @@ fun Project.configureMultiplatformPluginTasks() {
 
                 (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
                     originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+
+                compilation.compileKotlinTask.doFirst {
+                    compilation.kotlinOptions.freeCompilerArgs += "-Xfriend-paths=${originalMainClassesDirs.asPath}"
+                }
             }
         }
     }
