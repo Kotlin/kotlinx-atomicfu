@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.13.2
+
+* Added release notes.
+* Added the original classesDirs to the friend paths of test compilations.
+
 # Version 0.13.1
 
 * Better diagnostics when LockFreedomTestEnvironment fails to shutdown.
