@@ -152,6 +152,15 @@ fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
     }
 }
 
+private fun KotlinCommonOptions.addFriendPaths(friendPathsFileCollection: FileCollection) {
+    val argName = when (this) {
+        is KotlinJvmOptions -> "-Xfriend-paths"
+        is KotlinJsOptions -> "-Xfriend-modules"
+        else -> return
+    }
+    freeCompilerArgs = freeCompilerArgs + "$argName=${friendPathsFileCollection.asPath}"
+}
+
 fun Project.configureMultiplatformPluginTasks() {
     val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
     val config = config
@@ -213,7 +222,7 @@ fun Project.configureMultiplatformPluginTasks() {
                     originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
 
                 compilation.compileKotlinTask.doFirst {
-                    compilation.kotlinOptions.freeCompilerArgs += "-Xfriend-paths=${originalMainClassesDirs.asPath}"
+                    compilation.kotlinOptions.addFriendPaths(originalMainClassesDirs)
                 }
             }
         }
@@ -290,8 +299,14 @@ fun Project.configureTransformTasks(
                 Callable { (mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME) as FileCollection }
             )
 
-            (tasks.findByName(testTaskName) as? AbstractCompile)?.classpath =
-                originalMainClassesDirs + sourceSet.compileClasspath - mainSourceSet.output.classesDirs
+            (tasks.findByName(testTaskName) as? AbstractCompile)?.run {
+                classpath =
+                    originalMainClassesDirs + sourceSet.compileClasspath - mainSourceSet.output.classesDirs
+
+                (this as? KotlinCompile<*>)?.doFirst {
+                    kotlinOptions.addFriendPaths(originalMainClassesDirs)
+                }
+            }
 
             // todo: fix test runtime classpath for JS?
             (tasks.findByName(JavaPlugin.TEST_TASK_NAME) as? Test)?.classpath =
