@@ -14,7 +14,7 @@ task installDependenciesMochaNode(type: NpmTask, dependsOn: [npmInstall]) {
 
 task testMochaNode(type: NodeTask, dependsOn: [installDependenciesMochaNode]) {
     script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
-    args = [file("$buildDir/classes/kotlin/js/test/atomicfu_test_transformed.js"), '--require', 'source-map-support/register']
+    args = [file("$buildDir/classes/kotlin/js/test/atomicfu_test.js"), '--require', 'source-map-support/register']
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
     if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }

@@ -213,7 +213,11 @@ fun Project.configureMultiplatformPluginTasks() {
                     originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
 
                 compilation.compileKotlinTask.doFirst {
-                    compilation.kotlinOptions.freeCompilerArgs += "-Xfriend-paths=${originalMainClassesDirs.asPath}"
+                    if (target.platformType == KotlinPlatformType.js) {
+                        compilation.kotlinOptions.freeCompilerArgs += listOf("-Xfriend-modules", originalMainClassesDirs.asPath)
+                    } else {
+                        compilation.kotlinOptions.freeCompilerArgs += "-Xfriend-paths=${originalMainClassesDirs.asPath}"
+                    }
                 }
             }
         }
