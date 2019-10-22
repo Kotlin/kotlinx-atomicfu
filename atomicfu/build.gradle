@@ -6,7 +6,16 @@
 apply plugin: 'kotlin-multiplatform'
 apply from: rootProject.file("gradle/targets.gradle")
 
+project.ext.nativeMainSets = []
+project.ext.nativeTestSets = []
+
 kotlin {
+    targets.metaClass.addTarget = { preset ->
+        def target = delegate.fromPreset(preset, preset.name)
+        project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
+        project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
+    }
+
     targets {
         // JVM & JS -- always
         fromPreset(presets.jvm, 'jvm')
@@ -15,12 +24,17 @@ kotlin {
         if (project.ext.ideaActive) {
             fromPreset(project.ext.ideaPreset, 'native')
         } else {
-            fromPreset(presets.linuxX64, 'linux64')
-            fromPreset(presets.iosArm64, 'iosArm64')
-            fromPreset(presets.iosArm32, 'iosArm32')
-            fromPreset(presets.iosX64, 'iosX64')
-            fromPreset(presets.macosX64, 'macos64')
-            fromPreset(presets.mingwX64, 'windows64')
+            addTarget(presets.linuxX64)
+            addTarget(presets.iosArm64)
+            addTarget(presets.iosArm32)
+            addTarget(presets.iosX64)
+            addTarget(presets.macosX64)
+            addTarget(presets.mingwX64)
+            addTarget(presets.tvosArm64)
+            addTarget(presets.tvosX64)
+            addTarget(presets.watchosArm32)
+            addTarget(presets.watchosArm64)
+            addTarget(presets.watchosX86)
         }
     }
     sourceSets {
@@ -58,19 +72,11 @@ kotlin {
                 implementation "junit:junit:$junit_version"
             }
         }
-        nativeMain {}
+        nativeMain { dependsOn commonMain }
 
         if (!project.ext.ideaActive) {
-            configure([linux64Main, macos64Main, windows64Main, iosArm32Main, iosArm64Main, iosX64Main]) {
+            configure(nativeMainSets) {
                 dependsOn nativeMain
-            }
-        }
-    }
-    targets {
-        if (!project.ext.ideaActive) {
-            configure([linux64, macos64, windows64, iosArm32, iosArm64, iosX64]) {
-                def compileTask = tasks.getByName(compilations.main.compileKotlinTaskName)
-                compileTask.kotlinOptions.freeCompilerArgs += ["-module-name", "atomicfu-native"]
             }
         }
     }
