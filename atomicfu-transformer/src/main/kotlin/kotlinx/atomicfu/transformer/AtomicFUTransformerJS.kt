@@ -26,6 +26,7 @@ private const val MODULE_KOTLINX_ATOMICFU = "\$module\$kotlinx_atomicfu"
 private const val ARRAY = "Array"
 private const val FILL = "fill"
 private const val GET_ELEMENT = "get\\\$atomicfu"
+private const val REENTRANT_LOCK = "atomicfu\\.reentrantLock\\\$atomicfu"
 
 private val MANGLE_VALUE_REGEX = Regex(".${Pattern.quote(MANGLED_VALUE_PROP)}")
 // matches index until the first occurence of ')', parenthesised index expressions not supported
@@ -199,6 +200,14 @@ class AtomicFUTransformerJS(
                             }
                         }
                     }
+                }
+            }
+            if (node is VariableInitializer) {
+                val initializer = node.initializer?.toSource()
+                if (initializer != null && initializer.matches(Regex(REENTRANT_LOCK))) {
+                    // erase ReentrantLock constructor
+                    node.initializer = null
+                    return false
                 }
             }
             if (node is VariableInitializer && node.initializer is PropertyGet) {

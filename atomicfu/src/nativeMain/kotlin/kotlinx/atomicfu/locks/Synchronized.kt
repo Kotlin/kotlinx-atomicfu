@@ -5,11 +5,11 @@ import interop.*
 import kotlinx.cinterop.*
 import kotlin.native.concurrent.*
 import kotlin.native.internal.NativePtr
-import kotlinx.atomicfu.locks.Status.*
+import kotlinx.atomicfu.locks.SynchronizedObject.Status.*
 
 public actual open class SynchronizedObject {
 
-    private val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
+    protected val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
 
     public fun lock() {
         val currentThreadId = pthread_self()!!
@@ -46,7 +46,7 @@ public actual open class SynchronizedObject {
                 }
                 FAT -> {
                     if (currentThreadId == state.ownerThreadId) {
-                        // nested lock
+                        // reentrant lock
                         val nestedFatLock = LockState(FAT, state.nestedLocks + 1, state.waiters, state.ownerThreadId, state.mutex)
                         if (lock.compareAndSet(state, nestedFatLock)) return
                     } else if (state.ownerThreadId != null) {
@@ -58,6 +58,30 @@ public actual open class SynchronizedObject {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    public fun tryLock(): Boolean {
+        val currentThreadId = pthread_self()!!
+        while (true) {
+            val state = lock.value
+            when (state.status) {
+                UNLOCKED -> {
+                    val thinLock = LockState(THIN, 1, 0, currentThreadId)
+                    if (lock.compareAndSet(state, thinLock))
+                        return true
+                }
+                THIN -> {
+                    if (currentThreadId == state.ownerThreadId) {
+                        val nestedLock = LockState(THIN, state.nestedLocks + 1, state.waiters, currentThreadId)
+                        if (lock.compareAndSet(state, nestedLock))
+                            return true
+                    } else {
+                        return false
+                    }
+                }
+                FAT -> return false
             }
         }
     }
@@ -119,7 +143,7 @@ public actual open class SynchronizedObject {
         }
     }
 
-    private class LockState(
+    protected class LockState(
         val status: Status,
         val nestedLocks: Int,
         val waiters: Int,
@@ -129,12 +153,16 @@ public actual open class SynchronizedObject {
         init { freeze() }
     }
 
+    protected enum class Status { UNLOCKED, THIN, FAT }
+
     private fun CPointer<mutex_node_t>.lock() = lock(this.pointed.mutex)
 
     private fun CPointer<mutex_node_t>.unlock() = unlock(this.pointed.mutex)
 }
 
-private enum class Status { UNLOCKED, THIN, FAT }
+public actual fun reentrantLock() = ReentrantLock()
+
+public actual class ReentrantLock : SynchronizedObject()
 
 public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T {
     lock.lock()
