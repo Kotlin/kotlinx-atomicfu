@@ -50,7 +50,6 @@ public expect fun atomic(initial: Long): AtomicLong
  */
 public expect fun atomic(initial: Boolean): AtomicBoolean
 
-
 /**
  * Creates array of AtomicRef<T> of specified size, where each element is initialised with null value
  */
