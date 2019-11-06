@@ -246,6 +246,10 @@ tasks.withType(Test) {
     }
 }
 
+jvmTest {
+    exclude "**/AtomicfuBytecodeTest*" // run it only for transformed code
+}
+
 jvmTest.dependsOn jvmTestAll
 
 afterEvaluate {
