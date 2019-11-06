@@ -17,5 +17,5 @@ dependencies {
     compile "org.slf4j:slf4j-api:$slf4j_version"
     runtime "org.slf4j:slf4j-simple:$slf4j_version"
     compile "org.mozilla:rhino:1.7.10"
-    compile "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.0.5.1"
+    compile "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0"
 }

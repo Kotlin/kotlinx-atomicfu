@@ -514,7 +514,6 @@ class AtomicFUTransformer(
         }
 
         override fun visitAnnotation(desc: String?, visible: Boolean): AnnotationVisitor? {
-            if (analyzePhase2) return null // nop in analyze phase, do not visit annotations
             if (desc == KOTLIN_METADATA_DESC) {
                 check(visible) { "Expected run-time visible $KOTLIN_METADATA_DESC annotation" }
                 check(metadata == null) { "Only one $KOTLIN_METADATA_DESC annotation is expected" }
@@ -524,16 +523,16 @@ class AtomicFUTransformer(
         }
 
         override fun visitEnd() {
-            if (analyzePhase2) return // nop in analyze phase
             // remove unused methods from metadata
             metadata?.let {
                 val mt = MetadataTransformer(
                     removeFields = fields.keys,
                     removeMethods = accessors.keys + removeMethods
                 )
-                mt.transformMetadata(it)
-                it.accept(cv.visitAnnotation(KOTLIN_METADATA_DESC, true))
+                if (mt.transformMetadata(it)) transformed = true
+                if (cv != null) it.accept(cv.visitAnnotation(KOTLIN_METADATA_DESC, true))
             }
+            if (analyzePhase2) return // nop in analyze phase
             // collect class initialization
             if (originalClinit != null || newClinit != null) {
                 val newClinit = newClinit
