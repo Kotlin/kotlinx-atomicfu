@@ -156,29 +156,19 @@ private val mutexPool by lazy { MutexPool(INITIAL_POOL_CAPACITY) }
 class MutexPool(capacity: Int) {
     private val top = AtomicNativePtr(NativePtr.NULL)
 
-    private val mutexes = memScoped {
-        nativeHeap.allocArray<mutex_node_t>(capacity) { mutex_node_init(ptr) }
-    }
+    private val mutexes = nativeHeap.allocArray<mutex_node_t>(capacity) { mutex_node_init(ptr) }
 
     init {
         for (i in 0 until capacity) {
-            val mutexPtr = interpretCPointer<mutex_node_t>(mutexes.rawValue.plus(i * mutex_node_t.size))
-                ?: error ("Cast of the mutex_node NativePtr to CPointer failed")
-            push(mutexPtr)
+            release(interpretCPointer<mutex_node_t>(mutexes.rawValue.plus(i * mutex_node_t.size))!!)
         }
     }
 
-    private fun allocMutexNode() = memScoped {
-        nativeHeap.alloc<mutex_node_t> { mutex_node_init(ptr) }.ptr
-    }
+    private fun allocMutexNode() = nativeHeap.alloc<mutex_node_t> { mutex_node_init(ptr) }.ptr
 
     fun allocate(): CPointer<mutex_node_t> = pop() ?: allocMutexNode()
 
     fun release(mutexNode: CPointer<mutex_node_t>) {
-        if ((0..20).random() == 0) push(mutexNode)
-    }
-
-    private fun push(mutexNode: CPointer<mutex_node_t>) {
         while (true) {
             val oldTop = interpretCPointer<mutex_node_t>(top.value)
             mutexNode.pointed.next = oldTop
