@@ -1,8 +1,6 @@
-package kotlinx.atomicfu.test
+package kotlinx.atomicfu.locks
 
-import kotlinx.atomicfu.*
 import kotlin.native.concurrent.*
-import kotlin.native.concurrent.AtomicInt
 import kotlin.test.*
 
 private const val iterations = 100
@@ -41,7 +39,7 @@ class SynchronizedTest {
 
     @Test
     fun manyLocksTest() {
-        repeat(iterations) { 
+        repeat(iterations) {
             val workers = Array(nWorkers) { Worker.start() }
             val counters = Array(nLocks) { AtomicInt(0) }.freeze()
             val locks = Array(nLocks) { SynchronizedObject() }.freeze()

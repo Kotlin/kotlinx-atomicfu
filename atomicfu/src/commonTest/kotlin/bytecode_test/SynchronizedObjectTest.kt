@@ -1,6 +1,6 @@
 package bytecode_test
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.locks.*
 import kotlin.test.*
 
 class SynchronizedObjectTest : SynchronizedObject() {

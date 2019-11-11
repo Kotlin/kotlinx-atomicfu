@@ -1,4 +1,4 @@
-package kotlinx.atomicfu
+package kotlinx.atomicfu.locks
 
 public actual typealias SynchronizedObject = Any
 
