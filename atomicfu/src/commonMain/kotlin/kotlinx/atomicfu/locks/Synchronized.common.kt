@@ -10,4 +10,6 @@ public expect class ReentrantLock {
     fun unlock(): Unit
 }
 
+public expect inline fun <T> ReentrantLock.withLock(block: () -> T): T
+
 public expect inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T

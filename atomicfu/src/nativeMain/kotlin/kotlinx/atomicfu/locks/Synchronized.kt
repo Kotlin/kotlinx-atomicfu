@@ -66,22 +66,18 @@ public actual open class SynchronizedObject {
         val currentThreadId = pthread_self()!!
         while (true) {
             val state = lock.value
-            when (state.status) {
-                UNLOCKED -> {
-                    val thinLock = LockState(THIN, 1, 0, currentThreadId)
-                    if (lock.compareAndSet(state, thinLock))
+            if (state.status == UNLOCKED) {
+                val thinLock = LockState(THIN, 1, 0, currentThreadId)
+                if (lock.compareAndSet(state, thinLock))
+                    return true
+            } else {
+                if (currentThreadId == state.ownerThreadId) {
+                    val nestedLock = LockState(state.status, state.nestedLocks + 1, state.waiters, currentThreadId, state.mutex)
+                    if (lock.compareAndSet(state, nestedLock))
                         return true
+                } else {
+                    return false
                 }
-                THIN -> {
-                    if (currentThreadId == state.ownerThreadId) {
-                        val nestedLock = LockState(THIN, state.nestedLocks + 1, state.waiters, currentThreadId)
-                        if (lock.compareAndSet(state, nestedLock))
-                            return true
-                    } else {
-                        return false
-                    }
-                }
-                FAT -> return false
             }
         }
     }
@@ -163,6 +159,15 @@ public actual open class SynchronizedObject {
 public actual fun reentrantLock() = ReentrantLock()
 
 public actual class ReentrantLock : SynchronizedObject()
+
+public actual inline fun <T> ReentrantLock.withLock(block: () -> T): T {
+    lock()
+    try {
+        return block()
+    } finally {
+        unlock()
+    }
+}
 
 public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T {
     lock.lock()

@@ -88,4 +88,33 @@ class SynchronizedTest {
             assertEquals(nWorkers * increments, counter.value)
         }
     }
+
+    @Test
+    fun nestedReentrantLockTest() {
+        repeat(iterations) {
+            val workers = Array(nWorkers) { Worker.start() }
+            val counter = AtomicInt(0).freeze()
+            val so = ReentrantLock().freeze()
+            workers.forEach { worker ->
+                worker.execute(TransferMode.SAFE, {
+                    counter to so
+                }) { (count, lock) ->
+                    repeat(increments) {
+                        lock.lock()
+                        val nestedLocks = (1..3).random()
+                        repeat(nestedLocks) {
+                            assertTrue(lock.tryLock())
+                        }
+                        val oldValue = count.value
+                        count.value = oldValue + 1
+                        repeat(nestedLocks + 1) { lock.unlock() }
+                    }
+                }
+            }
+            workers.forEach {
+                it.requestTermination().result
+            }
+            assertEquals(nWorkers * increments, counter.value)
+        }
+    }
 }
