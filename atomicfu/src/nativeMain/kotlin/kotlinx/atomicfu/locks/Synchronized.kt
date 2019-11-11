@@ -1,14 +1,11 @@
-package kotlinx.atomicfu
+package kotlinx.atomicfu.locks
 
 import platform.posix.*
 import interop.*
 import kotlinx.cinterop.*
-import kotlin.native.concurrent.AtomicNativePtr
-import kotlin.native.concurrent.AtomicReference
-import kotlin.native.concurrent.SharedImmutable
-import kotlin.native.concurrent.freeze
+import kotlin.native.concurrent.*
 import kotlin.native.internal.NativePtr
-import kotlinx.atomicfu.Status.*
+import kotlinx.atomicfu.locks.Status.*
 
 public actual open class SynchronizedObject {
 

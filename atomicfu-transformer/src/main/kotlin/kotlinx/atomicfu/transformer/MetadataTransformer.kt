@@ -196,7 +196,7 @@ class MetadataTransformer(
     }
 }
 
-private val SynchronizedObjectAlias = KmClassifier.TypeAlias("kotlinx/atomicfu/SynchronizedObject")
+private val SynchronizedObjectAlias = KmClassifier.TypeAlias("kotlinx/atomicfu/locks/SynchronizedObject")
 
 @Suppress("UNCHECKED_CAST")
 private fun AnnotationNode.asMap(): Map<String, Any?> {

@@ -1,6 +1,6 @@
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
-package kotlinx.atomicfu
+package kotlinx.atomicfu.locks
 
 import kotlin.internal.InlineOnly
 
