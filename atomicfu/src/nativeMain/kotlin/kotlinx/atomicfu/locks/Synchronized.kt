@@ -158,7 +158,7 @@ public actual open class SynchronizedObject {
 
 public actual fun reentrantLock() = ReentrantLock()
 
-public actual class ReentrantLock : SynchronizedObject()
+public actual typealias ReentrantLock = SynchronizedObject
 
 public actual inline fun <T> ReentrantLock.withLock(block: () -> T): T {
     lock()
