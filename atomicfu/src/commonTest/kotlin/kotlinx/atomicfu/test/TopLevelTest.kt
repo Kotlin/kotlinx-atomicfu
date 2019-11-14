@@ -151,6 +151,7 @@ class TopLevelArrayTest {
         check(booleanArr[0].value && booleanArr[1].value && booleanArr[2].value)
     }
 
+    @Suppress("UNCHECKED_CAST")
     @Test
     fun testRefArray() {
         val a2 = ANode(BNode(CNode(2)))

@@ -13,6 +13,7 @@ class UncheckedCastTest {
     private val s = atomic<Any>("AAA")
     private val bs = atomic<Any?>(null)
 
+    @Suppress("UNCHECKED_CAST")
     @Test
     fun testAtomicValUncheckedCast() {
         assertEquals((s as AtomicRef<String>).value, "AAA")
@@ -20,6 +21,7 @@ class UncheckedCastTest {
         assertEquals((bs as AtomicRef<Map<Int, List<Box>>>).value[1]!![0].b * 10, 10)
     }
 
+    @Suppress("UNCHECKED_CAST")
     @Test
     fun testTopLevelValUnchekedCast() {
         assertEquals((topLevelS as AtomicRef<List<String>>).value[1], "B")
@@ -27,6 +29,7 @@ class UncheckedCastTest {
 
     private data class Box(val b: Int)
 
+    @Suppress("NOTHING_TO_INLINE", "UNCHECKED_CAST")
     private inline fun <T> AtomicRef<T>.getString(): String =
         (this as AtomicRef<String>).value
 
@@ -40,6 +43,7 @@ class UncheckedCastTest {
     @Test
     fun testArrayValueUncheckedCast() {
         a[0].value = "OK"
+        @Suppress("UNCHECKED_CAST")
         assertEquals("OK", (a[0] as AtomicRef<String>).value)
     }
 
