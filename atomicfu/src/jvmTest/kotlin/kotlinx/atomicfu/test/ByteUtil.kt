@@ -19,5 +19,5 @@ fun ByteArray.findString(strings: List<String>): FindResult? {
 }
 
 class FindResult(val string: String, val offset: Int) {
-    override fun toString(): String = "Found string '$string' at offset $offset"
+    override fun toString(): String = "Found string '$string' at offset 0x${offset.toString(16)}"
 }
