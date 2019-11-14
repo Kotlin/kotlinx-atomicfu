@@ -11,7 +11,7 @@ import java.io.FileReader
 import org.mozilla.javascript.Token
 import java.util.regex.*
 
-private const val ATOMIC_CONSTRUCTOR = """atomic\$(ref|int|long|boolean)\$"""
+private const val ATOMIC_CONSTRUCTOR = """(atomic\$(ref|int|long|boolean)\$|Atomic(Ref|Int|Long|Boolean))"""
 private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean|ofNulls)"""
 private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
 
@@ -20,13 +20,15 @@ private const val SCOPE = "scope"
 private const val FACTORY = "factory"
 private const val REQUIRE = "require"
 private const val KOTLINX_ATOMICFU = "'kotlinx-atomicfu'"
+private const val KOTLINX_ATOMICFU_PACKAGE = "kotlinx.atomicfu"
 private const val KOTLIN_TYPE_CHECK = "Kotlin.isType"
 private const val ATOMIC_REF = "AtomicRef"
-private const val MODULE_KOTLINX_ATOMICFU = "\$module\$kotlinx_atomicfu"
+private const val MODULE_KOTLINX_ATOMICFU = "\\\$module\\\$kotlinx_atomicfu"
 private const val ARRAY = "Array"
 private const val FILL = "fill"
 private const val GET_ELEMENT = "get\\\$atomicfu"
-private const val REENTRANT_LOCK = "atomicfu\\.reentrantLock\\\$atomicfu"
+private const val LOCKS = "locks"
+private const val REENTRANT_LOCK_ATOMICFU_SINGLETON = "$LOCKS.reentrantLock\\\$atomicfu"
 
 private val MANGLE_VALUE_REGEX = Regex(".${Pattern.quote(MANGLED_VALUE_PROP)}")
 // matches index until the first occurence of ')', parenthesised index expressions not supported
@@ -34,8 +36,7 @@ private val ARRAY_GET_ELEMENT_REGEX = Regex(".$GET_ELEMENT\\((.*)\\)")
 
 class AtomicFUTransformerJS(
     inputDir: File,
-    outputDir: File,
-    var requireKotlinxAtomicfu: Boolean = false
+    outputDir: File
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
     private val atomicConstructors = mutableSetOf<String>()
     private val atomicArrayConstructors = mutableMapOf<String, String?>()
@@ -101,7 +102,7 @@ class AtomicFUTransformerJS(
             (node.type == Token.STRING && node.toSource() == KOTLINX_ATOMICFU)
 
         private fun isAtomicfuModule(node: AstNode) =
-            (node.type == Token.NAME && node.toSource() == MODULE_KOTLINX_ATOMICFU)
+            (node.type == Token.NAME && node.toSource().matches(Regex(MODULE_KOTLINX_ATOMICFU)))
 
         override fun visit(node: AstNode): Boolean {
             when (node.type) {
@@ -121,7 +122,7 @@ class AtomicFUTransformerJS(
                     if (node is FunctionNode) {
                         val it = node.params.listIterator()
                         while (it.hasNext()) {
-                            if (isAtomicfuModule(it.next()) && !requireKotlinxAtomicfu) {
+                            if (isAtomicfuModule(it.next())) {
                                 it.remove()
                             }
                         }
@@ -142,7 +143,7 @@ class AtomicFUTransformerJS(
                                 Token.CALL -> {
                                     // erasing require of 'kotlinx-atomicfu' dependency
                                     if ((arg as FunctionCall).target.toSource() == REQUIRE) {
-                                        if (isAtomicfuDependency(arg.arguments[0]) && !requireKotlinxAtomicfu) {
+                                        if (isAtomicfuDependency(arg.arguments[0])) {
                                             it.remove()
                                         }
                                     }
@@ -188,35 +189,35 @@ class AtomicFUTransformerJS(
     }
 
     inner class AtomicConstructorDetector : NodeVisitor {
+        private fun kotlinxAtomicfuModuleName(name: String) = "$MODULE_KOTLINX_ATOMICFU.$KOTLINX_ATOMICFU_PACKAGE.$name"
+
         override fun visit(node: AstNode?): Boolean {
             if (node is Block) {
                 for (stmt in node) {
                     if (stmt is VariableDeclaration) {
                         val varInit = stmt.variables[0] as VariableInitializer
                         if (varInit.initializer is PropertyGet) {
-                            if ((varInit.initializer as PropertyGet).property.toSource().matches(Regex(ATOMIC_CONSTRUCTOR))) {
+                            val initializer = varInit.initializer.toSource()
+                            if (initializer.matches(Regex(kotlinxAtomicfuModuleName(ATOMIC_CONSTRUCTOR)))) {
                                 atomicConstructors.add(varInit.target.toSource())
+                                node.replaceChild(stmt, EmptyLine())
+                            } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName(LOCKS)))){
                                 node.replaceChild(stmt, EmptyLine())
                             }
                         }
                     }
                 }
             }
-            if (node is VariableInitializer) {
-                val initializer = node.initializer?.toSource()
-                if (initializer != null && initializer.matches(Regex(REENTRANT_LOCK))) {
-                    // erase ReentrantLock constructor
-                    node.initializer = null
-                    return false
-                }
-            }
             if (node is VariableInitializer && node.initializer is PropertyGet) {
-                val initializer = (node.initializer as PropertyGet).property.toSource()
-                if (initializer.matches(Regex(ATOMIC_CONSTRUCTOR))) {
+                val initializer = node.initializer.toSource()
+                if (initializer.matches(Regex(REENTRANT_LOCK_ATOMICFU_SINGLETON))) {
+                    node.initializer = null
+                }
+                if (initializer.matches(Regex(kotlinxAtomicfuModuleName(ATOMIC_CONSTRUCTOR)))) {
                     atomicConstructors.add(node.target.toSource())
                     node.initializer = null
                 }
-                if (initializer.matches(Regex(ATOMIC_ARRAY_CONSTRUCTOR))) {
+                if (initializer.matches(Regex(kotlinxAtomicfuModuleName(ATOMIC_ARRAY_CONSTRUCTOR)))) {
                     val initialValue = when (initializer.substringAfterLast('$')) {
                         "int" -> "0"
                         "long" -> "0"
@@ -227,6 +228,12 @@ class AtomicFUTransformerJS(
                     node.initializer = null
                 }
                 return false
+            } else if (node is Assignment && node.right is PropertyGet) {
+                val initializer = node.right.toSource()
+                if (initializer.matches(Regex(REENTRANT_LOCK_ATOMICFU_SINGLETON))) {
+                    node.right = Name().also { it.identifier = "null" }
+                    return false
+                }
             }
             return true
         }
@@ -511,13 +518,10 @@ private class EmptyLine: EmptyExpression() {
 }
 
 fun main(args: Array<String>) {
-    if (args.size !in 1..3) {
+    if (args.size !in 1..2) {
         println("Usage: AtomicFUTransformerKt <dir> [<output>]")
         return
     }
     val t = AtomicFUTransformerJS(File(args[0]), File(args[1]))
-    if (args.size > 2) {
-        t.requireKotlinxAtomicfu = args[2].toBoolean()
-    }
     t.transform()
 }
