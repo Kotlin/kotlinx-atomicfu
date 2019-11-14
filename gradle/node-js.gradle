@@ -27,7 +27,9 @@ task prepareNodePackage(type: Copy) {
 npmInstall.dependsOn prepareNodePackage
 
 task populateNodeModules(type: Copy, dependsOn: [compileKotlinJs]) {
-    from compileKotlinJs.destinationDir
+    from (compileKotlinJs.destinationDir) {
+        exclude '**/kotlinx-atomicfu/*'
+    }
     into "$node.nodeModulesDir/node_modules"
 
     afterEvaluate {

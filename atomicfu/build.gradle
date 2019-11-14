@@ -146,7 +146,7 @@ def transformedJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test_transfor
 
 task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
-    args = [originalJsFile, transformedJsFile, true]
+    args = [originalJsFile, transformedJsFile]
     classpath = configurations.transformer
     inputs.file(originalJsFile)
     outputs.file(transformedJsFile)
