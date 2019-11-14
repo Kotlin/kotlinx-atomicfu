@@ -144,7 +144,9 @@ class MetadataTransformer(
                 transformed = true
                 return
             }
-            // keeping this function
+            delegate.receiverParameterType?.fixType { delegate.receiverParameterType = it }
+            delegate.returnType.fixType { delegate.returnType = it }
+            // keeping this property
             extension?.accept(delegate.visitExtensions(JvmPropertyExtensionVisitor.TYPE) as JvmPropertyExtensionVisitor)
             delegate.accept(v)
         }
@@ -194,9 +196,21 @@ class MetadataTransformer(
             delegate.accept(v)
         }
     }
+
+    private fun KmType.fixType(update: (KmType) -> Unit) {
+        if (this.abbreviatedType?.classifier == ReentrantLockAlias) {
+            update(ReentrantLockType)
+            transformed = true
+        }
+    }
 }
 
 private val SynchronizedObjectAlias = KmClassifier.TypeAlias("kotlinx/atomicfu/locks/SynchronizedObject")
+
+private val ReentrantLockAlias = KmClassifier.TypeAlias("kotlinx/atomicfu/locks/ReentrantLock")
+private val ReentrantLockType = KmType(0).apply {
+    classifier = KmClassifier.Class("java/util/concurrent/locks/ReentrantLock")        
+}
 
 @Suppress("UNCHECKED_CAST")
 private fun AnnotationNode.asMap(): Map<String, Any?> {

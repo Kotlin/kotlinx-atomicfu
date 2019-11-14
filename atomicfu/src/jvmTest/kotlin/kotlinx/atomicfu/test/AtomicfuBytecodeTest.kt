@@ -21,6 +21,12 @@ class AtomicfuBytecodeTest {
     @Test
     fun testAtomicFieldBytecode() = checkBytecode(AtomicFieldTest::class.java)
 
+    /**
+     * Test [ReentrantLockTest].
+     */
+    @Test
+    fun testReentrantLockBytecode() = checkBytecode(ReentrantLockTest::class.java)
+
     private fun checkBytecode(javaClass: Class<*>) {
         val resourceName = javaClass.name.replace('.', '/') + ".class"
         val bytes = javaClass.classLoader.getResourceAsStream(resourceName)!!.use { it.readBytes() }
