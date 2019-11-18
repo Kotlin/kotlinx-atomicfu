@@ -148,7 +148,7 @@ class AtomicFUTransformer(
     var variant: Variant = Variant.FU
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
 
-    private val classLoader = URLClassLoader(
+    private val classPathLoader = URLClassLoader(
         (listOf(inputDir) + (classpath.map { File(it) } - outputDir))
             .map { it.toURI().toURL() }.toTypedArray()
     )
@@ -1161,8 +1161,8 @@ class AtomicFUTransformer(
 
     private inner class CW : ClassWriter(COMPUTE_MAXS or COMPUTE_FRAMES) {
         override fun getCommonSuperClass(type1: String, type2: String): String {
-            var c: Class<*> = Class.forName(type1.replace('/', '.'), false, classLoader)
-            val d: Class<*> = Class.forName(type2.replace('/', '.'), false, classLoader)
+            var c: Class<*> = loadClass(type1)
+            val d: Class<*> = loadClass(type2)
             if (c.isAssignableFrom(d)) return type1
             if (d.isAssignableFrom(c)) return type2
             return if (c.isInterface || d.isInterface) {
@@ -1175,6 +1175,13 @@ class AtomicFUTransformer(
             }
         }
     }
+
+    private fun loadClass(type: String): Class<*> =
+        try {
+            Class.forName(type.replace('/', '.'), false, classPathLoader)
+        } catch (e: Exception) {
+            throw TransformerException("Failed to load class for '$type'", e)
+        }
 }
 
 fun main(args: Array<String>) {
