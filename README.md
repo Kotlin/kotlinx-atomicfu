@@ -302,12 +302,13 @@ Condition variables (`notify`/`wait` and `signal`/`await`) are not supported.
 
 ### Testing lock-free data structures on JVM
 
-You can optionally test lock-freedomness of lock-free data structures using `LockFreedomTestEnvironment` class.
-See example in [`LockFreeQueueLFTest`](atomicfu/src/test/kotlin/kotlinx/atomicfu/test/LockFreeQueueLFTest.kt).
+You can optionally test lock-freedomness of lock-free data structures using
+[`LockFreedomTestEnvironment`](atomicfu/src/jvmMain/kotlin/kotlinx/atomicfu/LockFreedomTestEnvironment.kt) class.
+See example in [`LockFreeQueueLFTest`](atomicfu/src/jvmTest/kotlin/kotlinx/atomicfu/test/LockFreeQueueLFTest.kt).
 Testing is performed by pausing one (random) thread before or after a random state-update operation and
-making sure that all other threads can still make progress. 
+making sure that all other threads can still make progress.
 
-In order to make those test to actually perform lock-freedomness testing you need to configure an additional 
+In order to make those test to actually perform lock-freedomness testing you need to configure an additional
 execution of tests with the original (non-transformed) classes for Maven:
 
 ```xml
