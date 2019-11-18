@@ -21,6 +21,7 @@ The idiomatic way to use atomic operations in Kotlin.
   * [JDK9 VarHandle](#varhandles-with-java-9).
   * [Arrays of atomic values](#arrays-of-atomic-values).
   * [User-defined extensions on atomics](#user-defined-extensions-on-atomics)
+  * [Locks](#locks)
   * [Testing of lock-free data structures](#testing-lock-free-data-structures-on-jvm).
 
 ## Example
@@ -124,7 +125,7 @@ Configure add apply plugin just like for [JVM](#jvm).
 ### Native
 
 This library is available for Kotlin/Native (`atomicfu-native`).
-Kotlin/Native uses Gradle metadata and needs Gradle version 5.3 or later
+Kotlin/Native uses Gradle metadata and needs Gradle version 5.3 or later.
 See [Gradle Metadata 1.0 announcement](https://blog.gradle.org/gradle-metadata-1.0) for more details.
 Apply the corresponding plugin just like for [JVM](#jvm). 
 
@@ -278,6 +279,26 @@ be public and be used outside of the module they are defined in. For example:
 @Suppress("NOTHING_TO_INLINE")
 private inline fun AtomicBoolean.tryAcquire(): Boolean = compareAndSet(false, true)
 ```
+
+### Locks
+
+This project includes `kotlinx.atomicfu.locks` package providing multiplatform locking primitives that
+require no additional runtime dependencies on Kotlin/JVM and Kotlin/JS with a library implementation for 
+Kotlin/Native.
+
+* `SynchronizedObject` is designed for inheritance. You write `class MyClass : SynchronizedObject()` and then 
+use `synchronized(instance) { ... }` extension function similarly to the 
+[synchronized](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/synchronized.html)
+function from the standard library that is available for JVM. The `SynchronizedObject` superclass gets erased
+(transformed to `Any`) on JVM and JS, with `synchronized` leaving no trace in the code on JS and getting 
+replaced with built-in monitors for locking on JVM.
+
+* `ReentrantLock` is designed for delegation. You write `val lock = reentrantLock()` to construct its instance and
+use `lock`/`tryLock`/`unlock` functions or `lock.withLock { ... }` extension function similarly to the way
+[jucl.ReentrantLock](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantLock.html)
+is used on JVM. On JVM it is a typealias to the later class, erased on JS.   
+
+Condition variables (`notify`/`wait` and `signal`/`await`) are not supported.
 
 ### Testing lock-free data structures on JVM
 
