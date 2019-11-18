@@ -193,7 +193,7 @@ class AtomicFUTransformer(
             if (inpTime > outTime) needTransform = true
             if (file.isClassFile()) analyzeFileForFields(file)
         }
-        if (hasErrors) throw Exception("Encountered errors while analyzing fields")
+        if (lastError != null) throw TransformerException("Encountered errors while analyzing fields", lastError)
         return needTransform
     }
 
@@ -210,7 +210,7 @@ class AtomicFUTransformer(
             if (file.isClassFile() && analyzeFileForRefs(file, vh)) result += file
         }
         // Batch analyze all files, report all errors, bail out only at the end
-        if (hasErrors) throw Exception("Encountered errors while analyzing references")
+        if (lastError != null) throw TransformerException("Encountered errors while analyzing references", lastError)
         return result
     }
 
@@ -223,7 +223,7 @@ class AtomicFUTransformer(
             } catch (e: Exception) {
                 error("Failed to analyze: $e", cv.sourceInfo)
                 e.printStackTrace(System.out)
-                hasErrors = true
+                if (lastError == null) lastError = e
             }
             transformed // true for classes that need transformation
         }
@@ -234,9 +234,15 @@ class AtomicFUTransformer(
         transformed = false // clear global "transformed" flag
         val cw = CW()
         val cv = TransformerCV(cw, vh, analyzePhase2 = false)
-        ClassReader(ByteArrayInputStream(bytes)).accept(cv, SKIP_FRAMES)
+        try {
+            ClassReader(ByteArrayInputStream(bytes)).accept(cv, SKIP_FRAMES)
+        } catch (e: Exception) {
+            error("Failed to transform: $e", cv.sourceInfo)
+            e.printStackTrace(System.out)
+            if (lastError == null) lastError = e
+        }
         if (!transformed) error("Invoked transformFile on a file that does not need transformation: $file")
-        if (hasErrors) throw Exception("Encountered errors while transforming: $file")
+        if (lastError != null) throw TransformerException("Encountered errors while transforming: $file", lastError)
         info("Transformed $file")
         return cw.toByteArray() // write transformed bytes
     }

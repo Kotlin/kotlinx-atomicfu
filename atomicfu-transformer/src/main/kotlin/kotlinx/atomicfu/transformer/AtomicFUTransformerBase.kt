@@ -7,7 +7,6 @@ package kotlinx.atomicfu.transformer
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 import java.io.File
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 abstract class AtomicFUTransformerBase(
@@ -30,7 +29,7 @@ abstract class AtomicFUTransformerBase(
     protected fun File.isClassFile() = toString().endsWith(".class")
 
     var verbose = true
-    protected var hasErrors = false
+    protected var lastError: Throwable? = null
     protected var transformed = false
 
     data class SourceInfo(
@@ -63,9 +62,10 @@ abstract class AtomicFUTransformerBase(
 
     protected fun error(message: String, sourceInfo: SourceInfo? = null) {
         logger.error(format(message, sourceInfo))
-        hasErrors = true
+        if (lastError == null) lastError = TransformerException(message)
     }
 
     abstract fun transform()
-
 }
+
+class TransformerException(message: String, cause: Throwable? = null) : Exception(message, cause)
