@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.14.0
+
+* Updated to Kotlin 1.3.60.
+* Support locks and freezable atomics on Kotlin/Native.
+
 # Version 0.13.2
 
 * Added release notes.
