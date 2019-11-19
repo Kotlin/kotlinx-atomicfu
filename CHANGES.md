@@ -1,9 +1,15 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.14.1
+
+* Fixed broken JVM transformer after upgrade to ASM 7.2.
+
 # Version 0.14.0
 
 * Updated to Kotlin 1.3.60.
-* Support locks and freezable atomics on Kotlin/Native.
+* Updated to ASM 7.2.
+* Support locks (SynchronizedObject and ReentrantLock).
+* Freezable atomics on Kotlin/Native.
 
 # Version 0.13.2
 

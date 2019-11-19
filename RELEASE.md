@@ -40,7 +40,8 @@ To release new `<version>` of `kotlinx-atomicfu`:
 10. Merge new version branch into `master`:<br>
    `git checkout master`<br>
    `git merge version-<version>`<br>
-   `git push`   
+   `git push`<br>   
+    **Alternatively from GitHub UI**: Click "Create a merge commit" (**DO NOT REBASE!**)
 
 11. On [TeamCity integration server](https://teamcity.jetbrains.com/project.html?projectId=KotlinTools_KotlinxAtomicfu): 
     * Wait until "Build" configuration for committed `master` branch passes tests.
