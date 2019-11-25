@@ -260,6 +260,8 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
         val configurationName = when {
             // impl dependency for native (there is no transformation)
             platform == Platform.NATIVE -> sourceSet.implementationConfigurationName
+            // impl dependency for JS IR backend (no transformations yet)
+            platform == Platform.JS && !config.transformJs -> sourceSet.implementationConfigurationName
             // compileOnly dependency for main compilation (commonMain, jvmMain, jsMain)
             compilationType == CompilationType.MAIN -> sourceSet.compileOnlyConfigurationName
             // impl dependency for tests
