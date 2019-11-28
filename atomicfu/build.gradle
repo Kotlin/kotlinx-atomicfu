@@ -2,20 +2,26 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 
 apply plugin: 'kotlin-multiplatform'
 apply from: rootProject.file("gradle/targets.gradle")
 
-project.ext.nativeMainSets = []
-project.ext.nativeTestSets = []
-project.ext.nativeCompilations = []
+ext {
+    nativeMainSets = []
+    nativeTestSets = []
+    nativeCompilations = []
+}
 
 kotlin {
+    KotlinTarget.metaClass.addNative = {
+        nativeMainSets.add(delegate.compilations['main'].kotlinSourceSets.first())
+        nativeTestSets.add(delegate.compilations['test'].kotlinSourceSets.first())
+        nativeCompilations.add(delegate.compilations['main'])
+    }
+
     targets.metaClass.addTarget = { preset ->
-        def target = delegate.fromPreset(preset, preset.name)
-        project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
-        project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
-        project.ext.nativeCompilations.add(target.compilations['main'])
+        delegate.fromPreset(preset, preset.name).addNative()
     }
 
     targets {
@@ -24,7 +30,7 @@ kotlin {
         fromPreset(presets.js, 'js')
 
         if (project.ext.ideaActive) {
-            fromPreset(project.ext.ideaPreset, 'native')
+            fromPreset(project.ext.ideaPreset, 'native').addNative()
         } else {
             addTarget(presets.linuxX64)
             addTarget(presets.iosArm64)
@@ -89,7 +95,7 @@ kotlin {
         }
     }
 
-    configure(project.ext.nativeCompilations) {
+    configure(nativeCompilations) {
         cinterops {
             interop {
                 defFile 'src/nativeInterop/cinterop/interop.def'
