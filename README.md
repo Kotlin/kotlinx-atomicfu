@@ -178,60 +178,60 @@ Declare _provided_ dependency on the AtomicFU library
 (the users of the resulting artifact will not have a dependency on AtomicFU library):
 
 ```xml
-    <dependencies>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>atomicfu</artifactId>
-            <version>${atomicfu.version}</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+<dependencies>
+    <dependency>
+        <groupId>org.jetbrains.kotlinx</groupId>
+        <artifactId>atomicfu</artifactId>
+        <version>${atomicfu.version}</version>
+        <scope>provided</scope>
+    </dependency>
+</dependencies>
 ```
 
 Configure build steps so that Kotlin compiler puts classes into a different `classes-pre-atomicfu` directory,
 which is then transformed to a regular `classes` directory to be used later by tests and delivery.
 
 ```xml
-    <build>
-        <plugins>
-            <!-- compile Kotlin files to staging directory -->
-            <plugin>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-maven-plugin</artifactId>
-                <version>${kotlin.version}</version>
-                <executions>
-                    <execution>
-                        <id>compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <output>${project.build.directory}/classes-pre-atomicfu</output>
-                            <!-- "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code -->
-                            <variant>FU</variant>  
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- transform classes with AtomicFU plugin -->
-            <plugin>
-                <groupId>org.jetbrains.kotlinx</groupId>
-                <artifactId>atomicfu-maven-plugin</artifactId>
-                <version>${atomicfu.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                        <configuration>
-                            <input>${project.build.directory}/classes-pre-atomicfu</input>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+<build>
+    <plugins>
+        <!-- compile Kotlin files to staging directory -->
+        <plugin>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-plugin</artifactId>
+            <version>${kotlin.version}</version>
+            <executions>
+                <execution>
+                    <id>compile</id>
+                    <phase>compile</phase>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <output>${project.build.directory}/classes-pre-atomicfu</output>
+                        <!-- "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code -->
+                        <variant>FU</variant>  
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        <!-- transform classes with AtomicFU plugin -->
+        <plugin>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>atomicfu-maven-plugin</artifactId>
+            <version>${atomicfu.version}</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>transform</goal>
+                    </goals>
+                    <configuration>
+                        <input>${project.build.directory}/classes-pre-atomicfu</input>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
 ```
 
 ## Additional features
@@ -312,29 +312,29 @@ In order to make those test to actually perform lock-freedomness testing you nee
 execution of tests with the original (non-transformed) classes for Maven:
 
 ```xml
-    <build>
-        <plugins>
-            <!-- additional test execution with surefire on non-transformed files -->
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>lockfree-test</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <classesDirectory>${project.build.directory}/classes-pre-atomicfu</classesDirectory>
-                            <includes>
-                                <include>**/*LFTest.*</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+<build>
+    <plugins>
+        <!-- additional test execution with surefire on non-transformed files -->
+        <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+                <execution>
+                    <id>lockfree-test</id>
+                    <phase>test</phase>
+                    <goals>
+                        <goal>test</goal>
+                    </goals>
+                    <configuration>
+                        <classesDirectory>${project.build.directory}/classes-pre-atomicfu</classesDirectory>
+                        <includes>
+                            <include>**/*LFTest.*</include>
+                        </includes>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
 ```
 
 For Gradle there is nothing else to add. Tests are always run using original (non-transformed) classes.
