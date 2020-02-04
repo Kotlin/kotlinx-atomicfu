@@ -33,7 +33,11 @@ task populateNodeModules(type: Copy, dependsOn: [compileKotlinJs]) {
     into "$node.nodeModulesDir/node_modules"
 
     afterEvaluate {
-        configurations.jsTestRuntimeClasspath.each {
+        def runtimeClassPath = configurations.hasProperty("legacyjsTestRuntimeClasspath")
+                ? configurations.legacyjsTestRuntimeClasspath
+                : configurations.jsTestRuntimeClasspath
+
+        runtimeClassPath.each {
             if (it.absolutePath.endsWith(".jar")) {
                 from zipTree(it.absolutePath).matching {
                     include '*.js'

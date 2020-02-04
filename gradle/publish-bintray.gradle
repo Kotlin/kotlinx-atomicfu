@@ -72,9 +72,9 @@ publishing {
             it.artifact(javadocJar)
         }
 
-        // disable metadata everywhere, but in native modules
+        // disable metadata everywhere, but in native and js modules
         def type = it.name
-        if (type == 'maven' || type == 'metadata' || type == 'jvm' || type == 'js' || type == 'pluginMaven') {
+        if (type == 'maven' || type == 'metadata' || type == 'jvm' || type == 'pluginMaven') {
             moduleDescriptorGenerator = null
         }
     }
