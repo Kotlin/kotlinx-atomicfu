@@ -158,7 +158,7 @@ private fun KotlinCommonOptions.addFriendPaths(friendPathsFileCollection: FileCo
         is KotlinJsOptions -> "-Xfriend-modules"
         else -> return
     }
-    freeCompilerArgs = freeCompilerArgs + "$argName=${friendPathsFileCollection.asPath}"
+    freeCompilerArgs = freeCompilerArgs + "$argName=${friendPathsFileCollection.joinToString(",")}"
 }
 
 fun Project.configureMultiplatformPluginTasks() {
