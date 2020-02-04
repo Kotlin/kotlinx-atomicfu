@@ -74,7 +74,7 @@ publishing {
 
         // disable metadata everywhere, but in native modules
         def type = it.name
-        if (type == 'maven' || type == 'metadata' || type == 'jvm' || type == 'js' || type == 'pluginMaven') {
+        if (type == 'maven' || type == 'metadata' || type == 'jvm' || type == 'pluginMaven') {
             moduleDescriptorGenerator = null
         }
     }

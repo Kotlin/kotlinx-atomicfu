@@ -21,7 +21,11 @@ kotlin {
     targets {
         // JVM & JS -- always
         fromPreset(presets.jvm, 'jvm')
-        fromPreset(presets.js, 'js')
+        fromPreset(presets.js, 'js') {
+            browser()
+            nodejs()
+            produceKotlinLibrary()
+        }
 
         if (project.ext.ideaActive) {
             fromPreset(project.ext.ideaPreset, 'native')
@@ -141,8 +145,15 @@ repositories.whenObjectAdded {
     }
 }
 
-def originalJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test.js"
-def transformedJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test_transformed.js"
+compileTestKotlinJs {
+    kotlinOptions {
+        // NOTE: Module base-name must be equal to the package name declared in package.json
+        def baseName = "kotlinx-atomicfu"
+        outputFile = new File(outputFile.parent, baseName + ".js")
+    }
+}
+def originalJsFile = "${rootProject.buildDir}/js/packages/kotlinx.atomicfu-atomicfu-test/kotlin/kotlinx-atomicfu.js"
+def transformedJsFile = "${rootProject.buildDir}/js/packages/kotlinx.atomicfu-atomicfu-test/kotlin/kotlinx.atomicfu-atomicfu-test.js"
 
 task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
@@ -151,8 +162,8 @@ task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     inputs.file(originalJsFile)
     outputs.file(transformedJsFile)
 }
-
-testMochaNode.dependsOn transformJS
+legacyjsBrowserTest.dependsOn transformJS
+legacyjsNodeTest.dependsOn transformJS
 
 // ==== CONFIGURE JVM =====
 
