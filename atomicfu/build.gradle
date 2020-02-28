@@ -2,8 +2,6 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-
 apply plugin: 'kotlin-multiplatform'
 apply from: rootProject.file("gradle/targets.gradle")
 
@@ -11,17 +9,17 @@ ext {
     nativeMainSets = []
     nativeTestSets = []
     nativeCompilations = []
+
+    addNative = { preset ->
+        nativeMainSets.add(preset.compilations['main'].kotlinSourceSets.first())
+        nativeTestSets.add(preset.compilations['test'].kotlinSourceSets.first())
+        nativeCompilations.add(preset.compilations['main'])
+    }
 }
 
 kotlin {
-    KotlinTarget.metaClass.addNative = {
-        nativeMainSets.add(delegate.compilations['main'].kotlinSourceSets.first())
-        nativeTestSets.add(delegate.compilations['test'].kotlinSourceSets.first())
-        nativeCompilations.add(delegate.compilations['main'])
-    }
-
     targets.metaClass.addTarget = { preset ->
-        delegate.fromPreset(preset, preset.name).addNative()
+        addNative(delegate.fromPreset(preset, preset.name))
     }
 
     targets {
@@ -30,7 +28,7 @@ kotlin {
         fromPreset(presets.js, 'js')
 
         if (project.ext.ideaActive) {
-            fromPreset(project.ext.ideaPreset, 'native').addNative()
+            addNative(fromPreset(project.ext.ideaPreset, 'native'))
         } else {
             addTarget(presets.linuxX64)
             addTarget(presets.iosArm64)
