@@ -148,6 +148,7 @@ repositories.whenObjectAdded {
     }
 }
 
+def transformedJsFile = compileTestKotlinJs.kotlinOptions.outputFile
 compileTestKotlinJs {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
@@ -155,8 +156,7 @@ compileTestKotlinJs {
         outputFile = new File(outputFile.parent, baseName + ".js")
     }
 }
-def originalJsFile = "${rootProject.buildDir}/js/packages/kotlinx.atomicfu-atomicfu-test/kotlin/kotlinx-atomicfu.js"
-def transformedJsFile = "${rootProject.buildDir}/js/packages/kotlinx.atomicfu-atomicfu-test/kotlin/kotlinx.atomicfu-atomicfu-test.js"
+def originalJsFile = compileTestKotlinJs.kotlinOptions.outputFile
 
 task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
