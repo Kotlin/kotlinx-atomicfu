@@ -26,7 +26,8 @@ kotlin {
         // JVM & JS -- always
         fromPreset(presets.jvm, 'jvm')
         fromPreset(presets.js, 'js') {
-            browser()
+            // TODO: Commented out because browser tests do not work on TeamCity
+            // browser()
             nodejs()
         }
 
@@ -166,11 +167,9 @@ task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     outputs.file(transformedJsFile)
 }
 
-if (project.tasks.findByName('legacyjsBrowserTest')) {
-    legacyjsBrowserTest.dependsOn transformJS
+if (project.tasks.findByName('legacyjsNodeTest')) {
     legacyjsNodeTest.dependsOn transformJS
 } else {
-    jsBrowserTest.dependsOn transformJS
     jsNodeTest.dependsOn transformJS
 }
 
