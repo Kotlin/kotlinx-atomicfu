@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.14.2
+
+* Update to Kotlin 1.3.70.
+
 # Version 0.14.1
 
 * Fixed broken JVM transformer after upgrade to ASM 7.2.
