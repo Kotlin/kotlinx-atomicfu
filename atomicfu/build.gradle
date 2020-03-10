@@ -25,7 +25,11 @@ kotlin {
     targets {
         // JVM & JS -- always
         fromPreset(presets.jvm, 'jvm')
-        fromPreset(presets.js, 'js')
+        fromPreset(presets.js, 'js') {
+            // TODO: Commented out because browser tests do not work on TeamCity
+            // browser()
+            nodejs()
+        }
 
         if (project.ext.ideaActive) {
             addNative(fromPreset(project.ext.ideaPreset, 'native'))
@@ -145,8 +149,15 @@ repositories.whenObjectAdded {
     }
 }
 
-def originalJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test.js"
-def transformedJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test_transformed.js"
+def transformedJsFile = compileTestKotlinJs.kotlinOptions.outputFile
+compileTestKotlinJs {
+    kotlinOptions {
+        // NOTE: Module base-name must be equal to the package name declared in package.json
+        def baseName = "kotlinx-atomicfu"
+        outputFile = new File(outputFile.parent, baseName + ".js")
+    }
+}
+def originalJsFile = compileTestKotlinJs.kotlinOptions.outputFile
 
 task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
@@ -156,7 +167,11 @@ task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     outputs.file(transformedJsFile)
 }
 
-testMochaNode.dependsOn transformJS
+if (project.tasks.findByName('legacyjsNodeTest')) {
+    legacyjsNodeTest.dependsOn transformJS
+} else {
+    jsNodeTest.dependsOn transformJS
+}
 
 // ==== CONFIGURE JVM =====
 
