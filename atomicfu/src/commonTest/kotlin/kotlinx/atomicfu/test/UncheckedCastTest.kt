@@ -9,6 +9,8 @@ import kotlin.test.assertTrue
 
 private val topLevelS = atomic<Any>(listOf("A", "B"))
 
+private val topLevelSS = atomic<Any>(listOf(arrayOf("A", "B"), arrayOf("C", "D")))
+
 class UncheckedCastTest {
     private val s = atomic<Any>("AAA")
     private val bs = atomic<Any?>(null)
@@ -25,6 +27,12 @@ class UncheckedCastTest {
     @Test
     fun testTopLevelValUnchekedCast() {
         assertEquals((topLevelS as AtomicRef<List<String>>).value[1], "B")
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Test
+    fun testTopLevelValUnchekedCastNested() {
+        assertEquals((topLevelSS as AtomicRef<List<Array<String>>>).value[0][1], "B")
     }
 
     private data class Box(val b: Int)
