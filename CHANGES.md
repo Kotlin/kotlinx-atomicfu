@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.14.3
+
+* Update to Kotlin 1.3.71.
+* Enable HMPP and new JS IR backend compilation.
+
 # Version 0.14.2
 
 * Update to Kotlin 1.3.70.
