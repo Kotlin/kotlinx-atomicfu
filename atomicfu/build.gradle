@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 apply plugin: 'kotlin-multiplatform'
@@ -103,6 +103,31 @@ kotlin {
                 defFile 'src/nativeInterop/cinterop/interop.def'
             }
         }
+    }
+}
+
+// Hack for publishing as HMPP: pack the cinterop klib as a source set:
+if (!project.ext.ideaActive) {
+    kotlin.sourceSets {
+        nativeInterop
+        nativeMain.dependsOn(nativeInterop)
+    }
+
+    afterEvaluate {
+        def nativeTarget = kotlin.targets.findByName("linuxX64")
+        def cinteropTask = tasks.named(kotlin.linuxX64().compilations["main"].cinterops[0].interopProcessingTaskName)
+        def cinteropKlib = cinteropTask.map { it.outputFile }
+        def fakeCinteropCompilation = kotlin.targets["metadata"].compilations[kotlin.sourceSets.nativeInterop.name]
+        def destination = fakeCinteropCompilation.compileKotlinTask.destinationDir
+
+        task copyCinteropKlib(type: Zip) {
+            from(zipTree(cinteropKlib).matching { it.exclude("targets/**") })
+            destinationDirectory.set(destination)
+            archiveFileName.set("${project.name}_${fakeCinteropCompilation.name}.klib")
+            dependsOn cinteropTask
+        }
+
+        fakeCinteropCompilation.output.classesDirs.from(files().builtBy(copyCinteropKlib))
     }
 }
 

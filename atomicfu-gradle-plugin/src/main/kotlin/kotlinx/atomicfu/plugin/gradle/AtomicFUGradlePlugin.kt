@@ -242,30 +242,37 @@ fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilati
 }
 
 fun Project.configureMultiplatformPluginDependencies(version: String) {
-    sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
-        val platformTypes = compilations.map { it.platformType }.toSet()
-        val compilationNames = compilations.map { it.compilationName }.toSet()
-        if (compilationNames.size != 1)
-            error("Source set '${sourceSet.name}' of project '$name' is part of several compilations $compilationNames")
-        val compilationType = compilationNames.single().compilationNameToType()
-            ?: return@forEach // skip unknown compilations
-        val platform =
-            if (platformTypes.size > 1) Platform.COMMON else // mix of platform types -> "common"
-                when (platformTypes.single()) {
-                    KotlinPlatformType.common -> Platform.COMMON
-                    KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> Platform.JVM
-                    KotlinPlatformType.js -> Platform.JS
-                    KotlinPlatformType.native -> Platform.NATIVE
-                }
-        val configurationName = when {
-            // impl dependency for native (there is no transformation)
-            platform == Platform.NATIVE -> sourceSet.implementationConfigurationName
-            // compileOnly dependency for main compilation (commonMain, jvmMain, jsMain)
-            compilationType == CompilationType.MAIN -> sourceSet.compileOnlyConfigurationName
-            // impl dependency for tests
-            else -> sourceSet.implementationConfigurationName
+    if (rootProject.findProperty("kotlin.mpp.enableGranularSourceSetsMetadata").toString().toBoolean()) {
+        val configurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
+                .getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
+                .compileOnlyConfigurationName
+        dependencies.add(configurationName, getAtomicfuDependencyNotation(Platform.NATIVE, version))
+    } else {
+        sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
+            val platformTypes = compilations.map { it.platformType }.toSet()
+            val compilationNames = compilations.map { it.compilationName }.toSet()
+            if (compilationNames.size != 1)
+                error("Source set '${sourceSet.name}' of project '$name' is part of several compilations $compilationNames")
+            val compilationType = compilationNames.single().compilationNameToType()
+                    ?: return@forEach // skip unknown compilations
+            val platform =
+                    if (platformTypes.size > 1) Platform.COMMON else // mix of platform types -> "common"
+                        when (platformTypes.single()) {
+                            KotlinPlatformType.common -> Platform.COMMON
+                            KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> Platform.JVM
+                            KotlinPlatformType.js -> Platform.JS
+                            KotlinPlatformType.native -> Platform.NATIVE
+                        }
+            val configurationName = when {
+                // impl dependency for native (there is no transformation)
+                platform == Platform.NATIVE -> sourceSet.implementationConfigurationName
+                // compileOnly dependency for main compilation (commonMain, jvmMain, jsMain)
+                compilationType == CompilationType.MAIN -> sourceSet.compileOnlyConfigurationName
+                // impl dependency for tests
+                else -> sourceSet.implementationConfigurationName
+            }
+            dependencies.add(configurationName, getAtomicfuDependencyNotation(platform, version))
         }
-        dependencies.add(configurationName, getAtomicfuDependencyNotation(platform, version))
     }
 }
 

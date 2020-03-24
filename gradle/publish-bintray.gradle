@@ -71,11 +71,5 @@ publishing {
         if (it.name != 'kotlinMultiplatform') {
             it.artifact(javadocJar)
         }
-
-        // disable metadata everywhere, but in native and js modules
-        def type = it.name
-        if (type == 'maven' || type == 'metadata' || type == 'jvm' || type == 'pluginMaven') {
-            moduleDescriptorGenerator = null
-        }
     }
 }
