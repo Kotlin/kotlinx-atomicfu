@@ -119,8 +119,15 @@ private fun String.sourceSetNameToType(): CompilationType? = when (this) {
 private val Project.config: AtomicFUPluginExtension
     get() = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension ?: AtomicFUPluginExtension(null)
 
-private fun getAtomicfuDependencyNotation(platform: Platform, version: String): String =
-    "org.jetbrains.kotlinx:atomicfu${platform.suffix}:$version"
+private fun getAtomicfuDependencyNotation(platform: Platform, version: String): String {
+    val suffix = when (platform) {
+        // in common source sets, use a dependency on the MPP root module:
+        Platform.COMMON -> atomicfuRootMppModulePlatform.suffix
+        else -> platform.suffix
+    }
+    return "org.jetbrains.kotlinx:atomicfu$suffix:$version"
+}
+
 
 // Note "afterEvaluate" does nothing when the project is already in executed state, so we need
 // a special check for this case
@@ -241,12 +248,14 @@ fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilati
     return sourceSetsByCompilation
 }
 
+private val atomicfuRootMppModulePlatform = Platform.NATIVE
+
 fun Project.configureMultiplatformPluginDependencies(version: String) {
     if (rootProject.findProperty("kotlin.mpp.enableGranularSourceSetsMetadata").toString().toBoolean()) {
         val configurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
                 .getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
                 .compileOnlyConfigurationName
-        dependencies.add(configurationName, getAtomicfuDependencyNotation(Platform.NATIVE, version))
+        dependencies.add(configurationName, getAtomicfuDependencyNotation(atomicfuRootMppModulePlatform, version))
     } else {
         sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
             val platformTypes = compilations.map { it.platformType }.toSet()
