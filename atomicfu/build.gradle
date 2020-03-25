@@ -121,7 +121,10 @@ if (!project.ext.ideaActive) {
         def destination = fakeCinteropCompilation.compileKotlinTask.destinationDir
 
         task copyCinteropKlib(type: Zip) {
-            from(zipTree(cinteropKlib).matching { it.exclude("targets/**") })
+            from(zipTree(cinteropKlib).matching {
+                exclude("targets/**") // with Kotlin pre-1.4
+                exclude("default/targets/**") // with Kotlin 1.4
+            })
             destinationDirectory.set(destination)
             archiveFileName.set("${project.name}_${fakeCinteropCompilation.name}.klib")
             dependsOn cinteropTask
