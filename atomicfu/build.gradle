@@ -113,25 +113,12 @@ if (!project.ext.ideaActive) {
         nativeMain.dependsOn(nativeInterop)
     }
 
-    afterEvaluate {
-        def nativeTarget = kotlin.targets.findByName("linuxX64")
-        def cinteropTask = tasks.named(kotlin.linuxX64().compilations["main"].cinterops[0].interopProcessingTaskName)
-        def cinteropKlib = cinteropTask.map { it.outputFile }
-        def fakeCinteropCompilation = kotlin.targets["metadata"].compilations[kotlin.sourceSets.nativeInterop.name]
-        def destination = fakeCinteropCompilation.compileKotlinTask.destinationDir
+    apply from: "$rootDir/gradle/interop-as-source-set-klib.gradle"
 
-        task copyCinteropKlib(type: Zip) {
-            from(zipTree(cinteropKlib).matching {
-                exclude("targets/**") // with Kotlin pre-1.4
-                exclude("default/targets/**") // with Kotlin 1.4
-            })
-            destinationDirectory.set(destination)
-            archiveFileName.set("${project.name}_${fakeCinteropCompilation.name}.klib")
-            dependsOn cinteropTask
-        }
-
-        fakeCinteropCompilation.output.classesDirs.from(files().builtBy(copyCinteropKlib))
-    }
+    registerInteropAsSourceSetOutput(
+            kotlin.linuxX64().compilations["main"].cinterops["interop"],
+            kotlin.sourceSets["nativeInterop"]
+    )
 }
 
 configurations {
