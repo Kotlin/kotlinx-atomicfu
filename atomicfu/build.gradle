@@ -288,9 +288,15 @@ jvmTest.dependsOn jvmTestAll
 
 afterEvaluate {
     publishing.publications {
-        jvm.artifactId = 'atomicfu'
-        js.artifactId = 'atomicfu-js'
         metadata.artifactId = 'atomicfu-common'
-        kotlinMultiplatform.artifactId = 'atomicfu-native'
+
+        kotlinMultiplatform {
+            apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
+            publishPlatformArtifactsInRootModule(jvm)
+        }
     }
+}
+
+tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
+    dependsOn(tasks["generatePomFileForJvmPublication"])
 }
