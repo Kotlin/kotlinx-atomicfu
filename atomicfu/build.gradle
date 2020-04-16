@@ -124,6 +124,12 @@ if (!project.ext.ideaActive) {
             from(zipTree(cinteropKlib).matching {
                 exclude("targets/**") // with Kotlin pre-1.4
                 exclude("default/targets/**") // with Kotlin 1.4
+                eachFile {
+                    if (it.name == "manifest") {
+                        // drop property with the list of native targets; empty list -> applicable to all
+                        it.filter(org.apache.tools.ant.filters.LineContains, negate: true, contains: ['native_targets'])
+                    }
+                }
             })
             destinationDirectory.set(destination)
             archiveFileName.set("${project.name}_${fakeCinteropCompilation.name}.klib")
