@@ -11,15 +11,21 @@ project.ext.registerInteropAsSourceSetOutput = { interop, sourceSet ->
 
         def tempDir = "$buildDir/tmp/${sourceSet.name}UnpackedInteropKlib"
 
-        def prepareKlibTaskProvider = tasks.register("prepare${sourceSet.name}InteropKlib", Copy) {
-            from(files(zipTree(cinteropKlib).matching { exclude("default/targets/**")}).builtBy(cinteropTask))
+        def prepareKlibTaskProvider = tasks.register("prepare${sourceSet.name.capitalize()}InteropKlib", Sync) {
+            from(files(zipTree(cinteropKlib).matching {
+                exclude("targets/**", "default/targets/**")
+            }).builtBy(cinteropTask))
+
             into(tempDir)
 
             doLast {
-                def manifest = file("$tempDir/default/manifest")
+                def manifest140 = file("$tempDir/default/manifest")
+                def manifest1371 = file("$tempDir/manifest")
+                def manifest = manifest140.exists() ? manifest140 : manifest1371
+
                 def lines = manifest.readLines()
                 def modifiedLines = lines.collect { line ->
-                    line.startsWith("depends=") ? "depends=stdlib org.jetbrains.kotlin.native.platform.posix" :
+                    line.startsWith("depends=") ? "depends=stdlib ${manifest == manifest140 ? 'org.jetbrains.kotlin.native.platform.posix' : 'posix'}" :
                             line.startsWith("native_targets=") ? "native_targets=" :
                                     line
                 }
@@ -27,7 +33,7 @@ project.ext.registerInteropAsSourceSetOutput = { interop, sourceSet ->
             }
         }
 
-        def copyCinteropTaskProvider = tasks.register("copy${sourceSet.name}CinteropKlib",  Zip) {
+        def copyCinteropTaskProvider = tasks.register("copy${sourceSet.name.capitalize()}CinteropKlib",  Zip) {
             from(fileTree(tempDir).builtBy(prepareKlibTaskProvider))
             destinationDirectory.set(destination)
             archiveFileName.set("${project.name}_${fakeCinteropCompilation.name}.klib")
