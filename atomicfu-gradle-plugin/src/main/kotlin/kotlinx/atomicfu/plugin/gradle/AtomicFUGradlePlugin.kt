@@ -384,12 +384,17 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 
 @CacheableTask
 open class AtomicFUTransformTask : ConventionTask() {
+    @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
+
     @OutputDirectory
     lateinit var outputDir: File
+
+    @Classpath
     @InputFiles
     lateinit var classPath: FileCollection
+
     @Input
     var variant = "FU"
     @Input
@@ -410,8 +415,10 @@ open class AtomicFUTransformTask : ConventionTask() {
 
 @CacheableTask
 open class AtomicFUTransformJsTask : ConventionTask() {
+    @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
+
     @OutputDirectory
     lateinit var outputDir: File
     @Input
