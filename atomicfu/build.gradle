@@ -22,14 +22,15 @@ kotlin {
         addNative(delegate.fromPreset(preset, preset.name))
     }
 
+    js {
+        // TODO: Commented out because browser tests do not work on TeamCity
+        // browser()
+        nodejs()
+    }
+
     targets {
         // JVM & JS -- always
         fromPreset(presets.jvm, 'jvm')
-        fromPreset(presets.js, 'js') {
-            // TODO: Commented out because browser tests do not work on TeamCity
-            // browser()
-            nodejs()
-        }
 
         if (project.ext.ideaActive) {
             addNative(fromPreset(project.ext.ideaPreset, 'native'))
@@ -135,7 +136,7 @@ dependencies {
 
 // ==== CONFIGURE JS =====
 
-tasks.withType(compileKotlinJs.getClass()) {
+tasks.withType(compileKotlinJsLegacy.getClass()) {
     kotlinOptions {
         moduleKind = "umd"
         sourceMap = true
@@ -143,7 +144,7 @@ tasks.withType(compileKotlinJs.getClass()) {
     }
 }
 
-compileKotlinJs {
+compileKotlinJsLegacy {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
@@ -164,17 +165,17 @@ repositories.whenObjectAdded {
     }
 }
 
-def transformedJsFile = compileTestKotlinJs.kotlinOptions.outputFile
-compileTestKotlinJs {
+def transformedJsFile = compileTestKotlinJsLegacy.kotlinOptions.outputFile
+compileTestKotlinJsLegacy {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
         outputFile = new File(outputFile.parent, baseName + ".js")
     }
 }
-def originalJsFile = compileTestKotlinJs.kotlinOptions.outputFile
+def originalJsFile = compileTestKotlinJsLegacy.kotlinOptions.outputFile
 
-task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
+task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJsLegacy]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
     args = [originalJsFile, transformedJsFile]
     classpath = configurations.transformer
@@ -182,8 +183,8 @@ task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     outputs.file(transformedJsFile)
 }
 
-if (project.tasks.findByName('legacyjsNodeTest')) {
-    legacyjsNodeTest.dependsOn transformJS
+if (project.tasks.findByName('jsLegacyNodeTest')) {
+    jsLegacyNodeTest.dependsOn transformJS
 } else {
     jsNodeTest.dependsOn transformJS
 }

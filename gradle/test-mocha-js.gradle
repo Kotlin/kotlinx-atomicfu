@@ -34,7 +34,7 @@ task installDependenciesMochaChrome(type: NpmTask, dependsOn: [npmInstall]) {
 
 def mochaChromeTestPage = file("$buildDir/test-page.html")
 
-task prepareMochaChrome(dependsOn: [compileTestKotlinJs, installDependenciesMochaChrome]) {
+task prepareMochaChrome(dependsOn: [compileTestKotlinJsLegacy, installDependenciesMochaChrome]) {
     outputs.file(mochaChromeTestPage)
 }
 
@@ -52,8 +52,8 @@ prepareMochaChrome.doLast {
         <script>mocha.setup('bdd');</script>
         <script src="$node.nodeModulesDir/node_modules/kotlin/kotlin.js"></script>
         <script src="$node.nodeModulesDir/node_modules/kotlin-test/kotlin-test.js"></script>
-        <script src="$compileKotlinJs.outputFile"></script>
-        <script src="$compileTestKotlinJs.outputFile"></script>
+        <script src="$compileKotlinJsLegacy.outputFile"></script>
+        <script src="$compileTestKotlinJsLegacy.outputFile"></script>
         <script>mocha.run();</script>
         </body>
         </html>
@@ -62,7 +62,7 @@ prepareMochaChrome.doLast {
 
 task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
     script = file("$node.nodeModulesDir/node_modules/mocha-headless-chrome/bin/start")
-    args = [compileTestKotlinJs.outputFile, '--file', mochaChromeTestPage]
+    args = [compileTestKotlinJsLegacy.outputFile, '--file', mochaChromeTestPage]
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
     if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }

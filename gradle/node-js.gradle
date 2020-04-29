@@ -26,15 +26,15 @@ task prepareNodePackage(type: Copy) {
 
 npmInstall.dependsOn prepareNodePackage
 
-task populateNodeModules(type: Copy, dependsOn: [compileKotlinJs]) {
-    from (compileKotlinJs.destinationDir) {
+task populateNodeModules(type: Copy, dependsOn: [compileKotlinJsLegacy]) {
+    from (compileKotlinJsLegacy.destinationDir) {
         exclude '**/kotlinx-atomicfu/*'
     }
     into "$node.nodeModulesDir/node_modules"
 
     afterEvaluate {
-        def runtimeClassPath = configurations.hasProperty("legacyjsTestRuntimeClasspath")
-                ? configurations.legacyjsTestRuntimeClasspath
+        def runtimeClassPath = configurations.hasProperty("jsLegacyTestRuntimeClasspath")
+                ? configurations.jsLegacyTestRuntimeClasspath
                 : configurations.jsTestRuntimeClasspath
 
         runtimeClassPath.each {
