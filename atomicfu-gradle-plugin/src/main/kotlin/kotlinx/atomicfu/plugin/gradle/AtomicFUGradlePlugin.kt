@@ -235,10 +235,15 @@ fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilati
 
 fun Project.configureMultiplatformPluginDependencies(version: String) {
     if (rootProject.findProperty("kotlin.mpp.enableGranularSourceSetsMetadata").toString().toBoolean()) {
-        val configurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
+        val mainConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
                 .getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
                 .compileOnlyConfigurationName
-        dependencies.add(configurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+        dependencies.add(mainConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+
+        val testConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
+                .getByName(KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME)
+                .implementationConfigurationName
+        dependencies.add(testConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
     } else {
         sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
             val platformTypes = compilations.map { it.platformType }.toSet()
