@@ -235,10 +235,25 @@ fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilati
 
 fun Project.configureMultiplatformPluginDependencies(version: String) {
     if (rootProject.findProperty("kotlin.mpp.enableGranularSourceSetsMetadata").toString().toBoolean()) {
-        val configurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
+        val mainConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
                 .getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
                 .compileOnlyConfigurationName
-        dependencies.add(configurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+        dependencies.add(mainConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+
+        val testConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
+                .getByName(KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME)
+                .implementationConfigurationName
+        dependencies.add(testConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+
+        // For each Native target, add an implementation dependency, so that it gets published as a transitive one:
+        withKotlinTargets { target ->
+            if (target.platformType == KotlinPlatformType.native) {
+                target.compilations.matching { it.name == KotlinCompilation.MAIN_COMPILATION_NAME }.all { compilation ->
+                    val configuration = compilation.defaultSourceSet.implementationConfigurationName
+                    dependencies.add(configuration, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+                }
+            }
+        }
     } else {
         sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
             val platformTypes = compilations.map { it.platformType }.toSet()
@@ -384,12 +399,17 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 
 @CacheableTask
 open class AtomicFUTransformTask : ConventionTask() {
+    @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
+
     @OutputDirectory
     lateinit var outputDir: File
+
+    @Classpath
     @InputFiles
     lateinit var classPath: FileCollection
+
     @Input
     var variant = "FU"
     @Input
@@ -410,8 +430,10 @@ open class AtomicFUTransformTask : ConventionTask() {
 
 @CacheableTask
 open class AtomicFUTransformJsTask : ConventionTask() {
+    @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
+
     @OutputDirectory
     lateinit var outputDir: File
     @Input
