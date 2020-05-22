@@ -245,13 +245,15 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
                 .implementationConfigurationName
         dependencies.add(testConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
 
-        // For each Native target, add an implementation dependency, so that it gets published as a transitive one:
-        withKotlinTargets { target ->
-            if (target.platformType == KotlinPlatformType.native) {
-                target.compilations.matching { it.name == KotlinCompilation.MAIN_COMPILATION_NAME }.all { compilation ->
-                    val configuration = compilation.defaultSourceSet.implementationConfigurationName
-                    dependencies.add(configuration, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
-                }
+        // For each source set that is only used in Native compilations, add an implementation dependency so that it
+        // gets published and is properly consumed as a transitive dependency:
+        sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
+            val isSharedNativeSourceSet = compilations.all {
+                it.platformType == KotlinPlatformType.common || it.platformType == KotlinPlatformType.native
+            }
+            if (isSharedNativeSourceSet) {
+                val configuration = sourceSet.implementationConfigurationName
+                dependencies.add(configuration, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
             }
         }
     } else {
