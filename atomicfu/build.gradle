@@ -22,6 +22,7 @@ kotlin {
         addNative(delegate.fromPreset(preset, preset.name))
     }
 
+    // JS -- always
     js {
         // TODO: Commented out because browser tests do not work on TeamCity
         // browser()
@@ -29,7 +30,7 @@ kotlin {
     }
 
     targets {
-        // JVM & JS -- always
+        // JVM -- always
         fromPreset(presets.jvm, 'jvm')
 
         if (project.ext.ideaActive) {
