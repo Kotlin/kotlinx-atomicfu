@@ -26,8 +26,12 @@ task prepareNodePackage(type: Copy) {
 
 npmInstall.dependsOn prepareNodePackage
 
-task populateNodeModules(type: Copy, dependsOn: [compileKotlinJsLegacy]) {
-    from (compileKotlinJsLegacy.destinationDir) {
+def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
+        ? compileKotlinJsLegacy
+        : compileKotlinJs
+
+task populateNodeModules(type: Copy, dependsOn: [compileJsLegacy]) {
+    from (compileJsLegacy.destinationDir) {
         exclude '**/kotlinx-atomicfu/*'
     }
     into "$node.nodeModulesDir/node_modules"

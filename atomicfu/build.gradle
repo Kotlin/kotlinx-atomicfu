@@ -136,7 +136,11 @@ dependencies {
 
 // ==== CONFIGURE JS =====
 
-tasks.withType(compileKotlinJsLegacy.getClass()) {
+def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
+        ? compileKotlinJsLegacy
+        : compileKotlinJs
+
+tasks.withType(compileJsLegacy.getClass()) {
     kotlinOptions {
         moduleKind = "umd"
         sourceMap = true
@@ -144,7 +148,7 @@ tasks.withType(compileKotlinJsLegacy.getClass()) {
     }
 }
 
-compileKotlinJsLegacy {
+compileJsLegacy.configure {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
@@ -165,17 +169,21 @@ repositories.whenObjectAdded {
     }
 }
 
-def transformedJsFile = compileTestKotlinJsLegacy.kotlinOptions.outputFile
-compileTestKotlinJsLegacy {
+def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
+        ? compileTestKotlinJsLegacy
+        : compileTestKotlinJs
+
+def transformedJsFile = compileTestJsLegacy.kotlinOptions.outputFile
+compileTestJsLegacy.configure {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
         outputFile = new File(outputFile.parent, baseName + ".js")
     }
 }
-def originalJsFile = compileTestKotlinJsLegacy.kotlinOptions.outputFile
+def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
 
-task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJsLegacy]) {
+task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
     args = [originalJsFile, transformedJsFile]
     classpath = configurations.transformer
