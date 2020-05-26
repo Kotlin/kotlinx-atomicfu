@@ -157,7 +157,6 @@ compileJsLegacy.configure {
 }
 
 apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
-apply from: file("$rootProject.projectDir/gradle/test-mocha-js.gradle")
 apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
 
 // Workaround the problem with Node downloading
