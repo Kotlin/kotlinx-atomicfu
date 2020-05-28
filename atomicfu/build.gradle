@@ -22,14 +22,16 @@ kotlin {
         addNative(delegate.fromPreset(preset, preset.name))
     }
 
+    // JS -- always
+    js {
+        // TODO: Commented out because browser tests do not work on TeamCity
+        // browser()
+        nodejs()
+    }
+
     targets {
-        // JVM & JS -- always
+        // JVM -- always
         fromPreset(presets.jvm, 'jvm')
-        fromPreset(presets.js, 'js') {
-            // TODO: Commented out because browser tests do not work on TeamCity
-            // browser()
-            nodejs()
-        }
 
         if (project.ext.ideaActive) {
             addNative(fromPreset(project.ext.ideaPreset, 'native'))
@@ -135,7 +137,11 @@ dependencies {
 
 // ==== CONFIGURE JS =====
 
-tasks.withType(compileKotlinJs.getClass()) {
+def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
+        ? compileKotlinJsLegacy
+        : compileKotlinJs
+
+tasks.withType(compileJsLegacy.getClass()) {
     kotlinOptions {
         moduleKind = "umd"
         sourceMap = true
@@ -143,7 +149,7 @@ tasks.withType(compileKotlinJs.getClass()) {
     }
 }
 
-compileKotlinJs {
+compileJsLegacy.configure {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
@@ -152,7 +158,6 @@ compileKotlinJs {
 }
 
 apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
-apply from: file("$rootProject.projectDir/gradle/test-mocha-js.gradle")
 apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
 
 // Workaround the problem with Node downloading
@@ -164,17 +169,21 @@ repositories.whenObjectAdded {
     }
 }
 
-def transformedJsFile = compileTestKotlinJs.kotlinOptions.outputFile
-compileTestKotlinJs {
+def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
+        ? compileTestKotlinJsLegacy
+        : compileTestKotlinJs
+
+def transformedJsFile = compileTestJsLegacy.kotlinOptions.outputFile
+compileTestJsLegacy.configure {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
         outputFile = new File(outputFile.parent, baseName + ".js")
     }
 }
-def originalJsFile = compileTestKotlinJs.kotlinOptions.outputFile
+def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
 
-task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
+task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
     args = [originalJsFile, transformedJsFile]
     classpath = configurations.transformer
@@ -182,8 +191,8 @@ task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     outputs.file(transformedJsFile)
 }
 
-if (project.tasks.findByName('legacyjsNodeTest')) {
-    legacyjsNodeTest.dependsOn transformJS
+if (project.tasks.findByName('jsLegacyNodeTest')) {
+    jsLegacyNodeTest.dependsOn transformJS
 } else {
     jsNodeTest.dependsOn transformJS
 }
