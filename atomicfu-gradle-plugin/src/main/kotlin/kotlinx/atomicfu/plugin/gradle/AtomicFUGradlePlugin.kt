@@ -125,7 +125,7 @@ private fun getAtomicfuDependencyNotation(platform: Platform, version: String): 
         Platform.COMMON -> atomicfuRootMppModulePlatform.suffix
         else -> platform.suffix
     }
-    return "org.jetbrains.kotlinx:atomicfu$suffix:$version"
+    return "com.ionspin.kotlin.atomicfu:atomicfu$suffix:$version"
 }
 
 

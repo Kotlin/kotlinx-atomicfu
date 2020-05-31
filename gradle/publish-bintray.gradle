@@ -70,3 +70,8 @@ publishing {
         }
     }
 }
+
+/*
+Mac tasks
+ publishIosArm32PublicationToSnapshotRepository publishIosArm64PublicationToSnapshotRepository publishIosX64PublicationToSnapshotRepository publishMacosX64PublicationToSnapshotRepository publishTvosArm64PublicationToSnapshotRepository publishTvosX64PublicationToSnapshotRepository publishWatchosArm32PublicationToSnapshotRepository publishWatchosArm64PublicationToSnapshotRepository publishWatchosX86PublicationToSnapshotRepository
+ */
