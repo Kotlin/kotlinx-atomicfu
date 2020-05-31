@@ -19,8 +19,6 @@ task testMochaNode(type: NodeTask, dependsOn: [installDependenciesMochaNode]) {
     if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }
 
-jsTest.dependsOn testMochaNode
-
 // -- Testing with Mocha under headless Chrome
 
 task installDependenciesMochaChrome(type: NpmTask, dependsOn: [npmInstall]) {
