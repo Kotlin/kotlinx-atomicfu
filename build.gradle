@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -29,7 +29,13 @@ buildscript {
     repositories {
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven {
+            url "https://kotlin.bintray.com/kotlin-dev"
+            credentials {
+                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
+                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
+            }
+        }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
     }
@@ -55,7 +61,13 @@ allprojects {
     repositories {
         jcenter()
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
-        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven {
+            url "https://kotlin.bintray.com/kotlin-dev"
+            credentials {
+                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
+                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
+            }
+        }
         maven { url "https://kotlin.bintray.com/kotlinx" }
     }
 
@@ -65,6 +77,14 @@ allprojects {
     // 'atomicfu-native' check is a kludge so that existing YouTrack config works, todo: remove
     if (project != rootProject && project.name != 'atomicfu-native') {
         apply from: rootProject.file("gradle/publish-bintray.gradle")
+    }
+
+    // This fixes "org.gradle.jvm.version" in Gradle metadata
+    plugins.withType(JavaPlugin) {
+        java {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+        }
     }
 }
 

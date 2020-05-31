@@ -1,30 +1,38 @@
 /*
- * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
 
 apply plugin: 'kotlin-multiplatform'
 apply from: rootProject.file("gradle/targets.gradle")
 
-project.ext.nativeMainSets = []
-project.ext.nativeTestSets = []
-project.ext.nativeCompilations = []
+ext {
+    nativeMainSets = []
+    nativeTestSets = []
+    nativeCompilations = []
+
+    addNative = { preset ->
+        nativeMainSets.add(preset.compilations['main'].kotlinSourceSets.first())
+        nativeTestSets.add(preset.compilations['test'].kotlinSourceSets.first())
+        nativeCompilations.add(preset.compilations['main'])
+    }
+}
 
 kotlin {
     targets.metaClass.addTarget = { preset ->
-        def target = delegate.fromPreset(preset, preset.name)
-        project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
-        project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
-        project.ext.nativeCompilations.add(target.compilations['main'])
+        addNative(delegate.fromPreset(preset, preset.name))
     }
 
     targets {
         // JVM & JS -- always
         fromPreset(presets.jvm, 'jvm')
-        fromPreset(presets.js, 'js')
+        fromPreset(presets.js, 'js') {
+            // TODO: Commented out because browser tests do not work on TeamCity
+            // browser()
+            nodejs()
+        }
 
         if (project.ext.ideaActive) {
-            fromPreset(project.ext.ideaPreset, 'native')
+            addNative(fromPreset(project.ext.ideaPreset, 'native'))
         } else {
             addTarget(presets.linuxX64)
             addTarget(presets.iosArm64)
@@ -89,12 +97,40 @@ kotlin {
         }
     }
 
-    configure(project.ext.nativeCompilations) {
+    configure(nativeCompilations) {
         cinterops {
             interop {
                 defFile 'src/nativeInterop/cinterop/interop.def'
             }
         }
+    }
+}
+
+// Hack for publishing as HMPP: pack the cinterop klib as a source set:
+if (!project.ext.ideaActive) {
+    kotlin.sourceSets {
+        nativeInterop
+        nativeMain.dependsOn(nativeInterop)
+    }
+
+    afterEvaluate {
+        def nativeTarget = kotlin.targets.findByName("linuxX64")
+        def cinteropTask = tasks.named(kotlin.linuxX64().compilations["main"].cinterops[0].interopProcessingTaskName)
+        def cinteropKlib = cinteropTask.map { it.outputFile }
+        def fakeCinteropCompilation = kotlin.targets["metadata"].compilations[kotlin.sourceSets.nativeInterop.name]
+        def destination = fakeCinteropCompilation.compileKotlinTask.destinationDir
+
+        task copyCinteropKlib(type: Zip) {
+            from(zipTree(cinteropKlib).matching {
+                exclude("targets/**") // with Kotlin pre-1.4
+                exclude("default/targets/**") // with Kotlin 1.4
+            })
+            destinationDirectory.set(destination)
+            archiveFileName.set("${project.name}_${fakeCinteropCompilation.name}.klib")
+            dependsOn cinteropTask
+        }
+
+        fakeCinteropCompilation.output.classesDirs.from(files().builtBy(copyCinteropKlib))
     }
 }
 
@@ -141,8 +177,15 @@ repositories.whenObjectAdded {
     }
 }
 
-def originalJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test.js"
-def transformedJsFile = "$buildDir/classes/kotlin/js/test/atomicfu_test_transformed.js"
+def transformedJsFile = compileTestKotlinJs.kotlinOptions.outputFile
+compileTestKotlinJs {
+    kotlinOptions {
+        // NOTE: Module base-name must be equal to the package name declared in package.json
+        def baseName = "kotlinx-atomicfu"
+        outputFile = new File(outputFile.parent, baseName + ".js")
+    }
+}
+def originalJsFile = compileTestKotlinJs.kotlinOptions.outputFile
 
 task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
@@ -152,7 +195,11 @@ task transformJS(type: JavaExec, dependsOn: [compileTestKotlinJs]) {
     outputs.file(transformedJsFile)
 }
 
-testMochaNode.dependsOn transformJS
+if (project.tasks.findByName('legacyjsNodeTest')) {
+    legacyjsNodeTest.dependsOn transformJS
+} else {
+    jsNodeTest.dependsOn transformJS
+}
 
 // ==== CONFIGURE JVM =====
 
