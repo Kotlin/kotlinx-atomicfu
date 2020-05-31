@@ -28,64 +28,11 @@ task javadocJar(type: Jar) {
     archiveClassifier = 'javadoc'
 }
 
-/*
-publishing {
-    publications.withType(MavenPublication::class) {
-        artifact(tasks["javadocJar"])
-        pom {
-            name.set("Kotlin Multiplatform Crypto")
-            description.set("Kotlin Multiplatform Crypto library")
-            url.set("https://github.com/ionspin/kotlin-multiplatform-crypto")
-            licenses {
-                license {
-                    name.set("The Apache License, Version 2.0")
-                    url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                }
-            }
-            developers {
-                developer {
-                    id.set("ionspin")
-                    name.set("Ugljesa Jovanovic")
-                    email.set("opensource@ionspin.com")
-                }
-            }
-            scm {
-                url.set("https://github.com/ionspin/kotlin-multiplatform-crypto")
-                connection.set("scm:git:git://git@github.com:ionspin/kotlin-multiplatform-crypto.git")
-                developerConnection.set("scm:git:ssh://git@github.com:ionspin/kotlin-multiplatform-crypto.git")
-
-            }
-
-        }
-    }
-    repositories {
-        maven {
-
-            url = uri(sonatypeStaging)
-            credentials {
-                username = sonatypeUsername ?: sonatypeUsernameEnv ?: ""
-                password = sonatypePassword ?: sonatypePasswordEnv ?: ""
-            }
-        }
-
-        maven {
-            name = "snapshot"
-            url = uri(sonatypeSnapshots)
-            credentials {
-                username = sonatypeUsername ?: sonatypeUsernameEnv ?: ""
-                password = sonatypePassword ?: sonatypePasswordEnv ?: ""
-            }
-        }
-    }
-}
- */
-
-
 publishing {
     repositories {
         maven {
             url =  "https://oss.sonatype.org/content/repositories/snapshots/"
-
+            name = "snapshot"
             credentials {
                 username = project.hasProperty('sonatypeUsername') ? project.property('sonatypeUsername') : System.getenv('SONATYPE_USERNAME')
                 password = project.hasProperty('sonatypePassword') ? project.property('sonatypePassword') : System.getenv('SONATYPE_PASSWORD')
