@@ -168,13 +168,13 @@ class FieldInfo(
     override fun toString(): String = "${owner.prettyStr()}::$name"
 }
 
-enum class Variant { FU, VH, BOTH }
+enum class JvmVariant { FU, VH, BOTH }
 
 class AtomicFUTransformer(
     classpath: List<String>,
     inputDir: File,
     outputDir: File = inputDir,
-    var variant: Variant = Variant.FU
+    var jvmVariant: JvmVariant = JvmVariant.FU
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
 
     private val classPathLoader = URLClassLoader(
@@ -195,7 +195,7 @@ class AtomicFUTransformer(
         val files = inputDir.walk().filter { it.isFile }.toList()
         val needTransform = analyzeFilesForFields(files)
         if (needTransform || outputDir == inputDir) {
-            val vh = variant == Variant.VH
+            val vh = jvmVariant == JvmVariant.VH
             // visit method bodies for external references to fields, runs all logic, fails if anything is wrong
             val needsTransform = analyzeFilesForRefs(files, vh)
             // perform transformation
@@ -205,7 +205,7 @@ class AtomicFUTransformer(
                 val outBytes = if (file.isClassFile() && file in needsTransform) transformFile(file, bytes, vh) else bytes
                 val outFile = file.toOutputFile()
                 outFile.mkdirsAndWrite(outBytes)
-                if (variant == Variant.BOTH && outBytes !== bytes) {
+                if (jvmVariant == JvmVariant.BOTH && outBytes !== bytes) {
                     val vhBytes = transformFile(file, bytes, true)
                     val vhFile = outputDir / "META-INF" / "versions" / "9" / file.relativeTo(inputDir).toString()
                     vhFile.mkdirsAndWrite(vhBytes)
@@ -1512,7 +1512,7 @@ fun main(args: Array<String>) {
     }
     val t = AtomicFUTransformer(emptyList(), File(args[0]))
     if (args.size > 1) t.outputDir = File(args[1])
-    if (args.size > 2) t.variant = enumValueOf(args[2].toUpperCase(Locale.US))
+    if (args.size > 2) t.jvmVariant = enumValueOf(args[2].toUpperCase(Locale.US))
     t.verbose = true
     t.transform()
 }
