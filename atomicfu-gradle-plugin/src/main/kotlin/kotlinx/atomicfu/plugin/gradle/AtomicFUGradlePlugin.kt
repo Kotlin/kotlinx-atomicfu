@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.*
 import java.util.*
 import java.util.concurrent.*
+import org.jetbrains.kotlin.gradle.targets.js.*
+import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 
 private const val EXTENSION_NAME = "atomicfu"
 private const val ORIGINAL_DIR_NAME = "originalClassesDir"
@@ -49,6 +51,14 @@ private fun Project.configureDependencies() {
             getAtomicfuDependencyNotation(Platform.JS, version)
         )
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JS, version))
+    }
+    withPluginWhenEvaluatedDependencies("org.jetbrains.kotlin.js") { version ->
+        dependencies.add(
+                if (config.transformJs) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
+                getAtomicfuDependencyNotation(Platform.JS, version)
+        )
+        dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JS, version))
+        dependencies.add(IMPLEMENTATION_CONFIGURATION, "org.jetbrains.kotlin:kotlinx-atomicfu-runtime:1.5.0-M2")
     }
     withPluginWhenEvaluatedDependencies("kotlin-multiplatform") { version ->
         configureMultiplatformPluginDependencies(version)
@@ -113,6 +123,8 @@ private val Project.config: AtomicFUPluginExtension
 
 private fun getAtomicfuDependencyNotation(platform: Platform, version: String): String =
     "org.jetbrains.kotlinx:atomicfu${platform.suffix}:$version"
+
+private fun KotlinTarget.isIrTarget() = (this is KotlinJsTarget && irTarget != null) || this is KotlinJsIrTarget
 
 // Note "afterEvaluate" does nothing when the project is already in executed state, so we need
 // a special check for this case
@@ -235,6 +247,11 @@ fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilati
 
 fun Project.configureMultiplatformPluginDependencies(version: String) {
     if (rootProject.findProperty("kotlin.mpp.enableGranularSourceSetsMetadata").toString().toBoolean()) {
+        withKotlinTargets { target ->
+            if (target.isIrTarget()) {
+                dependencies.add(IMPLEMENTATION_CONFIGURATION, "org.jetbrains.kotlin:kotlinx-atomicfu-runtime:1.5.0-M2")
+            }
+        }
         val mainConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
                 .getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
                 .compileOnlyConfigurationName
@@ -258,6 +275,11 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
         }
     } else {
         sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
+            withKotlinTargets { target ->
+                if (target.isIrTarget()) {
+                    dependencies.add(IMPLEMENTATION_CONFIGURATION, "org.jetbrains.kotlin:kotlinx-atomicfu-runtime:1.5.0-M2")
+                }
+            }
             val platformTypes = compilations.map { it.platformType }.toSet()
             val compilationNames = compilations.map { it.compilationName }.toSet()
             if (compilationNames.size != 1)

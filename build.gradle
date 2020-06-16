@@ -27,6 +27,7 @@ buildscript {
     }
 
     repositories {
+        mavenLocal()
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
         // Future replacement for kotlin-dev, with cache redirector
@@ -61,6 +62,7 @@ allprojects {
 
     println "Using Kotlin $kotlin_version for project $it"
     repositories {
+        mavenLocal()
         jcenter()
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         // Future replacement for kotlin-dev, with cache redirector
