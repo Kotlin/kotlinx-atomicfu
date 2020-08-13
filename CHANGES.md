@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.14.4
+
+* Fixed bug when Maven plugin wasn't published
+* Migrate to new Kotlin HMPP metadata for multiplatform projects 
+* Update Kotlin to 1.4.0
+
 # Version 0.14.3
 
 * Update to Kotlin 1.3.71.
