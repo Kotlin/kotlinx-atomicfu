@@ -1052,9 +1052,9 @@ class AtomicFUTransformer(
             return next.next
         }
 
-        // erases pushing atomic factory trace arguments
+        // removes pushing atomic factory trace arguments
         // returns the first value argument push
-        private fun eraseTraceInit(atomicFactory: MethodInsnNode, isArrayFactory: Boolean): AbstractInsnNode {
+        private fun removeTraceInit(atomicFactory: MethodInsnNode, isArrayFactory: Boolean): AbstractInsnNode {
             val initStart = FlowAnalyzer(atomicFactory).getInitStart(1)
             if (isArrayFactory) return initStart
             var lastArg = atomicFactory.previous
@@ -1067,7 +1067,7 @@ class AtomicFUTransformer(
             return initStart
         }
 
-        private fun eraseTraceInfo(append: AbstractInsnNode): AbstractInsnNode {
+        private fun removeTraceAppend(append: AbstractInsnNode): AbstractInsnNode {
             // remove append trace instructions: from append invocation up to getfield Trace or accessor to Trace field
             val afterAppend = append.next
             var start = append
@@ -1089,11 +1089,11 @@ class AtomicFUTransformer(
             } else {
                 instructions.remove(start.previous)
             }
-            if (start.next is VarInsnNode) {
-                val v = (start.next as VarInsnNode).`var`
-                localVariables.removeIf { it.index == v }
-            }
             while (start != afterAppend) {
+                if (start is VarInsnNode) {
+                    // remove all local store instructions
+                    localVariables.removeIf { it.index == (start as VarInsnNode).`var` }
+                }
                 val next = start.next
                 instructions.remove(start)
                 start = next
@@ -1114,7 +1114,7 @@ class AtomicFUTransformer(
                             val f = fields[fieldId]!!
                             val isArray = AFU_CLASSES[i.owner]?.let { it.originalType.sort == ARRAY } ?: false
                             // erase pushing arguments for trace initialisation
-                            val newInitStart = eraseTraceInit(i, isArray)
+                            val newInitStart = removeTraceInit(i, isArray)
                             // in FU mode wrap values of top-level primitive atomics into corresponding *RefVolatile class
                             if (!vh && f.isStatic && !f.isArray) {
                                 return putPrimitiveTypeWrapper(i, newInitStart, f, next)
@@ -1153,6 +1153,20 @@ class AtomicFUTransformer(
                             return fixupLoadedAtomicVar(f, j)
                         }
                         methodId == TRACE_FACTORY || methodId == TRACE_PARTIAL_ARGS_FACTORY -> {
+                            if (methodId == TRACE_FACTORY) {
+                                // remove trace format initialization
+                                var checkcastTraceFormat = i
+                                while (checkcastTraceFormat.opcode != CHECKCAST) checkcastTraceFormat = checkcastTraceFormat.previous
+                                val astoreTraceFormat = checkcastTraceFormat.next
+                                val tranceFormatInitStart = FlowAnalyzer(checkcastTraceFormat.previous).getInitStart(1).previous
+                                var initInsn = checkcastTraceFormat
+                                while (initInsn != tranceFormatInitStart) {
+                                    val prev = initInsn.previous
+                                    instructions.remove(initInsn)
+                                    initInsn = prev
+                                }
+                                instructions.insertBefore(astoreTraceFormat, InsnNode(ACONST_NULL))
+                            }
                             // remove trace factory and following putfield
                             val argsSize = getMethodType(methodId.desc).argumentTypes.size
                             val putfield = i.next
@@ -1170,7 +1184,7 @@ class AtomicFUTransformer(
                             return next
                         }
                         methodId == TRACE_APPEND -> {
-                            return eraseTraceInfo(i)
+                            return removeTraceAppend(i)
                         }
                         methodId in removeMethods -> {
                             abort(
