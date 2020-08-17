@@ -8,8 +8,7 @@ import kotlinx.atomicfu.*
 import kotlin.test.*
 
 class TraceUseTest {
-    // todo: figure out what to do with trace format (removing it is not supported right now)
-    val trace = Trace(size = 64)
+    val trace = Trace(size = 64, format = TraceFormat { i, t -> "[$i$t]" } )
     val current = atomic(0, trace.named("current"))
 
     @Test

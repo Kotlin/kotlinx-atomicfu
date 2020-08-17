@@ -17,11 +17,16 @@ private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
 
 private const val TRACE_CONSTRUCTOR = "atomicfu\\\$Trace\\\$"
 private const val TRACE_APPEND = "atomicfu\\\$Trace\\\$append\\\$"
+private const val TRACE_NAMED = "atomicfu\\\$Trace\\\$named\\\$"
+private const val TRACE_FORMAT = "TraceFormat"
+private const val TRACE_FORMAT_CONSTRUCTOR = "atomicfu\\\$$TRACE_FORMAT\\\$"
+private const val TRACE_FORMAT_FORMAT = "atomicfu\\\$TraceFormat\\\$format\\\$"
 
 private const val RECEIVER = "\$receiver"
 private const val SCOPE = "scope"
 private const val FACTORY = "factory"
 private const val REQUIRE = "require"
+private const val PROTOTYPE = "prototype"
 private const val KOTLINX_ATOMICFU = "'kotlinx-atomicfu'"
 private const val KOTLINX_ATOMICFU_PACKAGE = "kotlinx.atomicfu"
 private const val KOTLIN_TYPE_CHECK = "Kotlin.isType"
@@ -32,6 +37,7 @@ private const val FILL = "fill"
 private const val GET_ELEMENT = "get\\\$atomicfu"
 private const val LOCKS = "locks"
 private const val REENTRANT_LOCK_ATOMICFU_SINGLETON = "$LOCKS.reentrantLock\\\$atomicfu"
+
 
 private val MANGLE_VALUE_REGEX = Regex(".${Pattern.quote(MANGLED_VALUE_PROP)}")
 // matches index until the first occurence of ')', parenthesised index expressions not supported
@@ -44,6 +50,7 @@ class AtomicFUTransformerJS(
     private val atomicConstructors = mutableSetOf<String>()
     private val atomicArrayConstructors = mutableMapOf<String, String?>()
     private val traceConstructors = mutableSetOf<String>()
+    private val traceFormatObjects = mutableSetOf<String>()
 
     override fun transform() {
         info("Transforming to $outputDir")
@@ -122,10 +129,10 @@ class AtomicFUTransformerJS(
                     }
                 }
                 Token.FUNCTION -> {
-                    // erasing 'kotlinx-atomicfu' module passed as parameter
                     if (node is FunctionNode) {
                         val it = node.params.listIterator()
                         while (it.hasNext()) {
+                            // erasing 'kotlinx-atomicfu' module passed as parameter
                             if (isAtomicfuModule(it.next())) {
                                 it.remove()
                             }
@@ -208,11 +215,17 @@ class AtomicFUTransformerJS(
                             } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName(TRACE_CONSTRUCTOR)))) {
                                 traceConstructors.add(varInit.target.toSource())
                                 node.replaceChild(stmt, EmptyLine())
-                            } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName(LOCKS)))){
+                            } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName("""($LOCKS|$TRACE_FORMAT_CONSTRUCTOR|$TRACE_NAMED)""")))) {
                                 node.replaceChild(stmt, EmptyLine())
                             }
                         }
                     }
+                }
+            }
+            if (node is PropertyGet && node.property.toSource().matches(Regex(TRACE_FORMAT_FORMAT))) {
+                val target = node.target
+                if (target is PropertyGet && target.property.toSource().matches(Regex(PROTOTYPE))) {
+                    traceFormatObjects.add(target.target.toSource())
                 }
             }
             if (node is VariableInitializer && node.initializer is PropertyGet) {
@@ -328,6 +341,35 @@ class AtomicFUTransformerJS(
                             val funcNode = (stmt.expression as FunctionCall).target
                             if (funcNode is PropertyGet && funcNode.property.toSource().matches(Regex(TRACE_APPEND))) {
                                 node.replaceChild(stmt, EmptyLine())
+                            }
+                        }
+                    }
+                }
+            }
+            if (node is Assignment && node.left is PropertyGet) {
+                val left = node.left as PropertyGet
+                if (traceFormatObjects.contains(left.target.toSource())) {
+                    if (node.right is FunctionCall) {
+                        // TraceFormatObject initialization
+                        (node.right as FunctionCall).arguments = listOf(Name().also { it.identifier = "null" })
+                    }
+                }
+            }
+            // remove TraceFormatObject constructor definition
+            if (node is FunctionNode && traceFormatObjects.contains(node.name)) {
+                val body  = node.body
+                for (stmt in body) { body.replaceChild(stmt, EmptyLine()) }
+            }
+            // remove TraceFormat from TraceFormatObject interfaces
+            if (node is Assignment && node.left is PropertyGet && node.right is ObjectLiteral) {
+                val left = node.left as PropertyGet
+                val metadata = node.right as ObjectLiteral
+                if (traceFormatObjects.contains(left.target.toSource())) {
+                    for (e in metadata.elements) {
+                        if (e.right is ArrayLiteral) {
+                            val array = (e.right as ArrayLiteral).toSource()
+                            if (array.contains(TRACE_FORMAT)) {
+                                (e.right as ArrayLiteral).elements = emptyList()
                             }
                         }
                     }
@@ -543,7 +585,7 @@ class AtomicFUTransformerJS(
     }
 }
 
-private class EmptyLine: EmptyExpression() {
+private class EmptyLine : EmptyExpression() {
     override fun toSource(depth: Int) = "\n"
 }
 
