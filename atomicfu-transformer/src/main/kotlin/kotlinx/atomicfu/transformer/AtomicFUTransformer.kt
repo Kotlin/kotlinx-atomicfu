@@ -636,7 +636,6 @@ class AtomicFUTransformer(
                 check(!f.isArray || onArrayElement) { "getValue/setValue can only be called on elements of arrays" }
                 val setInsn = iv.name == SET_VALUE
                 if (!onArrayElement) {
-                    instructions.remove(ld) // drop getstatic (we don't need field updater)
                     val primitiveType = f.getPrimitiveType(vh)
                     val owner = if (!vh && f.isStatic) f.refVolatileClassName else f.owner
                     if (!vh && f.isStatic) {
@@ -646,8 +645,9 @@ class AtomicFUTransformer(
                             f.staticRefVolatileField,
                             getObjectType(owner).descriptor
                         )
-                        instructions.insertBefore(iv, getOwnerClass)
+                        instructions.insert(ld, getOwnerClass)
                     }
+                    instructions.remove(ld) // drop getstatic (we don't need field updater)
                     val j = FieldInsnNode(
                         when {
                             iv.name == GET_VALUE -> if (f.isStatic && vh) GETSTATIC else GETFIELD

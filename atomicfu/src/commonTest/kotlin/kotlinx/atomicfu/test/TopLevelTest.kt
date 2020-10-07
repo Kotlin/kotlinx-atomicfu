@@ -27,7 +27,9 @@ class TopLevelPrimitiveTest {
         check(a.value == 0)
         check(a.getAndSet(3) == 0)
         check(a.compareAndSet(3, 8))
-        a.lazySet(1)
+        a.lazySet(5)
+        check(a.value == 5)
+        a.value = 1
         check(a.value == 1)
         check(a.getAndSet(2) == 1)
         check(a.value == 2)
@@ -51,7 +53,9 @@ class TopLevelPrimitiveTest {
         check(b.value == 2424920024888888848)
         b.lazySet(8424920024888888848)
         check(b.value == 8424920024888888848)
-        check(b.getAndSet(8924920024888888848) == 8424920024888888848)
+        b.value = 8424920024888888833
+        check(b.value == 8424920024888888833)
+        check(b.getAndSet(8924920024888888848) == 8424920024888888833)
         check(b.value == 8924920024888888848)
         check(b.incrementAndGet() == 8924920024888888849)
         check(b.value == 8924920024888888849)
@@ -72,6 +76,8 @@ class TopLevelPrimitiveTest {
         check(c.value)
         c.lazySet(false)
         check(!c.value)
+        c.value = false
+        check(!c.value)
         check(!c.getAndSet(true))
         check(c.compareAndSet(true, false))
         check(!c.value)
@@ -86,6 +92,8 @@ class TopLevelPrimitiveTest {
         val l = IntArray(4){i -> i}
         any.lazySet(l)
         check((any.value as IntArray)[2] == 2)
+        abcNode.value = ANode(BNode(CNode(88)))
+        check(abcNode.value.b.c.d == 88)
     }
 
     @Test
