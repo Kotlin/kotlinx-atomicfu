@@ -50,14 +50,6 @@ private fun Project.configureDependencies() {
         )
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JS, version))
     }
-    withPluginWhenEvaluatedDependencies("kotlin-native") { version ->
-        dependencies.add(IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.NATIVE, version))
-        dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.NATIVE, version))
-    }
-    withPluginWhenEvaluatedDependencies("kotlin-platform-common") { version ->
-        dependencies.add(COMPILE_ONLY_CONFIGURATION, getAtomicfuDependencyNotation(Platform.COMMON, version))
-        dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.COMMON, version))
-    }
     withPluginWhenEvaluatedDependencies("kotlin-multiplatform") { version ->
         configureMultiplatformPluginDependencies(version)
     }
@@ -96,10 +88,10 @@ private fun Project.configureTasks() {
 }
 
 private enum class Platform(val suffix: String) {
-    JVM(""),
+    JVM("-jvm"),
     JS("-js"),
-    NATIVE("-native"),
-    COMMON("-common")
+    NATIVE(""),
+    MULTIPLATFORM("")
 }
 
 private enum class CompilationType { MAIN, TEST }
@@ -119,15 +111,8 @@ private fun String.sourceSetNameToType(): CompilationType? = when (this) {
 private val Project.config: AtomicFUPluginExtension
     get() = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension ?: AtomicFUPluginExtension(null)
 
-private fun getAtomicfuDependencyNotation(platform: Platform, version: String): String {
-    val suffix = when (platform) {
-        // in common source sets, use a dependency on the MPP root module:
-        Platform.COMMON -> atomicfuRootMppModulePlatform.suffix
-        else -> platform.suffix
-    }
-    return "org.jetbrains.kotlinx:atomicfu$suffix:$version"
-}
-
+private fun getAtomicfuDependencyNotation(platform: Platform, version: String): String =
+    "org.jetbrains.kotlinx:atomicfu${platform.suffix}:$version"
 
 // Note "afterEvaluate" does nothing when the project is already in executed state, so we need
 // a special check for this case
@@ -248,14 +233,29 @@ fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilati
     return sourceSetsByCompilation
 }
 
-private val atomicfuRootMppModulePlatform = Platform.NATIVE
-
 fun Project.configureMultiplatformPluginDependencies(version: String) {
     if (rootProject.findProperty("kotlin.mpp.enableGranularSourceSetsMetadata").toString().toBoolean()) {
-        val configurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
+        val mainConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
                 .getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
                 .compileOnlyConfigurationName
-        dependencies.add(configurationName, getAtomicfuDependencyNotation(atomicfuRootMppModulePlatform, version))
+        dependencies.add(mainConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+
+        val testConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
+                .getByName(KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME)
+                .implementationConfigurationName
+        dependencies.add(testConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+
+        // For each source set that is only used in Native compilations, add an implementation dependency so that it
+        // gets published and is properly consumed as a transitive dependency:
+        sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
+            val isSharedNativeSourceSet = compilations.all {
+                it.platformType == KotlinPlatformType.common || it.platformType == KotlinPlatformType.native
+            }
+            if (isSharedNativeSourceSet) {
+                val configuration = sourceSet.implementationConfigurationName
+                dependencies.add(configuration, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
+            }
+        }
     } else {
         sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
             val platformTypes = compilations.map { it.platformType }.toSet()
@@ -265,9 +265,9 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
             val compilationType = compilationNames.single().compilationNameToType()
                     ?: return@forEach // skip unknown compilations
             val platform =
-                    if (platformTypes.size > 1) Platform.COMMON else // mix of platform types -> "common"
+                    if (platformTypes.size > 1) Platform.MULTIPLATFORM else // mix of platform types -> "common"
                         when (platformTypes.single()) {
-                            KotlinPlatformType.common -> Platform.COMMON
+                            KotlinPlatformType.common -> Platform.MULTIPLATFORM
                             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> Platform.JVM
                             KotlinPlatformType.js -> Platform.JS
                             KotlinPlatformType.native -> Platform.NATIVE
@@ -401,12 +401,17 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 
 @CacheableTask
 open class AtomicFUTransformTask : ConventionTask() {
+    @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
+
     @OutputDirectory
     lateinit var outputDir: File
+
+    @Classpath
     @InputFiles
     lateinit var classPath: FileCollection
+
     @Input
     var variant = "FU"
     @Input
@@ -427,8 +432,10 @@ open class AtomicFUTransformTask : ConventionTask() {
 
 @CacheableTask
 open class AtomicFUTransformJsTask : ConventionTask() {
+    @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
+
     @OutputDirectory
     lateinit var outputDir: File
     @Input

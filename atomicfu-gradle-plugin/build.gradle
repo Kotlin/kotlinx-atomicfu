@@ -33,7 +33,12 @@ dependencies {
 evaluationDependsOn(':atomicfu')
 def atomicfu = project(':atomicfu')
 def atomicfuJvmJarTask = atomicfu.tasks.getByName(atomicfu.kotlin.targets.jvm.artifactsTaskName)
-def atomicfuJsJarTask = atomicfu.tasks.getByName(atomicfu.kotlin.targets.js.artifactsTaskName)
+
+def jsLegacy = atomicfu.kotlin.targets.hasProperty("jsLegacy")
+        ? atomicfu.kotlin.targets.jsLegacy
+        : atomicfu.kotlin.targets.js
+def atomicfuJsJarTask = atomicfu.tasks.getByName(jsLegacy.artifactsTaskName)
+
 def atomicfuMetadataJarTask = atomicfu.tasks.getByName(atomicfu.kotlin.targets.metadata.artifactsTaskName)
 
 // Write the plugin's classpath to a file to share with the tests
