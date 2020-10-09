@@ -297,7 +297,8 @@ jvmTest.dependsOn jvmTestAll
 
 afterEvaluate {
     publishing.publications {
-        metadata.artifactId = 'atomicfu-common'
+        if (kotlin_version < '1.4.20-M2')
+            metadata.artifactId = 'atomicfu-common'
 
         kotlinMultiplatform {
             apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
@@ -306,6 +307,6 @@ afterEvaluate {
     }
 }
 
-tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
+tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
     dependsOn(tasks["generatePomFileForJvmPublication"])
 }
