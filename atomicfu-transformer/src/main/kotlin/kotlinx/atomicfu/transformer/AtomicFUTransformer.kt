@@ -421,7 +421,7 @@ class AtomicFUTransformer(
                 val fieldId = FieldId(className, name, desc)
                 val f = fields[fieldId]!!
                 val protection = when {
-                    // reference to wrapper class (primitive atomics) or reference to to j.u.c.a.Atomic*Array (atomic array)
+                    // reference to wrapper class (primitive atomics) or reference to j.u.c.a.Atomic*Array (atomic array)
                     f.isStatic && !vh -> ACC_STATIC or ACC_FINAL or ACC_SYNTHETIC
                     // primitive type field
                     f.isStatic && vh -> ACC_STATIC or ACC_SYNTHETIC
@@ -446,10 +446,10 @@ class AtomicFUTransformer(
                 }
                 if (vh) {
                     // VarHandle is needed for all array element accesses and for regular fields with atomic ops
-                    if (f.hasAtomicOps || f.isArray) vhField(protection, f)
+                    if (f.hasAtomicOps || f.isArray) vhField(protection or ACC_SYNTHETIC, f)
                 } else {
                     // FieldUpdater is not needed for arrays (they use AtomicArrays)
-                    if (f.hasAtomicOps && !f.isArray) fuField(protection, f)
+                    if (f.hasAtomicOps && !f.isArray) fuField(protection or ACC_SYNTHETIC, f)
                 }
                 transformed = true
                 return fv
