@@ -49,13 +49,13 @@ def jsLegacy = atomicfu.kotlin.targets.hasProperty("jsLegacy")
         : atomicfu.kotlin.targets.js
 def atomicfuJsJarTask = atomicfu.tasks.getByName(jsLegacy.artifactsTaskName)
 
-def atomicfuMetadataJarTask = atomicfu.tasks.getByName(atomicfu.kotlin.targets.metadata.artifactsTaskName)
+def atomicfuMetadataOutput = atomicfu.kotlin.targets.metadata.compilations["main"].output.allOutputs
 
 // Write the plugin's classpath to a file to share with the tests
 task createClasspathManifest {
     dependsOn(atomicfuJvmJarTask)
     dependsOn(atomicfuJsJarTask)
-    dependsOn(atomicfuMetadataJarTask)
+    dependsOn(atomicfuMetadataOutput)
 
     def outputDir = file("$buildDir/$name")
     outputs.dir outputDir
@@ -65,7 +65,7 @@ task createClasspathManifest {
         file("$outputDir/plugin-classpath.txt").text = (sourceSets.main.runtimeClasspath + configurations.testPluginClasspath).join("\n")
         file("$outputDir/atomicfu-jvm.txt").text = atomicfuJvmJarTask.archivePath
         file("$outputDir/atomicfu-js.txt").text = atomicfuJsJarTask.archivePath
-        file("$outputDir/atomicfu-metadata.txt").text = atomicfuMetadataJarTask.archivePath
+        file("$outputDir/atomicfu-metadata.txt").text = atomicfuMetadataOutput.join("\n")
     }
 }
 
