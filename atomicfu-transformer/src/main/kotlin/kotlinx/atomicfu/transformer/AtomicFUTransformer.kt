@@ -427,7 +427,7 @@ class AtomicFUTransformer(
                     f.isStatic && vh -> ACC_STATIC or ACC_SYNTHETIC
                     f.hasExternalAccess -> ACC_PUBLIC or ACC_SYNTHETIC
                     f.accessors.isEmpty() -> ACC_PRIVATE
-                    else -> 0
+                    else -> ACC_SYNTHETIC
                 }
                 val primitiveType = f.getPrimitiveType(vh)
                 val fv = when {
@@ -446,10 +446,10 @@ class AtomicFUTransformer(
                 }
                 if (vh) {
                     // VarHandle is needed for all array element accesses and for regular fields with atomic ops
-                    if (f.hasAtomicOps || f.isArray) vhField(protection or ACC_SYNTHETIC, f)
+                    if (f.hasAtomicOps || f.isArray) vhField(protection, f)
                 } else {
                     // FieldUpdater is not needed for arrays (they use AtomicArrays)
-                    if (f.hasAtomicOps && !f.isArray) fuField(protection or ACC_SYNTHETIC, f)
+                    if (f.hasAtomicOps && !f.isArray) fuField(protection, f)
                 }
                 transformed = true
                 return fv
