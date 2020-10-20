@@ -63,8 +63,10 @@ private val ARRAY_ELEMENT_TYPE: Map<Type, Int> = mapOf(
 private val AFU_TYPES: Map<Type, TypeInfo> = AFU_CLASSES.mapKeys { getObjectType(it.key) }
 
 private val METHOD_HANDLES = "$JLI_PKG/MethodHandles"
+private val METHOD_HANDLE = "$JLI_PKG/MethodHandle"
 private val LOOKUP = "$METHOD_HANDLES\$Lookup"
 private val VH_TYPE = getObjectType("$JLI_PKG/VarHandle")
+private val METHOD_HANDLE_TYPE = getObjectType(METHOD_HANDLE)
 
 private val STRING_TYPE = getObjectType("java/lang/String")
 private val CLASS_TYPE = getObjectType("java/lang/Class")
@@ -77,6 +79,7 @@ data class MethodId(val owner: String, val name: String, val desc: String, val i
 
 private const val GET_VALUE = "getValue"
 private const val SET_VALUE = "setValue"
+private const val GET_SIZE = "getSize"
 
 private const val AFU_CLS = "$AFU_PKG/AtomicFU"
 private const val TRACE_KT = "$AFU_PKG/TraceKt"
@@ -153,6 +156,7 @@ class FieldInfo(
             val fuName = fieldId.name + '$' + "FU"
             return if (hasExternalAccess) mangleInternal(fuName) else fuName
         }
+    val arrayLengthMethodHandleName = fieldId.name + '$' + "arrayLength"
 
     val refVolatileClassName = "${owner.replace('.', '/')}${name.capitalize()}RefVolatile"
     val staticRefVolatileField = refVolatileClassName.substringAfterLast("/").decapitalize()
@@ -466,6 +470,7 @@ class AtomicFUTransformer(
         // Generates static VarHandle field
         private fun vhField(protection: Int, f: FieldInfo) {
             super.visitField(protection or ACC_FINAL or ACC_STATIC, f.fuName, VH_TYPE.descriptor, null, null)
+            super.visitField(protection or ACC_FINAL or ACC_STATIC, f.arrayLengthMethodHandleName, METHOD_HANDLE_TYPE.descriptor, null, null)
             code(getOrCreateNewClinit()) {
                 if (!f.isArray) {
                     invokestatic(METHOD_HANDLES, "lookup", "()L$LOOKUP;", false)
@@ -494,6 +499,15 @@ class AtomicFUTransformer(
                         false
                     )
                     putstatic(className, f.fuName, VH_TYPE.descriptor)
+                    // create MethodHandle.arrayLength
+                    aconst(f.getPrimitiveType(vh))
+                    invokestatic(
+                            METHOD_HANDLES,
+                            "arrayLength",
+                            getMethodDescriptor(METHOD_HANDLE_TYPE, CLASS_TYPE),
+                            false
+                    )
+                    putstatic(className, f.arrayLengthMethodHandleName, METHOD_HANDLE_TYPE.descriptor)
                 }
             }
         }
@@ -718,45 +732,70 @@ class AtomicFUTransformer(
                     return iv
                 }
             }
+            if (f.isArray && iv.name == GET_SIZE) {
+                if (!vh) {
+                    // map to j.u.c.a.Atomic*Array length()
+                    iv.owner = descToName(f.fuType.descriptor)
+                    iv.name = "length"
+                } else {
+                    // map to MethodHandles.arrayLength
+                    val getStaticMH = FieldInsnNode(
+                            GETSTATIC, f.owner, f.arrayLengthMethodHandleName,
+                            METHOD_HANDLE_TYPE.descriptor
+                    )
+                    val getStaticVH = if (!f.isStatic) {
+                        iv.previous.previous.previous // skip getField array of primitive type, swap
+                    } else {
+                        iv.previous.previous // skip getField array of primitive type
+                    }
+                    instructions.set(getStaticVH, getStaticMH)
+                    iv.owner = METHOD_HANDLE
+                    iv.name = "invoke"
+                    iv.desc = getMethodDescriptor(
+                            INT_TYPE,
+                            f.getPrimitiveType(vh)
+                        )
+                }
+                return iv
+            }
             // An operation other than getValue/setValue is used
             if (f.isArray && iv.name == "get") { // "operator get" that retrieves array element, further ops apply to it
                 // fixup atomic operation on this array element
                 return fixupLoadedArrayElement(f, ld, iv)
+            }
+            // non-trivial atomic operation
+            check(f.isArray == onArrayElement) { "Atomic operations can be performed on atomic elements only" }
+            if (analyzePhase2) {
+                f.hasAtomicOps = true // mark the fact that non-trivial atomic op is used here
             } else {
-                // non-trivial atomic operation
-                check(f.isArray == onArrayElement) { "Atomic operations can be performed on atomic elements only" }
-                if (analyzePhase2) {
-                    f.hasAtomicOps = true // mark the fact that non-trivial atomic op is used here
-                } else {
-                    check(f.hasAtomicOps) // should have been set on previous phase
-                }
-                // update method invocation
-                if (vh) {
-                    vhOperation(iv, typeInfo, f)
-                } else {
-                    fuOperation(iv, typeInfo, f)
-                }
-                if (f.isStatic && !onArrayElement) {
-                    if (!vh) {
-                        // getstatic *RefVolatile class
-                        val aload = FieldInsnNode(
-                            GETSTATIC,
-                            f.owner,
-                            f.staticRefVolatileField,
-                            getObjectType(f.refVolatileClassName).descriptor
-                        )
-                        instructions.insert(ld, aload)
-                    }
-                    return iv.next
-                }
-                if (!onArrayElement) {
-                    // insert swap after field load
-                    val swap = InsnNode(SWAP)
-                    instructions.insert(ld, swap)
-                    return swap.next
+                check(f.hasAtomicOps) // should have been set on previous phase
+            }
+            // update method invocation
+            if (vh) {
+                vhOperation(iv, typeInfo, f)
+            } else {
+                fuOperation(iv, typeInfo, f)
+            }
+            if (f.isStatic && !onArrayElement) {
+                if (!vh) {
+                    // getstatic *RefVolatile class
+                    val aload = FieldInsnNode(
+                        GETSTATIC,
+                        f.owner,
+                        f.staticRefVolatileField,
+                        getObjectType(f.refVolatileClassName).descriptor
+                    )
+                    instructions.insert(ld, aload)
                 }
                 return iv.next
             }
+            if (!onArrayElement) {
+                // insert swap after field load
+                val swap = InsnNode(SWAP)
+                instructions.insert(ld, swap)
+                return swap.next
+            }
+            return iv.next
         }
 
         private fun vhOperation(iv: MethodInsnNode, typeInfo: TypeInfo, f: FieldInfo) {

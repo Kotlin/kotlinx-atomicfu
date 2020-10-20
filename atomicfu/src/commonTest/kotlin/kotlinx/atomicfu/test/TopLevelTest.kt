@@ -6,6 +6,7 @@ package kotlinx.atomicfu.test
 
 import kotlinx.atomicfu.*
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 private val a = atomic(0)
 private val b = atomic(2424920024888888848)
@@ -111,6 +112,7 @@ class TopLevelArrayTest {
         check(intArr[2].value == 2)
         check(intArr[2].compareAndSet(2, 34))
         check(intArr[2].value == 34)
+        assertEquals(8, intArr.size + longArr.size)
     }
 
     @Test
