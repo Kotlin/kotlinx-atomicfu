@@ -35,6 +35,8 @@ private const val MODULE_KOTLINX_ATOMICFU = "\\\$module\\\$kotlinx_atomicfu"
 private const val ARRAY = "Array"
 private const val FILL = "fill"
 private const val GET_ELEMENT = "get\\\$atomicfu"
+private const val ARRAY_SIZE = "size\$atomicfu"
+private const val LENGTH = "length"
 private const val LOCKS = "locks"
 private const val REENTRANT_LOCK_ATOMICFU_SINGLETON = "$LOCKS.reentrantLock\\\$atomicfu"
 
@@ -321,6 +323,10 @@ class AtomicFUTransformerJS(
                         node.enclosingFunction.visit(rr)
                         rr.receiver?.let { node.target = it }
                     }
+                }
+                // replace Atomic*Array.size call with `length` property on the pure type js array
+                if (node.property.toSource() == ARRAY_SIZE) {
+                    node.property = Name().also { it.identifier = LENGTH }
                 }
             }
             if (node is Block) {
