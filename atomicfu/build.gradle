@@ -3,6 +3,7 @@
  */
 
 apply plugin: 'kotlin-multiplatform'
+apply from: rootProject.file("gradle/publish-bintray.gradle")
 apply from: rootProject.file("gradle/targets.gradle")
 
 ext {
@@ -17,6 +18,8 @@ ext {
     }
 }
 
+def jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
+
 kotlin {
     targets.metaClass.addTarget = { preset ->
         addNative(delegate.fromPreset(preset, preset.name))
@@ -29,10 +32,24 @@ kotlin {
         nodejs()
     }
 
-    targets {
-        // JVM -- always
-        fromPreset(presets.jvm, 'jvm')
+    // JVM -- always
+    jvm('jvm') {
+        attributes.attribute(jvmCompilerTypeAttr, 'legacy')
+    }
+    jvm('jvmIr') {
+        attributes.attribute(jvmCompilerTypeAttr, 'ir')
+        compilations.all {
+            kotlinOptions.useIR = true
+        }
+        // Do not publish JVM IR into repository
+        mavenPublication { targetPublication ->
+            tasks.withType(PublishToMavenRepository)
+                    .matching { it.publication == targetPublication }
+                    .all { onlyIf { false } }
+        }
+    }
 
+    targets {
         if (project.ext.ideaActive) {
             addNative(fromPreset(project.ext.ideaPreset, 'native'))
         } else {
@@ -48,6 +65,8 @@ kotlin {
             addTarget(presets.watchosArm64)
             addTarget(presets.watchosX86)
         }
+
+
     }
     sourceSets {
         commonMain {
@@ -83,6 +102,12 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test-junit'
                 implementation "junit:junit:$junit_version"
             }
+        }
+        jvmIrMain {
+            dependsOn jvmMain
+        }
+        jvmIrTest {
+            dependsOn jvmTest
         }
         nativeMain { dependsOn commonMain }
 
@@ -199,35 +224,6 @@ if (project.tasks.findByName('jsLegacyNodeTest')) {
 
 // ==== CONFIGURE JVM =====
 
-def classesPreAtomicFuDir = file("$buildDir/classes/kotlin/jvm/test")
-def classesPostTransformFU = file("$buildDir/classes/kotlin/jvm/postTransformedFU")
-def classesPostTransformVH = file("$buildDir/classes/kotlin/jvm/postTransformedVH")
-def classesPostTransformBOTH = file("$buildDir/classes/kotlin/jvm/postTransformedBOTH")
-
-task transformFU(type: JavaExec, dependsOn: compileTestKotlinJvm) {
-    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
-    args = [classesPreAtomicFuDir, classesPostTransformFU, "FU"]
-    classpath = configurations.transformer
-    inputs.dir(classesPreAtomicFuDir)
-    outputs.dir(classesPostTransformFU)
-}
-
-task transformBOTH(type: JavaExec, dependsOn: compileTestKotlinJvm) {
-    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
-    args = [classesPreAtomicFuDir, classesPostTransformBOTH, "BOTH"]
-    classpath = configurations.transformer
-    inputs.dir(classesPreAtomicFuDir)
-    outputs.dir(classesPostTransformBOTH)
-}
-
-task transformVH(type: JavaExec, dependsOn: compileTestKotlinJvm) {
-    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
-    args = [classesPreAtomicFuDir, classesPostTransformVH, "VH"]
-    classpath = configurations.transformer
-    inputs.dir(classesPreAtomicFuDir)
-    outputs.dir(classesPostTransformVH)
-}
-
 task checkJdk16() {
     doLast {
         if (!System.env.JDK_16) {
@@ -238,49 +234,99 @@ task checkJdk16() {
     }
 }
 
-task transformedTestFU_6(type: Test, dependsOn: [checkJdk16, transformFU]) {
-    executable = "$System.env.JDK_16/bin/java"
-    classpath = configurations.jvmTestRuntimeClasspath + project.files(classesPostTransformFU)
-    testClassesDirs = project.files(classesPostTransformFU)
-    exclude '**/*LFTest.*', '**/TraceToStringTest.*'
-}
+[['jvm', tasks.named("compileTestKotlinJvm")], ['jvmIr', tasks.named("compileTestKotlinJvmIr")]].forEach {
+    def (targetName, testCompileTask) = it
+    def classesPreAtomicFuDir = file("$buildDir/classes/kotlin/$targetName/test")
+    def classesPostTransformFU = file("$buildDir/classes/kotlin/$targetName/postTransformedFU")
+    def classesPostTransformVH = file("$buildDir/classes/kotlin/$targetName/postTransformedVH")
+    def classesPostTransformBOTH = file("$buildDir/classes/kotlin/$targetName/postTransformedBOTH")
+    def targetCapitalized = targetName.capitalize()
 
-task transformedTestFU_current(type: Test, dependsOn: transformFU) {
-    classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformFU)
-    testClassesDirs = project.files(classesPostTransformFU)
-    exclude '**/*LFTest.*', '**/TraceToStringTest.*'
-}
+    tasks.register("transformFU$targetCapitalized", JavaExec) {
+        dependsOn(testCompileTask)
+        main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
+        args = [classesPreAtomicFuDir, classesPostTransformFU, "FU"]
+        classpath = configurations.transformer
+        inputs.dir(classesPreAtomicFuDir)
+        outputs.dir(classesPostTransformFU)
+    }
 
-task transformedTestBOTH_6(type: Test, dependsOn: [checkJdk16, transformBOTH]) {
-    executable = "$System.env.JDK_16/bin/java"
-    classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformBOTH)
-    testClassesDirs = project.files(classesPostTransformBOTH)
-    exclude '**/*LFTest.*', '**/TraceToStringTest.*'
-}
+    tasks.register("transformBOTH$targetCapitalized", JavaExec) {
+        dependsOn(testCompileTask)
+        main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
+        args = [classesPreAtomicFuDir, classesPostTransformBOTH, "BOTH"]
+        classpath = configurations.transformer
+        inputs.dir(classesPreAtomicFuDir)
+        outputs.dir(classesPostTransformBOTH)
+    }
 
-task transformedTestBOTH_current(type: Test, dependsOn: transformBOTH) {
-    classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformBOTH)
-    testClassesDirs = project.files(classesPostTransformBOTH)
-    exclude '**/*LFTest.*', '**/TraceToStringTest.*'
-}
+    tasks.register("transformVH$targetCapitalized", JavaExec) {
+        dependsOn(testCompileTask)
+        main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
+        args = [classesPreAtomicFuDir, classesPostTransformVH, "VH"]
+        classpath = configurations.transformer
+        inputs.dir(classesPreAtomicFuDir)
+        outputs.dir(classesPostTransformVH)
+    }
 
-task transformedTestVH(type: Test, dependsOn: transformVH) {
-    classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformVH)
-    testClassesDirs = project.files(classesPostTransformVH)
-    exclude '**/*LFTest.*', '**/TraceToStringTest.*'
-}
+    tasks.register("transformedTestFU_6$targetCapitalized", Test) {
+        dependsOn(tasks.named("checkJdk16"), tasks.named("transformFU$targetCapitalized"))
+        executable = "$System.env.JDK_16/bin/java"
+        classpath = configurations.jvmTestRuntimeClasspath + project.files(classesPostTransformFU)
+        testClassesDirs = project.files(classesPostTransformFU)
+        exclude '**/*LFTest.*', '**/TraceToStringTest.*'
+    }
 
-transformedTestVH.onlyIf {
-    logger.println(JavaVersion.current())
-    JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()
-}
+    tasks.register("transformedTestFU_current$targetCapitalized", Test) {
+        dependsOn(tasks.named("transformFU$targetCapitalized"))
+        classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformFU)
+        testClassesDirs = project.files(classesPostTransformFU)
+        exclude '**/*LFTest.*', '**/TraceToStringTest.*'
+    }
 
-task jvmTestAll(dependsOn: [
-        transformedTestFU_6,
-        transformedTestFU_current,
-        transformedTestBOTH_6,
-        transformedTestBOTH_current,
-        transformedTestVH])
+    tasks.register("transformedTestBOTH_6$targetCapitalized", Test) {
+        dependsOn(tasks.named("checkJdk16"), tasks.named("transformBOTH$targetCapitalized"))
+        executable = "$System.env.JDK_16/bin/java"
+        classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformBOTH)
+        testClassesDirs = project.files(classesPostTransformBOTH)
+        exclude '**/*LFTest.*', '**/TraceToStringTest.*'
+    }
+
+    tasks.register("transformedTestBOTH_current$targetCapitalized", Test) {
+        dependsOn(tasks.named("transformBOTH$targetCapitalized"))
+        classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformBOTH)
+        testClassesDirs = project.files(classesPostTransformBOTH)
+        exclude '**/*LFTest.*', '**/TraceToStringTest.*'
+    }
+
+    tasks.register("transformedTestVH$targetCapitalized", Test) {
+        dependsOn(tasks.named("transformVH$targetCapitalized"))
+        classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformVH)
+        testClassesDirs = project.files(classesPostTransformVH)
+        exclude '**/*LFTest.*', '**/TraceToStringTest.*'
+    }
+
+    tasks.named("transformedTestVH$targetCapitalized") {
+        onlyIf {
+            logger.println(JavaVersion.current())
+            JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()
+        }
+    }
+
+    tasks.register("${targetName}TestAll") {
+        dependsOn(
+                tasks.named("transformedTestFU_6$targetCapitalized"),
+                tasks.named("transformedTestFU_current$targetCapitalized"),
+                tasks.named("transformedTestBOTH_6$targetCapitalized"),
+                tasks.named("transformedTestBOTH_current$targetCapitalized"),
+                tasks.named("transformedTestVH$targetCapitalized")
+        )
+    }
+
+    tasks.named("jvmTest") {
+        dependsOn(tasks.named("${targetName}TestAll"))
+    }
+}
 
 tasks.withType(Test) {
     testLogging {
@@ -289,11 +335,9 @@ tasks.withType(Test) {
     }
 }
 
-jvmTest {
+configure([jvmTest, jvmIrTest]) {
     exclude "**/AtomicfuBytecodeTest*" // run it only for transformed code
 }
-
-jvmTest.dependsOn jvmTestAll
 
 afterEvaluate {
     publishing.publications {
