@@ -34,18 +34,22 @@ kotlin {
 
     // JVM -- always
     jvm('jvm') {
-        attributes.attribute(jvmCompilerTypeAttr, 'legacy')
-    }
-    jvm('jvmIr') {
-        attributes.attribute(jvmCompilerTypeAttr, 'ir')
-        compilations.all {
-            kotlinOptions.useIR = true
+        if (rootProject.ext.build_snapshot_train) {
+            attributes.attribute(jvmCompilerTypeAttr, 'legacy')
         }
-        // Do not publish JVM IR into repository
-        mavenPublication { targetPublication ->
-            tasks.withType(PublishToMavenRepository)
-                    .matching { it.publication == targetPublication }
-                    .all { onlyIf { false } }
+    }
+    if (rootProject.ext.build_snapshot_train) {
+        jvm('jvmIr') {
+            attributes.attribute(jvmCompilerTypeAttr, 'ir')
+            compilations.all {
+                kotlinOptions.useIR = true
+            }
+            // Do not publish JVM IR into repository
+            mavenPublication { targetPublication ->
+                tasks.withType(PublishToMavenRepository)
+                        .matching { it.publication == targetPublication }
+                        .all { onlyIf { false } }
+            }
         }
     }
 
@@ -103,11 +107,13 @@ kotlin {
                 implementation "junit:junit:$junit_version"
             }
         }
-        jvmIrMain {
-            dependsOn jvmMain
-        }
-        jvmIrTest {
-            dependsOn jvmTest
+        if (rootProject.ext.build_snapshot_train) {
+            jvmIrMain {
+                dependsOn jvmMain
+            }
+            jvmIrTest {
+                dependsOn jvmTest
+            }
         }
         nativeMain { dependsOn commonMain }
 
@@ -234,7 +240,11 @@ task checkJdk16() {
     }
 }
 
-[['jvm', tasks.named("compileTestKotlinJvm")], ['jvmIr', tasks.named("compileTestKotlinJvmIr")]].forEach {
+def testTargetsToTransform = rootProject.ext.build_snapshot_train ?
+        [['jvm', tasks.named("compileTestKotlinJvm")], ['jvmIr', tasks.named("compileTestKotlinJvmIr")]] :
+        [['jvm', tasks.named("compileTestKotlinJvm")]]
+
+testTargetsToTransform.forEach {
     def (targetName, testCompileTask) = it
     def classesPreAtomicFuDir = file("$buildDir/classes/kotlin/$targetName/test")
     def classesPostTransformFU = file("$buildDir/classes/kotlin/$targetName/postTransformedFU")
@@ -325,6 +335,7 @@ task checkJdk16() {
 
     tasks.named("jvmTest") {
         dependsOn(tasks.named("${targetName}TestAll"))
+        exclude "**/AtomicfuBytecodeTest*" // run it only for transformed code
     }
 }
 
@@ -333,10 +344,6 @@ tasks.withType(Test) {
         showStandardStreams = true
         events "passed", "failed"
     }
-}
-
-configure([jvmTest, jvmIrTest]) {
-    exclude "**/AtomicfuBytecodeTest*" // run it only for transformed code
 }
 
 afterEvaluate {
