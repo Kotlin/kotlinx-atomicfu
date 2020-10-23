@@ -2,7 +2,7 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-apply plugin: 'kotlin-multiplatform'
+apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
 apply from: rootProject.file("gradle/publish-bintray.gradle")
 apply from: rootProject.file("gradle/targets.gradle")
 
@@ -18,8 +18,6 @@ ext {
     }
 }
 
-def jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
-
 kotlin {
     targets.metaClass.addTarget = { preset ->
         addNative(delegate.fromPreset(preset, preset.name))
@@ -32,26 +30,7 @@ kotlin {
         nodejs()
     }
 
-    // JVM -- always
-    jvm('jvm') {
-        if (rootProject.ext.build_snapshot_train) {
-            attributes.attribute(jvmCompilerTypeAttr, 'legacy')
-        }
-    }
-    if (rootProject.ext.build_snapshot_train) {
-        jvm('jvmIr') {
-            attributes.attribute(jvmCompilerTypeAttr, 'ir')
-            compilations.all {
-                kotlinOptions.useIR = true
-            }
-            // Do not publish JVM IR into repository
-            mavenPublication { targetPublication ->
-                tasks.withType(PublishToMavenRepository)
-                        .matching { it.publication == targetPublication }
-                        .all { onlyIf { false } }
-            }
-        }
-    }
+    // JVM -- always applied in compile-jvm-multiplatform.gradle
 
     targets {
         if (project.ext.ideaActive) {
@@ -69,8 +48,6 @@ kotlin {
             addTarget(presets.watchosArm64)
             addTarget(presets.watchosX86)
         }
-
-
     }
     sourceSets {
         commonMain {
@@ -105,14 +82,6 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test'
                 implementation 'org.jetbrains.kotlin:kotlin-test-junit'
                 implementation "junit:junit:$junit_version"
-            }
-        }
-        if (rootProject.ext.build_snapshot_train) {
-            jvmIrMain {
-                dependsOn jvmMain
-            }
-            jvmIrTest {
-                dependsOn jvmTest
             }
         }
         nativeMain { dependsOn commonMain }
@@ -154,16 +123,37 @@ if (!project.ext.ideaActive) {
     )
 }
 
-configurations {
-    transformer
-}
-
-apply from: rootProject.file('gradle/compile-options.gradle')
+def jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
 
 ext.configureKotlin()
 
+if (rootProject.ext.build_snapshot_train) {
+    configurations {
+        transformerJvmIr {
+            attributes {
+                attribute(jvmCompilerTypeAttr, 'ir')
+            }
+        }
+    }
+
+    dependencies {
+        attributesSchema {
+            attribute(jvmCompilerTypeAttr)
+        }
+        transformerJvmIr project(":atomicfu-transformer")
+    }
+}
+
+configurations {
+    transformerJvm {
+        attributes {
+            attribute(jvmCompilerTypeAttr, 'legacy')
+        }
+    }
+}
+
 dependencies {
-    transformer project(":atomicfu-transformer")
+    transformerJvm project(":atomicfu-transformer")
 }
 
 // ==== CONFIGURE JS =====
@@ -217,7 +207,7 @@ def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
 task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
     args = [originalJsFile, transformedJsFile]
-    classpath = configurations.transformer
+    classpath = configurations.transformerJvm
     inputs.file(originalJsFile)
     outputs.file(transformedJsFile)
 }
@@ -256,7 +246,7 @@ testTargetsToTransform.forEach {
         dependsOn(testCompileTask)
         main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
         args = [classesPreAtomicFuDir, classesPostTransformFU, "FU"]
-        classpath = configurations.transformer
+        classpath = configurations.getByName("transformer$targetCapitalized")
         inputs.dir(classesPreAtomicFuDir)
         outputs.dir(classesPostTransformFU)
     }
@@ -265,7 +255,7 @@ testTargetsToTransform.forEach {
         dependsOn(testCompileTask)
         main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
         args = [classesPreAtomicFuDir, classesPostTransformBOTH, "BOTH"]
-        classpath = configurations.transformer
+        classpath = configurations.getByName("transformer$targetCapitalized")
         inputs.dir(classesPreAtomicFuDir)
         outputs.dir(classesPostTransformBOTH)
     }
@@ -274,7 +264,7 @@ testTargetsToTransform.forEach {
         dependsOn(testCompileTask)
         main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
         args = [classesPreAtomicFuDir, classesPostTransformVH, "VH"]
-        classpath = configurations.transformer
+        classpath = configurations.getByName("transformer$targetCapitalized")
         inputs.dir(classesPreAtomicFuDir)
         outputs.dir(classesPostTransformVH)
     }

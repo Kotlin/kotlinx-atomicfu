@@ -1,0 +1,32 @@
+/*
+ * Copyright 2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+apply plugin: 'kotlin'
+apply from: rootProject.file('gradle/compile-options.gradle')
+
+def jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
+
+configurations {
+    create('jvmImplementation') {
+        extendsFrom implementation
+        if (rootProject.ext.build_snapshot_train) {
+            attributes {
+                attribute(jvmCompilerTypeAttr, 'legacy')
+            }
+        }
+    }
+}
+
+sourceSets.all { sourceSet ->
+    sourceSet.compileClasspath += configurations.jvmImplementation
+    sourceSet.runtimeClasspath += configurations.jvmImplementation
+}
+
+if (rootProject.ext.build_snapshot_train) {
+    dependencies {
+        attributesSchema {
+            attribute(jvmCompilerTypeAttr)
+        }
+    }
+}

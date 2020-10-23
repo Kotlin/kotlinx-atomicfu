@@ -10,7 +10,7 @@ apply plugin: 'maven-publish'
 apply from: project.rootProject.file('gradle/maven-central.gradle')
 
 // todo: figure out how we can check it in a generic way
-def isMultiplatform = project.name == 'atomicfu'
+def isMultiplatform = project.name == 'atomicfu' || project.name == 'atomicfu-transformer'
 
 if (!isMultiplatform) {
     // Regular java modules need 'java-library' plugin for proper publication

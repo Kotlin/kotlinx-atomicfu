@@ -2,20 +2,29 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-apply plugin: 'kotlin'
-
+apply from: rootProject.file('gradle/compile-jvm-multiplatform.gradle')
+apply from: rootProject.file("gradle/publish-bintray.gradle")
 apply from: rootProject.file('gradle/compile-options.gradle')
 
 ext.configureKotlin()
 
+kotlin {
+    sourceSets {
+        jvmMain {
+            kotlin.srcDir('src')
+            resources.srcDir('resources')
+        }
+    }
+}
+
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile "org.ow2.asm:asm:$asm_version"
-    compile "org.ow2.asm:asm-commons:$asm_version"
-    compile "org.ow2.asm:asm-tree:$asm_version"
-    compile "org.ow2.asm:asm-util:$asm_version"
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-    runtime "org.slf4j:slf4j-simple:$slf4j_version"
-    compile "org.mozilla:rhino:1.7.10"
-    compile "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0"
+    jvmMainImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    jvmMainImplementation "org.ow2.asm:asm:$asm_version"
+    jvmMainImplementation "org.ow2.asm:asm-commons:$asm_version"
+    jvmMainImplementation "org.ow2.asm:asm-tree:$asm_version"
+    jvmMainImplementation "org.ow2.asm:asm-util:$asm_version"
+    jvmMainImplementation "org.slf4j:slf4j-api:$slf4j_version"
+    jvmMainImplementation "org.slf4j:slf4j-simple:$slf4j_version"
+    jvmMainImplementation "org.mozilla:rhino:1.7.10"
+    jvmMainImplementation "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0"
 }

@@ -79,7 +79,7 @@ allprojects {
     if (deployVersion != null) version = deployVersion
 
     // 'atomicfu-native' check is a kludge so that existing YouTrack config works, todo: remove
-    if (project != rootProject && !(project.name in ['atomicfu-native', 'atomicfu'])) {
+    if (project != rootProject && !(project.name in ['atomicfu-native', 'atomicfu', 'atomicfu-transformer'])) {
         apply from: rootProject.file("gradle/publish-bintray.gradle")
     }
 
