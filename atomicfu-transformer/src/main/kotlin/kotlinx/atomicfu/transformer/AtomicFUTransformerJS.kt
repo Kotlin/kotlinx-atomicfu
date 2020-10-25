@@ -22,7 +22,7 @@ private const val TRACE_FORMAT = "TraceFormat"
 private const val TRACE_FORMAT_CONSTRUCTOR = "atomicfu\\\$$TRACE_FORMAT\\\$"
 private const val TRACE_FORMAT_FORMAT = "atomicfu\\\$TraceFormat\\\$format\\\$"
 
-private const val RECEIVER = "\$receiver"
+private const val RECEIVER = """(\$(receiver)(_\d+)?)"""
 private const val SCOPE = "scope"
 private const val FACTORY = "factory"
 private const val REQUIRE = "require"
@@ -316,7 +316,7 @@ class AtomicFUTransformerJS(
                         node.setLeftAndRight(targetNode, clearProperety)
                     }
                     // other cases with $receiver.kotlinx$atomicfu$value in inline functions
-                    else if (node.target.toSource() == RECEIVER) {
+                    else if (node.target.toSource().matches(Regex(RECEIVER))) {
                         val rr = ReceiverResolver()
                         node.enclosingFunction.visit(rr)
                         rr.receiver?.let { node.target = it }
@@ -404,7 +404,7 @@ class AtomicFUTransformerJS(
         var receiver: AstNode? = null
         override fun visit(node: AstNode): Boolean {
             if (node is VariableInitializer) {
-                if (node.target.toSource() == RECEIVER) {
+                if (node.target.toSource().matches(Regex(RECEIVER))) {
                     receiver = node.initializer
                     return false
                 }
@@ -420,7 +420,7 @@ class AtomicFUTransformerJS(
                 if (node.target is PropertyGet) {
                     val funcName = (node.target as PropertyGet).property
                     var field = (node.target as PropertyGet).target
-                    if (field.toSource() == RECEIVER) {
+                    if (field.toSource().matches(Regex(RECEIVER))) {
                         val rr = ReceiverResolver()
                         node.enclosingFunction.visit(rr)
                         if (rr.receiver != null) {
