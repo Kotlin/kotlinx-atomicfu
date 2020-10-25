@@ -869,8 +869,12 @@ class AtomicFUTransformer(
             // this array element information is only used in case the reference to this element is stored (copied and inserted at the point of loading)
             val arrayElementInfo = mutableListOf<AbstractInsnNode>()
             if (vh) {
-                arrayElementInfo.add(ld.previous.previous) // getstatic VarHandle field
-                arrayElementInfo.add(ld.previous) // swap
+                if (!f.isStatic) {
+                    arrayElementInfo.add(ld.previous.previous) // getstatic VarHandle field
+                    arrayElementInfo.add(ld.previous) // swap
+                } else {
+                    arrayElementInfo.add(ld.previous) // getstatic VarHandle field
+                }
             }
             var i: AbstractInsnNode = ld
             while (i != getter) {
@@ -896,7 +900,8 @@ class AtomicFUTransformer(
                     val onArrayElement = arrayElementInfo != null
                     check(f.isArray == onArrayElement)
                     // was stored to local -- needs more processing:
-                    // store owner ref into the variable instead
+                    // for class fields store owner ref into the variable instead
+                    // for static fields store nothing, remove the local var
                     val v = operation.`var`
                     val next = operation.next
                     if (onArrayElement) {
@@ -906,6 +911,7 @@ class AtomicFUTransformer(
                         instructions.remove(ld)
                     }
                     val lv = localVar(v, operation)
+                    if (f.isStatic) instructions.remove(operation) // remove astore operation
                     if (lv != null) {
                         // Stored to a local variable with an entry in LVT (typically because of inline function)
                         if (lv.desc != f.fieldType.descriptor && !onArrayElement)
@@ -927,12 +933,15 @@ class AtomicFUTransformer(
             }
         }
 
-        private fun fixupLoad(f: FieldInfo, ld: FieldInsnNode, otherLd: VarInsnNode, arrayElementInfo: List<AbstractInsnNode>?): AbstractInsnNode? =
-            if (arrayElementInfo != null) {
+        private fun fixupLoad(f: FieldInfo, ld: FieldInsnNode, otherLd: VarInsnNode, arrayElementInfo: List<AbstractInsnNode>?): AbstractInsnNode? {
+            val next = if (arrayElementInfo != null) {
                 fixupArrayElementLoad(f, ld, otherLd, arrayElementInfo)
             } else {
                 fixupVarLoad(f, ld, otherLd)
             }
+            if (f.isStatic) instructions.remove(otherLd) // remove aload instruction for static fields, nothing is stored there
+            return next
+        }
 
         private fun fixupVarLoad(f: FieldInfo, ld: FieldInsnNode, otherLd: VarInsnNode): AbstractInsnNode? {
             val ldCopy = ld.clone(null) as FieldInsnNode
