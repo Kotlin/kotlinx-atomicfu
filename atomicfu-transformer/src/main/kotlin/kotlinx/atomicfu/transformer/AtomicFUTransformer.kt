@@ -63,10 +63,8 @@ private val ARRAY_ELEMENT_TYPE: Map<Type, Int> = mapOf(
 private val AFU_TYPES: Map<Type, TypeInfo> = AFU_CLASSES.mapKeys { getObjectType(it.key) }
 
 private val METHOD_HANDLES = "$JLI_PKG/MethodHandles"
-private val METHOD_HANDLE = "$JLI_PKG/MethodHandle"
 private val LOOKUP = "$METHOD_HANDLES\$Lookup"
 private val VH_TYPE = getObjectType("$JLI_PKG/VarHandle")
-private val METHOD_HANDLE_TYPE = getObjectType(METHOD_HANDLE)
 
 private val STRING_TYPE = getObjectType("java/lang/String")
 private val CLASS_TYPE = getObjectType("java/lang/Class")
@@ -156,7 +154,6 @@ class FieldInfo(
             val fuName = fieldId.name + '$' + "FU"
             return if (hasExternalAccess) mangleInternal(fuName) else fuName
         }
-    val arrayLengthMethodHandleName = fieldId.name + '$' + "arrayLength"
 
     val refVolatileClassName = "${owner.replace('.', '/')}${name.capitalize()}RefVolatile"
     val staticRefVolatileField = refVolatileClassName.substringAfterLast("/").decapitalize()
@@ -470,7 +467,6 @@ class AtomicFUTransformer(
         // Generates static VarHandle field
         private fun vhField(protection: Int, f: FieldInfo) {
             super.visitField(protection or ACC_FINAL or ACC_STATIC, f.fuName, VH_TYPE.descriptor, null, null)
-            super.visitField(protection or ACC_FINAL or ACC_STATIC, f.arrayLengthMethodHandleName, METHOD_HANDLE_TYPE.descriptor, null, null)
             code(getOrCreateNewClinit()) {
                 if (!f.isArray) {
                     invokestatic(METHOD_HANDLES, "lookup", "()L$LOOKUP;", false)
@@ -499,15 +495,6 @@ class AtomicFUTransformer(
                         false
                     )
                     putstatic(className, f.fuName, VH_TYPE.descriptor)
-                    // create MethodHandle.arrayLength
-                    aconst(f.getPrimitiveType(vh))
-                    invokestatic(
-                            METHOD_HANDLES,
-                            "arrayLength",
-                            getMethodDescriptor(METHOD_HANDLE_TYPE, CLASS_TYPE),
-                            false
-                    )
-                    putstatic(className, f.arrayLengthMethodHandleName, METHOD_HANDLE_TYPE.descriptor)
                 }
             }
         }
@@ -738,23 +725,18 @@ class AtomicFUTransformer(
                     iv.owner = descToName(f.fuType.descriptor)
                     iv.name = "length"
                 } else {
-                    // map to MethodHandles.arrayLength
-                    val getStaticMH = FieldInsnNode(
-                            GETSTATIC, f.owner, f.arrayLengthMethodHandleName,
-                            METHOD_HANDLE_TYPE.descriptor
-                    )
-                    val getStaticVH = if (!f.isStatic) {
-                        iv.previous.previous.previous // skip getField array of primitive type, swap
+                    // replace with arraylength of the primitive type array
+                    val arrayLength = InsnNode(ARRAYLENGTH)
+                    instructions.insert(ld, arrayLength)
+                    // do not need varhandle
+                    if (!f.isStatic) {
+                        instructions.remove(ld.previous.previous)
+                        instructions.remove(ld.previous)
                     } else {
-                        iv.previous.previous // skip getField array of primitive type
+                        instructions.remove(ld.previous)
                     }
-                    instructions.set(getStaticVH, getStaticMH)
-                    iv.owner = METHOD_HANDLE
-                    iv.name = "invoke"
-                    iv.desc = getMethodDescriptor(
-                            INT_TYPE,
-                            f.getPrimitiveType(vh)
-                        )
+                    instructions.remove(iv)
+                    return arrayLength
                 }
                 return iv
             }
