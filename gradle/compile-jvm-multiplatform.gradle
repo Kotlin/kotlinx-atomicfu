@@ -10,12 +10,12 @@ def jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', Stri
 kotlin {
     jvm('jvm') {
         if (rootProject.ext.build_snapshot_train) {
-            attributes.attribute(jvmCompilerTypeAttr, 'legacy')
+            attributes.attribute(jvmCompilerTypeAttr, 'jvm')
         }
     }
     if (rootProject.ext.build_snapshot_train) {
         jvm('jvmIr') {
-            attributes.attribute(jvmCompilerTypeAttr, 'ir')
+            attributes.attribute(jvmCompilerTypeAttr, 'jvmIr')
             compilations.all {
                 kotlinOptions.useIR = true
             }
