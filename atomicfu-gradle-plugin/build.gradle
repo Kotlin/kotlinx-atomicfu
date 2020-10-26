@@ -57,15 +57,11 @@ task createClasspathManifest {
 
     doLast {
         outputDir.mkdirs()
-        file("$outputDir/plugin-classpath.txt").text = (sourceSets.main.runtimeClasspath + configurations.testPluginClasspath).join("\n")
+        file("$outputDir/plugin-classpath.txt").text = (sourceSets.main.runtimeClasspath + configurations.testPluginClasspath + configurations.jvmImplementation).join("\n")
         file("$outputDir/atomicfu-jvm.txt").text = atomicfuJvmJarTask.archivePath
         file("$outputDir/atomicfu-js.txt").text = atomicfuJsJarTask.archivePath
         file("$outputDir/atomicfu-metadata.txt").text = atomicfuMetadataJarTask.archivePath
     }
-}
-
-tasks.named("test", Test) {
-    classpath += configurations.jvmImplementation
 }
 
 // Add the classpath file to the test runtime classpath

@@ -24,6 +24,7 @@ buildscript {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
+        ext.jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
     }
 
     repositories {

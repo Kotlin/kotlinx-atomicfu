@@ -5,27 +5,28 @@
 apply plugin: 'kotlin'
 apply from: rootProject.file('gradle/compile-options.gradle')
 
-def jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
-
 configurations {
     create('jvmImplementation') {
         if (rootProject.ext.build_snapshot_train) {
             attributes {
-                attribute(jvmCompilerTypeAttr, 'jvm')
+                attribute(rootProject.ext.jvmCompilerTypeAttr, 'jvm')
             }
         }
+    }
+
+    runtimeElements {
+        extendsFrom jvmImplementation
     }
 }
 
 sourceSets.all { sourceSet ->
     sourceSet.compileClasspath += configurations.jvmImplementation
-    sourceSet.runtimeClasspath += configurations.jvmImplementation
 }
 
 if (rootProject.ext.build_snapshot_train) {
     dependencies {
         attributesSchema {
-            attribute(jvmCompilerTypeAttr)
+            attribute(rootProject.ext.jvmCompilerTypeAttr)
         }
     }
 }
