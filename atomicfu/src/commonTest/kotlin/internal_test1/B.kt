@@ -4,7 +4,10 @@
 
 package internal_test1
 
+import bytecode_test.c
 import kotlinx.atomicfu.test.A
+import kotlinx.atomicfu.test.internalTopLevelField
+import kotlinx.atomicfu.test.publicTopLevelField
 import kotlin.test.*
 
 class B {
@@ -23,6 +26,15 @@ class B {
         assertEquals(6, a.intArr[2].value)
         check(a.refArr[3].compareAndSet(null, "OK"))
         assertEquals("OK", a.refArr[3].value)
+    }
+
+    @Test
+    fun testInternalTopLevel() {
+        internalTopLevelField.lazySet(55)
+        check(internalTopLevelField.value == 55)
+        check(publicTopLevelField.compareAndSet(0, 66))
+        check(publicTopLevelField.value == 66)
+        check(c.getAndSet(145) == 0)
     }
 }
 
