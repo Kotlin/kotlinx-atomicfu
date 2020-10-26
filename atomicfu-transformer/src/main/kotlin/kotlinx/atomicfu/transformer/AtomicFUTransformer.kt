@@ -425,12 +425,11 @@ class AtomicFUTransformer(
                     f.accessors.isEmpty() -> ACC_PRIVATE
                     else -> 0
                 }
-                val protection = visibility or when {
+                val protection = ACC_SYNTHETIC or visibility or when {
                     // reference to wrapper class (primitive atomics) or reference to to j.u.c.a.Atomic*Array (atomic array)
-                    f.isStatic && !vh -> ACC_STATIC or ACC_FINAL or ACC_SYNTHETIC
+                    f.isStatic && !vh -> ACC_STATIC or ACC_FINAL
                     // primitive type field
-                    f.isStatic && vh -> ACC_STATIC or ACC_SYNTHETIC
-                    f.hasExternalAccess -> ACC_SYNTHETIC
+                    f.isStatic && vh -> ACC_STATIC
                     else -> 0
                 }
                 val primitiveType = f.getPrimitiveType(vh)
