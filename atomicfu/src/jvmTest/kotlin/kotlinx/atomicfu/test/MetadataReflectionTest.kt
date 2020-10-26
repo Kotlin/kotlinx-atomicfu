@@ -9,7 +9,7 @@ import kotlin.test.*
 /**
  * Make sure metadata is intact after transformation.
  */
-class ReflectionTest {
+class MetadataReflectionTest {
     @Test
     fun testReflection() {
         val f =

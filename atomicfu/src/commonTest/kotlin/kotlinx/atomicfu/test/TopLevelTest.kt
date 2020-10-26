@@ -22,6 +22,9 @@ private val anyRefArr = AtomicArray<Any>(10)
 
 private val stringAtomicNullArr = atomicArrayOfNulls<String>(10)
 
+internal val internalTopLevelField = atomic(0)
+public val publicTopLevelField = atomic(0)
+
 class TopLevelPrimitiveTest {
     @Test
     fun testTopLevelInt() {

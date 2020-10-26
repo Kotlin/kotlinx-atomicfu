@@ -155,7 +155,7 @@ class FieldInfo(
             return if (hasExternalAccess) mangleInternal(fuName) else fuName
         }
 
-    val refVolatileClassName = "${owner.replace('.', '/')}${name.capitalize()}RefVolatile"
+    val refVolatileClassName = "${owner.replace('.', '/')}$${name.capitalize()}RefVolatile"
     val staticRefVolatileField = refVolatileClassName.substringAfterLast("/").decapitalize()
 
     fun getPrimitiveType(vh: Boolean): Type = if (vh) typeInfo.originalType else typeInfo.transformedType
@@ -421,13 +421,17 @@ class AtomicFUTransformer(
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
                 val fieldId = FieldId(className, name, desc)
                 val f = fields[fieldId]!!
-                val protection = when {
+                val visibility = when {
+                    f.hasExternalAccess -> ACC_PUBLIC
+                    f.accessors.isEmpty() -> ACC_PRIVATE
+                    else -> 0
+                }
+                val protection = visibility or when {
                     // reference to wrapper class (primitive atomics) or reference to to j.u.c.a.Atomic*Array (atomic array)
                     f.isStatic && !vh -> ACC_STATIC or ACC_FINAL or ACC_SYNTHETIC
                     // primitive type field
                     f.isStatic && vh -> ACC_STATIC or ACC_SYNTHETIC
-                    f.hasExternalAccess -> ACC_PUBLIC or ACC_SYNTHETIC
-                    f.accessors.isEmpty() -> ACC_PRIVATE
+                    f.hasExternalAccess -> ACC_SYNTHETIC
                     else -> 0
                 }
                 val primitiveType = f.getPrimitiveType(vh)
@@ -1272,9 +1276,14 @@ class AtomicFUTransformer(
 
         // generates a ref class with volatile field of primitive type inside
         private fun generateRefVolatileClass(f: FieldInfo, arg: Type) {
+            val visibility = when {
+                f.hasExternalAccess -> ACC_PUBLIC
+                f.accessors.isEmpty() -> ACC_PRIVATE
+                else -> 0
+            }
             if (analyzePhase2) return // nop
             val cw = ClassWriter(0)
-            cw.visit(V1_6, ACC_PUBLIC or ACC_SYNTHETIC, f.refVolatileClassName, null, "java/lang/Object", null)
+            cw.visit(V1_6, visibility or ACC_SYNTHETIC, f.refVolatileClassName, null, "java/lang/Object", null)
             //creating class constructor
             val cons = cw.visitMethod(ACC_PUBLIC, "<init>", "(${arg.descriptor})V", null, null)
             code(cons) {
@@ -1288,8 +1297,7 @@ class AtomicFUTransformer(
                 visitMaxs(3, 3)
             }
             //declaring volatile field of primitive type
-            val protection = ACC_VOLATILE
-            cw.visitField(protection, f.name, f.getPrimitiveType(vh).descriptor, null, null)
+            cw.visitField(visibility or ACC_VOLATILE, f.name, f.getPrimitiveType(vh).descriptor, null, null)
             val genFile = outputDir / "${f.refVolatileClassName}.class"
             genFile.mkdirsAndWrite(cw.toByteArray())
         }
