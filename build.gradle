@@ -43,6 +43,7 @@ buildscript {
         }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
     }
     
     dependencies {
@@ -76,6 +77,7 @@ allprojects {
             }
         }
         maven { url "https://kotlin.bintray.com/kotlinx" }
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
     }
 
     def deployVersion = properties['DeployVersion']

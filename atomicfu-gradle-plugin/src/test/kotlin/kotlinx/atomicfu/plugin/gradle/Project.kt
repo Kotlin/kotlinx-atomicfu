@@ -86,6 +86,7 @@ class Project(val projectDir: File) {
                     maven { url 'https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev' }
                     maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
                     maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+                    maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev' }
                     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
                 }
 

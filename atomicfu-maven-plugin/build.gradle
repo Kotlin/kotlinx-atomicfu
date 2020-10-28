@@ -54,6 +54,11 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                         }
 
                         appendNode('repository').with {
+                            appendNode('id', 'dev')
+                            appendNode('url', 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev')
+                        }
+
+                        appendNode('repository').with {
                             appendNode('id', 'kotlinx')
                             appendNode('url', 'https://kotlin.bintray.com/kotlinx')
                         }
