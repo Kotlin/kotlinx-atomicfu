@@ -22,6 +22,8 @@ class TopLevelGeneratedDeclarationsReflectionTest : ReflectionTestBase() {
                 FieldDesc(PRIVATE or STATIC or FINAL, true, "$BYTECODE_PACKAGE.NoAccessPrivateTopLevel\$A$REF_VOLATILE", "noAccessPrivateTopLevel\$A$REF_VOLATILE")
             )
         )
+        val refVolatileClass = Class.forName("$BYTECODE_PACKAGE.NoAccessPrivateTopLevel\$A$REF_VOLATILE")
+        checkClassModifiers(refVolatileClass, 0, true)
     }
 
     /**
@@ -36,6 +38,7 @@ class TopLevelGeneratedDeclarationsReflectionTest : ReflectionTestBase() {
             )
         )
         val refVolatileClass = Class.forName("$BYTECODE_PACKAGE.PrivateTopLevel\$B$REF_VOLATILE")
+        checkClassModifiers(refVolatileClass, 0, true)
         checkDeclarations(refVolatileClass, listOf(
                 FieldDesc(VOLATILE, false, "int", "b")
             )
@@ -54,6 +57,7 @@ class TopLevelGeneratedDeclarationsReflectionTest : ReflectionTestBase() {
             )
         )
         val refVolatileClass = Class.forName("$BYTECODE_PACKAGE.PublicTopLevel\$C$REF_VOLATILE")
+        checkClassModifiers(refVolatileClass, PUBLIC, true)
         checkDeclarations(refVolatileClass, listOf(
                 FieldDesc(PUBLIC or VOLATILE, false, "int", "c\$internal")
             )
@@ -72,6 +76,7 @@ class TopLevelGeneratedDeclarationsReflectionTest : ReflectionTestBase() {
         )
         )
         val refVolatileClass = Class.forName("$BYTECODE_PACKAGE.PackagePrivateTopLevel\$D$REF_VOLATILE")
+        checkClassModifiers(refVolatileClass, 0, true)
         checkDeclarations(refVolatileClass, listOf(
                 FieldDesc(VOLATILE, false, "int", "d")
             )
