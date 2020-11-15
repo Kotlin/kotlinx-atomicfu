@@ -6,7 +6,12 @@ apply plugin: 'kotlinx-atomicfu'
 apply plugin: 'kotlin-multiplatform'
 
 kotlin {
-    jvm()
+    // This flag is enabled to be able using JVM IR compiled dependencies (when build is ran with -Penable_jvm_ir)
+    jvm() {
+        compilations.all {
+            kotlinOptions.freeCompilerArgs += '-Xallow-jvm-ir-dependencies'
+        }
+    }
     js()
 
     sourceSets {

@@ -25,6 +25,9 @@ buildscript {
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
+    // These two flags are enabled in train builds for JVM IR compiler testing
+    ext.jvm_ir_enabled = rootProject.properties['enable_jvm_ir'] != null
+    ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
 
     repositories {
         jcenter()

@@ -5,6 +5,11 @@
 apply plugin: 'kotlinx-atomicfu'
 apply plugin: 'kotlin'
 
+// This flag is enabled to be able using JVM IR compiled dependencies (when build is ran with -Penable_jvm_ir)
+kotlin.target.compilations.all {
+    kotlinOptions.freeCompilerArgs += '-Xallow-jvm-ir-dependencies'
+}
+
 dependencies {
     compileOnly atomicfuJvm
     testRuntime atomicfuJvm
