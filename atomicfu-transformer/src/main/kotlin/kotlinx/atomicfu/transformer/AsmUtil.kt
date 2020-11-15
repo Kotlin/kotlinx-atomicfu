@@ -69,6 +69,9 @@ fun AbstractInsnNode.isAreturn() =
 fun AbstractInsnNode.isReturn() =
     this.opcode == RETURN
 
+fun AbstractInsnNode.isInvokeVirtual() =
+        this.opcode == INVOKEVIRTUAL
+
 @Suppress("UNCHECKED_CAST")
 fun MethodNode.localVar(v: Int, node: AbstractInsnNode): LocalVariableNode? =
     (localVariables as List<LocalVariableNode>).firstOrNull { it.index == v && verifyLocalVarScopeStart(v, node, it.start)}

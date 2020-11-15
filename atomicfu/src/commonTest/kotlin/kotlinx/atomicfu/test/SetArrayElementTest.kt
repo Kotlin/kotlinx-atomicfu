@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 class SetArrayElementTest {
     @Test
-    fun getArrayFieldTest() {
+    fun testGetArrayField() {
         val aes = ArrayElementSetters()
         assertTrue(aes.setInt(2, 5))
         assertFalse(aes.setInt(2, 10))
@@ -19,7 +19,7 @@ class SetArrayElementTest {
     }
 
     @Test
-    fun transformInMethodTest() {
+    fun testTransformInMethod() {
         val holder = AtomicArrayWithMethod()
         holder.set("Hello", 0)
     }

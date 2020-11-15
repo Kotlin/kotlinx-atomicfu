@@ -91,9 +91,7 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 
 ```kotlin
 private val _foo = atomic<T>(initial) // private atomic, convention is to name it with leading underscore
-public var foo: T                     // public val/var
-    get() = _foo.value
-    set(value) { _foo.value = value }
+public var foo: T by _foo            // public delegated property (val/var)
 ```  
 
 ## Gradle build setup

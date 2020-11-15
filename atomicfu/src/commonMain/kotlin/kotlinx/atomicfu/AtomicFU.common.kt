@@ -2,10 +2,15 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+
 package kotlinx.atomicfu
 
 import kotlin.js.JsName
+import kotlin.internal.InlineOnly
 import kotlinx.atomicfu.TraceBase.None
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
 
 /**
  * Creates atomic reference with a given [initial] value.
@@ -69,6 +74,12 @@ public expect class AtomicRef<T> {
      * Reading/writing this property maps to read/write of volatile variable.
      */
     public var value: T
+
+    @InlineOnly
+    public inline operator fun getValue(thisRef: Any?, property: KProperty<*>): T
+
+    @InlineOnly
+    public inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T)
 
     /**
      * Maps to [AtomicReferenceFieldUpdater.lazySet].
@@ -142,6 +153,12 @@ public expect class AtomicBoolean {
      */
     public var value: Boolean
 
+    @InlineOnly
+    public inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean
+
+    @InlineOnly
+    public inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean)
+
     /**
      * Maps to [AtomicIntegerFieldUpdater.lazySet].
      */
@@ -213,6 +230,12 @@ public expect class AtomicInt {
      * Reads/writes of this property maps to read/write of volatile variable.
      */
     public var value: Int
+
+    @InlineOnly
+    public inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int
+
+    @InlineOnly
+    public inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int)
 
     /**
      * Maps to [AtomicIntegerFieldUpdater.lazySet].
@@ -324,6 +347,12 @@ public expect class AtomicLong {
      * Reads/writes of this property maps to read/write of volatile variable.
      */
     public var value: Long
+
+    @InlineOnly
+    public operator fun getValue(thisRef: Any?, property: KProperty<*>): Long
+
+    @InlineOnly
+    public operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long)
 
     /**
      * Maps to [AtomicLongFieldUpdater.lazySet].

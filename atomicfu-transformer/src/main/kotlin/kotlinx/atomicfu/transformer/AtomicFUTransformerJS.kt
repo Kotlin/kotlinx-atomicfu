@@ -50,6 +50,8 @@ class AtomicFUTransformerJS(
     outputDir: File
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
     private val atomicConstructors = mutableSetOf<String>()
+    private val fieldDelegates = mutableMapOf<String, String>()
+    private val delegatedProperties = mutableMapOf<String, String>()
     private val atomicArrayConstructors = mutableMapOf<String, String?>()
     private val traceConstructors = mutableSetOf<String>()
     private val traceFormatObjects = mutableSetOf<String>()
@@ -75,6 +77,8 @@ class AtomicFUTransformerJS(
         val root = p.parse(FileReader(file), null, 0)
         root.visit(DependencyEraser())
         root.visit(AtomicConstructorDetector())
+        root.visit(FieldDelegatesVisitor())
+        root.visit(DelegatedPropertyAccessorsVisitor())
         root.visit(TransformVisitor())
         root.visit(AtomicOperationsInliner())
         return root.eraseGetValue().toByteArray()
@@ -261,6 +265,62 @@ class AtomicFUTransformerJS(
         }
     }
 
+    inner class FieldDelegatesVisitor : NodeVisitor {
+        override fun visit(node: AstNode?): Boolean {
+            if (node is FunctionCall) {
+                val functionName = node.target.toSource()
+                if (atomicConstructors.contains(functionName)) {
+                    if (node.parent is Assignment) {
+                        val assignment = node.parent as Assignment
+                        val atomicField = assignment.left
+                        val constructorBlock = ((node.parent.parent as? ExpressionStatement)?.parent as? Block)
+                                ?: abort("Incorrect tree structure of the constructor block initializing ${node.parent.toSource()}")
+                        // check if there is a delegate field initialized by the reference to this atomic
+                        for (stmt in constructorBlock) {
+                            if (stmt is ExpressionStatement) {
+                                if (stmt.expression is Assignment) {
+                                    val delegateAssignment = stmt.expression as Assignment
+                                    if (delegateAssignment.right is PropertyGet) {
+                                        val initializer = delegateAssignment.right as PropertyGet
+                                        if (initializer.toSource() == atomicField.toSource()) {
+                                            // register field delegate and the original atomic field
+                                            fieldDelegates[(delegateAssignment.left as PropertyGet).property.toSource()] =
+                                                    (atomicField as PropertyGet).property.toSource()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return true
+        }
+    }
+
+    inner class DelegatedPropertyAccessorsVisitor : NodeVisitor {
+        override fun visit(node: AstNode?): Boolean {
+            if (node is PropertyGet) {
+                if (node.target is PropertyGet) {
+                    if ((node.target as PropertyGet).property.toSource() in fieldDelegates && node.property.toSource() == MANGLED_VALUE_PROP) {
+                        if (node.parent is ReturnStatement) {
+                            val getter = ((((node.parent.parent as? Block)?.parent as? FunctionNode)?.parent as? ObjectProperty)?.parent as? ObjectLiteral)
+                                    ?: abort("Incorrect tree structure of the accessor for the property delegated " +
+                                            "to the atomic field ${fieldDelegates[node.target.toSource()]}")
+                            val definePropertyCall = getter.parent as FunctionCall
+                            val stringLiteral = definePropertyCall.arguments[1] as? StringLiteral
+                                    ?: abort ("Object.defineProperty invocation should take a property name as the second argument")
+                            val delegatedProperty = stringLiteral.value.toString()
+                            delegatedProperties[delegatedProperty] = (node.target as PropertyGet).property.toSource()
+                        }
+                    }
+                }
+
+            }
+            return true
+        }
+    }
+
     inner class TransformVisitor : NodeVisitor {
         override fun visit(node: AstNode): Boolean {
             // remove atomic constructors from classes fields
@@ -269,7 +329,7 @@ class AtomicFUTransformerJS(
                 if (atomicConstructors.contains(functionName)) {
                     if (node.parent is Assignment) {
                         val valueNode = node.arguments[0]
-                        (node.parent as InfixExpression).right = valueNode
+                        (node.parent as Assignment).right = valueNode
                     }
                     return true
                 } else if (atomicArrayConstructors.contains(functionName)) {
@@ -323,6 +383,12 @@ class AtomicFUTransformerJS(
                         node.enclosingFunction.visit(rr)
                         rr.receiver?.let { node.target = it }
                     }
+                }
+                if (node.property.toSource() in delegatedProperties) {
+                    // replace delegated property name with the name of the original atomic field
+                    val fieldDelegate = delegatedProperties[node.property.toSource()]
+                    val originalField = fieldDelegates[fieldDelegate]!!
+                    node.property = Name().apply { identifier = originalField }
                 }
                 // replace Atomic*Array.size call with `length` property on the pure type js array
                 if (node.property.toSource() == ARRAY_SIZE) {

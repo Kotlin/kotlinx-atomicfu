@@ -66,7 +66,7 @@ class CounterWithInternalTrace {
 
 class InternalTraceTest {
     @Test
-    fun internalTraceTest() {
+    fun testInternalTrace() {
         val cit = CounterWithInternalTrace()
         repeat(5) { cit.update() }
         assertEquals(cit.get(), 25)

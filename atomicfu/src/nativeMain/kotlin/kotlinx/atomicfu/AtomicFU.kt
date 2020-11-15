@@ -11,6 +11,8 @@ import kotlin.native.concurrent.AtomicLong as KAtomicLong
 import kotlin.native.concurrent.FreezableAtomicReference as KAtomicRef
 import kotlin.native.concurrent.isFrozen
 import kotlin.native.concurrent.freeze
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
 
 public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = AtomicRef<T>(KAtomicRef(initial))
 public actual fun atomic(initial: Int, trace: TraceBase): AtomicInt = AtomicInt(KAtomicInt(initial))
@@ -27,6 +29,10 @@ public actual inline class AtomicRef<T> internal constructor(@PublishedApi inter
             if (a.isFrozen) value.freeze()
             a.value = value
         }
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) { this.value = value }
 
     public actual inline fun lazySet(value: T) {
         if (a.isFrozen) value.freeze()
@@ -58,6 +64,10 @@ public actual inline class AtomicBoolean internal constructor(@PublishedApi inte
         get() = a.value != 0
         set(value) { a.value = if (value) 1 else 0 }
 
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { this.value = value }
+
     public actual inline fun lazySet(value: Boolean) { this.value = value }
 
     public actual fun compareAndSet(expect: Boolean, update: Boolean): Boolean {
@@ -85,6 +95,10 @@ public actual inline class AtomicInt internal constructor(@PublishedApi internal
     public actual inline var value: Int
         get() = a.value
         set(value) { a.value = value }
+
+    actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) { this.value = value }
 
     public actual inline fun lazySet(value: Int) { a.value = value }
 
@@ -119,6 +133,10 @@ public actual inline class AtomicLong internal constructor(@PublishedApi interna
     public actual inline var value: Long
         get() = a.value
         set(value) { a.value = value }
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Long = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) { this.value = value }
 
     public actual inline fun lazySet(value: Long) { a.value = value }
 
