@@ -24,6 +24,10 @@ class TopLevelGeneratedDeclarationsReflectionTest : ReflectionTestBase() {
         )
         val refVolatileClass = Class.forName("$BYTECODE_PACKAGE.NoAccessPrivateTopLevel\$A$REF_VOLATILE")
         checkClassModifiers(refVolatileClass, 0, true)
+        checkDeclarations(refVolatileClass, listOf(
+                FieldDesc(VOLATILE, false, "int", "a")
+            )
+        )
     }
 
     /**
