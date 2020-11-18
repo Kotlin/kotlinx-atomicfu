@@ -29,26 +29,9 @@ kotlin {
         nodejs()
     }
 
-    targets {
-        // JVM -- always
-        fromPreset(presets.jvm, 'jvm')
+    // JVM -- always
+    jvm()
 
-        if (project.ext.ideaActive) {
-            addNative(fromPreset(project.ext.ideaPreset, 'native'))
-        } else {
-            addTarget(presets.linuxX64)
-            addTarget(presets.iosArm64)
-            addTarget(presets.iosArm32)
-            addTarget(presets.iosX64)
-            addTarget(presets.macosX64)
-            addTarget(presets.mingwX64)
-            addTarget(presets.tvosArm64)
-            addTarget(presets.tvosX64)
-            addTarget(presets.watchosArm32)
-            addTarget(presets.watchosArm64)
-            addTarget(presets.watchosX86)
-        }
-    }
     sourceSets {
         commonMain {
             dependencies {
@@ -84,43 +67,69 @@ kotlin {
                 implementation "junit:junit:$junit_version"
             }
         }
-        nativeMain { dependsOn commonMain }
-
-        nativeTest {}
-
-        if (!project.ext.ideaActive) {
-            configure(nativeMainSets) {
-                dependsOn nativeMain
-            }
-
-            configure(nativeTestSets) {
-                dependsOn nativeTest
-            }
-        }
-    }
-
-    configure(nativeCompilations) {
-        cinterops {
-            interop {
-                defFile 'src/nativeInterop/cinterop/interop.def'
-            }
-        }
     }
 }
 
-// Hack for publishing as HMPP: pack the cinterop klib as a source set:
-if (!project.ext.ideaActive) {
-    kotlin.sourceSets {
-        nativeInterop
-        nativeMain.dependsOn(nativeInterop)
+// configure native targets only if they're not disabled
+if (rootProject.ext.native_targets_enabled) {
+    kotlin {
+        targets {
+            if (project.ext.ideaActive) {
+                addNative(fromPreset(project.ext.ideaPreset, 'native'))
+            } else {
+                addTarget(presets.linuxX64)
+                addTarget(presets.iosArm64)
+                addTarget(presets.iosArm32)
+                addTarget(presets.iosX64)
+                addTarget(presets.macosX64)
+                addTarget(presets.mingwX64)
+                addTarget(presets.tvosArm64)
+                addTarget(presets.tvosX64)
+                addTarget(presets.watchosArm32)
+                addTarget(presets.watchosArm64)
+                addTarget(presets.watchosX86)
+            }
+        }
+
+        sourceSets {
+            nativeMain { dependsOn commonMain }
+
+            nativeTest {}
+
+            if (!project.ext.ideaActive) {
+                configure(nativeMainSets) {
+                    dependsOn nativeMain
+                }
+
+                configure(nativeTestSets) {
+                    dependsOn nativeTest
+                }
+            }
+        }
+
+        configure(nativeCompilations) {
+            cinterops {
+                interop {
+                    defFile 'src/nativeInterop/cinterop/interop.def'
+                }
+            }
+        }
     }
 
-    apply from: "$rootDir/gradle/interop-as-source-set-klib.gradle"
+    // Hack for publishing as HMPP: pack the cinterop klib as a source set:
+    if (!project.ext.ideaActive) {
+        kotlin.sourceSets {
+            nativeInterop
+            nativeMain.dependsOn(nativeInterop)
+        }
 
-    registerInteropAsSourceSetOutput(
-            kotlin.linuxX64().compilations["main"].cinterops["interop"],
-            kotlin.sourceSets["nativeInterop"]
-    )
+        apply from: "$rootDir/gradle/interop-as-source-set-klib.gradle"
+
+        registerInteropAsSourceSetOutput(
+                kotlin.linuxX64().compilations["main"].cinterops["interop"],
+                kotlin.sourceSets["nativeInterop"]
+        )
+    }
 }
 
 configurations {
@@ -129,7 +138,7 @@ configurations {
 
 apply from: rootProject.file('gradle/compile-options.gradle')
 
-ext.configureKotlin()
+ext.configureKotlin(true)
 
 dependencies {
     transformer project(":atomicfu-transformer")
