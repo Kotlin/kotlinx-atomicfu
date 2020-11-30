@@ -266,7 +266,7 @@ class AtomicFUTransformer(
         val cv = TransformerCV(cw, vh, analyzePhase2 = false)
         try {
             ClassReader(ByteArrayInputStream(bytes)).accept(cv, SKIP_FRAMES)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             error("Failed to transform: $e", cv.sourceInfo)
             e.printStackTrace(System.out)
             if (lastError == null) lastError = e
