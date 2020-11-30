@@ -6,6 +6,9 @@
 
 package kotlinx.atomicfu
 
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
+
 @JsName("atomic\$ref\$")
 public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = AtomicRef<T>(initial)
 
@@ -23,6 +26,10 @@ public actual fun atomic(initial: Boolean, trace: TraceBase): AtomicBoolean = At
 public actual class AtomicRef<T> internal constructor(value: T) {
     @JsName("kotlinx\$atomicfu\$value")
     public actual var value: T = value
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) { this.value = value }
 
     public actual inline fun lazySet(value: T) { this.value = value }
 
@@ -48,6 +55,10 @@ public actual class AtomicRef<T> internal constructor(value: T) {
 public actual class AtomicBoolean internal constructor(value: Boolean) {
     @JsName("kotlinx\$atomicfu\$value")
     public actual var value: Boolean = value
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { this.value = value }
 
     public actual inline fun lazySet(value: Boolean) {
         this.value = value
@@ -75,6 +86,10 @@ public actual class AtomicBoolean internal constructor(value: Boolean) {
 public actual class AtomicInt internal constructor(value: Int) {
     @JsName("kotlinx\$atomicfu\$value")
     public actual var value: Int = value
+
+    actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) { this.value = value }
 
     public actual inline fun lazySet(value: Int) { this.value = value }
 
@@ -129,6 +144,10 @@ public actual class AtomicInt internal constructor(value: Int) {
 public actual class AtomicLong internal constructor(value: Long) {
     @JsName("kotlinx\$atomicfu\$value")
     public actual var value: Long = value
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Long = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) { this.value = value }
 
     public actual inline fun lazySet(value: Long) { this.value = value }
 

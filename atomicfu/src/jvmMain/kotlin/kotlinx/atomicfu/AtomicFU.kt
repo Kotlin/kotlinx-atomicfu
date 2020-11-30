@@ -10,6 +10,8 @@ package kotlinx.atomicfu
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
 
 /**
  * Creates atomic reference with a given [initial] value.
@@ -76,6 +78,10 @@ public actual class AtomicRef<T> internal constructor(value: T, val trace: Trace
             interceptor.afterSet(this, value)
         }
 
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) { this.value = value }
+
     /**
      * Maps to [AtomicReferenceFieldUpdater.lazySet].
      */
@@ -130,6 +136,10 @@ public actual class AtomicBoolean internal constructor(v: Boolean, val trace: Tr
 
     @Volatile
     private var _value: Int = if (v) 1 else 0
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { this.value = value }
 
     /**
      * Reading/writing this property maps to read/write of volatile variable.
@@ -207,6 +217,10 @@ public actual class AtomicInt internal constructor(value: Int, val trace: TraceB
             if (trace !== TraceBase.None) trace { "set($value)" }
             interceptor.afterSet(this, value)
         }
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) { this.value = value }
 
     /**
      * Maps to [AtomicIntegerFieldUpdater.lazySet].
@@ -348,6 +362,10 @@ public actual class AtomicLong internal constructor(value: Long, val trace: Trac
             if (trace !== TraceBase.None) trace { "set($value)" }
             interceptor.afterSet(this, value)
         }
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Long = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) { this.value = value }
 
     /**
      * Maps to [AtomicLongFieldUpdater.lazySet].
