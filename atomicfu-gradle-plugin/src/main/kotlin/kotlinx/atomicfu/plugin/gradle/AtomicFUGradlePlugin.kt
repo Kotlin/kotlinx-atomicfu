@@ -15,6 +15,8 @@ import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.DefaultKotlinCompilationOutput
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
 import java.io.*
 import java.util.*
 import java.util.concurrent.*
@@ -94,11 +96,12 @@ private enum class Platform(val suffix: String) {
     MULTIPLATFORM("")
 }
 
-private enum class CompilationType { MAIN, TEST }
+private enum class CompilationType { MAIN, TEST, RELEASE }
 
 private fun String.compilationNameToType(): CompilationType? = when (this) {
     KotlinCompilation.MAIN_COMPILATION_NAME -> CompilationType.MAIN
     KotlinCompilation.TEST_COMPILATION_NAME -> CompilationType.TEST
+    "release" -> CompilationType.RELEASE
     else -> null
 }
 
@@ -162,8 +165,7 @@ fun Project.configureMultiplatformPluginTasks() {
         }
         target.compilations.all compilations@{ compilation ->
             val compilationType = compilation.name.compilationNameToType()
-                ?: return@compilations // skip unknown compilations
-            val classesDirs = compilation.output.classesDirs
+            val classesDirs = (compilation.output as DefaultKotlinCompilationOutput).kotlinClassesDirs
             // make copy of original classes directory
             val originalClassesDirs: FileCollection =
                 project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
@@ -171,20 +173,31 @@ fun Project.configureMultiplatformPluginTasks() {
             val transformedClassesDir =
                 project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
             val transformTask = when (target.platformType) {
-                KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
+                KotlinPlatformType.jvm -> {
                     if (!config.transformJvm) return@compilations // skip when transformation is turned off
                     project.createJvmTransformTask(compilation).configureJvmTask(
                         compilation.compileDependencyFiles,
-                        compilation.compileAllTaskName,
+                        compilation.compileKotlinTaskName,
                         transformedClassesDir,
                         originalClassesDirs,
                         config
                     )
                 }
+                KotlinPlatformType.androidJvm -> {
+                    tasks.create(
+                            "testAtomicfuTask${compilation.name.capitalize()}",
+                            TestAndroidTransformationTask::class.java
+                    ).apply {
+                        dependsOn(compilation.compileKotlinTaskName)
+                        inputClassesDirs = originalClassesDirs
+                        inputDependencies = compilation.compileDependencyFiles
+                        outputDir = transformedClassesDir
+                    }
+                }
                 KotlinPlatformType.js -> {
                     if (!config.transformJs) return@compilations // skip when transformation is turned off
                     project.createJsTransformTask(compilation).configureJsTask(
-                        compilation.compileAllTaskName,
+                        compilation.compileKotlinTaskName,
                         transformedClassesDir,
                         originalClassesDirs,
                         config
@@ -195,6 +208,7 @@ fun Project.configureMultiplatformPluginTasks() {
             //now transformTask is responsible for compiling this source set into the classes directory
             classesDirs.setFrom(transformedClassesDir)
             classesDirs.builtBy(transformTask)
+
             (tasks.findByName(target.artifactsTaskName) as? Jar)?.apply {
                 setupJarManifest(multiRelease = config.variant.toVariant() == Variant.BOTH)
             }
@@ -220,6 +234,26 @@ fun Project.configureMultiplatformPluginTasks() {
         }
     }
 }
+
+open class TestAndroidTransformationTask : DefaultTask() {
+
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
+    lateinit var inputClassesDirs: FileCollection
+
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
+    lateinit var inputDependencies: FileCollection
+
+    @OutputDirectory
+    lateinit var outputDir: File
+
+    @TaskAction
+    fun generate() {
+        println("TestAndroidTransformationTask APPLIED")
+    }
+}
+
 
 fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilation<*>>> {
     val sourceSetsByCompilation = hashMapOf<KotlinSourceSet, MutableList<KotlinCompilation<*>>>()
@@ -260,10 +294,7 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
         sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
             val platformTypes = compilations.map { it.platformType }.toSet()
             val compilationNames = compilations.map { it.compilationName }.toSet()
-            if (compilationNames.size != 1)
-                error("Source set '${sourceSet.name}' of project '$name' is part of several compilations $compilationNames")
-            val compilationType = compilationNames.single().compilationNameToType()
-                    ?: return@forEach // skip unknown compilations
+            val compilationTypes = compilationNames.mapNotNull { it.compilationNameToType() }
             val platform =
                     if (platformTypes.size > 1) Platform.MULTIPLATFORM else // mix of platform types -> "common"
                         when (platformTypes.single()) {
@@ -276,7 +307,7 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
                 // impl dependency for native (there is no transformation)
                 platform == Platform.NATIVE -> sourceSet.implementationConfigurationName
                 // compileOnly dependency for main compilation (commonMain, jvmMain, jsMain)
-                compilationType == CompilationType.MAIN -> sourceSet.compileOnlyConfigurationName
+                CompilationType.MAIN in compilationTypes -> sourceSet.compileOnlyConfigurationName
                 // impl dependency for tests
                 else -> sourceSet.implementationConfigurationName
             }

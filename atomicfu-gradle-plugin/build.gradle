@@ -24,7 +24,10 @@ dependencies {
     compile project(":atomicfu-transformer")
     compile 'org.jetbrains.kotlin:kotlin-stdlib'
 
-    compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.255-atomicfu"
+    compileOnly("com.android.tools.build:gradle:3.0.0") { transitive = false }
+    compileOnly("com.android.tools.build:gradle-core:3.0.0") { transitive = false }
+    compileOnly("com.android.tools.build:builder-model:3.0.0") { transitive = false }
 
     testCompile gradleTestKit()
     testCompile 'org.jetbrains.kotlin:kotlin-test'
