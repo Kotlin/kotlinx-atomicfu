@@ -1320,11 +1320,15 @@ class AtomicFUTransformer(
                             i.name = f.name
                         }
                         i.desc = if (vh) VH_TYPE.descriptor else f.fuType.descriptor
+                        val prev = i.previous
                         if (vh && f.getPrimitiveType(vh).sort == ARRAY) {
-                            return insertPureVhArray(i, f)
+                            return getInsnOrNull(from = prev, to = insertPureVhArray(i, f)) { it.isAtomicGetFieldOrGetStatic() }
                         }
                         transformed = true
-                        return fixupLoadedAtomicVar(f, i)
+                        // in order not to skip the transformation of atomic field loads
+                        // check if there are any nested between the current atomic field load instruction i and it's transformed operation
+                        // and return the first one
+                        return getInsnOrNull(from = prev, to = fixupLoadedAtomicVar(f, i)) { it.isAtomicGetFieldOrGetStatic() }
                     }
                 }
             }
@@ -1355,6 +1359,10 @@ class AtomicFUTransformer(
             }
             return j.next
         }
+
+        private fun AbstractInsnNode.isAtomicGetFieldOrGetStatic() =
+                this is FieldInsnNode && (opcode == GETFIELD || opcode == GETSTATIC) &&
+                        FieldId(owner, name, desc) in fields
 
         private fun AbstractInsnNode.isAtomicGetValueOrSetValue() =
                 isInvokeVirtual() && (getObjectType((this as MethodInsnNode).owner) in AFU_TYPES) &&
