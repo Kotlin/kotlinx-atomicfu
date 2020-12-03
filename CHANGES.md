@@ -1,5 +1,13 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.15.0
+
+* Tracing atomic operations (#20).
+* Supported delegated properties (#83).
+* Fixed visibility modifiers of synthetic fields and classes (#144).
+* Introduced `size` method for atomic arrays (#149).
+* Update Kotlin to 1.4.10.
+
 # Version 0.14.4
 
 * Fixed bug when Maven plugin wasn't published
