@@ -18,14 +18,14 @@ public open class TraceFormat {
      * Formats trace at the given [index] with the given [text] as string.
      */
     @JsName("atomicfu\$TraceFormat\$format\$")
-    public open fun format(index: Int, text: String): String = "$index: $text"
+    public open fun format(index: Int, text: Any): String = "$index: $text"
 }
 
 /**
  * Creates trace string formatter with the given [format] code block.
  */
 @InlineOnly
-public inline fun TraceFormat(crossinline format: (index: Int, text: String) -> String): TraceFormat =
+public inline fun TraceFormat(crossinline format: (index: Int, text: Any) -> String): TraceFormat =
     object : TraceFormat() {
-        override fun format(index: Int, text: String): String = format(index, text)
+        override fun format(index: Int, text: Any): String = format(index, text)
     }

@@ -61,12 +61,24 @@ public expect val traceFormatDefault: TraceFormat
 
 @JsName("atomicfu\$TraceBase\$")
 public open class TraceBase internal constructor() {
-    @JsName("atomicfu\$Trace\$append\$")
+    @JsName("atomicfu\$Trace\$append\$1\$")
     @PublishedApi
-    internal open fun append(text: String) {}
+    internal open fun append(arg1: Any) {}
+
+    @JsName("atomicfu\$Trace\$append\$2\$")
+    @PublishedApi
+    internal open fun append(arg1: Any, arg2: Any) {}
+
+    @JsName("atomicfu\$Trace\$append\$3\$")
+    @PublishedApi
+    internal open fun append(arg1: Any, arg2: Any, arg3: Any) {}
+
+    @JsName("atomicfu\$Trace\$append\$4\$")
+    @PublishedApi
+    internal open fun append(arg1: Any, arg2: Any, arg3: Any, arg4: Any) {}
 
     @InlineOnly
-    public inline operator fun invoke(text: () -> String) {
+    public inline operator fun invoke(text: () -> Any) {
         append(text())
     }
 

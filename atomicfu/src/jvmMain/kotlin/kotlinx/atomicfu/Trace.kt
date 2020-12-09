@@ -24,7 +24,7 @@ public actual val traceFormatDefault: TraceFormat =
     if (getSystemProperty("kotlinx.atomicfu.trace.thread") != null) TraceFormatThread() else TraceFormat()
 
 private class TraceFormatThread : TraceFormat() {
-    override fun format(index: Int, text: String): String =
+    override fun format(index: Int, text: Any): String =
         "$index: [${Thread.currentThread().name}] $text"
 }
 
@@ -32,7 +32,16 @@ private class NamedTrace(
     private val trace: TraceBase, 
     private val name: String
 ) : TraceBase() {
-    override fun append(text: String) = trace.append("$name.$text")
+    override fun append(arg1: Any) = trace.append("$name.$arg1")
+
+    override fun append(arg1: Any, arg2: Any) = trace.append("$name.$arg1", "$name.$arg2")
+
+    override fun append(arg1: Any, arg2: Any, arg3: Any) =
+            trace.append("$name.$arg1", "$name.$arg2", "$name.$arg3")
+
+    override fun append(arg1: Any, arg2: Any, arg3: Any, arg4: Any) =
+            trace.append("$name.$arg1", "$name.$arg2", "$name.$arg3", "$name.$arg4")
+
     override fun toString(): String = trace.toString()
 }
 
@@ -40,25 +49,49 @@ private class TraceImpl(size: Int, val format: TraceFormat) : TraceBase() {
     init { require(size >= 1) }
     private val size = ((size shl 1) - 1).takeHighestOneBit() // next power of 2
     private val mask = this.size - 1
-    private val trace = arrayOfNulls<String>(this.size)
+    private val trace = arrayOfNulls<Any>(this.size)
     private val index = AtomicInteger(0)
 
-    override fun append(text: String) {
+    override fun append(arg1: Any) {
         val i = index.getAndIncrement()
-        trace[i and mask] = format.format(i, text)
+        trace[i and mask] = arg1
+    }
+
+    override fun append(arg1: Any, arg2: Any) {
+        val i = index.getAndAdd(2)
+        trace[i and mask] = arg1
+        trace[(i + 1) and mask] = arg2
+    }
+
+    override fun append(arg1: Any, arg2: Any, arg3: Any) {
+        val i = index.getAndAdd(3)
+        trace[i and mask] = arg1
+        trace[(i + 1) and mask] = arg2
+        trace[(i + 2) and mask] = arg3
+    }
+
+    override fun append(arg1: Any, arg2: Any, arg3: Any, arg4: Any) {
+        val i = index.getAndAdd(4)
+        trace[i and mask] = arg1
+        trace[(i + 1) and mask] = arg2
+        trace[(i + 2) and mask] = arg3
+        trace[(i + 3) and mask] = arg4
     }
 
     override fun toString(): String = buildString {
-        val start = index.get() and mask
-        var i = start
+        val index = index.get()
+        val start = index and mask
+        var i = if (index > size) index - size else 0
+        var pos = start
         var cnt = 0
         do {
-            val s = trace[i]
+            val s = trace[pos]
             if (s != null) {
                 if (cnt++ > 0) append('\n')
-                append(s)
+                append(format.format(i, s))
+                i++
             }
-            i = (i + 1) and mask
-        } while (i != start)
+            pos = (pos + 1) and mask
+        } while (pos != start)
     }
 }
