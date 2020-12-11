@@ -23,6 +23,9 @@ import kotlin.reflect.KProperty0
  */
 public expect fun <T> atomic(initial: T, trace: TraceBase = None): AtomicRef<T>
 
+// Binary compatibility
+public expect fun <T> atomic(initial: T): AtomicRef<T>
+
 /**
  * Creates atomic [Int] with a given [initial] value.
  *
@@ -33,6 +36,9 @@ public expect fun <T> atomic(initial: T, trace: TraceBase = None): AtomicRef<T>
  * ```
  */
 public expect fun atomic(initial: Int, trace: TraceBase = None): AtomicInt
+
+// Binary compatibility
+public expect fun atomic(initial: Int): AtomicInt
 
 /**
  * Creates atomic [Long] with a given [initial] value.
@@ -45,6 +51,9 @@ public expect fun atomic(initial: Int, trace: TraceBase = None): AtomicInt
  */
 public expect fun atomic(initial: Long, trace: TraceBase = None): AtomicLong
 
+// Binary compatibility
+public expect fun atomic(initial: Long): AtomicLong
+
 /**
  * Creates atomic [Boolean] with a given [initial] value.
  *
@@ -55,6 +64,9 @@ public expect fun atomic(initial: Long, trace: TraceBase = None): AtomicLong
  * ```
  */
 public expect fun atomic(initial: Boolean, trace: TraceBase = None): AtomicBoolean
+
+// Binary compatibility
+public expect fun atomic(initial: Boolean): AtomicBoolean
 
 /**
  * Creates array of AtomicRef<T> of specified size, where each element is initialised with null value

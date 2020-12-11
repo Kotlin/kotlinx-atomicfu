@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty0
+import kotlinx.atomicfu.TraceBase.None
 
 /**
  * Creates atomic reference with a given [initial] value.
@@ -24,6 +24,8 @@ import kotlin.reflect.KProperty0
  */
 public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = AtomicRef<T>(initial, trace)
 
+public actual fun <T> atomic(initial: T): AtomicRef<T> = atomic(initial, None)
+
 /**
  * Creates atomic [Int] with a given [initial] value.
  *
@@ -34,6 +36,8 @@ public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = Atomi
  * ```
  */
 public actual fun atomic(initial: Int, trace: TraceBase): AtomicInt = AtomicInt(initial, trace)
+
+public actual fun atomic(initial: Int): AtomicInt = atomic(initial, None)
 
 /**
  * Creates atomic [Long] with a given [initial] value.
@@ -46,6 +50,8 @@ public actual fun atomic(initial: Int, trace: TraceBase): AtomicInt = AtomicInt(
  */
 public actual fun atomic(initial: Long, trace: TraceBase): AtomicLong = AtomicLong(initial, trace)
 
+public actual fun atomic(initial: Long): AtomicLong = atomic(initial, None)
+
 /**
  * Creates atomic [Boolean] with a given [initial] value.
  *
@@ -56,6 +62,8 @@ public actual fun atomic(initial: Long, trace: TraceBase): AtomicLong = AtomicLo
  * ```
  */
 public actual fun atomic(initial: Boolean, trace: TraceBase): AtomicBoolean = AtomicBoolean(initial, trace)
+
+public actual fun atomic(initial: Boolean): AtomicBoolean = atomic(initial, None)
 
 // ==================================== AtomicRef ====================================
 
