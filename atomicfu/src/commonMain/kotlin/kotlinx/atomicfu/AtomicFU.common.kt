@@ -10,7 +10,6 @@ import kotlin.js.JsName
 import kotlin.internal.InlineOnly
 import kotlinx.atomicfu.TraceBase.None
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty0
 
 /**
  * Creates atomic reference with a given [initial] value.
@@ -23,7 +22,9 @@ import kotlin.reflect.KProperty0
  */
 public expect fun <T> atomic(initial: T, trace: TraceBase = None): AtomicRef<T>
 
-// Binary compatibility
+/**
+ * Binary compatibility with IR, should be removed with Kotlin 1.5 release
+ */
 public expect fun <T> atomic(initial: T): AtomicRef<T>
 
 /**
@@ -37,7 +38,9 @@ public expect fun <T> atomic(initial: T): AtomicRef<T>
  */
 public expect fun atomic(initial: Int, trace: TraceBase = None): AtomicInt
 
-// Binary compatibility
+/**
+ * Binary compatibility with IR, should be removed with Kotlin 1.5 release
+ */
 public expect fun atomic(initial: Int): AtomicInt
 
 /**
@@ -51,7 +54,9 @@ public expect fun atomic(initial: Int): AtomicInt
  */
 public expect fun atomic(initial: Long, trace: TraceBase = None): AtomicLong
 
-// Binary compatibility
+/**
+ * Binary compatibility with IR, should be removed with Kotlin 1.5 release
+ */
 public expect fun atomic(initial: Long): AtomicLong
 
 /**
@@ -65,7 +70,9 @@ public expect fun atomic(initial: Long): AtomicLong
  */
 public expect fun atomic(initial: Boolean, trace: TraceBase = None): AtomicBoolean
 
-// Binary compatibility
+/**
+ * Binary compatibility with IR, should be removed with Kotlin 1.5 release
+ */
 public expect fun atomic(initial: Boolean): AtomicBoolean
 
 /**
