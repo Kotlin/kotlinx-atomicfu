@@ -59,6 +59,7 @@ public expect fun TraceBase.named(name: String): TraceBase
  */
 public expect val traceFormatDefault: TraceFormat
 
+@JsName("atomicfu\$TraceBase\$")
 public open class TraceBase internal constructor() {
     @JsName("atomicfu\$Trace\$append\$")
     @PublishedApi
