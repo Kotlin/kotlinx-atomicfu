@@ -4,4 +4,4 @@
 
 // this is a kludge so that existing YouTrack config works, todo: remove
 // Deploy configurations run :atomicfu-native:bintrayUpload
-task bintrayUpload(dependsOn: ':atomicfu:publish')
+task publish(dependsOn: ':atomicfu:publish')
