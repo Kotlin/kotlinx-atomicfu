@@ -71,20 +71,20 @@ fun mavenRepositoryUri(): URI {
     }
 }
 
-fun configureMavenPublication(rh: RepositoryHandler) {
+fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     rh.maven {
         url = mavenRepositoryUri()
         credentials {
-            username = System.getenv("libs.sonatype.user")
-            password = System.getenv("libs.sonatype.password")
+            username = project.getSensitiveProperty("libs.sonatype.user")
+            password = project.getSensitiveProperty("libs.sonatype.password")
         }
     }
 }
 
 fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication) {
-    val keyId = System.getenv("libs.sign.key.id")
-    val signingKey = System.getenv("libs.sign.key.private")
-    val signingKeyPassphrase = System.getenv("libs.sign.passphrase")
+    val keyId = project.getSensitiveProperty("libs.sign.key.id")
+    val signingKey = project.getSensitiveProperty("libs.sign.key.private")
+    val signingKeyPassphrase = project.getSensitiveProperty("libs.sign.passphrase")
     if (!signingKey.isNullOrBlank()) {
         project.extensions.configure<SigningExtension>("signing") {
             useInMemoryPgpKeys(keyId, signingKey, signingKeyPassphrase)
@@ -93,3 +93,6 @@ fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication)
     }
 }
 
+private fun Project.getSensitiveProperty(name: String): String? {
+    return project.findProperty(name) as? String ?: System.getenv(name)
+}
