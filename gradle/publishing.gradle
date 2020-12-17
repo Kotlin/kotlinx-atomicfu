@@ -61,7 +61,9 @@ publishing {
 
     publications.all {
         PublishingKt.configureMavenCentralMetadata(pom, project)
-        PublishingKt.signPublicationIfKeyPresent(project, it)
+        if (!bintrayUpload) {
+            PublishingKt.signPublicationIfKeyPresent(project, it)
+        }
 
         // add empty javadocs
         if (it.name != "kotlinMultiplatform") { // The root module gets the JVM's javadoc JAR
