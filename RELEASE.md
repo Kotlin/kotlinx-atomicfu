@@ -51,10 +51,9 @@ To release new `<version>` of `kotlinx-atomicfu`:
     * Create a release named `<version>`. 
     * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.
    
-13. In [Bintray](https://bintray.com/kotlin/kotlinx/kotlinx.atomicfu#) admin interface:
-    * Publish artifacts of the new version.
-    * Wait until newly published version becomes the most recent.
-    * Sync to Maven Central.
+13. In [Sonatype](oss.sonatype.org/#stagingRepositories) admin interface:
+    * Close the repository and wait for it to verify.
+    * Release it.
 
 14. Switch into `develop` branch:<br>
    `git checkout develop`

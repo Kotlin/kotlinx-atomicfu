@@ -62,7 +62,8 @@ fun mavenRepositoryUri(): URI {
     // TODO -SNAPSHOT detection can be made here as well
     val repositoryId: String? = System.getenv("libs.repository.id")
     return if (repositoryId == null) {
-        // Using implicitly created staging, for MPP it's likely to be the mistake
+        // Using implicitly created staging, for MPP it's likely to be a mistake because
+        // publication on TeamCity will create 3 independent staging repositories
         System.err.println("Warning: using an implicitly created staging for atomicfu")
         URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
     } else {
