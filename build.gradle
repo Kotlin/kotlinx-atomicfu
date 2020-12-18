@@ -83,7 +83,7 @@ allprojects {
 
     // 'atomicfu-native' check is a kludge so that existing YouTrack config works, todo: remove
     if (project != rootProject && project.name != 'atomicfu-native') {
-        apply from: rootProject.file("gradle/publish-bintray.gradle")
+        apply from: rootProject.file("gradle/publishing.gradle")
     }
 
     // This fixes "org.gradle.jvm.version" in Gradle metadata
