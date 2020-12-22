@@ -12,66 +12,94 @@ import kotlinx.atomicfu.TraceBase.None
 import kotlin.reflect.KProperty
 
 /**
+ * Creates atomic reference with a given [initial] value and a [trace] object to trace modifications of the value.
+ *
+ * It can only be used to initialize a private or internal read-only property, like this:
+ *
+ * ```
+ * private val f = atomic<Type>(initial, trace)
+ * ```
+ */
+public expect fun <T> atomic(initial: T, trace: TraceBase = None): AtomicRef<T>
+
+// Binary compatibility with IR, should be removed with Kotlin 1.5 release
+/**
  * Creates atomic reference with a given [initial] value.
  *
- * It can only be used in initialize of private read-only property, like this:
+ * It can only be used to initialize a private or internal read-only property, like this:
  *
  * ```
  * private val f = atomic<Type>(initial)
  * ```
  */
-public expect fun <T> atomic(initial: T, trace: TraceBase = None): AtomicRef<T>
-
-/**
- * Binary compatibility with IR, should be removed with Kotlin 1.5 release
- */
 public expect fun <T> atomic(initial: T): AtomicRef<T>
 
 /**
+ * Creates atomic [Int] with a given [initial] value and a [trace] object to trace modifications of the value.
+ *
+ * It can only be used to initialize a private or internal read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialInt, trace)
+ * ```
+ */
+public expect fun atomic(initial: Int, trace: TraceBase = None): AtomicInt
+
+// Binary compatibility with IR, should be removed with Kotlin 1.5 release
+/**
  * Creates atomic [Int] with a given [initial] value.
  *
- * It can only be used in initialize of private read-only property, like this:
+ * It can only be used to initialize a private or internal read-only property, like this:
  *
  * ```
  * private val f = atomic(initialInt)
  * ```
  */
-public expect fun atomic(initial: Int, trace: TraceBase = None): AtomicInt
-
-/**
- * Binary compatibility with IR, should be removed with Kotlin 1.5 release
- */
 public expect fun atomic(initial: Int): AtomicInt
 
 /**
+ * Creates atomic [Long] with a given [initial] value and a [trace] object to trace modifications of the value.
+ *
+ * It can only be used to initialize a private or internal read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialLong, trace)
+ * ```
+ */
+public expect fun atomic(initial: Long, trace: TraceBase = None): AtomicLong
+
+// Binary compatibility with IR, should be removed with Kotlin 1.5 release
+/**
  * Creates atomic [Long] with a given [initial] value.
  *
- * It can only be used in initialize of private read-only property, like this:
+ * It can only be used to initialize a private or internal read-only property, like this:
  *
  * ```
  * private val f = atomic(initialLong)
  * ```
  */
-public expect fun atomic(initial: Long, trace: TraceBase = None): AtomicLong
-
-/**
- * Binary compatibility with IR, should be removed with Kotlin 1.5 release
- */
 public expect fun atomic(initial: Long): AtomicLong
 
 /**
- * Creates atomic [Boolean] with a given [initial] value.
+ * Creates atomic [Boolean] with a given [initial] value and a [trace] object to trace modifications of the value.
  *
- * It can only be used in initialize of private read-only property, like this:
+ * It can only be used to initialize a private or internal read-only property, like this:
  *
  * ```
- * private val f = atomic(initialBoolean)
+ * private val f = atomic(initialBoolean, trace)
  * ```
  */
 public expect fun atomic(initial: Boolean, trace: TraceBase = None): AtomicBoolean
 
+// Binary compatibility with IR, should be removed with Kotlin 1.5 release
 /**
- * Binary compatibility with IR, should be removed with Kotlin 1.5 release
+ * Creates atomic [Boolean] with a given [initial] value.
+ *
+ * It can only be used to initialize a private or internal read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialBoolean)
+ * ```
  */
 public expect fun atomic(initial: Boolean): AtomicBoolean
 
