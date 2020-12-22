@@ -15,13 +15,13 @@ private const val ATOMIC_CONSTRUCTOR = """(atomic\$(ref|int|long|boolean)\$|Atom
 private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean|ofNulls)"""
 private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
 
-private const val TRACE_CONSTRUCTOR = "atomicfu\\\$Trace\\\$"
+private const val TRACE_CONSTRUCTOR = "Trace\\\$atomicfu\\\$"
 private const val TRACE_BASE_CLASS = "atomicfu\\\$TraceBase\\\$"
-private const val TRACE_APPEND = """atomicfu\$(Trace)\$(append)\$(1|2|3|4)\$"""
-private const val TRACE_NAMED = "atomicfu\\\$Trace\\\$named\\\$"
+private const val TRACE_APPEND = """(Trace)\$(append)\$(1|2|3|4)\$(atomicfu)\$"""
+private const val TRACE_NAMED = "Trace\\\$named\\\$atomicfu\\\$"
 private const val TRACE_FORMAT = "TraceFormat"
-private const val TRACE_FORMAT_CONSTRUCTOR = "atomicfu\\\$$TRACE_FORMAT\\\$"
-private const val TRACE_FORMAT_FORMAT = "atomicfu\\\$TraceFormat\\\$format\\\$"
+private const val TRACE_FORMAT_CONSTRUCTOR = "$TRACE_FORMAT\\\$atomicfu\\\$"
+private const val TRACE_FORMAT_FORMAT = "$TRACE_FORMAT\\\$format\\\$atomicfu\\\$"
 
 private const val RECEIVER = """(\$(receiver)(_\d+)?)"""
 private const val SCOPE = "scope"
@@ -35,11 +35,11 @@ private const val ATOMIC_REF = "AtomicRef"
 private const val MODULE_KOTLINX_ATOMICFU = "\\\$module\\\$kotlinx_atomicfu"
 private const val ARRAY = "Array"
 private const val FILL = "fill"
-private const val GET_ELEMENT = "get\\\$atomicfu"
-private const val ARRAY_SIZE = "size\$atomicfu"
+private const val GET_ELEMENT = "get\\\$atomicfu\\\$"
+private const val ARRAY_SIZE = "size\$atomicfu\$"
 private const val LENGTH = "length"
 private const val LOCKS = "locks"
-private const val REENTRANT_LOCK_ATOMICFU_SINGLETON = "$LOCKS.reentrantLock\\\$atomicfu"
+private const val REENTRANT_LOCK_ATOMICFU_SINGLETON = "$LOCKS.reentrantLock\\\$atomicfu\\\$"
 
 
 private val MANGLE_VALUE_REGEX = Regex(".${Pattern.quote(MANGLED_VALUE_PROP)}")
@@ -231,6 +231,7 @@ class AtomicFUTransformerJS(
             }
             if (node is PropertyGet && node.property.toSource().matches(Regex(TRACE_FORMAT_FORMAT))) {
                 val target = node.target
+                node.property = Name().also { it.identifier = "emptyProperty" }
                 if (target is PropertyGet && target.property.toSource().matches(Regex(PROTOTYPE))) {
                     traceFormatObjects.add(target.target.toSource())
                 }
@@ -576,17 +577,17 @@ class AtomicFUTransformerJS(
     ): Boolean {
         val f = field.scopedSource()
         val code = when (funcName) {
-            "getAndSet\$atomicfu" -> {
+            "getAndSet\$atomicfu\$" -> {
                 val arg = args[0].toSource()
                 "(function($SCOPE) {var oldValue = $f; $f = $arg; return oldValue;})()"
             }
-            "compareAndSet\$atomicfu" -> {
+            "compareAndSet\$atomicfu\$" -> {
                 val expected = args[0].scopedSource()
                 val updated = args[1].scopedSource()
                 val equals = if (expected == "null") "==" else "==="
                 "(function($SCOPE) {return $f $equals $expected ? function() { $f = $updated; return true }() : false})()"
             }
-            "getAndIncrement\$atomicfu" -> {
+            "getAndIncrement\$atomicfu\$" -> {
                 "(function($SCOPE) {return $f++;})()"
             }
 
@@ -594,7 +595,7 @@ class AtomicFUTransformerJS(
                 "(function($SCOPE) {var oldValue = $f; $f = $f.inc(); return oldValue;})()"
             }
 
-            "getAndDecrement\$atomicfu" -> {
+            "getAndDecrement\$atomicfu\$" -> {
                 "(function($SCOPE) {return $f--;})()"
             }
 
@@ -602,7 +603,7 @@ class AtomicFUTransformerJS(
                 "(function($SCOPE) {var oldValue = $f; $f = $f.dec(); return oldValue;})()"
             }
 
-            "getAndAdd\$atomicfu" -> {
+            "getAndAdd\$atomicfu\$" -> {
                 val arg = args[0].scopedSource()
                 "(function($SCOPE) {var oldValue = $f; $f += $arg; return oldValue;})()"
             }
@@ -612,7 +613,7 @@ class AtomicFUTransformerJS(
                 "(function($SCOPE) {var oldValue = $f; $f = $f.add($arg); return oldValue;})()"
             }
 
-            "addAndGet\$atomicfu" -> {
+            "addAndGet\$atomicfu\$" -> {
                 val arg = args[0].scopedSource()
                 "(function($SCOPE) {$f += $arg; return $f;})()"
             }
@@ -622,7 +623,7 @@ class AtomicFUTransformerJS(
                 "(function($SCOPE) {$f = $f.add($arg); return $f;})()"
             }
 
-            "incrementAndGet\$atomicfu" -> {
+            "incrementAndGet\$atomicfu\$" -> {
                 "(function($SCOPE) {return ++$f;})()"
             }
 
@@ -630,7 +631,7 @@ class AtomicFUTransformerJS(
                 "(function($SCOPE) {return $f = $f.inc();})()"
             }
 
-            "decrementAndGet\$atomicfu" -> {
+            "decrementAndGet\$atomicfu\$" -> {
                 "(function($SCOPE) {return --$f;})()"
             }
 

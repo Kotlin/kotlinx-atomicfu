@@ -39,7 +39,7 @@ import kotlin.internal.InlineOnly
  * The default format is [traceFormatDefault].
  */
 @Suppress("FunctionName")
-@JsName("atomicfu\$Trace\$")
+@JsName("Trace\$atomicfu\$")
 public expect fun Trace(size: Int = 32, format: TraceFormat = traceFormatDefault): TraceBase
 
 /**
@@ -61,21 +61,17 @@ public expect val traceFormatDefault: TraceFormat
 
 @JsName("atomicfu\$TraceBase\$")
 public open class TraceBase internal constructor() {
-    @JsName("atomicfu\$Trace\$append\$1\$")
-    @PublishedApi
-    internal open fun append(arg1: Any) {}
+    @JsName("Trace\$append\$1\$atomicfu\$")
+    public open fun append(event: Any) {}
 
-    @JsName("atomicfu\$Trace\$append\$2\$")
-    @PublishedApi
-    internal open fun append(arg1: Any, arg2: Any) {}
+    @JsName("Trace\$append\$2\$atomicfu\$")
+    public open fun append(event1: Any, event2: Any) {}
 
-    @JsName("atomicfu\$Trace\$append\$3\$")
-    @PublishedApi
-    internal open fun append(arg1: Any, arg2: Any, arg3: Any) {}
+    @JsName("Trace\$append\$3\$atomicfu\$")
+    public open fun append(event1: Any, event2: Any, event3: Any) {}
 
-    @JsName("atomicfu\$Trace\$append\$4\$")
-    @PublishedApi
-    internal open fun append(arg1: Any, arg2: Any, arg3: Any, arg4: Any) {}
+    @JsName("Trace\$append\$4\$atomicfu\$")
+    public open fun append(event1: Any, event2: Any, event3: Any, event4: Any) {}
 
     @InlineOnly
     public inline operator fun invoke(text: () -> Any) {

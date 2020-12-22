@@ -289,12 +289,20 @@ transformedTestVH.onlyIf {
     JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()
 }
 
+task testAtomicfuReferenceJs(type: Test, dependsOn: [compileTestKotlinJvm, transformJS]) {
+    environment "transformedJsFile", transformedJsFile
+    classpath = files(configurations.jvmTestRuntimeClasspath, classesPreAtomicFuDir)
+    testClassesDirs = project.files(classesPreAtomicFuDir)
+    include '**/AtomicfuReferenceJsTest.*'
+}
+
 task jvmTestAll(dependsOn: [
         transformedTestFU_6,
         transformedTestFU_current,
         transformedTestBOTH_6,
         transformedTestBOTH_current,
-        transformedTestVH])
+        transformedTestVH,
+        testAtomicfuReferenceJs])
 
 tasks.withType(Test) {
     testLogging {
@@ -304,7 +312,7 @@ tasks.withType(Test) {
 }
 
 jvmTest {
-    exclude "**/AtomicfuBytecodeTest*", '**/TopLevelGeneratedDeclarationsReflectionTest.*', '**/SyntheticFUFieldsTest.*' // run them only for transformed code
+    exclude "**/AtomicfuBytecodeTest*", "**/AtomicfuReferenceJsTest*", '**/TopLevelGeneratedDeclarationsReflectionTest.*', '**/SyntheticFUFieldsTest.*' // run them only for transformed code
 }
 
 jvmTest.dependsOn jvmTestAll

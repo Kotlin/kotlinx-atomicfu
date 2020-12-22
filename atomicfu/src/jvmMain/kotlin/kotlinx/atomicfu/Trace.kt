@@ -32,15 +32,15 @@ private class NamedTrace(
     private val trace: TraceBase, 
     private val name: String
 ) : TraceBase() {
-    override fun append(arg1: Any) = trace.append("$name.$arg1")
+    override fun append(event: Any) = trace.append("$name.$event")
 
-    override fun append(arg1: Any, arg2: Any) = trace.append("$name.$arg1", "$name.$arg2")
+    override fun append(event1: Any, event2: Any) = trace.append("$name.$event1", "$name.$event2")
 
-    override fun append(arg1: Any, arg2: Any, arg3: Any) =
-            trace.append("$name.$arg1", "$name.$arg2", "$name.$arg3")
+    override fun append(event1: Any, event2: Any, event3: Any) =
+            trace.append("$name.$event1", "$name.$event2", "$name.$event3")
 
-    override fun append(arg1: Any, arg2: Any, arg3: Any, arg4: Any) =
-            trace.append("$name.$arg1", "$name.$arg2", "$name.$arg3", "$name.$arg4")
+    override fun append(event1: Any, event2: Any, event3: Any, event4: Any) =
+            trace.append("$name.$event1", "$name.$event2", "$name.$event3", "$name.$event4")
 
     override fun toString(): String = trace.toString()
 }
@@ -52,30 +52,30 @@ private class TraceImpl(size: Int, val format: TraceFormat) : TraceBase() {
     private val trace = arrayOfNulls<Any>(this.size)
     private val index = AtomicInteger(0)
 
-    override fun append(arg1: Any) {
+    override fun append(event: Any) {
         val i = index.getAndIncrement()
-        trace[i and mask] = arg1
+        trace[i and mask] = event
     }
 
-    override fun append(arg1: Any, arg2: Any) {
+    override fun append(event1: Any, event2: Any) {
         val i = index.getAndAdd(2)
-        trace[i and mask] = arg1
-        trace[(i + 1) and mask] = arg2
+        trace[i and mask] = event1
+        trace[(i + 1) and mask] = event2
     }
 
-    override fun append(arg1: Any, arg2: Any, arg3: Any) {
+    override fun append(event1: Any, event2: Any, event3: Any) {
         val i = index.getAndAdd(3)
-        trace[i and mask] = arg1
-        trace[(i + 1) and mask] = arg2
-        trace[(i + 2) and mask] = arg3
+        trace[i and mask] = event1
+        trace[(i + 1) and mask] = event2
+        trace[(i + 2) and mask] = event3
     }
 
-    override fun append(arg1: Any, arg2: Any, arg3: Any, arg4: Any) {
+    override fun append(event1: Any, event2: Any, event3: Any, event4: Any) {
         val i = index.getAndAdd(4)
-        trace[i and mask] = arg1
-        trace[(i + 1) and mask] = arg2
-        trace[(i + 2) and mask] = arg3
-        trace[(i + 3) and mask] = arg4
+        trace[i and mask] = event1
+        trace[(i + 1) and mask] = event2
+        trace[(i + 2) and mask] = event3
+        trace[(i + 3) and mask] = event4
     }
 
     override fun toString(): String = buildString {

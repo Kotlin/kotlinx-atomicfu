@@ -4,11 +4,11 @@
 
 package kotlinx.atomicfu
 
-@JsName("atomicfu\$Trace\$")
+@JsName("Trace\$atomicfu\$")
 @Suppress("FunctionName")
 public actual fun Trace(size: Int, format: TraceFormat): TraceBase = TraceBase.None
 
-@JsName("atomicfu\$Trace\$named\$")
+@JsName("Trace\$named\$atomicfu\$")
 public actual fun TraceBase.named(name: String): TraceBase = TraceBase.None
 
 public actual val traceFormatDefault: TraceFormat = TraceFormat()

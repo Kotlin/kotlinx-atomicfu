@@ -2,7 +2,7 @@ package kotlinx.atomicfu.locks
 
 public actual typealias SynchronizedObject = Any
 
-@JsName("reentrantLock\$atomicfu")
+@JsName("reentrantLock\$atomicfu\$")
 public val Lock = ReentrantLock()
 
 @Suppress("NOTHING_TO_INLINE")
