@@ -52,7 +52,7 @@ public expect fun Trace(size: Int = 32, format: TraceFormat = traceFormatDefault
 public expect fun TraceBase.named(name: String): TraceBase
 
 /**
- * The default trade string formatter.
+ * The default trace string formatter.
  *
  * On JVM when `kotlinx.atomicfu.trace.thread` system property is set, then the default format
  * also includes thread name for each operation.

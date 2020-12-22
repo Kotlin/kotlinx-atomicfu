@@ -12,7 +12,7 @@ import kotlinx.atomicfu.TraceBase.None
 import kotlin.reflect.KProperty
 
 /**
- * Creates atomic reference with a given [initial] value and a [trace] object to trace modifications of the value.
+ * Creates atomic reference with a given [initial] value and a [trace] object to [trace modifications][Trace] of the value.
  *
  * It can only be used to initialize a private or internal read-only property, like this:
  *
@@ -23,6 +23,7 @@ import kotlin.reflect.KProperty
 public expect fun <T> atomic(initial: T, trace: TraceBase = None): AtomicRef<T>
 
 // Binary compatibility with IR, should be removed with Kotlin 1.5 release
+
 /**
  * Creates atomic reference with a given [initial] value.
  *
@@ -35,7 +36,7 @@ public expect fun <T> atomic(initial: T, trace: TraceBase = None): AtomicRef<T>
 public expect fun <T> atomic(initial: T): AtomicRef<T>
 
 /**
- * Creates atomic [Int] with a given [initial] value and a [trace] object to trace modifications of the value.
+ * Creates atomic [Int] with a given [initial] value and a [trace] object to [trace modifications][Trace] of the value.
  *
  * It can only be used to initialize a private or internal read-only property, like this:
  *
@@ -46,6 +47,7 @@ public expect fun <T> atomic(initial: T): AtomicRef<T>
 public expect fun atomic(initial: Int, trace: TraceBase = None): AtomicInt
 
 // Binary compatibility with IR, should be removed with Kotlin 1.5 release
+
 /**
  * Creates atomic [Int] with a given [initial] value.
  *
@@ -58,7 +60,7 @@ public expect fun atomic(initial: Int, trace: TraceBase = None): AtomicInt
 public expect fun atomic(initial: Int): AtomicInt
 
 /**
- * Creates atomic [Long] with a given [initial] value and a [trace] object to trace modifications of the value.
+ * Creates atomic [Long] with a given [initial] value and a [trace] object to [trace modifications][Trace] of the value.
  *
  * It can only be used to initialize a private or internal read-only property, like this:
  *
@@ -69,6 +71,7 @@ public expect fun atomic(initial: Int): AtomicInt
 public expect fun atomic(initial: Long, trace: TraceBase = None): AtomicLong
 
 // Binary compatibility with IR, should be removed with Kotlin 1.5 release
+
 /**
  * Creates atomic [Long] with a given [initial] value.
  *
@@ -81,7 +84,7 @@ public expect fun atomic(initial: Long, trace: TraceBase = None): AtomicLong
 public expect fun atomic(initial: Long): AtomicLong
 
 /**
- * Creates atomic [Boolean] with a given [initial] value and a [trace] object to trace modifications of the value.
+ * Creates atomic [Boolean] with a given [initial] value and a [trace] object to [trace modifications][Trace] of the value.
  *
  * It can only be used to initialize a private or internal read-only property, like this:
  *
@@ -92,6 +95,7 @@ public expect fun atomic(initial: Long): AtomicLong
 public expect fun atomic(initial: Boolean, trace: TraceBase = None): AtomicBoolean
 
 // Binary compatibility with IR, should be removed with Kotlin 1.5 release
+
 /**
  * Creates atomic [Boolean] with a given [initial] value.
  *
