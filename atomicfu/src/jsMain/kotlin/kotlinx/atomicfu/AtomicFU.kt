@@ -7,19 +7,27 @@
 package kotlinx.atomicfu
 
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty0
+import kotlinx.atomicfu.TraceBase.None
 
 @JsName("atomic\$ref\$")
 public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = AtomicRef<T>(initial)
 
+public actual inline fun <T> atomic(initial: T): AtomicRef<T> = atomic(initial, None)
+
 @JsName("atomic\$int\$")
 public actual fun atomic(initial: Int, trace: TraceBase): AtomicInt = AtomicInt(initial)
+
+public actual inline fun atomic(initial: Int): AtomicInt = atomic(initial, None)
 
 @JsName("atomic\$long\$")
 public actual fun atomic(initial: Long, trace: TraceBase): AtomicLong = AtomicLong(initial)
 
+public actual inline fun atomic(initial: Long): AtomicLong = atomic(initial, None)
+
 @JsName("atomic\$boolean\$")
 public actual fun atomic(initial: Boolean, trace: TraceBase): AtomicBoolean = AtomicBoolean(initial)
+
+public actual inline fun atomic(initial: Boolean): AtomicBoolean = atomic(initial, None)
 
 // ==================================== AtomicRef ====================================
 
