@@ -252,12 +252,14 @@ task transformedTestFU_6(type: Test, dependsOn: [checkJdk16, transformFU]) {
     classpath = configurations.jvmTestRuntimeClasspath + project.files(classesPostTransformFU)
     testClassesDirs = project.files(classesPostTransformFU)
     exclude '**/*LFTest.*', '**/TraceToStringTest.*'
+    filter { setFailOnNoMatchingTests(false) } // to run excluded tests in Idea
 }
 
 task transformedTestFU_current(type: Test, dependsOn: transformFU) {
     classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformFU)
     testClassesDirs = project.files(classesPostTransformFU)
     exclude '**/*LFTest.*', '**/TraceToStringTest.*'
+    filter { setFailOnNoMatchingTests(false) }
 }
 
 task transformedTestBOTH_6(type: Test, dependsOn: [checkJdk16, transformBOTH]) {
@@ -265,18 +267,21 @@ task transformedTestBOTH_6(type: Test, dependsOn: [checkJdk16, transformBOTH]) {
     classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformBOTH)
     testClassesDirs = project.files(classesPostTransformBOTH)
     exclude '**/*LFTest.*', '**/TraceToStringTest.*', '**/TopLevelGeneratedDeclarationsReflectionTest.*', '**/SyntheticFUFieldsTest.*'
+    filter { setFailOnNoMatchingTests(false) }
 }
 
 task transformedTestBOTH_current(type: Test, dependsOn: transformBOTH) {
     classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformBOTH)
     testClassesDirs = project.files(classesPostTransformBOTH)
     exclude '**/*LFTest.*', '**/TraceToStringTest.*', '**/TopLevelGeneratedDeclarationsReflectionTest.*', '**/SyntheticFUFieldsTest.*'
+    filter { setFailOnNoMatchingTests(false) }
 }
 
 task transformedTestVH(type: Test, dependsOn: transformVH) {
     classpath = files(configurations.jvmTestRuntimeClasspath, classesPostTransformVH)
     testClassesDirs = project.files(classesPostTransformVH)
     exclude '**/*LFTest.*', '**/TraceToStringTest.*', '**/TopLevelGeneratedDeclarationsReflectionTest.*', '**/SyntheticFUFieldsTest.*'
+    filter { setFailOnNoMatchingTests(false) }
 }
 
 transformedTestVH.onlyIf {
