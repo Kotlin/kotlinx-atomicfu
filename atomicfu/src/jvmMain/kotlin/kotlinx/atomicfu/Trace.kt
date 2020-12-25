@@ -24,8 +24,8 @@ public actual val traceFormatDefault: TraceFormat =
     if (getSystemProperty("kotlinx.atomicfu.trace.thread") != null) TraceFormatThread() else TraceFormat()
 
 private class TraceFormatThread : TraceFormat() {
-    override fun format(index: Int, text: Any): String =
-        "$index: [${Thread.currentThread().name}] $text"
+    override fun format(index: Int, event: Any): String =
+        "$index: [${Thread.currentThread().name}] $event"
 }
 
 private class NamedTrace(
@@ -45,7 +45,7 @@ private class NamedTrace(
     override fun toString(): String = trace.toString()
 }
 
-private class TraceImpl(size: Int, val format: TraceFormat) : TraceBase() {
+private class TraceImpl(size: Int, private val format: TraceFormat) : TraceBase() {
     init { require(size >= 1) }
     private val size = ((size shl 1) - 1).takeHighestOneBit() // next power of 2
     private val mask = this.size - 1

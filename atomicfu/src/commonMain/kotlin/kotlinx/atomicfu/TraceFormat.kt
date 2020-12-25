@@ -12,12 +12,12 @@ import kotlin.js.JsName
 /**
  * Trace string formatter.
  */
-@JsName("TraceFormat\$atomicfu\$")
+@JsName(TRACE_FORMAT_CLASS)
 public open class TraceFormat {
     /**
      * Formats trace at the given [index] with the given [event] of Any type.
      */
-    @JsName("TraceFormat\$format\$atomicfu\$")
+    @JsName(TRACE_FORMAT_FORMAT_FUNCTION)
     public open fun format(index: Int, event: Any): String = "$index: $event"
 }
 

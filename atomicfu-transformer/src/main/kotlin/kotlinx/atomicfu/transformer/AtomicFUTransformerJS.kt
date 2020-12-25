@@ -12,12 +12,13 @@ import org.mozilla.javascript.Token
 import java.util.regex.*
 
 private const val ATOMIC_CONSTRUCTOR = """(atomic\$(ref|int|long|boolean)\$|Atomic(Ref|Int|Long|Boolean))"""
+private const val ATOMIC_CONSTRUCTOR_BINARY_COMPATIBILITY = """(atomic\$(ref|int|long|boolean)\$1)""" // mangled names for declarations left for binary compatibility
 private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean|ofNulls)"""
 private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
 
 private const val TRACE_CONSTRUCTOR = "Trace\\\$atomicfu\\\$"
 private const val TRACE_BASE_CLASS = "TraceBase\\\$atomicfu\\\$"
-private const val TRACE_APPEND = """(Trace)\$(append)\$(1|2|3|4)\$(atomicfu)\$"""
+private const val TRACE_APPEND = """(Trace)\$(append)\$([1234])\$(atomicfu)\$""" // [1234] is the number of arguments in the append overload
 private const val TRACE_NAMED = "Trace\\\$named\\\$atomicfu\\\$"
 private const val TRACE_FORMAT = "TraceFormat"
 private const val TRACE_FORMAT_CONSTRUCTOR = "$TRACE_FORMAT\\\$atomicfu\\\$"
@@ -216,7 +217,7 @@ class AtomicFUTransformerJS(
                         val varInit = stmt.variables[0] as VariableInitializer
                         if (varInit.initializer is PropertyGet) {
                             val initializer = varInit.initializer.toSource()
-                            if (initializer.matches(Regex(kotlinxAtomicfuModuleName(ATOMIC_CONSTRUCTOR)))) {
+                            if (initializer.matches(Regex(kotlinxAtomicfuModuleName("""($ATOMIC_CONSTRUCTOR|$ATOMIC_CONSTRUCTOR_BINARY_COMPATIBILITY)""")))) {
                                 atomicConstructors.add(varInit.target.toSource())
                                 node.replaceChild(stmt, EmptyLine())
                             } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName(TRACE_CONSTRUCTOR)))) {
@@ -241,7 +242,7 @@ class AtomicFUTransformerJS(
                 if (initializer.matches(Regex(REENTRANT_LOCK_ATOMICFU_SINGLETON))) {
                     node.initializer = null
                 }
-                if (initializer.matches(Regex(kotlinxAtomicfuModuleName(ATOMIC_CONSTRUCTOR)))) {
+                if (initializer.matches(Regex(kotlinxAtomicfuModuleName("""($ATOMIC_CONSTRUCTOR|$ATOMIC_CONSTRUCTOR_BINARY_COMPATIBILITY)""")))) {
                     atomicConstructors.add(node.target.toSource())
                     node.initializer = null
                 }

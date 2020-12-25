@@ -110,7 +110,7 @@ public expect fun atomic(initial: Boolean): AtomicBoolean
 /**
  * Creates array of AtomicRef<T> of specified size, where each element is initialised with null value
  */
-@JsName("AtomicLongArray\$ofNulls")
+@JsName(ATOMIC_ARRAY_OF_NULLS)
 public fun <T> atomicArrayOfNulls(size: Int): AtomicArray<T?> = AtomicArray(size)
 
 // ==================================== AtomicRef ====================================
@@ -508,15 +508,15 @@ public inline fun AtomicLong.updateAndGet(function: (Long) -> Long): Long {
 /**
  * Creates a new array of AtomicInt values of the specified size, where each element is initialised with 0
  */
-@JsName("AtomicIntArray\$int")
+@JsName(ATOMIC_INT_ARRAY)
 public class AtomicIntArray(size: Int) {
     private val array = Array(size) { atomic(0) }
 
-    @JsName("size\$atomicfu\$")
+    @JsName(ARRAY_SIZE)
     public val size: Int
         get() = array.size
 
-    @JsName("get\$atomicfu\$")
+    @JsName(ARRAY_ELEMENT_GET)
     public operator fun get(index: Int): AtomicInt = array[index]
 }
 
@@ -525,15 +525,15 @@ public class AtomicIntArray(size: Int) {
 /**
  * Creates a new array of AtomicLong values of the specified size, where each element is initialised with 0L
  */
-@JsName("AtomicLongArray\$long")
+@JsName(ATOMIC_LONG_ARRAY)
 public class AtomicLongArray(size: Int) {
     private val array = Array(size) { atomic(0L) }
 
-    @JsName("size\$atomicfu\$")
+    @JsName(ARRAY_SIZE)
     public val size: Int
         get() = array.size
 
-    @JsName("get\$atomicfu\$")
+    @JsName(ARRAY_ELEMENT_GET)
     public operator fun get(index: Int): AtomicLong = array[index]
 }
 
@@ -542,29 +542,29 @@ public class AtomicLongArray(size: Int) {
 /**
  * Creates a new array of AtomicBoolean values of the specified size, where each element is initialised with false
  */
-@JsName("AtomicBooleanArray\$boolean")
+@JsName(ATOMIC_BOOLEAN_ARRAY)
 public class AtomicBooleanArray(size: Int) {
     private val array = Array(size) { atomic(false) }
 
-    @JsName("size\$atomicfu\$")
+    @JsName(ARRAY_SIZE)
     public val size: Int
         get() = array.size
 
-    @JsName("get\$atomicfu\$")
+    @JsName(ARRAY_ELEMENT_GET)
     public operator fun get(index: Int): AtomicBoolean = array[index]
 }
 
 
 // ==================================== AtomicArray ====================================
 
-@JsName("AtomicRefArray\$ref")
+@JsName(ATOMIC_REF_ARRAY)
 public class AtomicArray<T> internal constructor(size: Int) {
     private val array = Array(size) { atomic<T?>(null) }
 
-    @JsName("size\$atomicfu\$")
+    @JsName(ARRAY_SIZE)
     public val size: Int
         get() = array.size
 
-    @JsName("get\$atomicfu\$")
+    @JsName(ARRAY_ELEMENT_GET)
     public operator fun get(index: Int): AtomicRef<T?> = array[index]
 }
