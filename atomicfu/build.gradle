@@ -294,6 +294,7 @@ task testAtomicfuReferenceJs(type: Test, dependsOn: [compileTestKotlinJvm, trans
     classpath = files(configurations.jvmTestRuntimeClasspath, classesPreAtomicFuDir)
     testClassesDirs = project.files(classesPreAtomicFuDir)
     include '**/AtomicfuReferenceJsTest.*'
+    filter { setFailOnNoMatchingTests(false) }
 }
 
 task jvmTestAll(dependsOn: [
