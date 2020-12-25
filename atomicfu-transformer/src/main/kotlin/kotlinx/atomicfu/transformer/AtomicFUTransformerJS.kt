@@ -16,6 +16,7 @@ private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Arra
 private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
 
 private const val TRACE_CONSTRUCTOR = "atomicfu\\\$Trace\\\$"
+private const val TRACE_BASE_CLASS = "atomicfu\\\$TraceBase\\\$"
 private const val TRACE_APPEND = "atomicfu\\\$Trace\\\$append\\\$"
 private const val TRACE_NAMED = "atomicfu\\\$Trace\\\$named\\\$"
 private const val TRACE_FORMAT = "TraceFormat"
@@ -221,7 +222,7 @@ class AtomicFUTransformerJS(
                             } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName(TRACE_CONSTRUCTOR)))) {
                                 traceConstructors.add(varInit.target.toSource())
                                 node.replaceChild(stmt, EmptyLine())
-                            } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName("""($LOCKS|$TRACE_FORMAT_CONSTRUCTOR|$TRACE_NAMED)""")))) {
+                            } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName("""($LOCKS|$TRACE_FORMAT_CONSTRUCTOR|$TRACE_BASE_CLASS|$TRACE_NAMED)""")))) {
                                 node.replaceChild(stmt, EmptyLine())
                             }
                         }
