@@ -3,7 +3,7 @@ package kotlinx.atomicfu.test
 import org.junit.Test
 import java.io.File
 
-private const val ATOMICFU_SUFFIX = "\$atomicfu\$"
+private const val ATOMICFU_PREFIX = "atomicfu\$"
 private const val KOTLINX_ATOMICFU_MODULE = "\$module\$kotlinx_atomicfu"
 
 /**
@@ -12,7 +12,7 @@ private const val KOTLINX_ATOMICFU_MODULE = "\$module\$kotlinx_atomicfu"
 class AtomicfuReferenceJsTest {
 
     private val TRANSFORMED_JS_FILE = System.getenv("transformedJsFile")
-    private val dependencies = listOf(ATOMICFU_SUFFIX, KOTLINX_ATOMICFU_MODULE)
+    private val dependencies = listOf(ATOMICFU_PREFIX, KOTLINX_ATOMICFU_MODULE)
 
     @Test
     fun testAtomicfuDependencies() {

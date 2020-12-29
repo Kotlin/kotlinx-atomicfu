@@ -13,16 +13,16 @@ import java.util.regex.*
 
 private const val ATOMIC_CONSTRUCTOR = """(atomic\$(ref|int|long|boolean)\$|Atomic(Ref|Int|Long|Boolean))"""
 private const val ATOMIC_CONSTRUCTOR_BINARY_COMPATIBILITY = """(atomic\$(ref|int|long|boolean)\$1)""" // mangled names for declarations left for binary compatibility
-private const val ATOMIC_ARRAY_CONSTRUCTOR = """Atomic(Ref|Int|Long|Boolean)Array\$(ref|int|long|boolean|ofNulls)"""
+private const val ATOMIC_ARRAY_CONSTRUCTOR = """(atomicfu)\$(Atomic(Ref|Int|Long|Boolean)Array)\$(ref|int|long|boolean|ofNulls)"""
 private const val MANGLED_VALUE_PROP = "kotlinx\$atomicfu\$value"
 
-private const val TRACE_CONSTRUCTOR = "Trace\\\$atomicfu\\\$"
-private const val TRACE_BASE_CLASS = "TraceBase\\\$atomicfu\\\$"
-private const val TRACE_APPEND = """(Trace)\$(append)\$([1234])\$(atomicfu)\$""" // [1234] is the number of arguments in the append overload
-private const val TRACE_NAMED = "Trace\\\$named\\\$atomicfu\\\$"
+private const val TRACE_CONSTRUCTOR = "atomicfu\\\$Trace"
+private const val TRACE_BASE_CLASS = "atomicfu\\\$TraceBase"
+private const val TRACE_APPEND = """(atomicfu)\$(Trace)\$(append)\$([1234])""" // [1234] is the number of arguments in the append overload
+private const val TRACE_NAMED = "atomicfu\\\$Trace\\\$named"
 private const val TRACE_FORMAT = "TraceFormat"
-private const val TRACE_FORMAT_CONSTRUCTOR = "$TRACE_FORMAT\\\$atomicfu\\\$"
-private const val TRACE_FORMAT_FORMAT = "$TRACE_FORMAT\\\$format\\\$atomicfu\\\$"
+private const val TRACE_FORMAT_CONSTRUCTOR = "atomicfu\\\$$TRACE_FORMAT"
+private const val TRACE_FORMAT_FORMAT = "atomicfu\\\$$TRACE_FORMAT\\\$format"
 
 private const val RECEIVER = """(\$(receiver)(_\d+)?)"""
 private const val SCOPE = "scope"
@@ -36,11 +36,11 @@ private const val ATOMIC_REF = "AtomicRef"
 private const val MODULE_KOTLINX_ATOMICFU = "\\\$module\\\$kotlinx_atomicfu"
 private const val ARRAY = "Array"
 private const val FILL = "fill"
-private const val GET_ELEMENT = "get\\\$atomicfu\\\$"
-private const val ARRAY_SIZE = "size\$atomicfu\$"
+private const val GET_ELEMENT = "atomicfu\\\$get"
+private const val ARRAY_SIZE = "atomicfu\$size"
 private const val LENGTH = "length"
 private const val LOCKS = "locks"
-private const val REENTRANT_LOCK_ATOMICFU_SINGLETON = "$LOCKS.reentrantLock\\\$atomicfu\\\$"
+private const val REENTRANT_LOCK_ATOMICFU_SINGLETON = "$LOCKS.atomicfu\\\$reentrantLock"
 
 
 private val MANGLE_VALUE_REGEX = Regex(".${Pattern.quote(MANGLED_VALUE_PROP)}")
@@ -578,65 +578,65 @@ class AtomicFUTransformerJS(
     ): Boolean {
         val f = field.scopedSource()
         val code = when (funcName) {
-            "getAndSet\$atomicfu\$" -> {
+            "atomicfu\$getAndSet" -> {
                 val arg = args[0].toSource()
                 "(function($SCOPE) {var oldValue = $f; $f = $arg; return oldValue;})()"
             }
-            "compareAndSet\$atomicfu\$" -> {
+            "atomicfu\$compareAndSet" -> {
                 val expected = args[0].scopedSource()
                 val updated = args[1].scopedSource()
                 val equals = if (expected == "null") "==" else "==="
                 "(function($SCOPE) {return $f $equals $expected ? function() { $f = $updated; return true }() : false})()"
             }
-            "getAndIncrement\$atomicfu\$" -> {
+            "atomicfu\$getAndIncrement" -> {
                 "(function($SCOPE) {return $f++;})()"
             }
 
-            "getAndIncrement\$atomicfu\$long" -> {
+            "atomicfu\$getAndIncrement\$long" -> {
                 "(function($SCOPE) {var oldValue = $f; $f = $f.inc(); return oldValue;})()"
             }
 
-            "getAndDecrement\$atomicfu\$" -> {
+            "atomicfu\$getAndDecrement" -> {
                 "(function($SCOPE) {return $f--;})()"
             }
 
-            "getAndDecrement\$atomicfu\$long" -> {
+            "atomicfu\$getAndDecrement\$long" -> {
                 "(function($SCOPE) {var oldValue = $f; $f = $f.dec(); return oldValue;})()"
             }
 
-            "getAndAdd\$atomicfu\$" -> {
+            "atomicfu\$getAndAdd" -> {
                 val arg = args[0].scopedSource()
                 "(function($SCOPE) {var oldValue = $f; $f += $arg; return oldValue;})()"
             }
 
-            "getAndAdd\$atomicfu\$long" -> {
+            "atomicfu\$getAndAdd\$long" -> {
                 val arg = args[0].scopedSource()
                 "(function($SCOPE) {var oldValue = $f; $f = $f.add($arg); return oldValue;})()"
             }
 
-            "addAndGet\$atomicfu\$" -> {
+            "atomicfu\$addAndGet" -> {
                 val arg = args[0].scopedSource()
                 "(function($SCOPE) {$f += $arg; return $f;})()"
             }
 
-            "addAndGet\$atomicfu\$long" -> {
+            "atomicfu\$addAndGet\$long" -> {
                 val arg = args[0].scopedSource()
                 "(function($SCOPE) {$f = $f.add($arg); return $f;})()"
             }
 
-            "incrementAndGet\$atomicfu\$" -> {
+            "atomicfu\$incrementAndGet" -> {
                 "(function($SCOPE) {return ++$f;})()"
             }
 
-            "incrementAndGet\$atomicfu\$long" -> {
+            "atomicfu\$incrementAndGet\$long" -> {
                 "(function($SCOPE) {return $f = $f.inc();})()"
             }
 
-            "decrementAndGet\$atomicfu\$" -> {
+            "atomicfu\$decrementAndGet" -> {
                 "(function($SCOPE) {return --$f;})()"
             }
 
-            "decrementAndGet\$atomicfu\$long" -> {
+            "atomicfu\$decrementAndGet\$long" -> {
                 "(function($SCOPE) {return $f = $f.dec();})()"
             }
             else -> null

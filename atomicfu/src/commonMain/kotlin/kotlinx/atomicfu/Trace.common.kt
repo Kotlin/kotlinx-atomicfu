@@ -23,9 +23,10 @@ import kotlin.internal.InlineOnly
  * ```
  * trace { "Doing something" }
  * ```
- * or
+ * or you can do multi-append in a garbage-free manner
  * ```
- * trace.append(Thread.currentThread())
+ * // Before queue.send(element) invocation
+ * trace.append("Adding element to the queue", element, Thread.currentThread())
  * ```
  *
  * Pass it to `atomic` constructor to automatically trace all modifications of the corresponding field:
