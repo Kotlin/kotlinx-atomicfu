@@ -382,7 +382,8 @@ class AtomicFUTransformerJS(
                     }
                     // other cases with $receiver.kotlinx$atomicfu$value in inline functions
                     else if (node.target.toSource().matches(Regex(RECEIVER))) {
-                        val rr = ReceiverResolver()
+                        val receiverName = node.target.toSource() // $receiver_i
+                        val rr = ReceiverResolver(receiverName)
                         node.enclosingFunction.visit(rr)
                         rr.receiver?.let { node.target = it }
                     }
@@ -475,11 +476,11 @@ class AtomicFUTransformerJS(
 
 
     // receiver data flow
-    inner class ReceiverResolver : NodeVisitor {
+    inner class ReceiverResolver(private val receiverName: String) : NodeVisitor {
         var receiver: AstNode? = null
         override fun visit(node: AstNode): Boolean {
             if (node is VariableInitializer) {
-                if (node.target.toSource().matches(Regex(RECEIVER))) {
+                if (node.target.toSource() == receiverName) {
                     receiver = node.initializer
                     return false
                 }
@@ -496,7 +497,8 @@ class AtomicFUTransformerJS(
                     val funcName = (node.target as PropertyGet).property
                     var field = (node.target as PropertyGet).target
                     if (field.toSource().matches(Regex(RECEIVER))) {
-                        val rr = ReceiverResolver()
+                        val receiverName = field.toSource() // $receiver_i
+                        val rr = ReceiverResolver(receiverName)
                         node.enclosingFunction.visit(rr)
                         if (rr.receiver != null) {
                             field = rr.receiver
