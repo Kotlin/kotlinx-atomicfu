@@ -81,4 +81,22 @@ class TraceToStringTest {
             """.trimIndent(), s.trace.toString()
         )
     }
+
+    private enum class Status { START, END }
+
+    @Test
+    fun testMultipleAppend() {
+        val i = 7
+        aTrace.append(i, Status.START)
+        a.lazySet(i)
+        aTrace.append(i, Status.END)
+        assertEquals("""
+            [0: $i]
+            [1: START]
+            [2: lazySet($i)]
+            [3: $i]
+            [4: END]
+            """.trimIndent(), aTrace.toString()
+        )
+    }
 }

@@ -1,8 +1,10 @@
 package kotlinx.atomicfu.locks
 
+import kotlinx.atomicfu.REENTRANT_LOCK
+
 public actual typealias SynchronizedObject = Any
 
-@JsName("reentrantLock\$atomicfu")
+@JsName(REENTRANT_LOCK)
 public val Lock = ReentrantLock()
 
 @Suppress("NOTHING_TO_INLINE")

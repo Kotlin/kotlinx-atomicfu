@@ -12,20 +12,20 @@ import kotlin.js.JsName
 /**
  * Trace string formatter.
  */
-@JsName("atomicfu\$TraceFormat\$")
+@JsName(TRACE_FORMAT_CLASS)
 public open class TraceFormat {
     /**
-     * Formats trace at the given [index] with the given [text] as string.
+     * Formats trace at the given [index] with the given [event] of Any type.
      */
-    @JsName("atomicfu\$TraceFormat\$format\$")
-    public open fun format(index: Int, text: String): String = "$index: $text"
+    @JsName(TRACE_FORMAT_FORMAT_FUNCTION)
+    public open fun format(index: Int, event: Any): String = "$index: $event"
 }
 
 /**
  * Creates trace string formatter with the given [format] code block.
  */
 @InlineOnly
-public inline fun TraceFormat(crossinline format: (index: Int, text: String) -> String): TraceFormat =
+public inline fun TraceFormat(crossinline format: (index: Int, event: Any) -> String): TraceFormat =
     object : TraceFormat() {
-        override fun format(index: Int, text: String): String = format(index, text)
+        override fun format(index: Int, event: Any): String = format(index, event)
     }

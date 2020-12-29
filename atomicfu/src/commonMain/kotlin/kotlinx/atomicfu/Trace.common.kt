@@ -23,6 +23,11 @@ import kotlin.internal.InlineOnly
  * ```
  * trace { "Doing something" }
  * ```
+ * or you can do multi-append in a garbage-free manner
+ * ```
+ * // Before queue.send(element) invocation
+ * trace.append("Adding element to the queue", element, Thread.currentThread())
+ * ```
  *
  * Pass it to `atomic` constructor to automatically trace all modifications of the corresponding field:
  *
@@ -39,7 +44,6 @@ import kotlin.internal.InlineOnly
  * The default format is [traceFormatDefault].
  */
 @Suppress("FunctionName")
-@JsName("atomicfu\$Trace\$")
 public expect fun Trace(size: Int = 32, format: TraceFormat = traceFormatDefault): TraceBase
 
 /**
@@ -59,15 +63,41 @@ public expect fun TraceBase.named(name: String): TraceBase
  */
 public expect val traceFormatDefault: TraceFormat
 
-@JsName("atomicfu\$TraceBase\$")
+/**
+ * Base class for implementations of `Trace`.
+ */
+@JsName(TRACE_BASE_CONSTRUCTOR)
 public open class TraceBase internal constructor() {
-    @JsName("atomicfu\$Trace\$append\$")
-    @PublishedApi
-    internal open fun append(text: String) {}
+    /**
+     * Accepts the logging [event] and appends it to the trace.
+     */
+    @JsName(TRACE_APPEND_1)
+    public open fun append(event: Any) {}
 
+    /**
+     * Accepts the logging events [event1], [event2] and appends them to the trace.
+     */
+    @JsName(TRACE_APPEND_2)
+    public open fun append(event1: Any, event2: Any) {}
+
+    /**
+     * Accepts the logging events [event1], [event2], [event3] and appends them to the trace.
+     */
+    @JsName(TRACE_APPEND_3)
+    public open fun append(event1: Any, event2: Any, event3: Any) {}
+
+    /**
+     * Accepts the logging events [event1], [event2], [event3], [event4] and appends them to the trace.
+     */
+    @JsName(TRACE_APPEND_4)
+    public open fun append(event1: Any, event2: Any, event3: Any, event4: Any) {}
+
+    /**
+     * Accepts the logging [event] and appends it to the trace.
+     */
     @InlineOnly
-    public inline operator fun invoke(text: () -> String) {
-        append(text())
+    public inline operator fun invoke(event: () -> Any) {
+        append(event())
     }
 
     /**

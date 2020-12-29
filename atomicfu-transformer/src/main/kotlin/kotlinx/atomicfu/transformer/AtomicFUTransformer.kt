@@ -85,7 +85,10 @@ private const val TRACE_BASE_CLS = "$AFU_PKG/$TRACE_BASE"
 
 private val TRACE_BASE_TYPE = getObjectType(TRACE_BASE_CLS)
 
-private val TRACE_APPEND = MethodId(TRACE_BASE_CLS, "append", getMethodDescriptor(VOID_TYPE, STRING_TYPE), INVOKEVIRTUAL)
+private val TRACE_APPEND = MethodId(TRACE_BASE_CLS, "append", getMethodDescriptor(VOID_TYPE, OBJECT_TYPE), INVOKEVIRTUAL)
+private val TRACE_APPEND_2 = MethodId(TRACE_BASE_CLS, "append", getMethodDescriptor(VOID_TYPE, OBJECT_TYPE, OBJECT_TYPE), INVOKEVIRTUAL)
+private val TRACE_APPEND_3 = MethodId(TRACE_BASE_CLS, "append", getMethodDescriptor(VOID_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE), INVOKEVIRTUAL)
+private val TRACE_APPEND_4 = MethodId(TRACE_BASE_CLS, "append", getMethodDescriptor(VOID_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE), INVOKEVIRTUAL)
 private val TRACE_DEFAULT_ARGS = "I${OBJECT_TYPE.descriptor}"
 private const val DEFAULT = "\$default"
 private const val DELEGATE = "\$delegate"
@@ -1285,7 +1288,7 @@ class AtomicFUTransformer(
                             instructions.remove(putfield)
                             return next
                         }
-                        methodId == TRACE_APPEND -> {
+                        methodId == TRACE_APPEND || methodId == TRACE_APPEND_2 || methodId == TRACE_APPEND_3 || methodId == TRACE_APPEND_4 -> {
                             return removeTraceAppend(i)
                         }
                         methodId in removeMethods -> {

@@ -104,3 +104,25 @@ class MyCounter {
         assertEquals(-n, c.get())
     }
 }
+
+class TraceAppendOverridesTest {
+    private val aTrace = Trace(format = TraceFormat { i, text -> "[$i: $text]" })
+    private val a = atomic(0, aTrace)
+
+    private enum class Status { START, END }
+
+    fun inc(n: Int, i: Int) {
+        aTrace.append(i, n, Status.START)
+        val res = a.getAndAdd(n)
+        aTrace.append(i, n, res, Status.END)
+    }
+
+    @Test
+    fun testTraceAppendOverrides() {
+        val n = 1000
+        repeat(n) {
+            inc(1, it)
+        }
+        assertEquals(n, a.value)
+    }
+}
