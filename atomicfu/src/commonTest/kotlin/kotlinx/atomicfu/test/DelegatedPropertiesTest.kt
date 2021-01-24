@@ -5,8 +5,27 @@ package kotlinx.atomicfu.test
 import kotlinx.atomicfu.atomic
 import kotlin.test.*
 
-class DelegatedProperties {
+private val topLevelIntOriginalAtomic = atomic(77)
+var topLevelIntDelegatedProperty: Int by topLevelIntOriginalAtomic
 
+private val _topLevelLong = atomic(55555555555)
+var topLevelDelegatedPropertyLong: Long by _topLevelLong
+
+private val _topLevelBoolean = atomic(false)
+var topLevelDelegatedPropertyBoolean: Boolean by _topLevelBoolean
+
+private val _topLevelRef = atomic(listOf("a", "b"))
+var topLevelDelegatedPropertyRef: List<String> by _topLevelRef
+
+var vTopLevelInt by atomic(77)
+
+var vTopLevelLong by atomic(777777777)
+
+var vTopLevelBoolean by atomic(false)
+
+var vTopLevelRef by atomic(listOf("a", "b"))
+
+class DelegatedProperties {
     private val _a = atomic(42)
     var a: Int by _a
 
@@ -99,6 +118,76 @@ class DelegatedProperties {
         assertEquals(99, vRef.b.n)
     }
 
+    @Test
+    fun testTopLevelDelegatedPropertiesInt() {
+        assertEquals(77, topLevelIntDelegatedProperty)
+        topLevelIntOriginalAtomic.compareAndSet(77, 56)
+        assertEquals(56, topLevelIntDelegatedProperty)
+        topLevelIntDelegatedProperty = 88
+        topLevelIntOriginalAtomic.compareAndSet(88,  66)
+        assertEquals(66, topLevelIntOriginalAtomic.value)
+        assertEquals(66, topLevelIntDelegatedProperty)
+    }
+
+    @Test
+    fun testTopLevelDelegatedPropertiesLong() {
+        assertEquals(55555555555, topLevelDelegatedPropertyLong)
+        _topLevelLong.getAndIncrement()
+        assertEquals(55555555556, topLevelDelegatedPropertyLong)
+        topLevelDelegatedPropertyLong = 7777777777777
+        assertTrue(_topLevelLong.compareAndSet(7777777777777, 66666666666))
+        assertEquals(66666666666, _topLevelLong.value)
+        assertEquals(66666666666, topLevelDelegatedPropertyLong)
+    }
+
+    @Test
+    fun testTopLevelDelegatedPropertiesBoolean() {
+        assertEquals(false, topLevelDelegatedPropertyBoolean)
+        _topLevelBoolean.lazySet(true)
+        assertEquals(true, topLevelDelegatedPropertyBoolean)
+        topLevelDelegatedPropertyBoolean = false
+        assertTrue(_topLevelBoolean.compareAndSet(false, true))
+        assertEquals(true, _topLevelBoolean.value)
+        assertEquals(true, topLevelDelegatedPropertyBoolean)
+    }
+
+    @Test
+    fun testTopLevelDelegatedPropertiesRef() {
+        assertEquals("b", topLevelDelegatedPropertyRef[1])
+        _topLevelRef.lazySet(listOf("c"))
+        assertEquals("c", topLevelDelegatedPropertyRef[0])
+        topLevelDelegatedPropertyRef = listOf("d", "e")
+        assertEquals("e", _topLevelRef.value[1])
+    }
+
+    @Test
+    fun testVolatileTopLevelInt() {
+        assertEquals(77, vTopLevelInt)
+        vTopLevelInt = 55
+        assertEquals(110, vTopLevelInt * 2)
+    }
+
+    @Test
+    fun testVolatileTopLevelLong() {
+        assertEquals(777777777, vTopLevelLong)
+        vTopLevelLong = 55
+        assertEquals(55, vTopLevelLong)
+    }
+
+    @Test
+    fun testVolatileTopLevelBoolean() {
+        assertEquals(false, vTopLevelBoolean)
+        vTopLevelBoolean = true
+        assertEquals(true, vTopLevelBoolean)
+    }
+
+    @Test
+    fun testVolatileTopLevelRef() {
+        assertEquals("a", vTopLevelRef[0])
+        vTopLevelRef = listOf("c")
+        assertEquals("c", vTopLevelRef[0])
+    }
+
     class A (val b: B)
     class B (val n: Int)
 }
@@ -143,5 +232,26 @@ class ExposedDelegatedPropertiesAccessorsTest {
         assertEquals(77, cl.vInt)
         cl.vInt = 99
         assertEquals(99, cl.vInt)
+    }
+}
+
+class ClashedNamesTest {
+    private class A1 {
+        val _a = atomic(0)
+        val a: Int by _a
+    }
+
+    private class A2 {
+        val _a = atomic(0)
+        val a: Int by _a
+    }
+
+    @Test
+    fun testClashedDelegatedPropertiesNames() {
+        val a1Class = A1()
+        val a2Class = A2()
+        a1Class._a.compareAndSet(0, 77)
+        assertEquals(77, a1Class.a)
+        assertEquals(0, a2Class.a)
     }
 }

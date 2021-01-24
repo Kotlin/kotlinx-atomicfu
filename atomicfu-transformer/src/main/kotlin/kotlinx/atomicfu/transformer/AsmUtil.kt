@@ -4,7 +4,9 @@
 
 package kotlinx.atomicfu.transformer
 
+import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type.*
 import org.objectweb.asm.tree.*
 import org.objectweb.asm.util.*
 
@@ -69,11 +71,22 @@ fun AbstractInsnNode.isGetField(owner: String) =
 fun AbstractInsnNode.isGetStatic(owner: String) =
     this is FieldInsnNode && this.opcode == GETSTATIC && this.owner == owner
 
+fun AbstractInsnNode.isGetFieldOrGetStatic() =
+    this is FieldInsnNode && (this.opcode == GETFIELD || this.opcode == GETSTATIC)
+
 fun AbstractInsnNode.isAreturn() =
     this.opcode == ARETURN
 
 fun AbstractInsnNode.isReturn() =
     this.opcode == RETURN
+
+fun AbstractInsnNode.isTypeReturn(type: Type) =
+    opcode == when (type) {
+        INT_TYPE -> IRETURN
+        LONG_TYPE -> LRETURN
+        BOOLEAN_TYPE -> IRETURN
+        else -> ARETURN
+    }
 
 fun AbstractInsnNode.isInvokeVirtual() =
         this.opcode == INVOKEVIRTUAL
