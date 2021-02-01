@@ -320,9 +320,6 @@ jvmTest.dependsOn jvmTestAll
 
 afterEvaluate {
     publishing.publications {
-        if (kotlin_version < '1.4.20-M2')
-            metadata.artifactId = 'atomicfu-common'
-
         kotlinMultiplatform {
             apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
             publishPlatformArtifactsInRootModule(jvm)
