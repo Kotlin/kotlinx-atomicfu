@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.15.1
+
+* Maven central publication (#173).
+* Binary compatibility with IR (#170).
+* Supported garbage-free multi-append in debug trace (#172).
+
 # Version 0.15.0
 
 * Tracing atomic operations (#20).
