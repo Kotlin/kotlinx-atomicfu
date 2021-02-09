@@ -213,6 +213,12 @@ def classesPostTransformFU = file("$buildDir/classes/kotlin/jvm/postTransformedF
 def classesPostTransformVH = file("$buildDir/classes/kotlin/jvm/postTransformedVH")
 def classesPostTransformBOTH = file("$buildDir/classes/kotlin/jvm/postTransformedBOTH")
 
+tasks.withType(compileTestKotlinJvm.getClass()) {
+    kotlinOptions {
+        jvmTarget = "1.6"
+    }
+}
+
 task transformFU(type: JavaExec, dependsOn: compileTestKotlinJvm) {
     main = "kotlinx.atomicfu.transformer.AtomicFUTransformerKt"
     args = [classesPreAtomicFuDir, classesPostTransformFU, "FU"]
