@@ -132,7 +132,7 @@ public actual inline class AtomicInt internal constructor(@PublishedApi internal
 
 // ==================================== AtomicLong ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "EXPERIMENTAL_FEATURE_WARNING", "NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS", "RESERVED_VAR_PROPERTY_OF_VALUE_CLASS ")
+@Suppress("ACTUAL_WITHOUT_EXPECT", "EXPERIMENTAL_FEATURE_WARNING", "NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS", "RESERVED_VAR_PROPERTY_OF_VALUE_CLASS")
 public actual inline class AtomicLong internal constructor(@PublishedApi internal val a: KAtomicLong) {
     public actual inline var value: Long
         get() = a.value
