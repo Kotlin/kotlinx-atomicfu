@@ -37,17 +37,17 @@ class MetadataTransformer(
             is KotlinClassMetadata.Class -> {
                 val w = KotlinClassMetadata.Class.Writer()
                 metadata.accept(ClassFilter(w))
-                w.write(hdr.metadataVersion, hdr.bytecodeVersion, hdr.extraInt)
+                w.write(hdr.metadataVersion, hdr.extraInt)
             }
             is KotlinClassMetadata.FileFacade -> {
                 val w = KotlinClassMetadata.FileFacade.Writer()
                 metadata.accept(PackageFilter(w))
-                w.write(hdr.metadataVersion, hdr.bytecodeVersion, hdr.extraInt)
+                w.write(hdr.metadataVersion, hdr.extraInt)
             }
             is KotlinClassMetadata.MultiFileClassPart -> {
                 val w = KotlinClassMetadata.MultiFileClassPart.Writer()
                 metadata.accept(PackageFilter(w))
-                w.write(metadata.facadeClassName, hdr.metadataVersion, hdr.bytecodeVersion, hdr.extraInt)
+                w.write(metadata.facadeClassName, hdr.metadataVersion, hdr.extraInt)
             }
             else -> return false // not transformed
         }
