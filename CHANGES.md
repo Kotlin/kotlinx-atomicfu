@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.15.2
+
+* Update kotlinx-metadata to 0.2.0.
+* Update Kotlin to 1.4.30.
+* Added kotlin space repository.
+
 # Version 0.15.1
 
 * Maven central publication (#173).
