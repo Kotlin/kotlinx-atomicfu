@@ -88,6 +88,7 @@ if (rootProject.ext.native_targets_enabled) {
                 addTarget(presets.watchosArm32)
                 addTarget(presets.watchosArm64)
                 addTarget(presets.watchosX86)
+                addTarget(presets.watchosX64)
             }
         }
 
