@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.16.0
+
+* Update Kotlin to 1.5.0.
+* Supported x86_64-based watchOS simulator target. (#177).
+
 # Version 0.15.2
 
 * Update kotlinx-metadata to 0.2.0.
