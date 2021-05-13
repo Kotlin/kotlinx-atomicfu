@@ -163,7 +163,7 @@ compileJsLegacy.configure {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
-        outputFile = new File(outputFile.parent, baseName + ".js")
+        outputFile = new File(new File(outputFile).parent, baseName + ".js")
     }
 }
 
@@ -188,7 +188,7 @@ compileTestJsLegacy.configure {
     kotlinOptions {
         // NOTE: Module base-name must be equal to the package name declared in package.json
         def baseName = "kotlinx-atomicfu"
-        outputFile = new File(outputFile.parent, baseName + ".js")
+        outputFile = new File(new File(outputFile).parent, baseName + ".js")
     }
 }
 def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
