@@ -190,7 +190,7 @@ class MutexPool(capacity: Int) {
 
     init {
         for (i in 0 until capacity) {
-            release(interpretCPointer<mutex_node_t>(mutexes.rawValue.plus(i * mutex_node_t.size))!!)
+            release(interpretCPointer<mutex_node_t>(mutexes.rawValue.plus(i * sizeOf<mutex_node_t>()))!!)
         }
     }
 
