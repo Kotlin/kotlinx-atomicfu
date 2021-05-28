@@ -715,10 +715,15 @@ class AtomicFUTransformer(
                     i = i.next
                     hasErrors = true
                 }
+            // make sure all kotlinx/atomicfu references removed
+            removeAtomicReferencesFromLVT()
             // save transformed method if not in analysis phase
             if (!hasErrors && !analyzePhase2)
                 accept(mv)
         }
+
+        private fun removeAtomicReferencesFromLVT() =
+            localVariables?.removeIf { getType(it.desc) in AFU_TYPES }
 
         private fun FieldInsnNode.checkCopyToDelegate(): AbstractInsnNode? {
             val fieldId = FieldId(owner, name, desc)
