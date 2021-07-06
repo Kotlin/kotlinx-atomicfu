@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.16.2
+
+* Update Kotlin to 1.5.20.
+* ASM 9.1 for Java 15+ support (#190).
+* Removing extra atomicfu references from LVT.
+
 # Version 0.16.0
 
 * Update Kotlin to 1.5.0.
