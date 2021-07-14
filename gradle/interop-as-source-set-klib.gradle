@@ -2,16 +2,19 @@
  * Copyright 2014-2020 JetBrains s.r.o and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
-project.ext.registerInteropAsSourceSetOutput = { interop, sourceSet ->
+project.ext.registerInteropAsSourceSetOutput = { target, sourceSet ->
     afterEvaluate {
+        def interop = target.compilations["main"].cinterops["interop"]
         def cinteropTask = tasks.named(interop.interopProcessingTaskName)
         def cinteropKlib = cinteropTask.map { it.outputFile }
         def fakeCinteropCompilation = kotlin.targets["metadata"].compilations[sourceSet.name]
         def destination = fakeCinteropCompilation.compileKotlinTask.destinationDir
 
-        def tempDir = "$buildDir/tmp/${sourceSet.name}UnpackedInteropKlib"
+        def tempDir = "$buildDir/tmp/${target.name}${sourceSet.name}UnpackedInteropKlib"
 
-        def prepareKlibTaskProvider = tasks.register("prepare${sourceSet.name.capitalize()}InteropKlib", Sync) {
+        println("prepare${target.name}${sourceSet.name.capitalize()}InteropKlib")
+
+        def prepareKlibTaskProvider = tasks.register("prepare${target.name}${sourceSet.name.capitalize()}InteropKlib", Sync) {
             from(files(zipTree(cinteropKlib).matching {
                 exclude("targets/**", "default/targets/**")
             }).builtBy(cinteropTask))
@@ -33,7 +36,7 @@ project.ext.registerInteropAsSourceSetOutput = { interop, sourceSet ->
             }
         }
 
-        def copyCinteropTaskProvider = tasks.register("copy${sourceSet.name.capitalize()}CinteropKlib",  Zip) {
+        def copyCinteropTaskProvider = tasks.register("copy${target.name}${sourceSet.name.capitalize()}CinteropKlib",  Zip) {
             from(fileTree(tempDir).builtBy(prepareKlibTaskProvider))
             destinationDirectory.set(destination)
             archiveFileName.set("${project.name}_${fakeCinteropCompilation.name}.klib")

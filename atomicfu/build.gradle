@@ -78,6 +78,8 @@ if (rootProject.ext.native_targets_enabled) {
                 addNative(fromPreset(project.ext.ideaPreset, 'native'))
             } else {
                 addTarget(presets.linuxX64)
+                addTarget(presets.linuxArm32Hfp)
+                addTarget(presets.linuxArm64)
                 addTarget(presets.iosArm64)
                 addTarget(presets.iosArm32)
                 addTarget(presets.iosX64)
@@ -127,7 +129,15 @@ if (rootProject.ext.native_targets_enabled) {
         apply from: "$rootDir/gradle/interop-as-source-set-klib.gradle"
 
         registerInteropAsSourceSetOutput(
-                kotlin.linuxX64().compilations["main"].cinterops["interop"],
+                kotlin.linuxX64(),
+                kotlin.sourceSets["nativeInterop"]
+        )
+        registerInteropAsSourceSetOutput(
+                kotlin.linuxArm64(),
+                kotlin.sourceSets["nativeInterop"]
+        )
+        registerInteropAsSourceSetOutput(
+                kotlin.linuxArm32Hfp(),
                 kotlin.sourceSets["nativeInterop"]
         )
     }
