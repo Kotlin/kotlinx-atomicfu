@@ -13,8 +13,6 @@ import org.objectweb.asm.Type.*
 import org.objectweb.asm.commons.*
 import org.objectweb.asm.commons.InstructionAdapter.*
 import org.objectweb.asm.tree.*
-import org.objectweb.asm.util.Textifier
-import org.objectweb.asm.util.TraceMethodVisitor
 import java.io.*
 import java.net.*
 import java.util.*
@@ -705,19 +703,6 @@ class AtomicFUTransformer(
             super.visitMethodInsn(opcode, owner, name, desc, itf)
         }
 
-        internal val MethodNode?.nodeText: String
-            get() {
-                if (this == null) {
-                    return "Not generated"
-                }
-                val textifier = Textifier()
-                accept(TraceMethodVisitor(textifier))
-                val sw = StringWriter()
-                textifier.print(PrintWriter(sw))
-                sw.flush()
-                return name + " " + desc + ":\n" + sw.buffer.toString()
-            }
-
         override fun visitEnd() {
             // transform instructions list
             var hasErrors = false
@@ -1029,17 +1014,15 @@ class AtomicFUTransformer(
                     val lv = localVar(v, operation)
                     if (f.isStatic) instructions.remove(operation) // remove astore operation
                     if (lv != null) {
-                        for (lvn in localVariables.filter { it.index == lv.index && it.name == lv.name && it.desc == lv.desc }) {
-                            // Stored to a local variable with an entry in LVT (typically because of inline function)
-                            if (lvn.desc != f.fieldType.descriptor && !onArrayElement)
-                                abort("field $f was stored to a local variable #$v \"${lv.name}\" with unexpected type: ${lv.desc}")
-                            // correct local variable descriptor
-                            lvn.desc = f.ownerType.descriptor
-                            lvn.signature = null
-                            // process all loads of this variable in the corresponding local variable range
-                            forVarLoads(v, lvn.start, lvn.end) { otherLd ->
-                                fixupLoad(f, ld, otherLd, arrayElementInfo)
-                            }
+                        // Stored to a local variable with an entry in LVT (typically because of inline function)
+                        if (lv.desc != f.fieldType.descriptor && !onArrayElement)
+                            abort("field $f was stored to a local variable #$v \"${lv.name}\" with unexpected type: ${lv.desc}")
+                        // correct local variable descriptor
+                        lv.desc = f.ownerType.descriptor
+                        lv.signature = null
+                        // process all loads of this variable in the corresponding local variable range
+                        forVarLoads(v, lv.start, lv.end) { otherLd ->
+                            fixupLoad(f, ld, otherLd, arrayElementInfo)
                         }
                     } else {
                         // Spilled temporarily to a local variable w/o an entry in LVT -> fixup only one load

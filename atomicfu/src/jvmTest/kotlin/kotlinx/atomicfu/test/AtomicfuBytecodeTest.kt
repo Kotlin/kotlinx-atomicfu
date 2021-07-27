@@ -40,12 +40,6 @@ class AtomicfuBytecodeTest {
     @Test
     fun testDelegatedPropertiesBytecode() = checkBytecode(DelegatedProperties::class.java, listOf(KOTLIN_REFLECTION))
 
-    /**
-     * Test [SplitLvt]
-     */
-    @Test
-    fun testSplitLvt() = checkBytecode(SplitLvt::class.java, listOf(KOTLINX_ATOMICFU))
-
     private fun checkBytecode(javaClass: Class<*>, strings: List<String>) {
         val resourceName = javaClass.name.replace('.', '/') + ".class"
         val bytes = javaClass.classLoader.getResourceAsStream(resourceName)!!.use { it.readBytes() }
