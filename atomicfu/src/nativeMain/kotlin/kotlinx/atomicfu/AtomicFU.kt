@@ -25,8 +25,8 @@ public actual fun atomic(initial: Boolean): AtomicBoolean = atomic(initial, None
 
 // ==================================== AtomicRef ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "EXPERIMENTAL_FEATURE_WARNING", "NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
-public actual inline class AtomicRef<T> internal constructor(@PublishedApi internal val a: KAtomicRef<T>) {
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+public actual value class AtomicRef<T> internal constructor(@PublishedApi internal val a: KAtomicRef<T>) {
     public actual inline var value: T
         get() = a.value
         set(value) {
@@ -62,8 +62,8 @@ public actual inline class AtomicRef<T> internal constructor(@PublishedApi inter
 
 // ==================================== AtomicBoolean ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "EXPERIMENTAL_FEATURE_WARNING", "NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
-public actual inline class AtomicBoolean internal constructor(@PublishedApi internal val a: KAtomicInt) {
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+public actual value class AtomicBoolean internal constructor(@PublishedApi internal val a: KAtomicInt) {
     public actual inline var value: Boolean
         get() = a.value != 0
         set(value) { a.value = if (value) 1 else 0 }
@@ -94,8 +94,8 @@ public actual inline class AtomicBoolean internal constructor(@PublishedApi inte
 
 // ==================================== AtomicInt ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "EXPERIMENTAL_FEATURE_WARNING", "NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
-public actual inline class AtomicInt internal constructor(@PublishedApi internal val a: KAtomicInt) {
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+public actual value class AtomicInt internal constructor(@PublishedApi internal val a: KAtomicInt) {
     public actual inline var value: Int
         get() = a.value
         set(value) { a.value = value }
@@ -132,8 +132,8 @@ public actual inline class AtomicInt internal constructor(@PublishedApi internal
 
 // ==================================== AtomicLong ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "EXPERIMENTAL_FEATURE_WARNING", "NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
-public actual inline class AtomicLong internal constructor(@PublishedApi internal val a: KAtomicLong) {
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+public actual value class AtomicLong internal constructor(@PublishedApi internal val a: KAtomicLong) {
     public actual inline var value: Long
         get() = a.value
         set(value) { a.value = value }
