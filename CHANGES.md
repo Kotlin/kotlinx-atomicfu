@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.16.3
+
+* Kotlin is updated to 1.5.30.
+* All references to Bintray are removed from artefacts POMs.
+* Added new Apple Silicon targets for K/N.
+
 # Version 0.16.2
 
 * Update Kotlin to 1.5.20.
