@@ -44,20 +44,6 @@ fun MavenPom.configureMavenCentralMetadata(project: Project) {
     }
 }
 
-fun configureBintrayPublication(rh: RepositoryHandler, project: Project) {
-    rh.maven {
-        val user = "kotlin"
-        val repo = "kotlinx"
-        val name = "kotlinx.atomicfu"
-        url = URI("https://api.bintray.com/maven/$user/$repo/$name/;publish=0;override=0")
-
-        credentials {
-            username = project.findProperty("bintrayUser") as? String ?: System.getenv("BINTRAY_USER")
-            password = project.findProperty("bintrayApiKey") as? String ?: System.getenv("BINTRAY_API_KEY")
-        }
-    }
-}
-
 fun mavenRepositoryUri(): URI {
     // TODO -SNAPSHOT detection can be made here as well
     val repositoryId: String? = System.getenv("libs.repository.id")

@@ -27,15 +27,9 @@ task javadocJar(type: Jar) {
     archiveClassifier = 'javadoc'
 }
 
-def bintrayUpload = System.getenv("libs.bintray.upload") != null
-
 publishing {
     repositories { // this: closure
-        if (bintrayUpload) {
-            PublishingKt.configureBintrayPublication(delegate, project)
-        } else {
-            PublishingKt.configureMavenPublication(delegate, project)
-        }
+        PublishingKt.configureMavenPublication(delegate, project)
     }
     
     if (!isMultiplatform) {
@@ -61,9 +55,7 @@ publishing {
 
     publications.all {
         PublishingKt.configureMavenCentralMetadata(pom, project)
-        if (!bintrayUpload) {
-            PublishingKt.signPublicationIfKeyPresent(project, it)
-        }
+        PublishingKt.signPublicationIfKeyPresent(project, it)
 
         // add empty javadocs
         if (it.name != "kotlinMultiplatform") { // The root module gets the JVM's javadoc JAR
