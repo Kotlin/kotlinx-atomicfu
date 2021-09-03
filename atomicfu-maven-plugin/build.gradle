@@ -48,11 +48,6 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                             appendNode('url', 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev')
                         }
 
-                        }
-
-                        appendNode('repository').with {
-                            appendNode('id', 'teamcity')
-                            appendNode('url', kotlinCompiler)
                         if (buildSnapshots) {
                             appendNode('repository').with {
                                 appendNode('id', 'kotlin-snapshots')
@@ -82,11 +77,11 @@ task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
     if (mavenUserHome != null) args.add("-Dmaven.user.home=${new File(mavenUserHome).getAbsolutePath()}")
     if (mavenRepoLocal != null) args.add("-Dmaven.repo.local=${new File(mavenRepoLocal).getAbsolutePath()}")
     args.addAll([
-        '--settings', './settings.xml',
-        '--errors',
-        '--batch-mode',
-        '--file', pomFile.toString(),
-        'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'
+            '--settings', './settings.xml',
+            '--errors',
+            '--batch-mode',
+            '--file', pomFile.toString(),
+            'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'
     ])
     commandLine args
     doLast {
