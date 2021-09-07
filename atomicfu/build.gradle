@@ -342,3 +342,5 @@ afterEvaluate {
 tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
     dependsOn(tasks["generatePomFileForJvmPublication"])
 }
+
+Java9Modularity.configureJava9ModuleInfo(project)
