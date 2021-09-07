@@ -5,11 +5,13 @@
 package kotlinx.atomicfu.plugin.gradle
 
 import org.gradle.testkit.runner.TaskOutcome
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
 class MppProjectTest : BaseKotlinGradleTest() {
     @Test
+    @Ignore
     fun testKotlinMultiplatformPlugin() = project("mpp-simple") {
         val tasksToCheck = arrayOf(
             ":compileKotlinJvm",
