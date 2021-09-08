@@ -4,11 +4,23 @@
 
 package kotlinx.atomicfu.plugin.gradle
 
-import org.gradle.testkit.runner.TaskOutcome
+import org.gradle.testkit.runner.*
+import org.junit.*
 import org.junit.Test
-import java.io.File
+import java.io.*
+import kotlin.jvm.internal.*
+import kotlin.test.*
 
 class JsProjectTest : BaseKotlinGradleTest() {
+    @Test
+    fun testStdLibRuntimeVersion() {
+        val stdlibPath = File(
+            FunctionReferenceImpl::class.java.getProtectionDomain().getCodeSource().getLocation()
+                .toURI()
+        ).getPath()
+        assertEquals("kotlin-stdlib-1.6.0-M1-175.jar", stdlibPath.substringAfterLast('/'))
+    }
+
     @Test
     fun testKotlin2JsPlugin() = project("js-simple") {
         val tasksToCheck = arrayOf(
