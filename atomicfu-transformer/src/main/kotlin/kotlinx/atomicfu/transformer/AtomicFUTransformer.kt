@@ -126,7 +126,7 @@ private inline fun code(mv: MethodVisitor, block: InstructionAdapter.() -> Unit)
 }
 
 private inline fun insns(block: InstructionAdapter.() -> Unit): InsnList {
-    val node = MethodNode(ASM5)
+    val node = MethodNode(ASM9)
     block(InstructionAdapter(node))
     return node.instructions
 }
@@ -280,7 +280,7 @@ class AtomicFUTransformer(
         return cw.toByteArray() // write transformed bytes
     }
 
-    private abstract inner class CV(cv: ClassVisitor?) : ClassVisitor(ASM5, cv) {
+    private abstract inner class CV(cv: ClassVisitor?) : ClassVisitor(ASM9, cv) {
         lateinit var className: String
 
         override fun visit(
@@ -348,7 +348,7 @@ class AtomicFUTransformer(
     private inner class AccessorCollectorMV(
         private val className: String,
         access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?
-    ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
+    ) : MethodNode(ASM9, access, name, desc, signature, exceptions) {
         override fun visitEnd() {
             val insns = instructions.listUseful(4)
             if (insns.size == 3 &&
@@ -398,7 +398,7 @@ class AtomicFUTransformer(
 
     private inner class DelegateFieldsCollectorMV(
             access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?
-    ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
+    ) : MethodNode(ASM9, access, name, desc, signature, exceptions) {
         override fun visitEnd() {
             // register delegate field and the corresponding original atomic field
             // getfield a: *Atomic
@@ -460,7 +460,7 @@ class AtomicFUTransformer(
         private var originalClinit: MethodNode? = null
         private var newClinit: MethodNode? = null
 
-        private fun newClinit() = MethodNode(ASM5, ACC_STATIC, "<clinit>", "()V", null, null)
+        private fun newClinit() = MethodNode(ASM9, ACC_STATIC, "<clinit>", "()V", null, null)
         fun getOrCreateNewClinit(): MethodNode = newClinit ?: newClinit().also { newClinit = it }
 
         override fun visitSource(source: String?, debug: String?) {
@@ -607,7 +607,7 @@ class AtomicFUTransformer(
             val superMV = if (name == "<clinit>" && desc == "()V") {
                 if (access and ACC_STATIC == 0) abort("<clinit> method not marked as static")
                 // defer writing class initialization method
-                val node = MethodNode(ASM5, access, name, desc, signature, exceptions)
+                val node = MethodNode(ASM9, access, name, desc, signature, exceptions)
                 if (originalClinit != null) abort("Multiple <clinit> methods found")
                 originalClinit = node
                 node
@@ -673,7 +673,7 @@ class AtomicFUTransformer(
         private val packageName: String,
         private val vh: Boolean,
         private val analyzePhase2: Boolean // true in Phase 2 when we are analyzing file for refs (not transforming yet)
-    ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
+    ) : MethodNode(ASM9, access, name, desc, signature, exceptions) {
         init {
             this.mv = mv
         }
