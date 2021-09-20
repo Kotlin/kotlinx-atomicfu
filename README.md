@@ -140,7 +140,7 @@ See [gradle.properties](gradle.properties) in AtomicFU project for its `kotlin_v
 
 ### Common
 
-If you write a common code that should get compiled or different platforms, add `org.jetbrains.kotlinx:atomicfu-common`
+If you write a common code that should get compiled or different platforms, add `org.jetbrains.kotlinx:atomicfu`
 to your common code dependencies or apply `kotlinx-atomicfu` plugin that adds this dependency automatically:
 
 ```groovy
