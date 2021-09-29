@@ -5,11 +5,13 @@
 package kotlinx.atomicfu.plugin.gradle
 
 import org.gradle.testkit.runner.TaskOutcome
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
 class MppProjectTest : BaseKotlinGradleTest() {
     @Test
+    @Ignore
     fun testKotlinMultiplatformPlugin() = project("mpp-simple") {
         val tasksToCheck = arrayOf(
             ":compileKotlinJvm",
@@ -26,7 +28,7 @@ class MppProjectTest : BaseKotlinGradleTest() {
             fun checkPlatform(platform: String, fileInMainName: String) {
                 val isJs = platform == "js"
                 val testCompileClasspathFiles = projectDir.resolve("build/classpath/$platform/test_compile.txt")
-                    .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
+                    .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter { file -> file.isFile } }
                 val testRuntimeClasspathFiles = if (isJs) emptySet<File>() else projectDir.resolve("build/classpath/$platform/test_runtime.txt")
                     .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
 

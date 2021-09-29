@@ -26,7 +26,6 @@ class MetadataTransformer(
         val hdr = KotlinClassHeader(
             kind = map["k"] as Int?,
             metadataVersion = (map["mv"] as? List<Int>)?.toIntArray(),
-            bytecodeVersion = (map["bv"] as? List<Int>)?.toIntArray(),
             data1 = (map["d1"] as? List<String>)?.toTypedArray(),
             data2 = (map["d2"] as? List<String>)?.toTypedArray(),
             extraString = map["xs"] as String?,

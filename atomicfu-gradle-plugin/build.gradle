@@ -14,8 +14,8 @@ if (rootProject.ext.jvm_ir_enabled) {
 // Gradle plugin must be compiled targeting the same Kotlin version as used by Gradle
 kotlin.sourceSets.all {
     languageSettings {
-        apiVersion = "1.3"
-        languageVersion = "1.3"
+        apiVersion = "1.4"
+        languageVersion = "1.4"
     }
 }
 
