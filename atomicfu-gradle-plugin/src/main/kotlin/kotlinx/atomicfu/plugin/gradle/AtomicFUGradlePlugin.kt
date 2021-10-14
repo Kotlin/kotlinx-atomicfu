@@ -271,6 +271,7 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
                             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> Platform.JVM
                             KotlinPlatformType.js -> Platform.JS
                             KotlinPlatformType.native -> Platform.NATIVE
+                            else -> TODO()
                         }
             val configurationName = when {
                 // impl dependency for native (there is no transformation)
