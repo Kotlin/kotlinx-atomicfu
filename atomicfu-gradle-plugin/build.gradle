@@ -2,21 +2,12 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-    dependencies {
-        classpath "com.gradle.publish:plugin-publish-plugin:0.16.0"
-    }
+plugins {
+    id 'kotlin'
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'com.gradle.plugin-publish' version '0.16.0'
 }
-
-apply plugin: 'kotlin'
-apply plugin: 'java-gradle-plugin'
-apply plugin: 'maven-publish'
-apply plugin: "com.gradle.plugin-publish"
 
 if (rootProject.ext.jvm_ir_enabled) {
     kotlin.target.compilations.all {
@@ -89,10 +80,10 @@ dependencies {
 
 gradlePlugin {
     plugins {
-        create("atomicfu") {
-            id = "kotlinx-atomicfu"
+        create("kotlinx-atomicfu") {
+            id = "org.jetbrains.kotlinx.atomicfu"
             displayName = "Kotlinx Atomicfu Plugin"
-            description = "The idiomatic way to use atomic operations in Kotlin "
+            description = "The idiomatic way to use atomic operations in Kotlin"
             implementationClass = "kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin"
         }
     }
@@ -100,7 +91,6 @@ gradlePlugin {
 
 pluginBundle {
     website = "https://github.com/Kotlin/kotlinx.atomicfu"
-    vcsUrl = "https://github.com/Kotlin/kotlinx.atomicfu"
+    vcsUrl = "https://github.com/Kotlin/kotlinx.atomicfu.git"
     tags = ["kotlin", "atomic", "kotlinx"]
 }
-
