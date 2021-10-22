@@ -26,9 +26,9 @@ class MppProjectTest : BaseKotlinGradleTest() {
             fun checkPlatform(platform: String, fileInMainName: String) {
                 val isJs = platform == "js"
                 val testCompileClasspathFiles = projectDir.resolve("build/classpath/$platform/test_compile.txt")
-                    .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
+                    .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter { it.isFile } }
                 val testRuntimeClasspathFiles = if (isJs) emptySet<File>() else projectDir.resolve("build/classpath/$platform/test_runtime.txt")
-                    .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter(File::isFile) }
+                    .readLines().asSequence().flatMapTo(HashSet()) { File(it).walk().filter { it.isFile } }
 
                 projectDir.resolve("build/classes/kotlin/$platform/main/$fileInMainName").let {
                     it.checkExists()
