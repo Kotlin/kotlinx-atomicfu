@@ -207,8 +207,6 @@ which is then transformed to a regular `classes` directory to be used later by t
                     </goals>
                     <configuration>
                         <output>${project.build.directory}/classes-pre-atomicfu</output>
-                        <!-- "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code -->
-                        <variant>FU</variant>  
                     </configuration>
                 </execution>
             </executions>
@@ -225,6 +223,8 @@ which is then transformed to a regular `classes` directory to be used later by t
                     </goals>
                     <configuration>
                         <input>${project.build.directory}/classes-pre-atomicfu</input>
+                        <!-- "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code -->
+                        <variant>FU</variant>  
                     </configuration>
                 </execution>
             </executions>
