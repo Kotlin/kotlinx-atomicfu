@@ -22,7 +22,7 @@ class JsProjectTest : BaseKotlinGradleTest() {
             checkOutcomes(TaskOutcome.SUCCESS, *tasksToCheck)
 
             val testCompileClasspathFiles = projectDir.resolve("build/test_compile_classpath.txt")
-                .readLines().asSequence().flatMap { File(it).walk().filter(File::isFile) }.toHashSet()
+                .readLines().asSequence().flatMap { File(it).walk().filter { it.isFile } }.toHashSet()
 
             projectDir.resolve("build/classes/kotlin/main/js-simple.js").let {
                 it.checkExists()
