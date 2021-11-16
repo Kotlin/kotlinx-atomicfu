@@ -324,6 +324,68 @@ tasks.withType(Test) {
     }
 }
 
+task compileJavaModuleInfo(type: JavaCompile) {
+    def moduleName = "kotlinx.atomicfu" // this module's name
+    def compileKotlinJvm = kotlin.targets["jvm"].compilations["main"].compileKotlinTask
+    def sourceDir = file("src/jvmMain/java9/")
+    def targetDir = file("${compileKotlinJvm.destinationDir}/../java9/")
+
+    // Use a Java 11 compiler for the module info.
+    javaCompiler.set(project.javaToolchains.compilerFor { languageVersion.set(JavaLanguageVersion.of(11)) })
+
+    // Always compile kotlin classes before the module descriptor.
+    dependsOn(compileKotlinJvm)
+
+    // Add the module-info source file.
+    source(sourceDir)
+
+    // Also add the module-info.java source file to the Kotlin compile task.
+    // The Kotlin compiler will parse and check module dependencies,
+    // but it currently won't compile to a module-info.class file.
+    // Note that module checking only works on JDK 9+,
+    // because the JDK built-in base modules are not available in earlier versions.
+    def javaVersion = compileKotlinJvm.kotlinJavaToolchain.javaVersion.getOrNull()
+    if (javaVersion?.isJava9Compatible() == true) {
+        logger.info("Module-info checking is enabled; $compileKotlinJvm is compiled using Java $javaVersion")
+        compileKotlinJvm.source(sourceDir)
+    } else {
+        logger.info("Module-info checking is disabled")
+    }
+
+    // Set the task outputs and destination dir
+    outputs.dir(targetDir)
+    destinationDir = targetDir
+
+    // Configure JVM compatibility
+    sourceCompatibility = JavaVersion.VERSION_1_9.toString()
+    targetCompatibility = JavaVersion.VERSION_1_9.toString()
+
+    // Set the Java release version.
+    options.release.set(9)
+
+    // Ignore warnings about using 'requires transitive' on automatic modules.
+    // not needed when compiling with recent JDKs, e.g. 17
+    options.compilerArgs.add("-Xlint:-requires-transitive-automatic")
+
+    // Patch the compileKotlinJvm output classes into the compilation so exporting packages works correctly.
+    options.compilerArgs.addAll(["--patch-module", "$moduleName=${compileKotlinJvm.destinationDir}"])
+
+    // Use the classpath of the compileKotlinJvm task.
+    // Also ensure that the module path is used instead of classpath.
+    classpath = compileKotlinJvm.classpath
+    modularity.inferModulePath.set(true)
+}
+
+// Configure the JAR task so that it will include the compiled module-info class file.
+tasks.named("jvmJar") {
+    manifest {
+        attributes(["Multi-Release": true])
+    }
+    from(compileJavaModuleInfo) {
+        into("META-INF/versions/9/")
+    }
+}
+
 jvmTest {
     exclude "**/AtomicfuBytecodeTest*", "**/AtomicfuReferenceJsTest*", '**/TopLevelGeneratedDeclarationsReflectionTest.*', '**/SyntheticFUFieldsTest.*' // run them only for transformed code
 }
@@ -343,4 +405,3 @@ tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }
     dependsOn(tasks["generatePomFileForJvmPublication"])
 }
 
-Java9Modularity.configureJava9ModuleInfo(project)
