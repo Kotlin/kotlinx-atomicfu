@@ -51,7 +51,7 @@ To release new `<version>` of `kotlinx-atomicfu`:
     * Create a release named `<version>`. 
     * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.
    
-13. In [Sonatype](oss.sonatype.org/#stagingRepositories) admin interface:
+13. In [Nexus](https://oss.sonatype.org/#stagingRepositories) admin interface:
     * Close the repository and wait for it to verify.
     * Release it.
 
