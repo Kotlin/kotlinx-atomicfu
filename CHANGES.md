@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.17.0
+
+* Update Kotlin to 1.6.0.
+* Update ASM minimal api version to ASM7 (#203).
+* Add explicit module-info for JPMS compatibility (#201).
+
 # Version 0.16.3
 
 * Kotlin is updated to 1.5.30.
