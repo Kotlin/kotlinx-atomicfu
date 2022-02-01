@@ -43,7 +43,7 @@ private fun Project.configureDependencies() {
         )
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JVM, version))
     }
-    withPluginWhenEvaluatedDependencies("kotlin2js") { version ->
+    withPluginWhenEvaluatedDependencies("org.jetbrains.kotlin.js") { version ->
         dependencies.add(
             if (config.transformJs) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
             getAtomicfuDependencyNotation(Platform.JS, version)
@@ -70,9 +70,9 @@ private fun Project.configureTasks() {
             }
         }
     }
-    withPluginWhenEvaluated("kotlin2js") {
+    withPluginWhenEvaluated("org.jetbrains.kotlin.js") {
         if (config.transformJs) {
-            configureTransformTasks("compileTestKotlin2Js") { sourceSet, transformedDir, originalDir ->
+            configureTransformTasks("compileTestKotlinJs") { sourceSet, transformedDir, originalDir ->
                 createJsTransformTask(sourceSet).configureJsTask(
                     sourceSet.classesTaskName,
                     transformedDir,
