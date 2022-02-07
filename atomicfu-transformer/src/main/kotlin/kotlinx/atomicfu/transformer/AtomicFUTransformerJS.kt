@@ -52,8 +52,8 @@ class AtomicFUTransformerJS(
     outputDir: File
 ) : AtomicFUTransformerBase(inputDir, outputDir) {
     private val atomicConstructors = mutableSetOf<String>()
-    private val fieldDelegates = mutableMapOf<String, String>()
-    private val delegatedProperties = mutableMapOf<String, String>()
+    private val delegateToOriginalAtomicField = mutableMapOf<String, Name>()
+    private val topLevelDelegatedFieldAccessorToOriginalField = mutableMapOf<String, Name>()
     private val atomicArrayConstructors = mutableMapOf<String, String?>()
     private val traceConstructors = mutableSetOf<String>()
     private val traceFormatObjects = mutableSetOf<String>()
@@ -81,6 +81,7 @@ class AtomicFUTransformerJS(
         root.visit(AtomicConstructorDetector())
         root.visit(FieldDelegatesVisitor())
         root.visit(DelegatedPropertyAccessorsVisitor())
+        root.visit(TopLevelDelegatedFieldsAccessorVisitor())
         root.visit(TransformVisitor())
         root.visit(AtomicOperationsInliner())
         return root.eraseGetValue().toByteArray()
@@ -283,12 +284,17 @@ class AtomicFUTransformerJS(
                             if (stmt is ExpressionStatement) {
                                 if (stmt.expression is Assignment) {
                                     val delegateAssignment = stmt.expression as Assignment
-                                    if (delegateAssignment.right is PropertyGet) {
-                                        val initializer = delegateAssignment.right as PropertyGet
-                                        if (initializer.toSource() == atomicField.toSource()) {
-                                            // register field delegate and the original atomic field
-                                            fieldDelegates[(delegateAssignment.left as PropertyGet).property.toSource()] =
-                                                    (atomicField as PropertyGet).property.toSource()
+                                    val initializer = delegateAssignment.right
+                                    if (initializer.toSource() == atomicField.toSource()) {
+                                        if (delegateAssignment.right is PropertyGet) { // initialization of a class field
+                                            // delegate${owner_class} to original atomic field
+                                            val delegateFieldName = (delegateAssignment.left as PropertyGet).property.toSource()
+                                            val ownerClassName = constructorBlock.enclosingFunction.functionName.identifier
+                                            delegateToOriginalAtomicField["$delegateFieldName\$$ownerClassName"] =
+                                                    (atomicField as PropertyGet).property
+                                        } else { // top-level delegated fields
+                                            val delegateFieldName = delegateAssignment.left.toSource()
+                                            delegateToOriginalAtomicField[delegateFieldName] = atomicField as Name
                                         }
                                     }
                                 }
@@ -303,22 +309,74 @@ class AtomicFUTransformerJS(
 
     inner class DelegatedPropertyAccessorsVisitor : NodeVisitor {
         override fun visit(node: AstNode?): Boolean {
-            if (node is PropertyGet) {
-                if (node.target is PropertyGet) {
-                    if ((node.target as PropertyGet).property.toSource() in fieldDelegates && node.property.toSource() == MANGLED_VALUE_PROP) {
-                        if (node.parent is ReturnStatement) {
-                            val getter = ((((node.parent.parent as? Block)?.parent as? FunctionNode)?.parent as? ObjectProperty)?.parent as? ObjectLiteral)
-                                    ?: abort("Incorrect tree structure of the accessor for the property delegated " +
-                                            "to the atomic field ${fieldDelegates[node.target.toSource()]}")
-                            val definePropertyCall = getter.parent as FunctionCall
-                            val stringLiteral = definePropertyCall.arguments[1] as? StringLiteral
-                                    ?: abort ("Object.defineProperty invocation should take a property name as the second argument")
-                            val delegatedProperty = stringLiteral.value.toString()
-                            delegatedProperties[delegatedProperty] = (node.target as PropertyGet).property.toSource()
+            // find ObjectLiteral with accessors of the delegated field (get: FunctionNode, set: FunctionNode)
+            // redirect getter/setter from generated delegate field to the original atomic field
+            if (node is ObjectLiteral && node.parent is FunctionCall &&
+                    ((node.elements.size == 2 && node.elements[1].left.toSource() == "get") ||
+                            (node.elements.size == 3 && node.elements[1].left.toSource() == "get" && node.elements[2].left.toSource() == "set"))) {
+                // check that these are accessors of the atomic delegate field (check only getter)
+                if (node.elements[1].right is FunctionNode) {
+                    val getter = node.elements[1].right as FunctionNode
+                    if (getter.body.hasChildren() && getter.body.firstChild is ReturnStatement) {
+                        val returnStmt = getter.body.firstChild as ReturnStatement
+                        if (returnStmt.returnValue is PropertyGet && (returnStmt.returnValue as PropertyGet).property.toSource() == MANGLED_VALUE_PROP) {
+                            val delegateField = ((returnStmt.returnValue as PropertyGet).target as PropertyGet).property.toSource()
+                            val ownerClassName = ((node.parent as FunctionCall).arguments[0] as PropertyGet).target.toSource()
+                            val key = "$delegateField\$$ownerClassName"
+                            delegateToOriginalAtomicField[key]?.let { atomicField ->
+                                // get() = a$delegate.value -> _a.value
+                                getter.replaceAccessedField(true, atomicField)
+                                if (node.elements.size == 3) {
+                                    // set(v: T) { a$delegate.value = v } -> { _a.value = v }
+                                    val setter = node.elements[2].right as FunctionNode
+                                    setter.replaceAccessedField(false, atomicField)
+                                }
+                            }
                         }
                     }
                 }
+            }
+            if (node is ObjectLiteral && node.parent is FunctionCall && ((node.elements.size == 1 && node.elements[0].left.toSource() == "get") ||
+                            node.elements.size == 2 && node.elements[0].left.toSource() == "get" && node.elements[1].left.toSource() == "set")) {
+                val parent = node.parent as FunctionCall
+                if (parent.arguments.size == 3 && parent.arguments[1] is StringLiteral) {
+                    val topLevelDelegatedFieldName = (parent.arguments[1] as StringLiteral).value
+                    if (topLevelDelegatedFieldName in delegateToOriginalAtomicField) {
+                        val originalAtomicFieldName = delegateToOriginalAtomicField[topLevelDelegatedFieldName]!!
+                        val getterName = node.elements[0].right.toSource()
+                        topLevelDelegatedFieldAccessorToOriginalField[getterName] = originalAtomicFieldName
+                        if (node.elements.size == 2) {
+                            val setterName = node.elements[1].right.toSource()
+                            topLevelDelegatedFieldAccessorToOriginalField[setterName] = originalAtomicFieldName
+                        }
+                    }
+                }
+            }
+            return true
+        }
+    }
 
+    private fun FunctionNode.replaceAccessedField(isGetter: Boolean, newField: Name) {
+        val propertyGet = if (isGetter) {
+            (body.firstChild as ReturnStatement).returnValue as PropertyGet
+        } else {
+            ((body.firstChild as ExpressionStatement).expression as Assignment).left as PropertyGet
+        }
+        if (propertyGet.target is PropertyGet) { // class member
+            (propertyGet.target as PropertyGet).property = newField
+        } else { // top-level field
+            propertyGet.target = newField
+        }
+    }
+
+    inner class TopLevelDelegatedFieldsAccessorVisitor : NodeVisitor {
+        override fun visit(node: AstNode?): Boolean {
+            if (node is FunctionNode && node.name.toString() in topLevelDelegatedFieldAccessorToOriginalField) {
+                val accessorName = node.name.toString()
+                val atomicField = topLevelDelegatedFieldAccessorToOriginalField[accessorName]!!
+                // function get_topLevelDelegatedField() = a.value  -> _a.value
+                // function set_topLevelDelegatedField(v: T) { a.value = v }  -> { _a.value = v }
+                node.replaceAccessedField(accessorName.startsWith("get"), atomicField)
             }
             return true
         }
@@ -387,12 +445,6 @@ class AtomicFUTransformerJS(
                         node.enclosingFunction.visit(rr)
                         rr.receiver?.let { node.target = it }
                     }
-                }
-                if (node.property.toSource() in delegatedProperties) {
-                    // replace delegated property name with the name of the original atomic field
-                    val fieldDelegate = delegatedProperties[node.property.toSource()]
-                    val originalField = fieldDelegates[fieldDelegate]!!
-                    node.property = Name().apply { identifier = originalField }
                 }
                 // replace Atomic*Array.size call with `length` property on the pure type js array
                 if (node.property.toSource() == ARRAY_SIZE) {

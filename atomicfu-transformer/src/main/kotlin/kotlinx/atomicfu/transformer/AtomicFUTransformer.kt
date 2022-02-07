@@ -91,7 +91,6 @@ private val TRACE_APPEND_3 = MethodId(TRACE_BASE_CLS, "append", getMethodDescrip
 private val TRACE_APPEND_4 = MethodId(TRACE_BASE_CLS, "append", getMethodDescriptor(VOID_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE), INVOKEVIRTUAL)
 private val TRACE_DEFAULT_ARGS = "I${OBJECT_TYPE.descriptor}"
 private const val DEFAULT = "\$default"
-private const val DELEGATE = "\$delegate"
 
 private val TRACE_FACTORY = MethodId(TRACE_KT, TRACE, "(IL$AFU_PKG/$TRACE_FORMAT;)L$AFU_PKG/$TRACE_BASE;", INVOKESTATIC)
 private val TRACE_PARTIAL_ARGS_FACTORY = MethodId(TRACE_KT, "$TRACE$DEFAULT", "(IL$AFU_PKG/$TRACE_FORMAT;$TRACE_DEFAULT_ARGS)L$AFU_PKG/$TRACE_BASE;", INVOKESTATIC)
@@ -188,6 +187,7 @@ class AtomicFUTransformer(
     private val traceFields = mutableSetOf<FieldId>()
     private val traceAccessors = mutableSetOf<MethodId>()
     private val fieldDelegates = mutableMapOf<FieldId, FieldInfo>()
+    private val delegatedPropertiesAccessors = mutableMapOf<FieldId, MethodId>()
     private val removeMethods = mutableSetOf<MethodId>()
 
     override fun transform() {
@@ -341,6 +341,10 @@ class AtomicFUTransformer(
                 // check for copying atomic values into delegate fields and register potential delegate fields
                 return DelegateFieldsCollectorMV(access, name, desc, signature, exceptions)
             }
+            // collect accessors of potential delegated properties
+            if (methodType.argumentTypes.isEmpty()) {
+                return DelegatedFieldAccessorCollectorMV(className, methodType.returnType, access, name, desc, signature, exceptions)
+            }
             return null
         }
     }
@@ -396,6 +400,43 @@ class AtomicFUTransformer(
         }
     }
 
+    private inner class DelegatedFieldAccessorCollectorMV(
+            private val className: String, private val returnType: Type,
+            access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?
+    ) : MethodNode(ASM5, access, name, desc, signature, exceptions) {
+        override fun visitEnd() {
+            // check for pattern of a delegated property getter
+            // getfield/getstatic a$delegate: Atomic*
+            // astore_i ...
+            // aload_i
+            // invokevirtual Atomic*.getValue()
+            // ireturn
+            var cur = instructions.first
+            while (cur != null && !(cur.isGetFieldOrGetStatic() && getType((cur as FieldInsnNode).desc) in AFU_TYPES)) {
+                cur = cur.next
+            }
+            if (cur != null && cur.next.opcode == ASTORE) {
+                val fi = cur as FieldInsnNode
+                val fieldDelegate = FieldId(className, fi.name, fi.desc)
+                val atomicType = getType(fi.desc)
+                val v = (cur.next as VarInsnNode).`var`
+                while (!(cur is VarInsnNode && cur.opcode == ALOAD && cur.`var` == v)) {
+                    cur = cur.next
+                }
+                val invokeVirtual = cur.next
+                if (invokeVirtual.opcode == INVOKEVIRTUAL && (invokeVirtual as MethodInsnNode).name == GET_VALUE && invokeVirtual.owner == atomicType.internalName) {
+                    // followed by RETURN operation
+                    val next = invokeVirtual.nextUseful
+                    val ret = if (next?.opcode == CHECKCAST) next.nextUseful else next
+                    if (ret != null && ret.isTypeReturn(returnType)) {
+                        // register delegated property accessor
+                        delegatedPropertiesAccessors[fieldDelegate] = MethodId(className, name, desc, accessToInvokeOpcode(access))
+                    }
+                }
+            }
+        }
+    }
+
     private inner class DelegateFieldsCollectorMV(
             access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?
     ) : MethodNode(ASM9, access, name, desc, signature, exceptions) {
@@ -408,7 +449,7 @@ class AtomicFUTransformer(
                     insn.checkGetFieldOrGetStatic()?.let { getfieldId ->
                         val next = insn.next
                         (next as? FieldInsnNode)?.checkPutFieldOrPutStatic()?.let { delegateFieldId ->
-                            if (delegateFieldId.name.endsWith(DELEGATE)) {
+                            if (getfieldId in fields && delegateFieldId in fields) {
                                 // original atomic value is copied to the synthetic delegate atomic field <delegated field name>$delegate
                                 val originalField = fields[getfieldId]!!
                                 fieldDelegates[delegateFieldId] = originalField
@@ -420,11 +461,12 @@ class AtomicFUTransformer(
                     val methodId = MethodId(insn.owner, insn.name, insn.desc, insn.opcode)
                     if (methodId in FACTORIES) {
                         (insn.nextUseful as? FieldInsnNode)?.checkPutFieldOrPutStatic()?.let { delegateFieldId ->
-                            if (delegateFieldId.name.endsWith(DELEGATE)) {
+                            val fieldType = getType(insn.desc).returnType
+                            if (fieldType in AFU_TYPES) {
+                                val isStatic = insn.nextUseful!!.opcode == PUTSTATIC
                                 // delegate field is initialized by a factory invocation
-                                val fieldType = getType(insn.desc).returnType
                                 // for volatile delegated properties store FieldInfo of the delegate field itself
-                                fieldDelegates[delegateFieldId] = FieldInfo(delegateFieldId, fieldType)
+                                fieldDelegates[delegateFieldId] = FieldInfo(delegateFieldId, fieldType, isStatic)
                             }
                         }
                     }
@@ -446,6 +488,8 @@ class AtomicFUTransformer(
         val fieldId = FieldId(owner, name, desc)
         return if (fieldId in fields) fieldId else null
     }
+
+    private fun FieldId.isFieldDelegate() = this in fieldDelegates && delegatedPropertiesAccessors.contains(this)
 
     private inner class TransformerCV(
         cv: ClassVisitor?,
@@ -478,8 +522,8 @@ class AtomicFUTransformer(
             val fieldType = getType(desc)
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
                 val fieldId = FieldId(className, name, desc)
-                // skip delegate field
-                if (fieldId in fieldDelegates && (fieldId != fieldDelegates[fieldId]!!.fieldId)) {
+                // skip field delegates except volatile delegated properties (e.g. val a: Int by atomic(0))
+                if (fieldId.isFieldDelegate() && (fieldId != fieldDelegates[fieldId]!!.fieldId)) {
                     transformed = true
                     return null
                 }
@@ -727,7 +771,7 @@ class AtomicFUTransformer(
 
         private fun FieldInsnNode.checkCopyToDelegate(): AbstractInsnNode? {
             val fieldId = FieldId(owner, name, desc)
-            if (fieldId in fieldDelegates) {
+            if (fieldId.isFieldDelegate()) {
                 // original atomic value is copied to the synthetic delegate atomic field <delegated field name>$delegate
                 val originalField = fieldDelegates[fieldId]!!
                 val getField = previous as FieldInsnNode
@@ -753,51 +797,29 @@ class AtomicFUTransformer(
             if (iv.name == GET_VALUE || iv.name == SET_VALUE) {
                 check(!f.isArray || onArrayElement) { "getValue/setValue can only be called on elements of arrays" }
                 val setInsn = iv.name == SET_VALUE
-                if (!onArrayElement) {
-                    val primitiveType = f.getPrimitiveType(vh)
-                    val owner = if (!vh && f.isStatic) f.refVolatileClassName else f.owner
-                    if (!vh && f.isStatic) {
-                        val getOwnerClass = FieldInsnNode(
-                            GETSTATIC,
-                            f.owner,
-                            f.staticRefVolatileField,
-                            getObjectType(owner).descriptor
-                        )
-                        instructions.insert(ld, getOwnerClass)
-                    }
-                    instructions.remove(ld) // drop getstatic (we don't need field updater)
-                    val j = FieldInsnNode(
-                        when {
-                            iv.name == GET_VALUE -> if (f.isStatic && vh) GETSTATIC else GETFIELD
-                            else -> if (f.isStatic && vh) PUTSTATIC else PUTFIELD
-                        }, owner, f.name, primitiveType.descriptor
-                    )
-                    instructions.set(iv, j) // replace invokevirtual with get/setfield
-                    return j.next
-                } else {
-                    var methodType = getMethodType(iv.desc)
-                    if (f.typeInfo.originalType != f.typeInfo.transformedType && !vh) {
-                        val ret = f.typeInfo.transformedType.elementType
-                        iv.desc = if (setInsn) getMethodDescriptor(methodType.returnType, ret) else getMethodDescriptor(ret, *methodType.argumentTypes)
-                        methodType = getMethodType(iv.desc)
-                    }
-                    iv.name = iv.name.substring(0, 3)
-                    if (!vh) {
-                        // map to j.u.c.a.Atomic*Array get or set
-                        iv.owner = descToName(f.fuType.descriptor)
-                        iv.desc = getMethodDescriptor(methodType.returnType, INT_TYPE, *methodType.argumentTypes)
-                    } else {
-                        // map to VarHandle get or set
-                        iv.owner = descToName(VH_TYPE.descriptor)
-                        iv.desc = getMethodDescriptor(
-                            methodType.returnType,
-                            f.getPrimitiveType(vh),
-                            INT_TYPE,
-                            *methodType.argumentTypes
-                        )
-                    }
-                    return iv
+                if (!onArrayElement) return getPureTypeField(ld, f, iv)
+                var methodType = getMethodType(iv.desc)
+                if (f.typeInfo.originalType != f.typeInfo.transformedType && !vh) {
+                    val ret = f.typeInfo.transformedType.elementType
+                    iv.desc = if (setInsn) getMethodDescriptor(methodType.returnType, ret) else getMethodDescriptor(ret, *methodType.argumentTypes)
+                    methodType = getMethodType(iv.desc)
                 }
+                iv.name = iv.name.substring(0, 3)
+                if (!vh) {
+                    // map to j.u.c.a.Atomic*Array get or set
+                    iv.owner = descToName(f.fuType.descriptor)
+                    iv.desc = getMethodDescriptor(methodType.returnType, INT_TYPE, *methodType.argumentTypes)
+                } else {
+                    // map to VarHandle get or set
+                    iv.owner = descToName(VH_TYPE.descriptor)
+                    iv.desc = getMethodDescriptor(
+                        methodType.returnType,
+                        f.getPrimitiveType(vh),
+                        INT_TYPE,
+                        *methodType.argumentTypes
+                    )
+                }
+                return iv
             }
             if (f.isArray && iv.name == GET_SIZE) {
                 if (!vh) {
@@ -858,6 +880,29 @@ class AtomicFUTransformer(
                 return swap.next
             }
             return iv.next
+        }
+
+        private fun getPureTypeField(ld: FieldInsnNode, f: FieldInfo, iv: MethodInsnNode): AbstractInsnNode? {
+            val primitiveType = f.getPrimitiveType(vh)
+            val owner = if (!vh && f.isStatic) f.refVolatileClassName else f.owner
+            if (!vh && f.isStatic) {
+                val getOwnerClass = FieldInsnNode(
+                        GETSTATIC,
+                        f.owner,
+                        f.staticRefVolatileField,
+                        getObjectType(owner).descriptor
+                )
+                instructions.insert(ld, getOwnerClass)
+            }
+            instructions.remove(ld) // drop getfield/getstatic of the atomic field
+            val j = FieldInsnNode(
+                    when {
+                        iv.name == GET_VALUE -> if (f.isStatic && vh) GETSTATIC else GETFIELD
+                        else -> if (f.isStatic && vh) PUTSTATIC else PUTFIELD
+                    }, owner, f.name, primitiveType.descriptor
+            )
+            instructions.set(iv, j) // replace invokevirtual with get/setfield
+            return j.next
         }
 
         private fun vhOperation(iv: MethodInsnNode, typeInfo: TypeInfo, f: FieldInfo) {
@@ -1310,7 +1355,7 @@ class AtomicFUTransformer(
                 is FieldInsnNode -> {
                     val fieldId = FieldId(i.owner, i.name, i.desc)
                     if ((i.opcode == GETFIELD || i.opcode == GETSTATIC) && fieldId in fields) {
-                        if (fieldId in fieldDelegates && i.next.opcode == ASTORE) {
+                        if (fieldId.isFieldDelegate() && i.next.opcode == ASTORE) {
                             return transformDelegatedFieldAccessor(i, fieldId)
                         }
                         (i.next as? FieldInsnNode)?.checkCopyToDelegate()?.let { return it } // atomic field is copied to delegate field
@@ -1343,29 +1388,25 @@ class AtomicFUTransformer(
             return i.next
         }
 
-        private fun transformDelegatedFieldAccessor(i: FieldInsnNode, fieldId: FieldId): AbstractInsnNode {
+        private fun transformDelegatedFieldAccessor(i: FieldInsnNode, fieldId: FieldId): AbstractInsnNode? {
             val f = fieldDelegates[fieldId]!!
-            val astore = (i.next as? VarInsnNode) ?: abort("Method $name does not match the pattern of a delegated field accessor")
-            val v = astore.`var`
-            var cur: AbstractInsnNode = i
+            val v = (i.next as VarInsnNode).`var`
+            // remove instructions [astore_v .. aload_v]
+            var cur: AbstractInsnNode = i.next
             while (!(cur is VarInsnNode && cur.opcode == ALOAD && cur.`var` == v)) {
                 val next = cur.next
                 instructions.remove(cur)
                 cur = next
             }
-            val invokeVirtual = FlowAnalyzer(cur.next).execute()
-            instructions.remove(cur)
-            check(invokeVirtual.isAtomicGetValueOrSetValue()) { "Aload of the field delegate $f should be followed with Atomic*.getValue()/setValue() invocation" }
-            val accessorName = (invokeVirtual as MethodInsnNode).name.substring(0, 3)
-            val isGetter = accessorName == "get"
-            val primitiveType = f.getPrimitiveType(vh)
-            val j = FieldInsnNode(if (isGetter) GETFIELD else PUTFIELD, f.owner, f.name, primitiveType.descriptor)
-            instructions.set(invokeVirtual, j)
+            val iv = FlowAnalyzer(cur.next).execute()
+            check(iv.isAtomicGetValueOrSetValue()) { "Aload of the field delegate $f should be followed with Atomic*.getValue()/setValue() invocation" }
+            val isGetter = (iv as MethodInsnNode).name == GET_VALUE
+            instructions.remove(cur) // remove aload_v
             localVariables.removeIf {
                 !(getType(it.desc).internalName == f.owner ||
                         (!isGetter && getType(it.desc) == getType(desc).argumentTypes.first() && it.name == "<set-?>"))
             }
-            return j.next
+            return getPureTypeField(i, f, iv)
         }
 
         private fun AbstractInsnNode.isAtomicGetFieldOrGetStatic() =
