@@ -211,8 +211,9 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
                 originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
 
+            val kotlinOptions = compilation.kotlinOptions
             compilation.compileKotlinTask.doFirst {
-                compilation.kotlinOptions.addFriendPaths(originalMainClassesDirs)
+                kotlinOptions.addFriendPaths(originalMainClassesDirs)
             }
         }
     }
