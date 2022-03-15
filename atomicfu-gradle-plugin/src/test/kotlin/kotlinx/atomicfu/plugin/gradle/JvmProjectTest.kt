@@ -5,10 +5,11 @@
 package kotlinx.atomicfu.plugin.gradle
 
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Test
+import org.junit.*
 import java.io.File
 
 class JvmProjectTest : BaseKotlinGradleTest() {
+    @Ignore
     @Test
     fun testKotlinPlugin() =
         project("jvm-simple") {
