@@ -24,6 +24,7 @@ kotlin {
 
     // JS -- always
     js {
+        moduleName = "kotlinx-atomicfu"
         // TODO: Commented out because browser tests do not work on TeamCity
         // browser()
         nodejs()
@@ -164,14 +165,6 @@ tasks.withType(compileJsLegacy.getClass()) {
     }
 }
 
-compileJsLegacy.configure {
-    kotlinOptions {
-        // NOTE: Module base-name must be equal to the package name declared in package.json
-        def baseName = "kotlinx-atomicfu"
-        outputFile = new File(new File(outputFile).parent, baseName + ".js")
-    }
-}
-
 apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
 apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
 
@@ -208,8 +201,14 @@ task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
 
 if (project.tasks.findByName('jsLegacyNodeTest')) {
     jsLegacyNodeTest.dependsOn transformJS
+    jsLegacyNodeTest.configure {
+        inputFileProperty.set(new File(transformedJsFile))
+    }
 } else {
     jsNodeTest.dependsOn transformJS
+    jsNodeTest.configure {
+        inputFileProperty.set(new File(transformedJsFile))
+    }
 }
 
 // ==== CONFIGURE JVM =====
