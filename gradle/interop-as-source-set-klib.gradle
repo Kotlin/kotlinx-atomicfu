@@ -7,7 +7,7 @@ project.ext.registerInteropAsSourceSetOutput = { interop, sourceSet ->
         def cinteropTask = tasks.named(interop.interopProcessingTaskName)
         def cinteropKlib = cinteropTask.map { it.outputFile }
         def fakeCinteropCompilation = kotlin.targets["metadata"].compilations[sourceSet.name]
-        def destination = fakeCinteropCompilation.compileKotlinTask.destinationDir
+        def destination = fakeCinteropCompilation.compileKotlinTask.destinationDirectory
 
         def tempDir = "$buildDir/tmp/${sourceSet.name}UnpackedInteropKlib"
 
