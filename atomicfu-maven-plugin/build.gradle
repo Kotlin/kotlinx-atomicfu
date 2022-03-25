@@ -18,7 +18,7 @@ dependencies {
 }
 
 def pomFile = file("$buildDir/pom.xml")
-def outputDir = compileKotlin.destinationDir
+def outputDir = compileKotlin.destinationDirectory
 def buildSnapshots = rootProject.properties['build_snapshot_train'] != null
 
 evaluationDependsOn(':atomicfu-transformer')
@@ -37,7 +37,7 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                 asNode().with {
                     appendNode('build').with {
                         appendNode('directory', buildDir)
-                        appendNode('outputDirectory', outputDir)
+                        appendNode('outputDirectory', outputDir.get().getAsFile())
                     }
                     appendNode('properties').with {
                         appendNode('project.build.sourceEncoding', 'UTF-8')
@@ -69,7 +69,7 @@ String mavenRepoLocal = System.getProperty("maven.repo.local")
 
 // runs the plugin description generator
 task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
-    def pluginDescriptorFile = new File(outputDir, 'META-INF/maven/plugin.xml')
+    def pluginDescriptorFile = outputDir.file('META-INF/maven/plugin.xml')
 
     workingDir projectDir
     boolean isWindows = System.getProperty("os.name").toLowerCase().indexOf("windows") >= 0
@@ -85,8 +85,9 @@ task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
     ])
     commandLine args
     doLast {
-        assert pluginDescriptorFile.file, "$pluginDescriptorFile: was not generated"
-        logger.info("Plugin descriptor is generated in $pluginDescriptorFile")
+        def descriptorFile = pluginDescriptorFile.get().getAsFile()
+        assert descriptorFile, "$descriptorFile: was not generated"
+        logger.info("Plugin descriptor is generated in $descriptorFile")
     }
 }
 
