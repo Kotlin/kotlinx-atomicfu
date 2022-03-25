@@ -29,7 +29,7 @@ task preparePublishNpm(type: Copy, dependsOn: [compileJsLegacy]) {
     from(npmTemplateDir) {
         expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
     }
-    from(compileJsLegacy.destinationDir)
+    from(compileJsLegacy.destinationDirectory)
     into npmDeployDir
 }
 
