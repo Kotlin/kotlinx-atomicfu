@@ -327,7 +327,7 @@ task compileJavaModuleInfo(type: JavaCompile) {
     def moduleName = "kotlinx.atomicfu" // this module's name
     def compileKotlinJvm = kotlin.targets["jvm"].compilations["main"].compileKotlinTask
     def sourceDir = file("src/jvmMain/java9/")
-    def targetDir = file("${compileKotlinJvm.destinationDir}/../java9/")
+    def targetDir = compileKotlinJvm.destinationDirectory.map { it.dir("../java9/") }
 
     // Use a Java 11 compiler for the module info.
     javaCompiler.set(project.javaToolchains.compilerFor { languageVersion.set(JavaLanguageVersion.of(11)) })
@@ -353,7 +353,7 @@ task compileJavaModuleInfo(type: JavaCompile) {
 
     // Set the task outputs and destination dir
     outputs.dir(targetDir)
-    destinationDir = targetDir
+    destinationDirectory.set(targetDir)
 
     // Configure JVM compatibility
     sourceCompatibility = JavaVersion.VERSION_1_9.toString()
@@ -367,12 +367,16 @@ task compileJavaModuleInfo(type: JavaCompile) {
     options.compilerArgs.add("-Xlint:-requires-transitive-automatic")
 
     // Patch the compileKotlinJvm output classes into the compilation so exporting packages works correctly.
-    options.compilerArgs.addAll(["--patch-module", "$moduleName=${compileKotlinJvm.destinationDir}"])
+    options.compilerArgs.addAll(["--patch-module", "$moduleName=${compileKotlinJvm.destinationDirectory.get().getAsFile()}"])
 
     // Use the classpath of the compileKotlinJvm task.
     // Also ensure that the module path is used instead of classpath.
     classpath = compileKotlinJvm.classpath
     modularity.inferModulePath.set(true)
+
+    doFirst {
+        logger.warn("Task destination directory: ${destinationDirectory.get().getAsFile()}")
+    }
 }
 
 // Configure the JAR task so that it will include the compiled module-info class file.
