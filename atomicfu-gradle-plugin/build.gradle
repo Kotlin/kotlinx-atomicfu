@@ -20,16 +20,18 @@ kotlin.sourceSets.all {
 }
 
 dependencies {
-    compile gradleApi()
-    compile project(":atomicfu-transformer")
-    compile 'org.jetbrains.kotlin:kotlin-stdlib'
+    implementation(project(":atomicfu-transformer")) {
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
+    }
 
+    compileOnly gradleApi()
+    compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
     compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
-    testCompile gradleTestKit()
-    testCompile 'org.jetbrains.kotlin:kotlin-test'
-    testCompile 'org.jetbrains.kotlin:kotlin-test-junit'
-    testCompile 'junit:junit:4.12'
+    testImplementation gradleTestKit()
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+    testImplementation 'junit:junit:4.12'
 }
 
 configurations {
