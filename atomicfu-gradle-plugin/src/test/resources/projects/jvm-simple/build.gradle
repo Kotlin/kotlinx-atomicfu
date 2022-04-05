@@ -22,7 +22,7 @@ dependencies {
 }
 
 compileTestKotlin.doLast {
-    file("$buildDir/test_compile_classpath.txt").text = classpath.join("\n")
+    file("$buildDir/test_compile_classpath.txt").text = libraries.join("\n")
 }
 
 test.doLast {

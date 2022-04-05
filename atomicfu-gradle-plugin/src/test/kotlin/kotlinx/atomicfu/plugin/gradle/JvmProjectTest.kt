@@ -41,13 +41,13 @@ class JvmProjectTest : BaseKotlinGradleTest() {
 
             projectDir.resolve("build/classes/kotlin/main/IntArithmetic.class").let {
                 it.checkExists()
-                check(it in testCompileClasspathFiles) { "Original '$it' is missing from test compile classpath" }
+                check(it !in testCompileClasspathFiles) { "Original '$it' is missing from test compile classpath" }
                 check(it in testRuntimeClasspathFiles) { "Original '$it' is missing from test runtime classpath" }
             }
 
             projectDir.resolve("build/classes/atomicfu/main/IntArithmetic.class").let {
                 it.checkExists()
-                check(it !in testCompileClasspathFiles) { "Transformed '$it' is present in test compile classpath" }
+                check(it in testCompileClasspathFiles) { "Transformed '$it' is present in test compile classpath" }
                 check(it !in testRuntimeClasspathFiles) { "Transformed '$it' is present in test runtime classpath" }
             }
         }
