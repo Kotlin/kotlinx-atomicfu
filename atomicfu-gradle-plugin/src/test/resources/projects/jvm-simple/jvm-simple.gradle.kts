@@ -8,13 +8,14 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.6.0"
+    kotlin("jvm")
 }
 
 apply(plugin = "kotlinx-atomicfu")
 
 repositories {
     mavenCentral()
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 }
 
 dependencies {
