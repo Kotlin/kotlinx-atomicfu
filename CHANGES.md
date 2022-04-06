@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.17.1
+
+* Support of `org.jetbrains.kotlin.js` plugin (#218).
+* Fixed configuration cache bug. (#216).
+* Bug fixes for delegated fields support (#179).
+
 # Version 0.17.0
 
 * Update Kotlin to 1.6.0.
