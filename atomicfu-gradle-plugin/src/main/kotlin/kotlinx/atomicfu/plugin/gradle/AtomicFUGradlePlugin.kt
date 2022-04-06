@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.*
 import java.util.*
 import java.util.concurrent.*
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 
 private const val EXTENSION_NAME = "atomicfu"
 private const val ORIGINAL_DIR_NAME = "originalClassesDir"
@@ -205,8 +206,22 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 Callable { originalDirsByCompilation[mainCompilation]!! }
             )
 
-            (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
-                originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
+                // KGP >= 1.7.0 has breaking changes in task hierarchy:
+                // https://youtrack.jetbrains.com/issue/KT-32805#focus=Comments-27-5915479.0-0
+                val (majorVersion, minorVersion) = getKotlinPluginVersion()
+                    .split('.')
+                    .take(2)
+                    .map { it.toInt() }
+                if (majorVersion == 1 && minorVersion < 7) {
+                    (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
+                        originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
+                } else {
+                    (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractKotlinCompileTool<*>)
+                        ?.libraries
+                        ?.setFrom(
+                            originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
+                        )
+                }
 
             (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
                 originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
