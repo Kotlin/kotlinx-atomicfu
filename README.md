@@ -145,7 +145,7 @@ to your common code dependencies or apply `kotlinx-atomicfu` plugin that adds th
 
 ```groovy
 dependencies {
-    compile "org.jetbrains.kotlinx:atomicfu-common:$atomicfu_version"
+    compile "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
 }
 ```
 
