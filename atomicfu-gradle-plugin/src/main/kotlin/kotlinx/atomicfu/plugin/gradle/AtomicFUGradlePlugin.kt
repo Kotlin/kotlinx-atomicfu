@@ -33,10 +33,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
-        if (config.transformJs && config.jsVariant == "IR") {
-            // apply the compiler plugin, if IR transformation should be applied to KotlinJsIrTarget compilations
-            plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
-        }
+        plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
         configureDependencies()
         configureTasks()
     }
@@ -87,7 +84,7 @@ private fun Project.configureTasks() {
 }
 
 private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
-    config.transformJs && config.jsVariant == "IR" && target.isJsIrTarget()
+    config.transformJs && target.isJsIrTarget()
 
 private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
 
@@ -210,7 +207,9 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             }
             KotlinPlatformType.js -> {
                 // skip when js transformation is not needed or when IR is transformed
-                if (!config.transformJs || (needsJsIrTransformation(target))) return@compilations
+                if (!config.transformJs || (needsJsIrTransformation(target))) {
+                    return@compilations
+                }
                 project.createJsTransformTask(compilation).configureJsTask(
                     compilation.compileAllTaskName,
                     transformedClassesDir,
