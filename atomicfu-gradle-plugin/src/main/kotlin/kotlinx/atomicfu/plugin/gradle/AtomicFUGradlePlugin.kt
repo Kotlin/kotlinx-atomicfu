@@ -27,13 +27,16 @@ private const val ORIGINAL_DIR_NAME = "originalClassesDir"
 private const val COMPILE_ONLY_CONFIGURATION = "compileOnly"
 private const val IMPLEMENTATION_CONFIGURATION = "implementation"
 private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
+private const val ENABLE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableIrTransformation"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) = project.run {
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
-        plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
+        if (rootProject.findProperty(ENABLE_IR_TRANSFORMATION).toString().toBoolean()) {
+            plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
+        }
         configureDependencies()
         configureTasks()
     }
@@ -421,7 +424,6 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
     var dependenciesVersion = pluginVersion
     var transformJvm = true
     var transformJs = true
-    var jsVariant: String = "JS"
     var jvmVariant: String = "FU"
     var verbose: Boolean = false
 }

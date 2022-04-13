@@ -149,6 +149,17 @@ dependencies {
 }
 ```
 
+## IR transformation for Kotlin/JS
+
+There is a new option to turn on IR transformation for Kotlin/Js backend.
+You should add `kotlinx.atomicfu.enableIrTransformation=true` to your `gradle.properties` file.
+
+Here is how transformation is performed for different [JS compiler modes](https://kotlinlang.org/docs/js-ir-compiler.html) with this option enabled:
+
+- `kotlin.js.compiler=legacy`: JavaScript transformer from the library is applied to the final compiled *.js files.
+- `kotlin.js.compiler=ir`: compiler plugin transformations are appiled to the generated IR.
+- `kotlin.js.compiler=both`: compiler plugin transformations are appiled to all compilations of IR targets, while compilations of legacy targets are transformed by the library.
+
 ## Additional configuration
 
 To set configuration options you should create `atomicfu` section in a `build.gradle` file, 
@@ -174,18 +185,11 @@ Here are the valid options:
 
 To turn off transformation for Kotlin/JS set option `transformJs` to `false`.
 
-Configuration option `jsVariant` defines how transformation is performed on Kotlin/JS.
-Here are the valid options:
-- `JS` – JavaScript transformer implemented in the library is applied to the compiled `*.js` files.
-- `IR` – may be set if [Kotlin/JS IR backend](https://kotlinlang.org/docs/js-ir-compiler.html) is used for compilation, 
-  then `IR` generated from the Kotlin source code is transformed by the `kotlinx-atomicfu` compiler plugin.
-
 Here are all available configuration options (with their defaults):
 ```groovy
 atomicfu {
   dependenciesVersion = '0.17.1' // set to null to turn-off auto dependencies
   transformJvm = true // set to false to turn off JVM transformation
-  transformJs = true // set to false to turn off JS transformation
   jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH 
   jsVariant = "JS" // JS transformation variant: JS or IR
   verbose = false // set to true to be more verbose  
