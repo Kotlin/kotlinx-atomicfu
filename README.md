@@ -151,7 +151,7 @@ dependencies {
 
 ## IR transformation for Kotlin/JS
 
-There is a new option to turn on IR transformation for Kotlin/Js backend.
+There is a new option to turn on IR transformation for Kotlin/JS backend.
 You can add `kotlinx.atomicfu.enableIrTransformation=true` to your `gradle.properties` file in order to enable it.
 
 Here is how transformation is performed for different [JS compiler modes](https://kotlinlang.org/docs/js-ir-compiler.html) with this option enabled:
