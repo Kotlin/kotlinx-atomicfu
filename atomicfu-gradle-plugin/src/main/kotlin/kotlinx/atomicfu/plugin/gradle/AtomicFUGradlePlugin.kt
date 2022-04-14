@@ -34,7 +34,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
-        if (rootProject.findProperty(ENABLE_IR_TRANSFORMATION).toString().toBoolean()) {
+        if (rootProject.getBooleanProperty(ENABLE_IR_TRANSFORMATION)) {
             plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
         }
         configureDependencies()
@@ -84,6 +84,15 @@ private fun Project.configureTasks() {
     withPluginWhenEvaluated("kotlin-multiplatform") {
         configureMultiplatformTransformation()
     }
+}
+
+private fun Project.getBooleanProperty(name: String) =
+    rootProject.findProperty(name)?.toString()?.toBooleanStrict() ?: false
+
+private fun String.toBooleanStrict(): Boolean = when (this) {
+    "true" -> true
+    "false" -> false
+    else -> throw IllegalArgumentException("The string doesn't represent a boolean value: $this")
 }
 
 private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
@@ -264,7 +273,7 @@ fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilati
 }
 
 fun Project.configureMultiplatformPluginDependencies(version: String) {
-    if (rootProject.findProperty("kotlin.mpp.enableGranularSourceSetsMetadata").toString().toBoolean()) {
+    if (rootProject.getBooleanProperty("kotlin.mpp.enableGranularSourceSetsMetadata")) {
         addCompilerPluginDependency()
         val mainConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
                 .getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
