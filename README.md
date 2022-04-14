@@ -2,7 +2,7 @@
 
 [![JetBrains incubator project](https://jb.gg/badges/incubator.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.17.1/pom)
+[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.17.2/pom)
 
 The idiomatic way to use atomic operations in Kotlin. 
 
@@ -107,7 +107,7 @@ See [additional configuration](#additional-configuration) if that needs tweaking
 
 ```groovy
 buildscript {
-    ext.atomicfu_version = '0.17.1'
+    ext.atomicfu_version = '0.17.2'
 
     dependencies {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
@@ -166,7 +166,7 @@ To set configuration options you should create `atomicfu` section in a `build.gr
 like this:
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.17.1'
+  dependenciesVersion = '0.17.2'
 }
 ```
 
@@ -188,7 +188,7 @@ To turn off transformation for Kotlin/JS set option `transformJs` to `false`.
 Here are all available configuration options (with their defaults):
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.17.1' // set to null to turn-off auto dependencies
+  dependenciesVersion = '0.17.2' // set to null to turn-off auto dependencies
   transformJvm = true // set to false to turn off JVM transformation
   jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH 
   jsVariant = "JS" // JS transformation variant: JS or IR
@@ -202,7 +202,7 @@ Declare AtomicFU version:
 
 ```xml
 <properties>
-     <atomicfu.version>0.17.1</atomicfu.version>
+     <atomicfu.version>0.17.2</atomicfu.version>
 </properties> 
 ```
 

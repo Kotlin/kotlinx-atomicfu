@@ -1,5 +1,12 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.17.2
+
+* Update Kotlin to 1.6.20.
+* IR transformation for Kotlin/JS. (#215).
+* Update ASM to 9.3 for Java 18 support (#223)
+* Update kotlinx.metadata to 0.4.2.
+
 # Version 0.17.1
 
 * Support of `org.jetbrains.kotlin.js` plugin (#218).
