@@ -119,7 +119,7 @@ apply plugin: 'kotlinx-atomicfu'
 
 ### JS 
 
-Configure add apply plugin just like for [JVM](#jvm). 
+Configure add apply plugin just like for [JVM](#jvm).
 
 ### Native
 
@@ -149,16 +149,49 @@ dependencies {
 }
 ```
 
-### Additional configuration
+## IR transformation for Kotlin/JS
 
-There are the following additional parameters (with their defaults):
+There is a new option to turn on IR transformation for Kotlin/JS backend.
+You can add `kotlinx.atomicfu.enableIrTransformation=true` to your `gradle.properties` file in order to enable it.
 
+Here is how transformation is performed for different [JS compiler modes](https://kotlinlang.org/docs/js-ir-compiler.html) with this option enabled:
+
+- `kotlin.js.compiler=legacy`: JavaScript transformer from the library is applied to the final compiled *.js files.
+- `kotlin.js.compiler=ir`: compiler plugin transformations are appiled to the generated IR.
+- `kotlin.js.compiler=both`: compiler plugin transformations are appiled to all compilations of IR targets, while compilations of legacy targets are transformed by the library.
+
+## Additional configuration
+
+To set configuration options you should create `atomicfu` section in a `build.gradle` file, 
+like this:
+```groovy
+atomicfu {
+  dependenciesVersion = '0.17.1'
+}
+```
+
+### JVM transformation options
+
+To turn off transformation for Kotlin/JVM set option `transformJvm` to `false`.
+
+Configuration option `jvmVariant` defines the Java class that replaces atomics during bytecode transformation.
+Here are the valid options:
+- `FU` – atomics are replaced with [AtomicXxxFieldUpdater](https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.html).
+- `VH` – atomics are replaced with [VarHandle](https://docs.oracle.com/javase/9/docs/api/java/lang/invoke/VarHandle.html), 
+  this option is supported for JDK 9+.
+- `BOTH` – [multi-release jar file](https://openjdk.java.net/jeps/238) will be created with both `AtomicXxxFieldUpdater` for JDK <= 8 and `VarHandle` for JDK 9+.
+
+### JS transformation options
+
+To turn off transformation for Kotlin/JS set option `transformJs` to `false`.
+
+Here are all available configuration options (with their defaults):
 ```groovy
 atomicfu {
   dependenciesVersion = '0.17.1' // set to null to turn-off auto dependencies
   transformJvm = true // set to false to turn off JVM transformation
-  transformJs = true // set to false to turn off JS transformation
-  variant = "FU" // JVM transformation variant: FU,VH, or BOTH 
+  jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH 
+  jsVariant = "JS" // JS transformation variant: JS or IR
   verbose = false // set to true to be more verbose  
 }
 ```
@@ -236,22 +269,6 @@ which is then transformed to a regular `classes` directory to be used later by t
 ## Additional features
 
 AtomicFU provides some additional features that you can optionally use.
-
-### VarHandles with Java 9
-
-AtomicFU can produce code that uses Java 9 
-[VarHandle](https://docs.oracle.com/javase/9/docs/api/java/lang/invoke/VarHandle.html)
-instead of `AtomicXxxFieldUpdater`. Configure transformation `variant` in Gradle build file:
- 
-```groovy
-atomicfu {
-    variant = "VH"
-}
-``` 
- 
-It can also create [JEP 238](https://openjdk.java.net/jeps/238) multi-release jar file with both
-`AtomicXxxFieldUpdater` for JDK<=8 and `VarHandle` for for JDK9+ if you 
-set `variant` to `"BOTH"`.
 
 ### Arrays of atomic values
 
