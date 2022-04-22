@@ -77,6 +77,20 @@ class FlowAnalyzer(
         return i ?: abort("Backward flow control falls after the beginning of the method")
     }
 
+    fun getUncheckedCastInsn(): AbstractInsnNode? {
+        var i = start
+        depth = 1
+        while (i != null) {
+            cur = i
+            executeOne(i)
+            if (depth == 0 && i is MethodInsnNode && i.owner == "kotlin/jvm/internal/Intrinsics" && i.name == "checkNotNull") {
+                return i
+            }
+            i = i.next
+        }
+        return null
+    }
+
     fun getValueArgInitLast(): AbstractInsnNode {
         var i = start
         val valueArgSize = Type.getArgumentTypes((start as MethodInsnNode).desc)[0].size
