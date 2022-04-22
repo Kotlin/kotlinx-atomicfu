@@ -1001,6 +1001,31 @@ class AtomicFUTransformer(
                     i = next
                 }
             }
+            // fix for languageVersion 1.7: check if there is checkNotNull invocation
+            var startInsn: AbstractInsnNode = getter
+            val checkNotNull = when {
+                getter.next?.opcode == DUP && getter.next?.next?.opcode == LDC -> FlowAnalyzer(getter.next?.next).getUncheckedCastInsn()
+                getter.next?.opcode == ASTORE -> {
+                    startInsn = getter.next
+                    val v = (getter.next as VarInsnNode).`var`
+                    var aload: AbstractInsnNode = getter.next
+                    while (!(aload is VarInsnNode && aload.opcode == ALOAD && aload.`var` == v)) {
+                        aload = aload.next
+                    }
+                    if (aload.next.opcode == LDC) {
+                        FlowAnalyzer(aload.next).getUncheckedCastInsn()
+                    } else null
+                }
+                else -> null
+            }
+            if (checkNotNull != null) {
+                var i: AbstractInsnNode = checkNotNull
+                while (i != startInsn) {
+                    val prev = i.previous
+                    instructions.remove(i)
+                    i = prev
+                }
+            }
         }
 
         private fun fixupLoadedAtomicVar(f: FieldInfo, ld: FieldInsnNode): AbstractInsnNode? {
