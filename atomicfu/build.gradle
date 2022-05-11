@@ -220,7 +220,7 @@ def classesPostTransformBOTH = file("$buildDir/classes/kotlin/jvm/postTransforme
 
 tasks.withType(compileTestKotlinJvm.getClass()) {
     kotlinOptions {
-        jvmTarget = "1.6"
+        jvmTarget = "1.8"
     }
 }
 
