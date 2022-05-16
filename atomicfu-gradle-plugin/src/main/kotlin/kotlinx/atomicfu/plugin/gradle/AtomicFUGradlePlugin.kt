@@ -34,7 +34,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
-        if (rootProject.getBooleanProperty(ENABLE_IR_TRANSFORMATION)) {
+        if (rootProject.getBooleanProperty(ENABLE_IR_TRANSFORMATION) && isCompilerPluginAvailable()) {
             plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
         }
         configureDependencies()
@@ -86,6 +86,15 @@ private fun Project.configureTasks() {
     }
 }
 
+private fun Project.isCompilerPluginAvailable(): Boolean {
+    // kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
+    val (majorVersion, minorVersion, patch) = getKotlinPluginVersion()
+        .split('.')
+        .take(3)
+        .map { it.toInt() }
+    return majorVersion == 1 && (minorVersion == 6 && patch >= 20 || minorVersion > 6)
+}
+
 private fun Project.getBooleanProperty(name: String) =
     rootProject.findProperty(name)?.toString()?.toBooleanStrict() ?: false
 
@@ -101,15 +110,15 @@ private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
 private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
 
 private fun Project.addCompilerPluginDependency() {
-    val kotlinVersion = rootProject.buildscript.configurations.findByName("classpath")
-        ?.allDependencies?.find { it.name == "kotlin-gradle-plugin" }?.version
-    withKotlinTargets { target ->
-        if (needsJsIrTransformation(target)) {
-            target.compilations.forEach { kotlinCompilation ->
-                kotlinCompilation.dependencies {
-                    // add atomicfu compiler plugin dependency
-                    // to provide the `kotlinx-atomicfu-runtime` library used during compiler plugin transformation
-                    compileOnly("org.jetbrains.kotlin:atomicfu:$kotlinVersion")
+    if (isCompilerPluginAvailable()) {
+        withKotlinTargets { target ->
+            if (needsJsIrTransformation(target)) {
+                target.compilations.forEach { kotlinCompilation ->
+                    kotlinCompilation.dependencies {
+                        // add atomicfu compiler plugin dependency
+                        // to provide the `kotlinx-atomicfu-runtime` library used during compiler plugin transformation
+                        compileOnly("org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}")
+                    }
                 }
             }
         }
