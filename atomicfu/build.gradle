@@ -3,6 +3,7 @@
  */
 
 apply plugin: 'kotlin-multiplatform'
+apply plugin: 'io.deepmedia.tools.multiplatform-testing' // androidNative test tasks
 apply from: rootProject.file("gradle/targets.gradle")
 
 ext {
@@ -95,6 +96,11 @@ if (rootProject.ext.native_targets_enabled) {
                 addTarget(presets.watchosSimulatorArm64)
                 addTarget(presets.tvosSimulatorArm64)
                 addTarget(presets.macosArm64)
+
+                addTarget(presets.androidNativeArm32)
+                addTarget(presets.androidNativeArm64)
+                addTarget(presets.androidNativeX64)
+                addTarget(presets.androidNativeX86)
             }
         }
 
