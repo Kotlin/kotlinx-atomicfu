@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.17.3
+
+* Adding compiler plugin dependency only for projects with KGP >= 1.6.20 (#226).
+* Compiler plugin runtime dependency fixes (#230).
+* Update README badges (#228).
+
 # Version 0.17.2
 
 * Update Kotlin to 1.6.20.
