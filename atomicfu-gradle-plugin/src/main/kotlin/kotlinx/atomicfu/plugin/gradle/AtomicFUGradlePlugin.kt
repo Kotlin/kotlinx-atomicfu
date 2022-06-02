@@ -88,10 +88,12 @@ private fun Project.configureTasks() {
 
 private fun Project.isCompilerPluginAvailable(): Boolean {
     // kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
-    val (majorVersion, minorVersion, patch) = getKotlinPluginVersion()
+    val kotlinVersion = getKotlinPluginVersion()
+    val (majorVersion, minorVersion) = kotlinVersion
         .split('.')
-        .take(3)
+        .take(2)
         .map { it.toInt() }
+    val patch = kotlinVersion.substringAfterLast('.').substringBefore('-').toInt()
     return majorVersion == 1 && (minorVersion == 6 && patch >= 20 || minorVersion > 6)
 }
 
