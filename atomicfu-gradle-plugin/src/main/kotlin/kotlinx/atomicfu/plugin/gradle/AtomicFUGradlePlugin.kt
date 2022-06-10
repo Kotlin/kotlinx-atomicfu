@@ -105,7 +105,7 @@ private fun String.toBooleanStrict(): Boolean = when (this) {
 }
 
 private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
-    config.transformJs && target.isJsIrTarget()
+    rootProject.getBooleanProperty(ENABLE_IR_TRANSFORMATION) && target.isJsIrTarget()
 
 private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
 
