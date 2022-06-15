@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.6.0"
+    kotlin("jvm")
 }
 
 apply(plugin = "kotlinx-atomicfu")

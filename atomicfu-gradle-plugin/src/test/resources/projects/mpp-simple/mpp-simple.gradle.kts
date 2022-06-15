@@ -7,7 +7,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version "1.6.0"
+    kotlin("multiplatform")
 }
 
 apply(plugin = "kotlinx-atomicfu")
