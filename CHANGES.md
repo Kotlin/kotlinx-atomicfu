@@ -1,5 +1,12 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.18.0
+
+* Update Kotlin to 1.7.0.
+* Fix kotlin 1.7 compatibility (#222).
+* Update JVM target to 1.8 (see KT-45165).
+* Fix for parsing Kotlin version in AtomicfuGradlePlugin.
+
 # Version 0.17.3
 
 * Adding compiler plugin dependency only for projects with KGP >= 1.6.20 (#226).
