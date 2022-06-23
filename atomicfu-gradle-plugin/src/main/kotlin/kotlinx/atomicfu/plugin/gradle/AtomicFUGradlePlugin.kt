@@ -67,6 +67,8 @@ private fun Project.configureTasks() {
     val config = config
     withPluginWhenEvaluated("kotlin") {
         if (config.transformJvm) {
+            // skip transformation task if ir transformation is enabled
+            if (rootProject.getBooleanProperty(ENABLE_IR_TRANSFORMATION)) return@withPluginWhenEvaluated
             configureJvmTransformation("compileTestKotlin") { sourceSet, transformedDir, originalDir ->
                 createJvmTransformTask(sourceSet).configureJvmTask(
                     sourceSet.compileClasspath,
@@ -219,6 +221,8 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
         val transformTask = when (target.platformType) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
+                // skip transformation task if ir transformation is enabled
+                if (rootProject.getBooleanProperty(ENABLE_IR_TRANSFORMATION)) return@compilations
                 if (!config.transformJvm) return@compilations // skip when transformation is turned off
                 project.createJvmTransformTask(compilation).configureJvmTask(
                     compilation.compileDependencyFiles,
