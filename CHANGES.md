@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.18.1
+
+* Fix for the compatibility issue: add `atomicfu-runtime` dependency directly since Kotlin 1.7.10.
+
 # Version 0.18.0
 
 * Update Kotlin to 1.7.0.
