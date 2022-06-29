@@ -120,7 +120,17 @@ private fun Project.addCompilerPluginDependency() {
                     kotlinCompilation.dependencies {
                         // add atomicfu compiler plugin dependency
                         // to provide the `kotlinx-atomicfu-runtime` library used during compiler plugin transformation
-                        implementation("org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}")
+                        val kotlinVersion = getKotlinPluginVersion()
+                        val (majorVersion, minorVersion) = kotlinVersion
+                            .split('.')
+                            .take(2)
+                            .map { it.toInt() }
+                        val patch = kotlinVersion.substringAfterLast('.').substringBefore('-').toInt()
+                        if (majorVersion == 1 && (minorVersion == 7 && patch >= 10 || minorVersion > 7)) {
+                            implementation("org.jetbrains.kotlin:atomicfu-runtime:$kotlinVersion")
+                        } else {
+                            implementation("org.jetbrains.kotlin:atomicfu:$kotlinVersion")
+                        }
                     }
                 }
             }
