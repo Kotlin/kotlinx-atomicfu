@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.18.2
+
+* In Kotlin 1.7.10 the name of `atomicfu-runtime` module was reverted back to `kotlinx-atomicfu-runtime`, 
+  as the renaming was an incompatible change. 
+  Fixed `atomicfu-gradle-plugin` to add `kotlinx-atomicfu-runtime` dependency directly.
+
 # Version 0.18.1
 
 * Fix for the compatibility issue: add `atomicfu-runtime` dependency directly since Kotlin 1.7.10.
