@@ -126,7 +126,7 @@ private fun Project.addCompilerPluginDependency() {
                         val patch = kotlinVersion.substringAfterLast('.').substringBefore('-').toInt()
                         if (majorVersion == 1 && (minorVersion == 7 && patch >= 10 || minorVersion > 7)) {
                             // since Kotlin 1.7.10 we can add `atomicfu-runtime` dependency directly
-                            implementation("org.jetbrains.kotlin:atomicfu-runtime:$kotlinVersion")
+                            implementation("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:$kotlinVersion")
                         } else {
                             // add atomicfu compiler plugin dependency
                             // to provide the `atomicfu-runtime` library used during compiler plugin transformation
