@@ -187,8 +187,8 @@ fun Project.withPluginWhenEvaluatedDependencies(plugin: String, fn: Project.(ver
 }
 
 fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
-    extensions.findByType(KotlinProjectExtension::class.java)?.let { kotlinExtension ->
-        val targetsExtension = (kotlinExtension as? ExtensionAware)?.extensions?.findByName("targets")
+    extensions.findByType(KotlinTargetsContainer::class.java)?.let { kotlinExtension ->
+        val targetsExtension = kotlinExtension.targets
         @Suppress("UNCHECKED_CAST")
         val targets = targetsExtension as? NamedDomainObjectContainer<KotlinTarget>
         // find all compilations given sourceSet belongs to
