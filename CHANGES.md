@@ -1,5 +1,9 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.18.3
+
+* Fix for atomicfu-gradle-plugin application to the MPP project (for Kotlin 1.7.20).
+
 # Version 0.18.2
 
 * In Kotlin 1.7.10 the name of `atomicfu-runtime` module was reverted back to `kotlinx-atomicfu-runtime`, 
