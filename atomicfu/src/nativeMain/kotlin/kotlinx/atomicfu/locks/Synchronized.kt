@@ -9,7 +9,7 @@ import kotlinx.atomicfu.locks.SynchronizedObject.Status.*
 
 public actual open class SynchronizedObject {
 
-    protected val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
+    private val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
 
     public fun lock() {
         val currentThreadId = pthread_self()!!
@@ -29,18 +29,18 @@ public actual open class SynchronizedObject {
                             return
                     } else {
                         // another thread is trying to take this lock -> allocate native mutex
-                        val mutex = mutexPool.allocate()
+                        val mutex = MutexPool.allocate()
                         mutex.lock()
                         val fatLock = LockState(FAT, state.nestedLocks, state.waiters + 1, state.ownerThreadId, mutex)
                         if (lock.compareAndSet(state, fatLock)) {
-                            //block the current thread waiting for the owner thread to release the permit
+                            // block the current thread waiting for the owner thread to release the permit
                             mutex.lock()
                             tryLockAfterResume(currentThreadId)
                             return
                         } else {
                             // return permit taken for the owner thread and release mutex back to the pool
                             mutex.unlock()
-                            mutexPool.release(mutex)
+                            MutexPool.release(mutex)
                         }
                     }
                 }
@@ -132,14 +132,14 @@ public actual open class SynchronizedObject {
             if (lock.compareAndSet(state, newState)) {
                 if (state.waiters == 0) {
                     state.mutex!!.unlock()
-                    mutexPool.release(state.mutex)
+                    MutexPool.release(state.mutex)
                 }
                 return
             }
         }
     }
 
-    protected class LockState(
+    internal class LockState(
         val status: Status,
         val nestedLocks: Int,
         val waiters: Int,
@@ -149,7 +149,7 @@ public actual open class SynchronizedObject {
         init { freeze() }
     }
 
-    protected enum class Status { UNLOCKED, THIN, FAT }
+    internal enum class Status { UNLOCKED, THIN, FAT }
 
     private fun CPointer<mutex_node_t>.lock() = lock(this.pointed.mutex)
 
@@ -175,46 +175,5 @@ public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () ->
         return block()
     } finally {
         lock.unlock()
-    }
-}
-
-private const val INITIAL_POOL_CAPACITY = 64
-
-@SharedImmutable
-private val mutexPool by lazy { MutexPool(INITIAL_POOL_CAPACITY) }
-
-class MutexPool(capacity: Int) {
-    private val top = AtomicNativePtr(NativePtr.NULL)
-
-    private val mutexes = nativeHeap.allocArray<mutex_node_t>(capacity) { mutex_node_init(ptr) }
-
-    init {
-        for (i in 0 until capacity) {
-            release(interpretCPointer<mutex_node_t>(mutexes.rawValue.plus(i * sizeOf<mutex_node_t>()))!!)
-        }
-    }
-
-    private fun allocMutexNode() = nativeHeap.alloc<mutex_node_t> { mutex_node_init(ptr) }.ptr
-
-    fun allocate(): CPointer<mutex_node_t> = pop() ?: allocMutexNode()
-
-    fun release(mutexNode: CPointer<mutex_node_t>) {
-        while (true) {
-            val oldTop = interpretCPointer<mutex_node_t>(top.value)
-            mutexNode.pointed.next = oldTop
-            if (top.compareAndSet(oldTop.rawValue, mutexNode.rawValue))
-                return
-        }
-    }
-
-    private fun pop(): CPointer<mutex_node_t>? {
-        while (true) {
-            val oldTop = interpretCPointer<mutex_node_t>(top.value)
-            if (oldTop.rawValue === NativePtr.NULL)
-                return null
-            val newHead = oldTop!!.pointed.next
-            if (top.compareAndSet(oldTop.rawValue, newHead.rawValue))
-                return oldTop
-        }
     }
 }
