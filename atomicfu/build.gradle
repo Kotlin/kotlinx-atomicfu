@@ -49,6 +49,10 @@ kotlin {
     // JVM -- always
     jvm()
 
+    wasm() {
+      d8()
+    }
+
     sourceSets {
         commonMain {
             dependencies {
@@ -69,6 +73,11 @@ kotlin {
         jsTest {
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-test-js'
+            }
+        }
+        wasmTest {
+            dependencies {
+                implementation 'org.jetbrains.kotlin:kotlin-test-wasm'
             }
         }
         jvmMain {
