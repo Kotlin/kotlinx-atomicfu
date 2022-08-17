@@ -171,7 +171,9 @@ private fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
     rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION) &&
             (target.platformType == KotlinPlatformType.jvm || target.platformType == KotlinPlatformType.androidJvm)
 
-private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
+private fun KotlinTarget.isJsIrTarget() =
+    (this is KotlinJsTarget && this.irTarget != null) ||
+            (this is KotlinJsIrTarget && this.platformType != KotlinPlatformType.wasm)
 
 private fun Project.isTransformationDisabled(target: KotlinTarget): Boolean {
     val platformType = target.platformType
