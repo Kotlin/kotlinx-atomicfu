@@ -146,7 +146,9 @@ private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
     (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION) || rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY))
             && target.isJsIrTarget()
 
-private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
+private fun KotlinTarget.isJsIrTarget() =
+    (this is KotlinJsTarget && this.irTarget != null) ||
+            (this is KotlinJsIrTarget && this.platformType != KotlinPlatformType.wasm)
 
 private fun Project.addCompilerPluginDependency() {
     if (isCompilerPluginAvailable()) {
@@ -273,7 +275,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                     config
                 )
             }
-            KotlinPlatformType.js -> {
+            KotlinPlatformType.js, KotlinPlatformType.wasm -> {
                 // skip when js transformation is not needed or when IR is transformed
                 if (!config.transformJs || (needsJsIrTransformation(target))) {
                     return@compilations

@@ -25,7 +25,7 @@ kotlin {
     }
 
     // JS -- always
-    js {
+    js(BOTH) {
         moduleName = "kotlinx-atomicfu"
         // TODO: Commented out because browser tests do not work on TeamCity
         // browser()
@@ -34,6 +34,10 @@ kotlin {
 
     // JVM -- always
     jvm()
+
+    wasm() {
+      d8()
+    }
 
     sourceSets {
         commonMain {
@@ -55,6 +59,11 @@ kotlin {
         jsTest {
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-test-js'
+            }
+        }
+        wasmTest {
+            dependencies {
+                implementation 'org.jetbrains.kotlin:kotlin-test-wasm'
             }
         }
         jvmMain {
