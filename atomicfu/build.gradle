@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
+
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -66,6 +68,13 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test'
                 implementation 'org.jetbrains.kotlin:kotlin-test-junit'
                 implementation "junit:junit:$junit_version"
+            }
+        }
+
+        all {
+            languageSettings {
+                optIn('kotlinx.atomicfu.ExperimentalConcurrencyApi')
+                optIn('kotlin.RequiresOptIn')
             }
         }
     }
@@ -149,6 +158,14 @@ ext.configureKotlin(true)
 
 dependencies {
     transformer project(":atomicfu-transformer")
+}
+
+kotlin {
+    targets.withType(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests.class).configureEach {
+        binaries.getTest("DEBUG").with {
+            binaryOptions["memoryModel"] = "experimental"
+        }
+    }
 }
 
 // ==== CONFIGURE JS =====

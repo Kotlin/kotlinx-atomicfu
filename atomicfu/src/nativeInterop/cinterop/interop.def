@@ -43,3 +43,59 @@ void unlock(lock_support_t* ls) {
     pthread_cond_broadcast(&ls->locked_cond);
     pthread_mutex_unlock(&ls->mutex);
 }
+
+// --------- Fat lock support
+
+// Wrapper on top of mutex so its consistent type across all POSIX-supported platforms
+
+typedef struct fat_lock {
+    pthread_mutex_t mutex;
+} fat_lock_t;
+
+typedef struct fat_lock_condition {
+    pthread_cond_t condition;
+} fat_lock_condition_t;
+
+fat_lock_t* fat_lock_init() {
+    fat_lock_t* fl = (fat_lock_t*) malloc(sizeof(fat_lock_t));
+    pthread_mutex_init(&fl->mutex, NULL);
+    return fl;
+}
+
+void lock_fat(fat_lock_t* fl) {
+    pthread_mutex_lock(&fl->mutex);
+}
+
+void unlock_fat(fat_lock_t* fl) {
+    pthread_mutex_unlock(&fl->mutex);
+}
+
+void fat_lock_destroy(fat_lock_t* fl) {
+    pthread_mutex_destroy(&fl->mutex);
+    free(fl);
+}
+
+// Conditions
+
+fat_lock_condition_t* fat_lock_condition_init() {
+    fat_lock_condition_t* flc = (fat_lock_condition_t*) malloc(sizeof(fat_lock_condition_t));
+    pthread_cond_init(&flc->condition, NULL);
+    return flc;
+}
+
+void cond_wait(fat_lock_t* fl, fat_lock_condition_t* flc) {
+    pthread_cond_wait(&flc->condition, &fl->mutex);
+}
+
+void cond_notify_all(fat_lock_condition_t* flc) {
+    pthread_cond_broadcast(&flc->condition);
+}
+
+void cond_notify_one(fat_lock_condition_t* flc) {
+    pthread_cond_signal(&flc->condition);
+}
+
+void fat_lock_condition_destroy(fat_lock_condition_t* flc) {
+    pthread_mutex_destroy(&flc->condition);
+    free(flc);
+}

@@ -1,5 +1,7 @@
 package kotlinx.atomicfu.locks
 
+import kotlinx.atomicfu.*
+
 @ExperimentalConcurrencyApi
 public expect open class SynchronizedObject() // marker abstract class
 
