@@ -5,12 +5,16 @@
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.18.3/pom)
 
+>Note on Beta status: the plugin is in its active development phase and changes from release to release.
+>We do provide a compatibility of atomicfu-transformed artifacts between releases, but we do not provide 
+>strict compatibility guarantees on plugin API and its general stability between Kotlin versions.
+
 The idiomatic way to use atomic operations in Kotlin. 
 
 * Code it like `AtomicReference/Int/Long`, but run it in production efficiently as `AtomicXxxFieldUpdater` on Kotlin/JVM 
   and as plain unboxed values on Kotlin/JS. 
 * Use Kotlin-specific extensions (e.g. inline `updateAndGet` and `getAndUpdate` functions).
-* Compile-time dependency only (no runtime dependencies).
+* Compile-time dependency only for JVM and JS/IR (no runtime dependencies).
   * Post-compilation bytecode transformer that declares all the relevant field updaters for you on [Kotlin/JVM](#jvm).
   * Post-compilation JavaScript files transformer on [Kotlin/JS](#js).
 * Multiplatform: 
@@ -23,7 +27,6 @@ The idiomatic way to use atomic operations in Kotlin.
   * [Arrays of atomic values](#arrays-of-atomic-values).
   * [User-defined extensions on atomics](#user-defined-extensions-on-atomics)
   * [Locks](#locks)
-  * [Testing of lock-free data structures](#testing-lock-free-data-structures-on-jvm).
   * [Tracing operations](#tracing-operations)
 
 ## Example
@@ -101,9 +104,8 @@ Building with Gradle is supported for all platforms.
 
 ### JVM
 
-You will need Gradle 4.10 or later.
-Add and apply AtomicFU plugin. It adds all the corresponding dependencies
-and transformations automatically. 
+You will need Gradle 6.8 or later.
+Add and apply AtomicFU plugin. It adds all the corresponding dependencies and transformations automatically. 
 See [additional configuration](#additional-configuration) if that needs tweaking.
 
 ```groovy
@@ -125,8 +127,6 @@ Configure add apply plugin just like for [JVM](#jvm).
 ### Native
 
 This library is available for Kotlin/Native (`atomicfu-native`).
-Kotlin/Native uses Gradle metadata and needs Gradle version 5.3 or later.
-See [Gradle Metadata 1.0 announcement](https://blog.gradle.org/gradle-metadata-1.0) for more details.
 Apply the corresponding plugin just like for [JVM](#jvm). 
 
 Atomic references for Kotlin/Native are based on 
@@ -315,46 +315,9 @@ use `lock`/`tryLock`/`unlock` functions or `lock.withLock { ... }` extension fun
 [jucl.ReentrantLock](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantLock.html)
 is used on JVM. On JVM it is a typealias to the later class, erased on JS.   
 
-Condition variables (`notify`/`wait` and `signal`/`await`) are not supported.
-
-### Testing lock-free data structures on JVM
-
-You can optionally test lock-freedomness of lock-free data structures using
-[`LockFreedomTestEnvironment`](atomicfu/src/jvmMain/kotlin/kotlinx/atomicfu/LockFreedomTestEnvironment.kt) class.
-See example in [`LockFreeQueueLFTest`](atomicfu/src/jvmTest/kotlin/kotlinx/atomicfu/test/LockFreeQueueLFTest.kt).
-Testing is performed by pausing one (random) thread before or after a random state-update operation and
-making sure that all other threads can still make progress.
-
-In order to make those test to actually perform lock-freedomness testing you need to configure an additional
-execution of tests with the original (non-transformed) classes for Maven:
-
-```xml
-<build>
-    <plugins>
-        <!-- additional test execution with surefire on non-transformed files -->
-        <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <executions>
-                <execution>
-                    <id>lockfree-test</id>
-                    <phase>test</phase>
-                    <goals>
-                        <goal>test</goal>
-                    </goals>
-                    <configuration>
-                        <classesDirectory>${project.build.directory}/classes-pre-atomicfu</classesDirectory>
-                        <includes>
-                            <include>**/*LFTest.*</include>
-                        </includes>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
-```
-
-For Gradle there is nothing else to add. Tests are always run using original (non-transformed) classes.
+> Note that package `kotlinx.atomicfu.locks` is experimental explicitly even while atomicfu is experimental itself,
+> meaning that no ABI guarantees are provided whatsoever. API from this package is not recommended to use in libraries
+> that other projects depend on.
 
 ### Tracing operations
 
