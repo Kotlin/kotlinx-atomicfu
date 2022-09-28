@@ -196,7 +196,7 @@ fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
 }
 
 private fun BaseKotlinCompile.setFriendPaths(friendPathsFileCollection: FileCollection) =
-    friendPaths.setFrom(friendPathsFileCollection)
+    friendPaths.from(friendPathsFileCollection)
 
 fun Project.configureJsTransformation() =
     configureTransformationForTarget((kotlinExtension as KotlinJsProjectExtension).js())
