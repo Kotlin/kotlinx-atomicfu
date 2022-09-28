@@ -195,6 +195,7 @@ fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
     }
 }
 
+// Fixes KT-KT-54167 (works only for KGP 1.7.0+)
 private fun BaseKotlinCompile.setFriendPaths(friendPathsFileCollection: FileCollection) =
     friendPaths.from(friendPathsFileCollection)
 
