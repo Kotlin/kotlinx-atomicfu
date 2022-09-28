@@ -282,9 +282,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
                 originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
 
-            compilation.compileKotlinTask.doFirst {
-                (it as BaseKotlinCompile).setFriendPaths(originalMainClassesDirs)
-            }
+            (compilation.compileKotlinTask as BaseKotlinCompile).setFriendPaths(originalMainClassesDirs)
         }
     }
 }
@@ -389,9 +387,7 @@ fun Project.configureJvmTransformation(
                 classpath =
                     originalMainClassesDirs + sourceSet.compileClasspath - mainSourceSet.output.classesDirs
 
-                (this as? KotlinCompile<*>)?.doFirst {
-                    (it as BaseKotlinCompile).setFriendPaths(originalMainClassesDirs)
-                }
+                (this as? BaseKotlinCompile)?.setFriendPaths(originalMainClassesDirs)
             }
 
             // todo: fix test runtime classpath for JS?
