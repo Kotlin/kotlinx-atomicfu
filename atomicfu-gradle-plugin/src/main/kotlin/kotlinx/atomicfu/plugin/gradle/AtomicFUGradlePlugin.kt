@@ -14,14 +14,15 @@ import org.gradle.api.tasks.compile.*
 import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.*
 import java.util.*
 import java.util.concurrent.*
 import org.jetbrains.kotlin.gradle.targets.js.*
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
+import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlinx.atomicfu.gradle.*
-import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 
 private const val EXTENSION_NAME = "atomicfu"
 private const val ORIGINAL_DIR_NAME = "originalClassesDir"
@@ -194,14 +195,9 @@ fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
     }
 }
 
-private fun KotlinCommonOptions.addFriendPaths(friendPathsFileCollection: FileCollection) {
-    val argName = when (this) {
-        is KotlinJvmOptions -> "-Xfriend-paths"
-        is KotlinJsOptions -> "-Xfriend-modules"
-        else -> return
-    }
-    freeCompilerArgs = freeCompilerArgs + "$argName=${friendPathsFileCollection.joinToString(",")}"
-}
+// Fixes KT-KT-54167 (works only for KGP 1.7.0+)
+private fun BaseKotlinCompile.setFriendPaths(friendPathsFileCollection: FileCollection) =
+    friendPaths.from(friendPathsFileCollection)
 
 fun Project.configureJsTransformation() =
     configureTransformationForTarget((kotlinExtension as KotlinJsProjectExtension).js())
@@ -287,10 +283,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
                 originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
 
-            val kotlinOptions = compilation.kotlinOptions
-            compilation.compileKotlinTask.doFirst {
-                kotlinOptions.addFriendPaths(originalMainClassesDirs)
-            }
+            (compilation.compileKotlinTask as BaseKotlinCompile).setFriendPaths(originalMainClassesDirs)
         }
     }
 }
@@ -395,9 +388,7 @@ fun Project.configureJvmTransformation(
                 classpath =
                     originalMainClassesDirs + sourceSet.compileClasspath - mainSourceSet.output.classesDirs
 
-                (this as? KotlinCompile<*>)?.doFirst {
-                    kotlinOptions.addFriendPaths(originalMainClassesDirs)
-                }
+                (this as? BaseKotlinCompile)?.setFriendPaths(originalMainClassesDirs)
             }
 
             // todo: fix test runtime classpath for JS?
