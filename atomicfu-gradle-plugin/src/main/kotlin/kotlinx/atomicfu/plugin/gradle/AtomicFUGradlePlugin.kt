@@ -195,9 +195,18 @@ fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
     }
 }
 
-// Fixes KT-KT-54167 (works only for KGP 1.7.0+)
-private fun BaseKotlinCompile.setFriendPaths(friendPathsFileCollection: FileCollection) =
-    friendPaths.from(friendPathsFileCollection)
+private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileCollection) {
+    val (majorVersion, minorVersion) = project.getKotlinPluginVersion()
+        .split('.')
+        .take(2)
+        .map { it.toInt() }
+    if (majorVersion == 1 && minorVersion < 7) {
+        (this as? AbstractKotlinCompile<*>)?.friendPaths?.from(friendPathsFileCollection)
+    } else {
+        // See KT-KT-54167 (works only for KGP 1.7.0+)
+        (this as BaseKotlinCompile).friendPaths.from(friendPathsFileCollection)
+    }
+}
 
 fun Project.configureJsTransformation() =
     configureTransformationForTarget((kotlinExtension as KotlinJsProjectExtension).js())
@@ -283,7 +292,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
                 originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
 
-            (compilation.compileKotlinTask as BaseKotlinCompile).setFriendPaths(originalMainClassesDirs)
+            compilation.compileKotlinTask.setFriendPaths(originalMainClassesDirs)
         }
     }
 }
@@ -388,7 +397,7 @@ fun Project.configureJvmTransformation(
                 classpath =
                     originalMainClassesDirs + sourceSet.compileClasspath - mainSourceSet.output.classesDirs
 
-                (this as? BaseKotlinCompile)?.setFriendPaths(originalMainClassesDirs)
+                (this as? KotlinCompile<*>)?.setFriendPaths(originalMainClassesDirs)
             }
 
             // todo: fix test runtime classpath for JS?
