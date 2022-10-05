@@ -29,6 +29,7 @@ private const val ORIGINAL_DIR_NAME = "originalClassesDir"
 private const val COMPILE_ONLY_CONFIGURATION = "compileOnly"
 private const val IMPLEMENTATION_CONFIGURATION = "implementation"
 private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
+private const val ENABLE_JS_IR_TRANSFORMATION_LEGACY = "kotlinx.atomicfu.enableIrTransformation"
 private const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 private const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
 
@@ -37,13 +38,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
-        if (isCompilerPluginAvailable()) {
-            plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
-            extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
-                isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
-                isJvmIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)
-            }
-        }
+        applyAtomicfuCompilerPlugin()
         configureDependencies()
         configureTasks()
     }
@@ -95,15 +90,45 @@ private fun Project.configureTasks() {
     }
 }
 
-private fun Project.isCompilerPluginAvailable(): Boolean {
-    // kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
+private data class KotlinVersion(val major: Int, val minor: Int, val patch: Int)
+
+private fun Project.getKotlinVersion(): KotlinVersion {
     val kotlinVersion = getKotlinPluginVersion()
-    val (majorVersion, minorVersion) = kotlinVersion
+    val (major, minor) = kotlinVersion
         .split('.')
         .take(2)
         .map { it.toInt() }
     val patch = kotlinVersion.substringAfterLast('.').substringBefore('-').toInt()
-    return majorVersion == 1 && (minorVersion == 6 && patch >= 20 || minorVersion > 6)
+    return KotlinVersion(major, minor, patch)
+}
+
+private fun Project.isCompilerPluginAvailable(): Boolean {
+    // kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
+    val kotlinVersion = getKotlinVersion()
+    return kotlinVersion.major == 1 && (kotlinVersion.minor == 6 && kotlinVersion.patch >= 20 || kotlinVersion.minor > 6)
+}
+
+private fun Project.applyAtomicfuCompilerPlugin() {
+    val kotlinVersion = getKotlinVersion()
+    // for KGP >= 1.7.20:
+    // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableJsIrTransformation`
+    // compiler plugin for JVM IR is applied via the property `kotlinx.atomicfu.enableJvmIrTransformation`
+    if (kotlinVersion.major == 1 && (kotlinVersion.minor == 7 && kotlinVersion.patch >= 20 || kotlinVersion.minor > 7)) {
+        plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
+        extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
+            isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
+            isJvmIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)
+        }
+    } else {
+        // for KGP >= 1.6.20 && KGP <= 1.7.20:
+        // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableIrTransformation`
+        // compiler plugin for JVM IR is not supported yet
+        if (kotlinVersion.major == 1 && (kotlinVersion.minor == 6 && kotlinVersion.patch >= 20 || kotlinVersion.minor > 6)) {
+            if (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY)) {
+                plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
+            }
+        }
+    }
 }
 
 private fun Project.getBooleanProperty(name: String) =
@@ -116,7 +141,8 @@ private fun String.toBooleanStrict(): Boolean = when (this) {
 }
 
 private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
-    rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION) && target.isJsIrTarget()
+    (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION) || rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY))
+            && target.isJsIrTarget()
 
 private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
 
