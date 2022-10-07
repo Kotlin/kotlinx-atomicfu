@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.18.4
+
+* Fix KGP compatibility bug with freeCompilerArgs modification (#247).
+* Update kotlinx.metadata to 0.5.0 (#245). 
+* Update gradle version to 6.8.3 (#244)
+
 # Version 0.18.3
 
 * Fix for atomicfu-gradle-plugin application to the MPP project (for Kotlin 1.7.20).
