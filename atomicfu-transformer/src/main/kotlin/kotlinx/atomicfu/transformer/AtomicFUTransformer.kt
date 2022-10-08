@@ -519,6 +519,8 @@ class AtomicFUTransformer(
             signature: String?,
             value: Any?
         ): FieldVisitor? {
+            if (analyzePhase2) return super.visitField(access, name, desc, signature, value)
+
             val fieldType = getType(desc)
             if (fieldType.sort == OBJECT && fieldType.internalName in AFU_CLASSES) {
                 val fieldId = FieldId(className, name, desc)
