@@ -146,7 +146,7 @@ private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
     (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION) || rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY))
             && target.isJsIrTarget()
 
-private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
+private fun KotlinTarget.isJsIrTarget() = this is KotlinJsIrTarget
 
 private fun Project.addCompilerPluginDependency() {
     if (isCompilerPluginAvailable()) {
