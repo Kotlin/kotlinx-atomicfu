@@ -154,19 +154,13 @@ private fun Project.addCompilerPluginDependency() {
             if (needsJsIrTransformation(target)) {
                 target.compilations.forEach { kotlinCompilation ->
                     kotlinCompilation.dependencies {
-                        val kotlinVersion = getKotlinPluginVersion()
-                        val (majorVersion, minorVersion) = kotlinVersion
-                            .split('.')
-                            .take(2)
-                            .map { it.toInt() }
-                        val patch = kotlinVersion.substringAfterLast('.').substringBefore('-').toInt()
-                        if (majorVersion == 1 && (minorVersion == 7 && patch >= 10 || minorVersion > 7)) {
+                        if (getKotlinVersion().atLeast(1, 7, 10)) {
                             // since Kotlin 1.7.10 we can add `atomicfu-runtime` dependency directly
-                            implementation("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:$kotlinVersion")
+                            implementation("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:${getKotlinPluginVersion()}")
                         } else {
                             // add atomicfu compiler plugin dependency
                             // to provide the `atomicfu-runtime` library used during compiler plugin transformation
-                            implementation("org.jetbrains.kotlin:atomicfu:$kotlinVersion")
+                            implementation("org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}")
                         }
                     }
                 }
