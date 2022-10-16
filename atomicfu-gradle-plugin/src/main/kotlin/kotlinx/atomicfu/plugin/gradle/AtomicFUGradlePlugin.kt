@@ -104,18 +104,18 @@ private fun Project.getKotlinVersion(): KotlinVersion {
     return KotlinVersion(major, minor, patch)
 }
 
-private fun Project.isCompilerPluginAvailable(): Boolean {
-    // kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
-    val kotlinVersion = getKotlinVersion()
-    return kotlinVersion.major == 1 && (kotlinVersion.minor == 6 && kotlinVersion.patch >= 20 || kotlinVersion.minor > 6)
-}
+private fun KotlinVersion.atLeast(major: Int, minor: Int, patch: Int) =
+    this.major == major && (this.minor == minor && this.patch >= patch || this.minor > minor) || this.major > major
+
+// kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
+private fun Project.isCompilerPluginAvailable() = getKotlinVersion().atLeast(1, 6, 20)
 
 private fun Project.applyAtomicfuCompilerPlugin() {
     val kotlinVersion = getKotlinVersion()
     // for KGP >= 1.7.20:
     // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableJsIrTransformation`
     // compiler plugin for JVM IR is applied via the property `kotlinx.atomicfu.enableJvmIrTransformation`
-    if (kotlinVersion.major == 1 && (kotlinVersion.minor == 7 && kotlinVersion.patch >= 20 || kotlinVersion.minor > 7)) {
+    if (kotlinVersion.atLeast(1, 7, 20)) {
         plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
         extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
             isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
@@ -125,7 +125,7 @@ private fun Project.applyAtomicfuCompilerPlugin() {
         // for KGP >= 1.6.20 && KGP <= 1.7.20:
         // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableIrTransformation`
         // compiler plugin for JVM IR is not supported yet
-        if (kotlinVersion.major == 1 && (kotlinVersion.minor == 6 && kotlinVersion.patch >= 20 || kotlinVersion.minor > 6)) {
+        if (kotlinVersion.atLeast(1, 6, 20)) {
             if (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY)) {
                 plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
             }
