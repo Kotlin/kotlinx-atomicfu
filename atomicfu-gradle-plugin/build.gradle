@@ -60,8 +60,8 @@ def atomicfu = project(':atomicfu')
 def atomicfuJvmJarTask = atomicfu.tasks.getByName(atomicfu.kotlin.targets.jvm.artifactsTaskName)
 
 def jsLegacy = atomicfu.kotlin.targets.hasProperty("jsLegacy")
-        ? atomicfu.kotlin.targets.jsLegacy
-        : atomicfu.kotlin.targets.js
+        ? atomicfu.kotlin.targets.js
+        : atomicfu.kotlin.targets.jsIr
 def atomicfuJsJarTask = atomicfu.tasks.getByName(jsLegacy.artifactsTaskName)
 
 def atomicfuMetadataOutput = atomicfu.kotlin.targets.metadata.compilations["main"].output.allOutputs
