@@ -18,8 +18,10 @@ ext {
 }
 
 kotlin {
-    targets.metaClass.addTarget = { preset ->
-        addNative(delegate.fromPreset(preset, preset.name))
+    targets {
+        delegate.metaClass.addTarget = { preset ->
+            addNative(delegate.fromPreset(preset, preset.name))
+        }
     }
 
     // JS -- always
