@@ -43,6 +43,7 @@ class JsLegacyTransformationTest : BaseKotlinGradleTest("js-simple") {
 
     @Test
     fun testClasspath() {
+        runner.build()
         checkJsCompilationClasspath()
     }
 }
