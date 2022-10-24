@@ -37,13 +37,12 @@
 * Code it like a boxed value `atomic(0)`, but run it in production efficiently:
   * as `java.util.concurrent.atomic.AtomicXxxFieldUpdater` on Kotlin/JVM 
   * as a plain unboxed value on Kotlin/JS
-* Use Kotlin-specific extensions (e.g. inline `loop`, `update`, `updateAndGet` functions).
-* Multiplatform:
-  * Write common Kotlin code with atomics that compiles for Kotlin JVM, JS, and Native backends:
+* Multiplatform: write common Kotlin code with atomics that compiles for Kotlin JVM, JS, and Native backends:
     * Compile-only dependency for JVM and JS (no runtime dependencies)
-    * Compile and runtime dependency for Kotlin/Native
-* Also supports atomic arrays, user-defined extensions on atomics and locks (see [more features](#more-features)).
-* Supports [debug tracing](#tracing-operations)
+    * Compile and runtime dependency for Kotlin/Native 
+* Use Kotlin-specific extensions (e.g. inline `loop`, `update`, `updateAndGet` functions).
+* Use atomic arrays, user-defined extensions on atomics and locks (see [more features](#more-features)).
+* [Tracing operations](#tracing-operations) for debugging.
   
 ## Example
 
@@ -244,7 +243,7 @@ public var foo: T by _foo            // public delegated property (val/var)
 
 Basically, Atomicfu library provides an effective usage of atomic values by performing the transformations of the compiled code.
 For JVM and JS there 2 transformation modes available: 
-* **Post-compilation transformation** that modifies the compiled bytecode and `*.js` sources correspondingly. 
+* **Post-compilation transformation** that modifies the compiled bytecode or `*.js` files. 
 * **IR transformation** that is performed by the atomicfu compiler plugin.
 
 ### Atomicfu compiler plugin
