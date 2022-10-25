@@ -9,26 +9,41 @@
 >We do provide a compatibility of atomicfu-transformed artifacts between releases, but we do not provide 
 >strict compatibility guarantees on plugin API and its general stability between Kotlin versions.
 
-The idiomatic way to use atomic operations in Kotlin. 
+**Atomicfu** is a multiplatform library that provides the idiomatic and effective way of using atomic operations in Kotlin.
 
-* Code it like `AtomicReference/Int/Long`, but run it in production efficiently as `AtomicXxxFieldUpdater` on Kotlin/JVM 
-  and as plain unboxed values on Kotlin/JS. 
-* Use Kotlin-specific extensions (e.g. inline `updateAndGet` and `getAndUpdate` functions).
-* Compile-time dependency only for JVM and JS/IR (no runtime dependencies).
-  * Post-compilation bytecode transformer that declares all the relevant field updaters for you on [Kotlin/JVM](#jvm).
-  * Post-compilation JavaScript files transformer on [Kotlin/JS](#js).
-* Multiplatform: 
-  * [Kotlin/Native](#native) is supported.
-  * However, Kotlin/Native works as library dependency at the moment (unlike Kotlin/JVM and Kotlin/JS).
-  * This enables writing [common](#common) Kotlin code with atomics that compiles for JVM, JS, and Native.
-* [Gradle](#gradle-build-setup) for all platforms and [Maven](#maven-build-setup) for JVM are supported.  
-* [Additional features](#additional-features) include:
-  * [JDK9 VarHandle](#varhandles-with-java-9).
-  * [Arrays of atomic values](#arrays-of-atomic-values).
-  * [User-defined extensions on atomics](#user-defined-extensions-on-atomics)
-  * [Locks](#locks)
-  * [Tracing operations](#tracing-operations)
+## Table of contents
+- [Features](#features)
+- [Example](#example)
+- [Quickstart](#quickstart)
+  - [Apply plugin to a project](#apply-plugin)
+    - [Gradle configuration](#gradle-configuration)
+    - [Maven configuration](#maven-configuration)
+- [Usage constraints](#usage-constraints)  
+- [Transformation modes](#transformation-modes)
+  - [Atomicfu compiler plugin](#atomicfu-compiler-plugin)
+- [Options for post-compilation transformation](#options-for-post-compilation-transformation) 
+  - [JVM options](#jvm-options)
+  - [JS options](#js-options)
+- [More features](#more-features)
+  - [Arrays of atomic values](#arrays-of-atomic-values)
+  - [User-defined extensions on atomics](#user-defined-extensions-on-atomics)
+  - [Locks](#locks)
+  - [Tracing operations](#tracing-operations)
+- [Kotlin/Native support](#kotlin-native-support)
 
+
+## Features
+
+* Code it like a boxed value `atomic(0)`, but run it in production efficiently:
+  * as `java.util.concurrent.atomic.AtomicXxxFieldUpdater` on Kotlin/JVM 
+  * as a plain unboxed value on Kotlin/JS
+* Multiplatform: write common Kotlin code with atomics that compiles for Kotlin JVM, JS, and Native backends:
+    * Compile-only dependency for JVM and JS (no runtime dependencies)
+    * Compile and runtime dependency for Kotlin/Native 
+* Use Kotlin-specific extensions (e.g. inline `loop`, `update`, `updateAndGet` functions).
+* Use atomic arrays, user-defined extensions on atomics and locks (see [more features](#more-features)).
+* [Tracing operations](#tracing-operations) for debugging.
+  
 ## Example
 
 Let us declare a `top` variable for a lock-free stack implementation:
@@ -78,128 +93,56 @@ val myLong = atomic(0L)  // note: long initial value
 Integer and long atomics provide all the usual `getAndIncrement`, `incrementAndGet`, `getAndAdd`, `addAndGet`, and etc
 operations. They can be also atomically modified via `+=` and `-=` operators.
 
-## Dos and Don'ts
+## Quickstart
+### Apply plugin
+#### Gradle configuration
 
-* Declare atomic variables as `private val` or `internal val`. You can use just (public) `val`, 
-  but make sure they are not directly accessed outside of your Kotlin module (outside of the source set).
-  Access to the atomic variable itself shall be encapsulated.
-* Only simple operations on atomic variables _directly_ are supported. 
-  * Do not read references on atomic variables into local variables,
-    e.g. `top.compareAndSet(...)` is Ok, while `val tmp = top; tmp...` is not. 
-  * Do not leak references on atomic variables in other way (return, pass as params, etc). 
-* Do not introduce complex data flow in parameters to atomic variable operations, 
-  i.e. `top.value = complex_expression` and `top.compareAndSet(cur, complex_expression)` are not supported 
-  (more specifically, `complex_expression` should not have branches in its compiled representation).
-  Extract `complex_expression` into a variable when needed.
-* Use the following convention if you need to expose the value of atomic property to the public:
+Gradle configuration is supported for all platforms, minimal version is Gradle 6.8.
+
+In top-level build file:
+
+<details open>
+<summary>Kotlin</summary>
 
 ```kotlin
-private val _foo = atomic<T>(initial) // private atomic, convention is to name it with leading underscore
-public var foo: T by _foo            // public delegated property (val/var)
-```  
-
-## Gradle build setup
-
-Building with Gradle is supported for all platforms.
-
-### JVM
-
-You will need Gradle 6.8 or later.
-Add and apply AtomicFU plugin. It adds all the corresponding dependencies and transformations automatically. 
-See [additional configuration](#additional-configuration) if that needs tweaking.
-
-```groovy
 buildscript {
-    ext.atomicfu_version = '0.18.4'
+    repositories {
+        mavenCentral()
+    }
 
     dependencies {
-        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
+      classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.18.4")
     }
 }
 
+apply(plugin = "kotlinx-atomicfu")
+```
+</details>
+
+<details>
+<summary>Groovy</summary>
+
+```groovy
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.18.4'
+    }
+}
+  
 apply plugin: 'kotlinx-atomicfu'
 ```
+</details>
 
-### JS 
+#### Maven configuration
 
-Configure add apply plugin just like for [JVM](#jvm).
+Maven configuration is supported for JVM projects.
 
-### Native
 
-This library is available for Kotlin/Native (`atomicfu-native`).
-Apply the corresponding plugin just like for [JVM](#jvm). 
-
-Atomic references for Kotlin/Native are based on 
-[FreezableAtomicReference](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.concurrent/-freezable-atomic-reference/-init-.html)
-and every reference that is stored to the previously 
-[frozen](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.concurrent/freeze.html) 
-(shared with another thread) atomic is automatically frozen, too.
-
-Since Kotlin/Native does not generally provide binary compatibility between versions, 
-you should use the same version of Kotlin compiler as was used to build AtomicFU. 
-See [gradle.properties](gradle.properties) in AtomicFU project for its `kotlin_version`.
-
-### Common
-
-If you write a common code that should get compiled or different platforms, add `org.jetbrains.kotlinx:atomicfu`
-to your common code dependencies or apply `kotlinx-atomicfu` plugin that adds this dependency automatically:
-
-```groovy
-dependencies {
-    compile "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
-}
-```
-
-## IR transformation for Kotlin/JS
-
-There is a new option to turn on IR transformation for Kotlin/JS backend.
-You can add `kotlinx.atomicfu.enableIrTransformation=true` to your `gradle.properties` file in order to enable it.
-
-Here is how transformation is performed for different [JS compiler modes](https://kotlinlang.org/docs/js-ir-compiler.html) with this option enabled:
-
-- `kotlin.js.compiler=legacy`: JavaScript transformer from the library is applied to the final compiled *.js files.
-- `kotlin.js.compiler=ir`: compiler plugin transformations are appiled to the generated IR.
-- `kotlin.js.compiler=both`: compiler plugin transformations are appiled to all compilations of IR targets, while compilations of legacy targets are transformed by the library.
-
-## Additional configuration
-
-To set configuration options you should create `atomicfu` section in a `build.gradle` file, 
-like this:
-```groovy
-atomicfu {
-  dependenciesVersion = '0.18.4'
-}
-```
-
-### JVM transformation options
-
-To turn off transformation for Kotlin/JVM set option `transformJvm` to `false`.
-
-Configuration option `jvmVariant` defines the Java class that replaces atomics during bytecode transformation.
-Here are the valid options:
-- `FU` – atomics are replaced with [AtomicXxxFieldUpdater](https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.html).
-- `VH` – atomics are replaced with [VarHandle](https://docs.oracle.com/javase/9/docs/api/java/lang/invoke/VarHandle.html), 
-  this option is supported for JDK 9+.
-- `BOTH` – [multi-release jar file](https://openjdk.java.net/jeps/238) will be created with both `AtomicXxxFieldUpdater` for JDK <= 8 and `VarHandle` for JDK 9+.
-
-### JS transformation options
-
-To turn off transformation for Kotlin/JS set option `transformJs` to `false`.
-
-Here are all available configuration options (with their defaults):
-```groovy
-atomicfu {
-  dependenciesVersion = '0.18.4' // set to null to turn-off auto dependencies
-  transformJvm = true // set to false to turn off JVM transformation
-  jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH 
-  jsVariant = "JS" // JS transformation variant: JS or IR
-  verbose = false // set to true to be more verbose  
-}
-```
-
-## Maven build setup
-
-Declare AtomicFU version:
+<details open>
+<summary>Declare atomicfu version</summary>
 
 ```xml
 <properties>
@@ -207,8 +150,10 @@ Declare AtomicFU version:
 </properties> 
 ```
 
-Declare _provided_ dependency on the AtomicFU library 
-(the users of the resulting artifact will not have a dependency on AtomicFU library):
+</details>
+
+<details>
+<summary>Declare provided dependency on the AtomicFU library</summary>
 
 ```xml
 <dependencies>
@@ -221,55 +166,161 @@ Declare _provided_ dependency on the AtomicFU library
 </dependencies>
 ```
 
+</details>
+
 Configure build steps so that Kotlin compiler puts classes into a different `classes-pre-atomicfu` directory,
 which is then transformed to a regular `classes` directory to be used later by tests and delivery.
 
+<details>
+<summary>Build steps</summary>
+
 ```xml
 <build>
-    <plugins>
-        <!-- compile Kotlin files to staging directory -->
-        <plugin>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-maven-plugin</artifactId>
-            <version>${kotlin.version}</version>
-            <executions>
-                <execution>
-                    <id>compile</id>
-                    <phase>compile</phase>
-                    <goals>
-                        <goal>compile</goal>
-                    </goals>
-                    <configuration>
-                        <output>${project.build.directory}/classes-pre-atomicfu</output>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-        <!-- transform classes with AtomicFU plugin -->
-        <plugin>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>atomicfu-maven-plugin</artifactId>
-            <version>${atomicfu.version}</version>
-            <executions>
-                <execution>
-                    <goals>
-                        <goal>transform</goal>
-                    </goals>
-                    <configuration>
-                        <input>${project.build.directory}/classes-pre-atomicfu</input>
-                        <!-- "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code -->
-                        <variant>FU</variant>  
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
+  <plugins>
+    <!-- compile Kotlin files to staging directory -->
+    <plugin>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-maven-plugin</artifactId>
+      <version>${kotlin.version}</version>
+      <executions>
+        <execution>
+          <id>compile</id>
+          <phase>compile</phase>
+          <goals>
+            <goal>compile</goal>
+          </goals>
+          <configuration>
+            <output>${project.build.directory}/classes-pre-atomicfu</output>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+    <!-- transform classes with AtomicFU plugin -->
+    <plugin>
+      <groupId>org.jetbrains.kotlinx</groupId>
+      <artifactId>atomicfu-maven-plugin</artifactId>
+      <version>${atomicfu.version}</version>
+      <executions>
+        <execution>
+          <goals>
+            <goal>transform</goal>
+          </goals>
+          <configuration>
+            <input>${project.build.directory}/classes-pre-atomicfu</input>
+            <!-- "VH" to use Java 9 VarHandle, "BOTH" to produce multi-version code -->
+            <variant>FU</variant>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
 </build>
 ```
 
-## Additional features
+</details>
 
-AtomicFU provides some additional features that you can optionally use.
+## Usage constraints
+
+* Declare atomic variables as `private val` or `internal val`. You can use just (public) `val`, 
+  but make sure they are not directly accessed outside of your Kotlin module (outside of the source set).
+  Access to the atomic variable itself shall be encapsulated.
+* Only simple operations on atomic variables _directly_ are supported. 
+  * Do not read references on atomic variables into local variables,
+    e.g. `top.compareAndSet(...)` is ok, while `val tmp = top; tmp...` is not. 
+  * Do not leak references on atomic variables in other way (return, pass as params, etc). 
+* Do not introduce complex data flow in parameters to atomic variable operations, 
+  i.e. `top.value = complex_expression` and `top.compareAndSet(cur, complex_expression)` are not supported 
+  (more specifically, `complex_expression` should not have branches in its compiled representation).
+  Extract `complex_expression` into a variable when needed.
+* Use the following convention if you need to expose the value of atomic property to the public:
+
+```kotlin
+private val _foo = atomic<T>(initial) // private atomic, convention is to name it with leading underscore
+public var foo: T by _foo            // public delegated property (val/var)
+```
+
+## Transformation modes
+
+Basically, Atomicfu library provides an effective usage of atomic values by performing the transformations of the compiled code.
+For JVM and JS there 2 transformation modes available: 
+* **Post-compilation transformation** that modifies the compiled bytecode or `*.js` files. 
+* **IR transformation** that is performed by the atomicfu compiler plugin.
+
+### Atomicfu compiler plugin
+
+Compiler plugin transformation is less fragile than transformation of the compiled sources 
+as it depends on the compiler IR tree.
+
+To turn on IR transformation set these properties in your `gradle.properties` file:
+
+<details open>
+<summary>For Kotlin >= 1.7.20</summary>
+
+```groovy
+kotlinx.atomicfu.enableJvmIrTransformation=true // for JVM IR transformation
+kotlinx.atomicfu.enableJsIrTransformation=true // for JS IR transformation
+```
+
+</details>
+
+<details>
+
+
+<summary> For Kotlin >= 1.6.20 and Kotlin < 1.7.20</summary>
+
+```groovy
+kotlinx.atomicfu.enableIrTransformation=true // only JS IR transformation is supported
+```
+
+</details>
+
+Also for JS backend make sure that `ir` or `both` compiler mode is set:
+
+```groovy
+kotlin.js.compiler=ir // or both
+```
+
+
+## Options for post-compilation transformation
+
+Some configuration options are available for _post-compilation transform tasks_ on JVM and JS.
+
+To set configuration options you should create `atomicfu` section in a `build.gradle` file, 
+like this:
+```groovy
+atomicfu {
+  dependenciesVersion = '0.18.4'
+}
+```
+
+### JVM options
+
+To turn off transformation for Kotlin/JVM set option `transformJvm` to `false`.
+
+Configuration option `jvmVariant` defines the Java class that replaces atomics during bytecode transformation.
+Here are the valid options:
+- `FU` – atomics are replaced with [AtomicXxxFieldUpdater](https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/atomic/AtomicIntegerFieldUpdater.html).
+- `VH` – atomics are replaced with [VarHandle](https://docs.oracle.com/javase/9/docs/api/java/lang/invoke/VarHandle.html), 
+  this option is supported for JDK 9+.
+- `BOTH` – [multi-release jar file](https://openjdk.java.net/jeps/238) will be created with both `AtomicXxxFieldUpdater` for JDK <= 8 and `VarHandle` for JDK 9+.
+
+### JS options
+
+To turn off transformation for Kotlin/JS set option `transformJs` to `false`.
+
+Here are all available configuration options (with their defaults):
+```groovy
+atomicfu {
+  dependenciesVersion = '0.18.4' // set to null to turn-off auto dependencies
+  transformJvm = true // set to false to turn off JVM transformation
+  jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH
+  transformJs = true // set to false to turn off JVM transformation
+}
+```
+
+## More features
+
+AtomicFU provides some additional features that you can use.
 
 ### Arrays of atomic values
 
@@ -349,4 +400,16 @@ private val trace = Trace(size = 64) {
 ```                           
 
 `trace` is only seen before transformation and completely erased after on Kotlin/JVM and Kotlin/JS.
+
+## Kotlin Native support
+
+Atomic references for Kotlin/Native are based on
+[FreezableAtomicReference](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.concurrent/-freezable-atomic-reference/-init-.html)
+and every reference that is stored to the previously
+[frozen](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.concurrent/freeze.html)
+(shared with another thread) atomic is automatically frozen, too.
+
+Since Kotlin/Native does not generally provide binary compatibility between versions,
+you should use the same version of Kotlin compiler as was used to build AtomicFU.
+See [gradle.properties](gradle.properties) in AtomicFU project for its `kotlin_version`.
 
