@@ -4,8 +4,15 @@ import kotlinx.atomicfu.plugin.gradle.internal.*
 import kotlinx.atomicfu.plugin.gradle.internal.BaseKotlinScope
 import org.junit.Test
 
-class JsProjectTest : BaseKotlinGradleTest("js-simple") {
-    private fun BaseKotlinScope.createProject() {
+/**
+ * Test that ensures correctness of `atomicfu-gradle-plugin` application to the JS project:
+ * - post-compilation js transformation tasks are created
+ *   (legacy transformation is tested here, compiler plugin is not applied).
+ * - original non-transformed classes are not left in compile/runtime classpath.
+ */
+class JsLegacyTransformationTest : BaseKotlinGradleTest("js-simple") {
+
+    override fun BaseKotlinScope.createProject() {
         buildGradleKts {
             resolve("projects/js-simple/js-simple.gradle.kts")
         }
@@ -23,30 +30,20 @@ class JsProjectTest : BaseKotlinGradleTest("js-simple") {
     }
 
     @Test
-    fun testPlugin() {
-        val runner = test {
-            createProject()
-            runner {
-                arguments.add(":build")
-            }
-        }
-        val tasksToCheck = arrayOf(
-            ":compileKotlinJs",
-            ":transformJsMainAtomicfu",
-            ":compileTestKotlinJs",
-            ":transformJsTestAtomicfu"
+    fun testPluginApplication() =
+        checkTaskOutcomes(
+            executedTasks = listOf(
+                ":compileKotlinJs",
+                ":transformJsMainAtomicfu",
+                ":compileTestKotlinJs",
+                ":transformJsTestAtomicfu"
+            ),
+            excludedTasks = emptyList()
         )
-        runner.build().apply {
-            tasksToCheck.forEach {
-                assertTaskSuccess(it)
-            }
-        }
-        // check that task outcomes are cached for the second build
-        runner.build().apply {
-            tasksToCheck.forEach {
-                assertTaskUpToDate(it)
-            }
-        }
+
+    @Test
+    fun testClasspath() {
+        runner.build()
         checkJsCompilationClasspath()
     }
 }

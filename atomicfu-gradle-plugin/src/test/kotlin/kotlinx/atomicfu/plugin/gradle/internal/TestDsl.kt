@@ -62,6 +62,14 @@ internal fun FileContainer.settingsGradleKts(fn: AppendableScope.() -> Unit) {
 }
 
 /**
+ * Shortcut for creating a `gradle.properties` by using [file][FileContainer.file]
+ */
+internal fun FileContainer.gradleProperties(fn: AppendableScope.() -> Unit) {
+    val fileName = "gradle.properties"
+    file(fileName, fn)
+}
+
+/**
  * Declares a directory with the given [dirName] inside the current container.
  * All calls creating files within this scope will create the files nested in this directory.
  *
