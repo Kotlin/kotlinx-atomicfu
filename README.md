@@ -3,7 +3,7 @@
 [![Kotlin Beta](https://kotl.in/badges/beta.svg)](https://kotlinlang.org/docs/components-stability.html)
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.18.4/pom)
+[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.18.5/pom)
 
 >Note on Beta status: the plugin is in its active development phase and changes from release to release.
 >We do provide a compatibility of atomicfu-transformed artifacts between releases, but we do not provide 
@@ -111,7 +111,7 @@ buildscript {
     }
 
     dependencies {
-      classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.18.4")
+      classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.18.5")
     }
 }
 
@@ -128,7 +128,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.18.4'
+        classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.18.5'
     }
 }
   
@@ -146,7 +146,7 @@ Maven configuration is supported for JVM projects.
 
 ```xml
 <properties>
-     <atomicfu.version>0.18.4</atomicfu.version>
+     <atomicfu.version>0.18.5</atomicfu.version>
 </properties> 
 ```
 
@@ -289,7 +289,7 @@ To set configuration options you should create `atomicfu` section in a `build.gr
 like this:
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.18.4'
+  dependenciesVersion = '0.18.5'
 }
 ```
 
@@ -311,7 +311,7 @@ To turn off transformation for Kotlin/JS set option `transformJs` to `false`.
 Here are all available configuration options (with their defaults):
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.18.4' // set to null to turn-off auto dependencies
+  dependenciesVersion = '0.18.5' // set to null to turn-off auto dependencies
   transformJvm = true // set to false to turn off JVM transformation
   jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH
   transformJs = true // set to false to turn off JVM transformation

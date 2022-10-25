@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.18.5
+
+* Support JVM IR compiler plugin (#246).
+* Update Kotlin to 1.7.20. 
+* Added more tests for atomicfu-gradle-plugin (#255).
+
 # Version 0.18.4
 
 * Fix KGP compatibility bug with freeCompilerArgs modification (#247).
