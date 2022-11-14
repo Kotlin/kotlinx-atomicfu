@@ -224,6 +224,12 @@ which is then transformed to a regular `classes` directory to be used later by t
 * Declare atomic variables as `private val` or `internal val`. You can use just (public) `val`, 
   but make sure they are not directly accessed outside of your Kotlin module (outside of the source set).
   Access to the atomic variable itself shall be encapsulated.
+* To expose the value of an atomic property to the public, use a delegated property declared in the same scope:
+
+```kotlin
+private val _foo = atomic<T>(initial) // private atomic, convention is to name it with leading underscore
+public var foo: T by _foo            // public delegated property (val/var)
+```
 * Only simple operations on atomic variables _directly_ are supported. 
   * Do not read references on atomic variables into local variables,
     e.g. `top.compareAndSet(...)` is ok, while `val tmp = top; tmp...` is not. 
@@ -232,12 +238,6 @@ which is then transformed to a regular `classes` directory to be used later by t
   i.e. `top.value = complex_expression` and `top.compareAndSet(cur, complex_expression)` are not supported 
   (more specifically, `complex_expression` should not have branches in its compiled representation).
   Extract `complex_expression` into a variable when needed.
-* Use the following convention if you need to expose the value of atomic property to the public:
-
-```kotlin
-private val _foo = atomic<T>(initial) // private atomic, convention is to name it with leading underscore
-public var foo: T by _foo            // public delegated property (val/var)
-```
 
 ## Transformation modes
 
