@@ -5,6 +5,8 @@
 import org.jetbrains.kotlin.konan.target.HostManager
 
 buildscript {
+
+
     /*
      * These property group is used to build kotlinx.atomicfu against Kotlin compiler snapshot.
      * How does it work:
@@ -29,14 +31,13 @@ buildscript {
     ext.jvm_ir_enabled = rootProject.properties['enable_jvm_ir'] != null
     ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
 
+
     repositories {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
-        // Future replacement for kotlin-dev, with cache redirector
-        maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        KotlinAggregateBuild.addDevRepositoryIfEnabled(delegate, project)
     }
-    
+
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
@@ -54,12 +55,11 @@ allprojects {
         }
     }
 
-    println "Using Kotlin $kotlin_version for project $it"
+    logger.info("Using Kotlin compiler $kotlin_version for $it")
+
     repositories {
         mavenCentral()
-        // Future replacement for kotlin-dev, with cache redirector
-        maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        KotlinAggregateBuild.addDevRepositoryIfEnabled(delegate, project)
     }
 
     def deployVersion = properties['DeployVersion']
@@ -79,7 +79,7 @@ allprojects {
     }
 }
 
-println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
+logger.info("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 if (build_snapshot_train) {
     afterEvaluate {
         println "Manifest of kotlin-compiler-embeddable.jar for atomicfu"

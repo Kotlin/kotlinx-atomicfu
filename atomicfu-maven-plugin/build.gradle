@@ -23,6 +23,8 @@ def buildSnapshots = rootProject.properties['build_snapshot_train'] != null
 
 evaluationDependsOn(':atomicfu-transformer')
 
+def kotlinDevRepoUrl = KotlinAggregateBuild.getKotlinDevRepositoryUrl(project)
+
 task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishToMavenLocal']) {
     def buildDir = project.buildDir // because Maven model also has "project"
     outputs.file(pomFile)
@@ -43,11 +45,12 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                         appendNode('project.build.sourceEncoding', 'UTF-8')
                     }
                     appendNode('repositories').with {
-                        appendNode('repository').with {
-                            appendNode('id', 'dev')
-                            appendNode('url', 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev')
+                        if (kotlinDevRepoUrl != null && !kotlinDevRepoUrl.isEmpty()) {
+                            appendNode('repository').with {
+                                appendNode('id', 'dev')
+                                appendNode('url', kotlinDevRepoUrl)
+                            }
                         }
-
                         if (buildSnapshots) {
                             appendNode('repository').with {
                                 appendNode('id', 'kotlin-snapshots')
@@ -77,11 +80,11 @@ task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
     if (mavenUserHome != null) args.add("-Dmaven.user.home=${new File(mavenUserHome).getAbsolutePath()}")
     if (mavenRepoLocal != null) args.add("-Dmaven.repo.local=${new File(mavenRepoLocal).getAbsolutePath()}")
     args.addAll([
-        '--settings', './settings.xml',
-        '--errors',
-        '--batch-mode',
-        '--file', pomFile.toString(),
-        'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'
+            '--settings', './settings.xml',
+            '--errors',
+            '--batch-mode',
+            '--file', pomFile.toString(),
+            'org.apache.maven.plugins:maven-plugin-plugin:3.5.1:descriptor'
     ])
     commandLine args
     doLast {
