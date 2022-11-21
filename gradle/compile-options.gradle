@@ -19,8 +19,8 @@ ext.configureKotlin = { isMultiplatform ->
 
     kotlin.sourceSets.all {
         languageSettings {
-            apiVersion = "1.4"
-            languageVersion = "1.4"
+            apiVersion = rootProject.ext.kotlin_api_version
+            languageVersion = rootProject.ext.kotlin_language_version
         }
     }
 }

@@ -54,7 +54,7 @@ allprojects {
         }
     }
 
-    println "Using Kotlin $kotlin_version for project $it"
+    println "Using Kotlin compiler $kotlin_version, kotlin api version $rootProject.ext.kotlin_api_version, kotlin language version $rootProject.ext.kotlin_language_version for project $it"
     repositories {
         jcenter()
         // Future replacement for kotlin-dev, with cache redirector
