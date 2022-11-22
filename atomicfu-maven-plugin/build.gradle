@@ -23,6 +23,10 @@ def buildSnapshots = rootProject.properties['build_snapshot_train'] != null
 
 evaluationDependsOn(':atomicfu-transformer')
 
+def kotlinDevRepoUrl = (rootProject.properties['kotlin_repo_url'] ?: "" ) as String
+println("Configured external repository url: '$kotlinDevRepoUrl'")
+
+
 task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishToMavenLocal']) {
     def buildDir = project.buildDir // because Maven model also has "project"
     outputs.file(pomFile)
@@ -45,9 +49,8 @@ task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishTo
                     appendNode('repositories').with {
                         appendNode('repository').with {
                             appendNode('id', 'dev')
-                            appendNode('url', 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev')
+                            appendNode('url', kotlinDevRepoUrl)
                         }
-
                         if (buildSnapshots) {
                             appendNode('repository').with {
                                 appendNode('id', 'kotlin-snapshots')

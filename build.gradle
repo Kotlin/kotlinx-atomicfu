@@ -28,13 +28,15 @@ buildscript {
     // These two flags are enabled in train builds for JVM IR compiler testing
     ext.jvm_ir_enabled = rootProject.properties['enable_jvm_ir'] != null
     ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
+    def kotlinDevRepoUrl = (rootProject.properties['kotlin_repo_url'] ?: "" ) as String
+    println("Configured external repository url: '$kotlinDevRepoUrl'")
 
     repositories {
         jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
-        // Future replacement for kotlin-dev, with cache redirector
-        maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        if (kotlinDevRepoUrl!= "") {
+            maven { url kotlinDevRepoUrl }
+        }
     }
     
     dependencies {
@@ -55,11 +57,15 @@ allprojects {
     }
 
     println "Using Kotlin compiler $kotlin_version, kotlin api version $rootProject.ext.kotlin_api_version, kotlin language version $rootProject.ext.kotlin_language_version for project $it"
+
+    def kotlinDevRepoUrl = (rootProject.properties['kotlin_repo_url'] ?: "" ) as String
+    println("Configured external repository url: '$kotlinDevRepoUrl'")
+
     repositories {
         jcenter()
-        // Future replacement for kotlin-dev, with cache redirector
-        maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        if (kotlinDevRepoUrl!= "") {
+            maven { url kotlinDevRepoUrl }
+        }
     }
 
     def deployVersion = properties['DeployVersion']
