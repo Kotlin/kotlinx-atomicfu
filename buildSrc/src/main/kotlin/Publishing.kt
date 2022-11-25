@@ -57,10 +57,10 @@ fun mavenRepositoryUri(): URI {
 
 fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     rh.maven {
-        url = mavenRepositoryUri()
+        url = URI("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
         credentials {
-            username = project.getSensitiveProperty("libs.sonatype.user")
-            password = project.getSensitiveProperty("libs.sonatype.password")
+            username = project.getSensitiveProperty("space.kotlin.packages.user")
+            password = project.getSensitiveProperty("space.kotlin.packages.secret")
         }
     }
 }

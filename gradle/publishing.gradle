@@ -28,9 +28,7 @@ task javadocJar(type: Jar) {
 
 publishing {
     repositories { // this: closure
-        maven {
-            url = uri("$rootDir/build/repo")
-        }
+        PublishingKt.configureMavenPublication(delegate, project)
     }
     
     if (!isMultiplatform) {
