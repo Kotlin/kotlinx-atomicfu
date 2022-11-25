@@ -59,8 +59,8 @@ fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     rh.maven {
         url = URI("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
         credentials {
-            username = project.getSensitiveProperty("space.kotlin.packages.user")
-            password = project.getSensitiveProperty("space.kotlin.packages.secret")
+            username = project.getSensitiveProperty("kotlin.space.packages.wasm.user")
+            password = project.getSensitiveProperty("kotlin.space.packages.wasm.secret")
         }
     }
 }
