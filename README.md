@@ -224,7 +224,8 @@ which is then transformed to a regular `classes` directory to be used later by t
 * Declare atomic variables as `private val` or `internal val`. You can use just (public) `val`, 
   but make sure they are not directly accessed outside of your Kotlin module (outside of the source set).
   Access to the atomic variable itself shall be encapsulated.
-* To expose the value of an atomic property to the public, use a delegated property declared in the same scope:
+* To expose the value of an atomic property to the public, use a delegated property declared in the same scope
+  (see [atomic delegates](#atomic-delegates) section for details):
 
 ```kotlin
 private val _foo = atomic<T>(initial) // private atomic, convention is to name it with leading underscore
@@ -337,6 +338,24 @@ val x = a[i].value // read value
 a[i].value = x // set value
 a[i].compareAndSet(expect, update) // do atomic operations
 ```
+
+### Atomic delegates
+
+You can expose the value of an atomic property to the public, using a delegated property 
+declared in the same scope:
+
+```kotlin
+private val _foo = atomic<T>(initial) // private atomic, convention is to name it with leading underscore
+public var foo: T by _foo            // public delegated property (val/var)
+```
+
+You can also delegate a property to the atomic factory invocation, that is equal to declaring a volatile property:  
+
+```kotlin
+public var foo: T by atomic(0)
+```
+
+This feature is only supported for the IR transformation mode, see the [atomicfu compiler plugin](#atomicfu-compiler-plugin) section for details.
 
 ### User-defined extensions on atomics
 

@@ -34,12 +34,6 @@ class AtomicfuBytecodeTest {
     @Test
     fun testTraceUseBytecode() = checkBytecode(TraceUseTest::class.java, listOf(KOTLINX_ATOMICFU))
 
-    /**
-     * Test [DelegatedProperties].
-     */
-    @Test
-    fun testDelegatedPropertiesBytecode() = checkBytecode(DelegatedProperties::class.java, listOf(KOTLIN_REFLECTION))
-
     private fun checkBytecode(javaClass: Class<*>, strings: List<String>) {
         val resourceName = javaClass.name.replace('.', '/') + ".class"
         val bytes = javaClass.classLoader.getResourceAsStream(resourceName)!!.use { it.readBytes() }
