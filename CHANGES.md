@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.19.0
+
+* Update Kotlin to 1.8.0.
+* Update LV to 1.8 (#270).
+* Prepare atomicfu for including to the Kotlin Aggregate build (#265).
+
 # Version 0.18.5
 
 * Support JVM IR compiler plugin (#246).
