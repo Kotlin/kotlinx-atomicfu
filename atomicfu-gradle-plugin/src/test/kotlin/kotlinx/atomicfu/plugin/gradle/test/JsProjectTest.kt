@@ -19,6 +19,9 @@ class JsLegacyTransformationTest : BaseKotlinGradleTest("js-simple") {
         settingsGradleKts {
             resolve("projects/js-simple/settings.gradle.kts")
         }
+        gradleProperties {
+            resolve("projects/mpp-simple/gradle.properties_js_legacy")
+        }
         dir("src/main/kotlin") {}
         kotlin("IntArithmetic.kt", "main") {
             resolve("projects/js-simple/src/main/kotlin/IntArithmetic.kt")

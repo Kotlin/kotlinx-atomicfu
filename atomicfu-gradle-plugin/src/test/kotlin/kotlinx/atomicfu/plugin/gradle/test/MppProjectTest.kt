@@ -19,6 +19,9 @@ class MppLegacyTransformationTest : BaseKotlinGradleTest("mpp-simple") {
         settingsGradleKts {
             resolve("projects/mpp-simple/settings.gradle.kts")
         }
+        gradleProperties {
+            resolve("projects/mpp-simple/gradle.properties_js_legacy")
+        }
         dir("src/commonMain/kotlin") {}
         kotlin("IntArithmetic.kt", "commonMain") {
             resolve("projects/mpp-simple/src/commonMain/kotlin/IntArithmetic.kt")
