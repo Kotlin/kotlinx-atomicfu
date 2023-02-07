@@ -226,6 +226,8 @@ class AtomicFUTransformerJS(
                                 node.replaceChild(stmt, EmptyLine())
                             } else if (initializer.matches(Regex(kotlinxAtomicfuModuleName("""($LOCKS|$TRACE_FORMAT_CONSTRUCTOR|$TRACE_BASE_CLASS|$TRACE_NAMED)""")))) {
                                 node.replaceChild(stmt, EmptyLine())
+                            } else if (initializer.matches(Regex("$MODULE_KOTLINX_ATOMICFU.$KOTLINX_ATOMICFU_PACKAGE"))) {
+                                node.replaceChild(stmt, EmptyLine())
                             }
                         }
                     }

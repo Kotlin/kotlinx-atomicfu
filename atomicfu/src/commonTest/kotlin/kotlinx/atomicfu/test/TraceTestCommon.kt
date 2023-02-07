@@ -30,6 +30,18 @@ class CounterWithDefaultTrace {
     internal fun getA1() = a1.value
 }
 
+class CounterWithExplicitDefaultTraceFormat {
+    private val traceWithDefaultFormat = Trace(10, traceFormatDefault)
+    private val a = atomic(0, traceWithDefaultFormat)
+
+    fun inc() {
+        traceWithDefaultFormat { "current value ${a.value}" }
+        val newValue = a.incrementAndGet()
+        traceWithDefaultFormat { "new value $newValue" }
+    }
+    internal fun get() = a.value
+}
+
 class CounterWithCustomSizeTrace {
     private val t = Trace(30)
     private val a = atomic(0, t)
@@ -82,6 +94,13 @@ class MyCounter {
         assertEquals(1, c.getA())
         c.multTen()
         assertEquals(c.getA1(), 50)
+    }
+
+    @Test
+    fun testTraceWithDefaultFormat() {
+        val c = CounterWithExplicitDefaultTraceFormat()
+        c.inc()
+        assertEquals(10, c.get())
     }
 
     @Test
