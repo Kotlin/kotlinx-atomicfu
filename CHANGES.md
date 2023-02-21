@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.20.0
+
+* Update Kotlin to 1.8.10.
+* Support all official K/N targets (#275).
+
 # Version 0.19.0
 
 * Update Kotlin to 1.8.0.
