@@ -432,3 +432,5 @@ Since Kotlin/Native does not generally provide binary compatibility between vers
 you should use the same version of Kotlin compiler as was used to build AtomicFU.
 See [gradle.properties](gradle.properties) in AtomicFU project for its `kotlin_version`.
 
+Available Kotlin/Native targets are based on non-deprecated official targets [Tier list](https://kotlinlang.org/docs/native-target-support.html)
+ with the corresponding compatibility guarantees.
