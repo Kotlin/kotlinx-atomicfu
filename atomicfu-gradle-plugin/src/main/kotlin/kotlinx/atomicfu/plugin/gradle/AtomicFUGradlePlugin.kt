@@ -38,6 +38,7 @@ private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
 private const val ENABLE_JS_IR_TRANSFORMATION_LEGACY = "kotlinx.atomicfu.enableIrTransformation"
 private const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 private const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
+private const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
 private const val MIN_SUPPORTED_GRADLE_VERSION = "7.0"
 private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 
@@ -133,6 +134,7 @@ private fun Project.applyAtomicfuCompilerPlugin() {
         extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
             isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
             isJvmIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)
+            isNativeIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION)
         }
     } else {
         // for KGP >= 1.6.20 && KGP <= 1.7.20:
@@ -414,8 +416,8 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
                         KotlinPlatformType.native, KotlinPlatformType.wasm -> Platform.NATIVE
                     }
             val configurationName = when {
-                // impl dependency for native (there is no transformation)
-                platform == Platform.NATIVE -> sourceSet.implementationConfigurationName
+                // impl dependency for native when IR transformation is off
+                platform == Platform.NATIVE && !project.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION) -> sourceSet.implementationConfigurationName
                 // compileOnly dependency for main compilation (commonMain, jvmMain, jsMain)
                 compilationType == CompilationType.MAIN -> sourceSet.compileOnlyConfigurationName
                 // impl dependency for tests
