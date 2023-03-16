@@ -124,21 +124,6 @@ if (rootProject.ext.native_targets_enabled) {
             }
         }
     }
-
-    // Hack for publishing as HMPP: pack the cinterop klib as a source set:
-    if (!project.ext.ideaActive) {
-        kotlin.sourceSets {
-            nativeInterop
-            nativeMain.dependsOn(nativeInterop)
-        }
-
-        apply from: "$rootDir/gradle/interop-as-source-set-klib.gradle"
-
-        registerInteropAsSourceSetOutput(
-                kotlin.linuxX64().compilations["main"].cinterops["interop"],
-                kotlin.sourceSets["nativeInterop"]
-        )
-    }
 }
 
 configurations {
