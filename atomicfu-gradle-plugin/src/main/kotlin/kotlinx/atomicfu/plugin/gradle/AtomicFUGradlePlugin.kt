@@ -156,7 +156,8 @@ private fun Project.addCompilerPluginDependency() {
                     kotlinCompilation.dependencies {
                         if (getKotlinVersion().atLeast(1, 7, 10)) {
                             // since Kotlin 1.7.10 we can add `atomicfu-runtime` dependency directly
-                            implementation("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:${getKotlinPluginVersion()}")
+                            compileOnly("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:${getKotlinPluginVersion()}")
+                            runtimeOnly("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:${getKotlinPluginVersion()}")
                         } else {
                             // add atomicfu compiler plugin dependency
                             // to provide the `atomicfu-runtime` library used during compiler plugin transformation
