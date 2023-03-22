@@ -27,8 +27,7 @@ dependencies {
     compileOnly gradleApi()
     compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
     compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    // atomicfu compiler plugin dependency will be loaded to kotlinCompilerPluginClasspath
-    implementation "org.jetbrains.kotlin:atomicfu:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:atomicfu:$kotlin_version"
 
     testImplementation gradleTestKit()
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
