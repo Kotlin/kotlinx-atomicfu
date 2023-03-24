@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.20.1
+
+* Fixed passing `kotlinx-atomicfu-runtime` dependency to the runtime classpath (#283).
+* AV/LV set to 1.4 to be compatible with Gradle 7 (#287).
+* Enable cinterop commonization (#282).
+
 # Version 0.20.0
 
 * Update Kotlin to 1.8.10.
