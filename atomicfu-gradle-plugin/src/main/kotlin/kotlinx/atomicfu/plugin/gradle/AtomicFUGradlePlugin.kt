@@ -151,16 +151,14 @@ private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarg
 private fun Project.addCompilerPluginDependency() {
     if (isCompilerPluginAvailable()) {
         withKotlinTargets { target ->
-            if (needsJsIrTransformation(target)) {
+            if (target.isJsIrTarget()) {
                 target.compilations.forEach { kotlinCompilation ->
                     kotlinCompilation.dependencies {
                         if (getKotlinVersion().atLeast(1, 7, 10)) {
-                            // since Kotlin 1.7.10 we can add `atomicfu-runtime` dependency directly
+                            // since Kotlin 1.7.10 `kotlinx-atomicfu-runtime` is published and should be added directly
                             compileOnly("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:${getKotlinPluginVersion()}")
                             runtimeOnly("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:${getKotlinPluginVersion()}")
                         } else {
-                            // add atomicfu compiler plugin dependency
-                            // to provide the `atomicfu-runtime` library used during compiler plugin transformation
                             implementation("org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}")
                         }
                     }

@@ -27,7 +27,8 @@ dependencies {
     compileOnly gradleApi()
     compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
     compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    // atomicfu compiler plugin dependency will be loaded to kotlinCompilerPluginClasspath
+    // Atomicfu compiler plugin dependency will be loaded to kotlinCompilerPluginClasspath
+    // Atomicfu plugin will only be applied if the flag is set kotlinx.atomicfu.enableJsIrTransformation=true
     implementation "org.jetbrains.kotlin:atomicfu:$kotlin_version"
 
     testImplementation gradleTestKit()
