@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.20.2
+
+* Fix for unresolved `kotlinx-atomicfu-runtime` dependency error (https://youtrack.jetbrains.com/issue/KT-57235),
+please see the corresponding PR for more comments (#290).
+
 # Version 0.20.1
 
 * Fixed passing `kotlinx-atomicfu-runtime` dependency to the runtime classpath (#283).
