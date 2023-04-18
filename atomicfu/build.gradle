@@ -153,63 +153,69 @@ dependencies {
     transformer project(":atomicfu-transformer")
 }
 
-// ==== CONFIGURE JS =====
+// This JS Legacy configuration should be removed when Kotlin version is updated to 1.9.0,
+// configurations are conditionally removed for test builds with Kotlin 1.9.0
+def kotlinVersion = ext.kotlin_version.split('\\.').take(2).collect { it.toInteger() }
+if (kotlinVersion[0] == 1 && kotlinVersion[1] <= 8) {
 
-def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
-        ? compileKotlinJsLegacy
-        : compileKotlinJs
+    // ==== CONFIGURE JS =====
 
-tasks.withType(compileJsLegacy.getClass()) {
-    kotlinOptions {
-        moduleKind = "umd"
-        sourceMap = true
-        metaInfo = true
-    }
-}
+    def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
+            ? compileKotlinJsLegacy
+            : compileKotlinJs
 
-apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
-apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
-
-// Workaround the problem with Node downloading
-repositories.whenObjectAdded {
-    if (it instanceof IvyArtifactRepository) {
-        metadataSources {
-            artifact()
+    tasks.withType(compileJsLegacy.getClass()) {
+        kotlinOptions {
+            moduleKind = "umd"
+            sourceMap = true
+            metaInfo = true
         }
     }
-}
 
-def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
-        ? compileTestKotlinJsLegacy
-        : compileTestKotlinJs
+    apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
+    apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
 
-def transformedJsFile = compileTestJsLegacy.kotlinOptions.outputFile
-compileTestJsLegacy.configure {
-    kotlinOptions {
-        // NOTE: Module base-name must be equal to the package name declared in package.json
-        def baseName = "kotlinx-atomicfu"
-        outputFile = new File(new File(outputFile).parent, baseName + ".js")
+    // Workaround the problem with Node downloading
+    repositories.whenObjectAdded {
+        if (it instanceof IvyArtifactRepository) {
+            metadataSources {
+                artifact()
+            }
+        }
     }
-}
-def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
 
-task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
-    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
-    args = [originalJsFile, transformedJsFile]
-    classpath = configurations.transformer
-    inputs.file(originalJsFile)
-    outputs.file(transformedJsFile)
-}
+    def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
+            ? compileTestKotlinJsLegacy
+            : compileTestKotlinJs
 
-if (project.tasks.findByName('jsLegacyNodeTest')) {
-    jsLegacyNodeTest.dependsOn transformJS
-    jsLegacyNodeTest.configure {
-        inputFileProperty.set(new File(transformedJsFile))
+    def transformedJsFile = compileTestJsLegacy.kotlinOptions.outputFile
+    compileTestJsLegacy.configure {
+        kotlinOptions {
+            // NOTE: Module base-name must be equal to the package name declared in package.json
+            def baseName = "kotlinx-atomicfu"
+            outputFile = new File(new File(outputFile).parent, baseName + ".js")
+        }
     }
-} else {
-    jsNodeTest.dependsOn transformJS
-    jsNodeTest.configure {
-        inputFileProperty.set(new File(transformedJsFile))
+    def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
+
+    task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
+        main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
+        args = [originalJsFile, transformedJsFile]
+        classpath = configurations.transformer
+        inputs.file(originalJsFile)
+        outputs.file(transformedJsFile)
+    }
+
+    if (project.tasks.findByName('jsLegacyNodeTest')) {
+        jsLegacyNodeTest.dependsOn transformJS
+        jsLegacyNodeTest.configure {
+            inputFileProperty.set(new File(transformedJsFile))
+        }
+    } else {
+        jsNodeTest.dependsOn transformJS
+        jsNodeTest.configure {
+            inputFileProperty.set(new File(transformedJsFile))
+        }
     }
 }
 
@@ -276,19 +282,11 @@ transformedTestVH.onlyIf {
     JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()
 }
 
-task testAtomicfuReferenceJs(type: Test, dependsOn: [compileTestKotlinJvm, transformJS]) {
-    environment "transformedJsFile", transformedJsFile
-    classpath = files(configurations.jvmTestRuntimeClasspath, classesPreAtomicFuDir)
-    testClassesDirs = project.files(classesPreAtomicFuDir)
-    include '**/AtomicfuReferenceJsTest.*'
-    filter { setFailOnNoMatchingTests(false) }
-}
-
 task jvmTestAll(dependsOn: [
-        transformedTestFU_current,
-        transformedTestBOTH_current,
-        transformedTestVH,
-        testAtomicfuReferenceJs])
+    transformedTestFU_current,
+    transformedTestBOTH_current,
+    transformedTestVH
+])
 
 tasks.withType(Test) {
     testLogging {
