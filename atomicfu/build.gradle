@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -17,6 +19,12 @@ ext {
     }
 }
 
+// TODO: this block should be removed after the switch to Kotlin language version 1.9
+// (right now it implements a toggle between IR and BOTH JS compiler types for testing of Kotlin dev builds)
+def fromVersion = { String arg -> KotlinVersion.values().find { it.version == arg } }
+def kotlinLanguageVersion = fromVersion(KotlinAggregateBuild.getOverriddenKotlinLanguageVersion(project) ?: "1.4")
+def isJsLegacyCompilerEnabled = kotlinLanguageVersion < KotlinVersion.KOTLIN_1_9
+
 kotlin {
     targets {
         delegate.metaClass.addTarget = { preset ->
@@ -25,7 +33,10 @@ kotlin {
     }
 
     // JS -- always
-    js {
+    // TODO: JS compiler should be switched to IR-only after the switch to Kotlin language version 1.9
+    // (right now compiler type is chosen conditionally for testing of Kotlin dev builds)
+    def jsCompiler = isJsLegacyCompilerEnabled ? BOTH : IR
+    js(jsCompiler) {
         moduleName = "kotlinx-atomicfu"
         // TODO: Commented out because browser tests do not work on TeamCity
         // browser()
@@ -153,10 +164,9 @@ dependencies {
     transformer project(":atomicfu-transformer")
 }
 
-// This JS Legacy configuration should be removed when Kotlin version is updated to 1.9.0,
-// configurations are conditionally removed for test builds with Kotlin 1.9.0
-def kotlinVersion = ext.kotlin_version.split('\\.').take(2).collect { it.toInteger() }
-if (kotlinVersion[0] == 1 && kotlinVersion[1] <= 8) {
+// TODO: this JS Legacy configuration should be removed after the switch to Kotlin language version 1.9
+// (right now configurations are removed conditionally for testing of Kotlin 1.9.0-dev builds)
+if (isJsLegacyCompilerEnabled) {
 
     // ==== CONFIGURE JS =====
 
