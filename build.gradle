@@ -31,6 +31,9 @@ buildscript {
     ext.jvm_ir_enabled = rootProject.properties['enable_jvm_ir'] != null
     ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
 
+    // this flag disables all project tests for purposes of testing of Kotlin compiler dev builds
+    ext.are_project_tests_disabled = rootProject.hasProperty('disable_project_tests')
+
 
     repositories {
         mavenCentral()
@@ -45,6 +48,13 @@ buildscript {
 }
 
 allprojects {
+    // this snippet disables all project tests for purposes of testing of Kotlin compiler dev builds
+    if (are_project_tests_disabled) {
+        tasks.withType(AbstractTestTask.class).configureEach {
+            enabled = false
+        }
+    }
+
     // the only place where HostManager could be instantiated
     project.ext.hostManager = new HostManager()
     if (build_snapshot_train) {
