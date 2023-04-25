@@ -2,6 +2,8 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+import static KotlinVersion.*
+
 apply plugin: 'kotlin'
 apply plugin: 'java-gradle-plugin'
 
@@ -91,8 +93,7 @@ dependencies {
 }
 
 // Skip these tests if Kotlin version >= 1.9.0, as JS Legacy is no longer supported there
-def kotlinVersion = ext.kotlin_version.split('\\.').take(2).collect { it.toInteger() }
-if (kotlinVersion[0] == 1 && kotlinVersion[1] == 9) {
+if (isKotlinVersionAtLeast(ext.kotlin_version, 1, 9)) {
     test {
         exclude "**/JsLegacyTransformationTest*", "**/MppLegacyTransformationTest*"
     }
