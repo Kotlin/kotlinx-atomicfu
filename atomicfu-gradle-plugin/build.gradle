@@ -17,7 +17,7 @@ if (rootProject.ext.jvm_ir_enabled) {
 kotlin.sourceSets.all {
     languageSettings {
         apiVersion = KotlinAggregateBuild.getOverriddenKotlinApiVersion(project) ?: "1.4"
-        languageVersion = KotlinAggregateBuild.getOverriddenKotlinLanguageVersion(project) ?: "1.4"
+        languageVersion = KotlinAggregateBuild.getOverriddenKotlinLanguageVersion(project) ?: "1.9"
     }
 }
 
