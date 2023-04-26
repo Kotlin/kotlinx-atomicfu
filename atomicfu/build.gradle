@@ -330,7 +330,7 @@ task compileJavaModuleInfo(type: JavaCompile) {
 
     // Use the classpath of the compileKotlinJvm task.
     // Also ensure that the module path is used instead of classpath.
-    classpath = compileKotlinJvm.classpath
+    classpath = compileKotlinJvm.libraries
     modularity.inferModulePath.set(true)
 
     doFirst {
