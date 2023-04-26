@@ -169,10 +169,10 @@ if (isJsLegacyCompilerEnabled) {
     // ==== CONFIGURE JS =====
 
     def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
-            ? compileKotlinJsLegacy
-            : compileKotlinJs
+            ? compileKotlinJsLegacy.getClass()
+            : compileKotlinJs.getClass()
 
-    tasks.withType(compileJsLegacy.getClass()) {
+    tasks.withType(compileJsLegacy).configureEach {
         kotlinOptions {
             moduleKind = "umd"
             sourceMap = true
