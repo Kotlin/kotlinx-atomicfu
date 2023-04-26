@@ -24,13 +24,13 @@ class MetadataTransformer(
     fun transformMetadata(metadataAnnotation: AnnotationNode): Boolean {
         val map = metadataAnnotation.asMap()
         val hdr = KotlinClassHeader(
-            kind = map["k"] as Int?,
-            metadataVersion = (map["mv"] as? List<Int>)?.toIntArray(),
-            data1 = (map["d1"] as? List<String>)?.toTypedArray(),
-            data2 = (map["d2"] as? List<String>)?.toTypedArray(),
-            extraString = map["xs"] as String?,
-            packageName = map["pn"] as String?,
-            extraInt = map["xi"] as Int?
+            map["k"] as Int?,
+            (map["mv"] as? List<Int>)?.toIntArray(),
+            (map["d1"] as? List<String>)?.toTypedArray(),
+            (map["d2"] as? List<String>)?.toTypedArray(),
+            map["xs"] as String?,
+            map["pn"] as String?,
+            map["xi"] as Int?
         )
         val result = when (val metadata = KotlinClassMetadata.read(hdr)) {
             is KotlinClassMetadata.Class -> {
@@ -54,8 +54,8 @@ class MetadataTransformer(
         result.apply {
             with (metadataAnnotation) {
                 // read resulting header & update annotation data
-                setKey("d1", header.data1.toList())
-                setKey("d2", header.data2.toList())
+                setKey("d1", annotationData.data1.toList())
+                setKey("d2", annotationData.data2.toList())
             }
         }
         return true // transformed
