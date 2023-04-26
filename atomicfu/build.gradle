@@ -2,6 +2,8 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+import static KotlinVersion.*
+
 apply plugin: 'kotlin-multiplatform'
 apply from: rootProject.file("gradle/targets.gradle")
 
@@ -17,6 +19,10 @@ ext {
     }
 }
 
+// TODO: this block should be removed when Kotlin version is updated to 1.9.0
+// (right now it implements a toggle between IR and BOTH JS compiler types for testing of Kotlin dev builds)
+def isJsLegacyCompilerEnabled = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9)
+
 kotlin {
     targets {
         delegate.metaClass.addTarget = { preset ->
@@ -25,7 +31,10 @@ kotlin {
     }
 
     // JS -- always
-    js {
+    // TODO: JS compiler should be switched to IR-only when Kotlin version is updated to 1.9.0
+    // (right now compiler type is chosen conditionally for testing of Kotlin dev builds)
+    def jsCompiler = isJsLegacyCompilerEnabled ? BOTH : IR
+    js(jsCompiler) {
         moduleName = "kotlinx-atomicfu"
         // TODO: Commented out because browser tests do not work on TeamCity
         // browser()
@@ -138,63 +147,68 @@ dependencies {
     transformer project(":atomicfu-transformer")
 }
 
-// ==== CONFIGURE JS =====
+// TODO: This JS Legacy configuration should be removed when Kotlin version is updated to 1.9.0,
+// (right now configurations are removed conditionally for testing of Kotlin 1.9.0-dev builds)
+if (isJsLegacyCompilerEnabled) {
 
-def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
-        ? compileKotlinJsLegacy
-        : compileKotlinJs
+    // ==== CONFIGURE JS =====
 
-tasks.withType(compileJsLegacy.getClass()) {
-    kotlinOptions {
-        moduleKind = "umd"
-        sourceMap = true
-        metaInfo = true
-    }
-}
+    def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
+            ? compileKotlinJsLegacy.getClass()
+            : compileKotlinJs.getClass()
 
-apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
-apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
-
-// Workaround the problem with Node downloading
-repositories.whenObjectAdded {
-    if (it instanceof IvyArtifactRepository) {
-        metadataSources {
-            artifact()
+    tasks.withType(compileJsLegacy).configureEach {
+        kotlinOptions {
+            moduleKind = "umd"
+            sourceMap = true
+            metaInfo = true
         }
     }
-}
 
-def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
-        ? compileTestKotlinJsLegacy
-        : compileTestKotlinJs
+    apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
+    apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
 
-def transformedJsFile = compileTestJsLegacy.kotlinOptions.outputFile
-compileTestJsLegacy.configure {
-    kotlinOptions {
-        // NOTE: Module base-name must be equal to the package name declared in package.json
-        def baseName = "kotlinx-atomicfu"
-        outputFile = new File(new File(outputFile).parent, baseName + ".js")
+    // Workaround the problem with Node downloading
+    repositories.whenObjectAdded {
+        if (it instanceof IvyArtifactRepository) {
+            metadataSources {
+                artifact()
+            }
+        }
     }
-}
-def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
 
-task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
-    main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
-    args = [originalJsFile, transformedJsFile]
-    classpath = configurations.transformer
-    inputs.file(originalJsFile)
-    outputs.file(transformedJsFile)
-}
+    def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
+            ? compileTestKotlinJsLegacy
+            : compileTestKotlinJs
 
-if (project.tasks.findByName('jsLegacyNodeTest')) {
-    jsLegacyNodeTest.dependsOn transformJS
-    jsLegacyNodeTest.configure {
-        inputFileProperty.set(new File(transformedJsFile))
+    def transformedJsFile = compileTestJsLegacy.kotlinOptions.outputFile
+    compileTestJsLegacy.configure {
+        kotlinOptions {
+            // NOTE: Module base-name must be equal to the package name declared in package.json
+            def baseName = "kotlinx-atomicfu"
+            outputFile = new File(new File(outputFile).parent, baseName + ".js")
+        }
     }
-} else {
-    jsNodeTest.dependsOn transformJS
-    jsNodeTest.configure {
-        inputFileProperty.set(new File(transformedJsFile))
+    def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
+
+    task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
+        main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
+        args = [originalJsFile, transformedJsFile]
+        classpath = configurations.transformer
+        inputs.file(originalJsFile)
+        outputs.file(transformedJsFile)
+    }
+
+    if (project.tasks.findByName('jsLegacyNodeTest')) {
+        jsLegacyNodeTest.dependsOn transformJS
+        jsLegacyNodeTest.configure {
+            inputFileProperty.set(new File(transformedJsFile))
+        }
+    } else {
+        jsNodeTest.dependsOn transformJS
+        jsNodeTest.configure {
+            inputFileProperty.set(new File(transformedJsFile))
+        }
     }
 }
 
@@ -261,19 +275,11 @@ transformedTestVH.onlyIf {
     JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()
 }
 
-task testAtomicfuReferenceJs(type: Test, dependsOn: [compileTestKotlinJvm, transformJS]) {
-    environment "transformedJsFile", transformedJsFile
-    classpath = files(configurations.jvmTestRuntimeClasspath, classesPreAtomicFuDir)
-    testClassesDirs = project.files(classesPreAtomicFuDir)
-    include '**/AtomicfuReferenceJsTest.*'
-    filter { setFailOnNoMatchingTests(false) }
-}
-
 task jvmTestAll(dependsOn: [
-        transformedTestFU_current,
-        transformedTestBOTH_current,
-        transformedTestVH,
-        testAtomicfuReferenceJs])
+    transformedTestFU_current,
+    transformedTestBOTH_current,
+    transformedTestVH
+])
 
 tasks.withType(Test) {
     testLogging {
