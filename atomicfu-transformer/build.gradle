@@ -9,13 +9,13 @@ apply from: rootProject.file('gradle/compile-options.gradle')
 ext.configureKotlin()
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile "org.ow2.asm:asm:$asm_version"
-    compile "org.ow2.asm:asm-commons:$asm_version"
-    compile "org.ow2.asm:asm-tree:$asm_version"
-    compile "org.ow2.asm:asm-util:$asm_version"
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-    runtime "org.slf4j:slf4j-simple:$slf4j_version"
-    compile "org.mozilla:rhino:1.7.10"
-    compile "org.jetbrains.kotlinx:kotlinx-metadata-jvm:$kotlinx_metadata_version"
+    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    api "org.ow2.asm:asm:$asm_version"
+    api "org.ow2.asm:asm-commons:$asm_version"
+    api "org.ow2.asm:asm-tree:$asm_version"
+    api "org.ow2.asm:asm-util:$asm_version"
+    api "org.slf4j:slf4j-api:$slf4j_version"
+    runtimeOnly "org.slf4j:slf4j-simple:$slf4j_version"
+    api "org.mozilla:rhino:1.7.10"
+    api "org.jetbrains.kotlinx:kotlinx-metadata-jvm:$kotlinx_metadata_version"
 }
