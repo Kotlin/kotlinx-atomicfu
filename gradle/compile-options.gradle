@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -23,6 +22,7 @@ ext.configureKotlin = { isMultiplatform ->
             languageVersion = "1.8"
             optIn("kotlin.Experimental")
             optIn("kotlin.ExperimentalStdlibApi")
+            optIn('kotlinx.cinterop.ExperimentalForeignApi')
         }
     }
 }
