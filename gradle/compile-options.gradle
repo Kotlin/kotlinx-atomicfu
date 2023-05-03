@@ -20,6 +20,7 @@ ext.configureKotlin = { isMultiplatform ->
         languageSettings {
             apiVersion = KotlinAggregateBuild.getOverriddenKotlinApiVersion(project) ?: "1.4"
             languageVersion = KotlinAggregateBuild.getOverriddenKotlinLanguageVersion(project) ?: "1.4"
+            optIn('kotlinx.cinterop.ExperimentalForeignApi')
         }
     }
 }
