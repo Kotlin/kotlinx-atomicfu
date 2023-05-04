@@ -19,8 +19,6 @@ dependencies {
 
 def outputDir = compileKotlin.destinationDirectory
 
-evaluationDependsOn(':atomicfu-transformer')
-
 publishing.publications {
     maven(MavenPublication) {
         MavenPomConfiguration.configureMavenPluginPomAttributes(pom, project, outputDir.get().getAsFile().path)
@@ -33,7 +31,7 @@ String mavenRepoLocal = System.getProperty("maven.repo.local")
 def pomFile = tasks.named("generatePomFileForMavenPublication", GenerateMavenPom).map { it.destination }.get()
 
 // runs the plugin description generator
-task generatePluginDescriptor(type: Exec, dependsOn: generatePomFileForMavenPublication) {
+task generatePluginDescriptor(type: Exec, dependsOn: [generatePomFileForMavenPublication, ':atomicfu-transformer:publishToMavenLocal']) {
     def pluginDescriptorFile = outputDir.file('META-INF/maven/plugin.xml')
 
     workingDir projectDir
