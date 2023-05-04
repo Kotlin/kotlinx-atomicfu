@@ -1,5 +1,12 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.20.3
+
+* Update Kotlin to 1.8.20.
+* Update Gradle version to 7.3 (#300).
+* Conditionally remove JS legacy configurations in case of compilation with Kotlin >= 1.9.0 (#296).
+* Opt-in into experimental interop (KT-57728) to fix aggregate build (#299).
+
 # Version 0.20.2
 
 * Fix for unresolved `kotlinx-atomicfu-runtime` dependency error (https://youtrack.jetbrains.com/issue/KT-57235),
