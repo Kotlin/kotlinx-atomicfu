@@ -89,7 +89,7 @@ task createClasspathManifest {
 
 // Add the classpath file to the test runtime classpath
 dependencies {
-    testRuntime files(createClasspathManifest)
+    testRuntimeOnly files(createClasspathManifest)
 }
 
 // Skip these tests if Kotlin version >= 1.9.0, as JS Legacy is no longer supported there

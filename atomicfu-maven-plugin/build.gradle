@@ -3,75 +3,35 @@
  */
 
 apply plugin: 'kotlin'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 apply from: rootProject.file('gradle/compile-options.gradle')
 
 ext.configureKotlin()
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile project(":atomicfu-transformer")
-    compile "org.apache.maven:maven-core:$maven_version"
-    compile "org.apache.maven:maven-plugin-api:$maven_version"
-    compile 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    api project(":atomicfu-transformer")
+    api "org.apache.maven:maven-core:$maven_version"
+    api "org.apache.maven:maven-plugin-api:$maven_version"
+    api 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
 }
 
-def pomFile = file("$buildDir/pom.xml")
 def outputDir = compileKotlin.destinationDirectory
-def buildSnapshots = rootProject.properties['build_snapshot_train'] != null
 
-evaluationDependsOn(':atomicfu-transformer')
-
-def kotlinDevRepoUrl = KotlinAggregateBuild.getKotlinDevRepositoryUrl(project)
-
-task generatePomFile(dependsOn: [compileKotlin, ':atomicfu-transformer:publishToMavenLocal']) {
-    def buildDir = project.buildDir // because Maven model also has "project"
-    outputs.file(pomFile)
-    doLast {
-        install.repositories.mavenInstaller.pom.with {
-            groupId = project.group
-            artifactId = project.name
-            version = project.version
-            packaging = 'maven-plugin'
-
-            withXml {
-                asNode().with {
-                    appendNode('build').with {
-                        appendNode('directory', buildDir)
-                        appendNode('outputDirectory', outputDir.get().getAsFile())
-                    }
-                    appendNode('properties').with {
-                        appendNode('project.build.sourceEncoding', 'UTF-8')
-                    }
-                    appendNode('repositories').with {
-                        if (kotlinDevRepoUrl != null && !kotlinDevRepoUrl.isEmpty()) {
-                            appendNode('repository').with {
-                                appendNode('id', 'dev')
-                                appendNode('url', kotlinDevRepoUrl)
-                            }
-                        }
-                        if (buildSnapshots) {
-                            appendNode('repository').with {
-                                appendNode('id', 'kotlin-snapshots')
-                                appendNode('url', "https://oss.sonatype.org/content/repositories/snapshots")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        install.repositories.mavenInstaller.pom.writeTo(pomFile)
-        assert pomFile.file, "$pomFile: was not generated"
-        logger.info("POM is generated in $pomFile")
+publishing.publications {
+    maven(MavenPublication) {
+        MavenPomConfiguration.configureMavenPluginPomAttributes(pom, project, outputDir.get().getAsFile().path)
     }
 }
 
 String mavenUserHome = System.getProperty("maven.user.home")
 String mavenRepoLocal = System.getProperty("maven.repo.local")
 
+def pomFile = tasks.named("generatePomFileForMavenPublication", GenerateMavenPom).map { it.destination }.get()
+
 // runs the plugin description generator
-task generatePluginDescriptor(type: Exec, dependsOn: generatePomFile) {
+task generatePluginDescriptor(type: Exec, dependsOn: [generatePomFileForMavenPublication, ':atomicfu-transformer:publishToMavenLocal']) {
     def pluginDescriptorFile = outputDir.file('META-INF/maven/plugin.xml')
 
     workingDir projectDir
