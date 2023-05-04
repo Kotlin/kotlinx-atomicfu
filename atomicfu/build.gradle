@@ -307,7 +307,7 @@ tasks.withType(Test) {
 task compileJavaModuleInfo(type: JavaCompile) {
     def moduleName = "kotlinx.atomicfu" // this module's name
     def compilation = kotlin.targets["jvm"].compilations["main"]
-    def compileKotlinTask = compilation.compileTaskProvider.get() as KotlinCompile
+    def compileKotlinTask = compilation.compileTaskProvider.get() as KotlinJvmCompile
     def targetDir = compileKotlinTask.destinationDirectory.dir("../java9")
     def sourceDir = file("src/jvmMain/java9/")
 
