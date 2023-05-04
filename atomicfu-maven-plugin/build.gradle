@@ -17,7 +17,6 @@ dependencies {
     api 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
 }
 
-def pomFile = file("$buildDir/publications/maven/pom-default.xml")
 def outputDir = compileKotlin.destinationDirectory
 
 evaluationDependsOn(':atomicfu-transformer')
@@ -30,6 +29,8 @@ publishing.publications {
 
 String mavenUserHome = System.getProperty("maven.user.home")
 String mavenRepoLocal = System.getProperty("maven.repo.local")
+
+def pomFile = tasks.named("generatePomFileForMavenPublication", GenerateMavenPom).map { it.destination }.get()
 
 // runs the plugin description generator
 task generatePluginDescriptor(type: Exec, dependsOn: generatePomFileForMavenPublication) {
