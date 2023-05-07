@@ -1,2 +1,0 @@
-kotlinx.atomicfu.enableJvmIrTransformation=true
-kotlin.js.compiler=ir
