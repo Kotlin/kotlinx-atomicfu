@@ -70,19 +70,7 @@ private fun Project.configureDependencies() {
 private fun Project.configureTasks() {
     val config = config
     withPluginWhenEvaluated("kotlin") {
-        if (config.transformJvm) {
-            // skip transformation task if ir transformation is enabled
-            if (rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)) return@withPluginWhenEvaluated
-            configureJvmTransformation("compileTestKotlin") { sourceSet, transformedDir, originalDir ->
-                createJvmTransformTask(sourceSet).configureJvmTask(
-                    sourceSet.compileClasspath,
-                    sourceSet.classesTaskName,
-                    transformedDir,
-                    originalDir,
-                    config
-                )
-            }
-        }
+        if (config.transformJvm) configureJvmTransformation()
     }
     withPluginWhenEvaluated("org.jetbrains.kotlin.js") {
         if (config.transformJs) configureJsTransformation()
@@ -182,12 +170,6 @@ private fun String.compilationNameToType(): CompilationType? = when (this) {
     else -> null
 }
 
-private fun String.sourceSetNameToType(): CompilationType? = when (this) {
-    SourceSet.MAIN_SOURCE_SET_NAME -> CompilationType.MAIN
-    SourceSet.TEST_SOURCE_SET_NAME -> CompilationType.TEST
-    else -> null
-}
-
 private val Project.config: AtomicFUPluginExtension
     get() = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension ?: AtomicFUPluginExtension(null)
 
@@ -232,6 +214,12 @@ private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileColle
     } else {
         // See KT-KT-54167 (works only for KGP 1.7.0+)
         (this as BaseKotlinCompile).friendPaths.from(friendPathsFileCollection)
+    }
+}
+
+fun Project.configureJvmTransformation() {
+    if (kotlinExtension is KotlinJvmProjectExtension || kotlinExtension is KotlinAndroidProjectExtension) {
+        configureTransformationForTarget((kotlinExtension as KotlinSingleTargetExtension<*>).target)
     }
 }
 
@@ -387,50 +375,6 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
                 else -> sourceSet.implementationConfigurationName
             }
             dependencies.add(configurationName, getAtomicfuDependencyNotation(platform, version))
-        }
-    }
-}
-
-fun Project.configureJvmTransformation(
-    testTaskName: String,
-    createTransformTask: (sourceSet: SourceSet, transformedDir: File, originalDir: FileCollection) -> Task
-) {
-    val config = config
-    sourceSets.all { sourceSet ->
-        val compilationType = sourceSet.name.sourceSetNameToType()
-            ?: return@all // skip unknown types
-        val classesDirs = (sourceSet.output.classesDirs as ConfigurableFileCollection).from as Collection<Any>
-        // make copy of original classes directory
-        val originalClassesDirs: FileCollection = project.files(classesDirs.toTypedArray()).filter { it.exists() }
-        (sourceSet as ExtensionAware).extensions.add(ORIGINAL_DIR_NAME, originalClassesDirs)
-        val transformedClassesDir =
-            project.buildDir.resolve("classes/atomicfu/${sourceSet.name}")
-        // make transformedClassesDir the source path for output.classesDirs
-        (sourceSet.output.classesDirs as ConfigurableFileCollection).setFrom(transformedClassesDir)
-        val transformTask = createTransformTask(sourceSet, transformedClassesDir, originalClassesDirs)
-        //now transformTask is responsible for compiling this source set into the classes directory
-        sourceSet.compiledBy(transformTask)
-        (tasks.findByName(sourceSet.jarTaskName) as? Jar)?.apply {
-            setupJarManifest(multiRelease = config.jvmVariant.toJvmVariant() == JvmVariant.BOTH)
-        }
-        // test should compile and run against original production binaries
-        if (compilationType == CompilationType.TEST) {
-            val mainSourceSet = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-            val originalMainClassesDirs = project.files(
-                // use Callable because there is no guarantee that main is configured before test
-                Callable { (mainSourceSet as ExtensionAware).extensions.getByName(ORIGINAL_DIR_NAME) as FileCollection }
-            )
-
-            (tasks.findByName(testTaskName) as? AbstractCompile)?.run {
-                classpath =
-                    originalMainClassesDirs + sourceSet.compileClasspath - mainSourceSet.output.classesDirs
-
-                (this as? KotlinCompile<*>)?.setFriendPaths(originalMainClassesDirs)
-            }
-
-            // todo: fix test runtime classpath for JS?
-            (tasks.findByName(JavaPlugin.TEST_TASK_NAME) as? Test)?.classpath =
-                originalMainClassesDirs + sourceSet.runtimeClasspath - mainSourceSet.output.classesDirs
         }
     }
 }
