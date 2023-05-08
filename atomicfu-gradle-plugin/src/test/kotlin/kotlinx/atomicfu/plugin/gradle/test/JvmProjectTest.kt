@@ -35,9 +35,9 @@ class JvmLegacyTransformationTest : BaseKotlinGradleTest("jvm-simple") {
         checkTaskOutcomes(
             executedTasks = listOf(
                 ":compileKotlin",
-                ":transformAtomicfuClasses",
+                ":transformAtomicfu",
                 ":compileTestKotlin",
-                ":transformTestAtomicfuClasses"
+                ":transformTestAtomicfu"
             ),
             excludedTasks = emptyList()
         )
@@ -95,8 +95,8 @@ class JvmIrTransformationTest : BaseKotlinGradleTest("jvm-simple") {
                 ":compileTestKotlin"
             ),
             excludedTasks = listOf(
-                ":transformAtomicfuClasses",
-                ":transformTestAtomicfuClasses"
+                ":transformAtomicfu",
+                ":transformTestAtomicfu"
             )
         )
 
