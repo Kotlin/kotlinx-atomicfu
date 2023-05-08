@@ -24,6 +24,11 @@ dependencies {
 }
 
 kotlin {
+    java {
+        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+    }
+
     tasks.compileTestKotlin {
         doLast {
             file("$buildDir/test_compile_jvm_classpath.txt").writeText(
