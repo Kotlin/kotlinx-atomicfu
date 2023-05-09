@@ -170,12 +170,6 @@ private fun String.compilationNameToType(): CompilationType? = when (this) {
     else -> null
 }
 
-private fun String.sourceSetNameToType(): CompilationType? = when (this) {
-    SourceSet.MAIN_SOURCE_SET_NAME -> CompilationType.MAIN
-    SourceSet.TEST_SOURCE_SET_NAME -> CompilationType.TEST
-    else -> null
-}
-
 private val Project.config: AtomicFUPluginExtension
     get() = extensions.findByName(EXTENSION_NAME) as? AtomicFUPluginExtension ?: AtomicFUPluginExtension(null)
 
@@ -223,8 +217,11 @@ private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileColle
     }
 }
 
-fun Project.configureJvmTransformation() =
-    configureTransformationForTarget((kotlinExtension as KotlinJvmProjectExtension).target)
+fun Project.configureJvmTransformation() {
+    if (kotlinExtension is KotlinJvmProjectExtension || kotlinExtension is KotlinAndroidProjectExtension) {
+        configureTransformationForTarget((kotlinExtension as KotlinSingleTargetExtension<*>).target)
+    }
+}
 
 fun Project.configureJsTransformation() =
     configureTransformationForTarget((kotlinExtension as KotlinJsProjectExtension).js())
