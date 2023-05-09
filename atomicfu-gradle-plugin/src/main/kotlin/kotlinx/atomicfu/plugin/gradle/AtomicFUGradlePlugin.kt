@@ -278,6 +278,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         classesDirs.builtBy(transformTask)
         (tasks.findByName(target.artifactsTaskName) as? Jar)?.apply {
             setupJarManifest(multiRelease = config.jvmVariant.toJvmVariant() == JvmVariant.BOTH)
+            from(classesDirs)
         }
         // test should compile and run against original production binaries
         if (compilationType == CompilationType.TEST) {
