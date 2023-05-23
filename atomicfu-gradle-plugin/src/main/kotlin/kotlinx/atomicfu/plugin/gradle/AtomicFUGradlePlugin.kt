@@ -9,6 +9,8 @@ import org.gradle.api.*
 import org.gradle.api.file.*
 import org.gradle.api.internal.*
 import org.gradle.api.plugins.*
+import org.gradle.api.provider.Provider
+import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.api.tasks.testing.*
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.gradle.targets.js.*
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlinx.atomicfu.gradle.*
+import javax.inject.Inject
 
 private const val EXTENSION_NAME = "atomicfu"
 private const val ORIGINAL_DIR_NAME = "originalClassesDir"
@@ -248,8 +251,8 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             compilationTask.flatMap { it.destinationDirectory }
         )
         originalDirsByCompilation[compilation] = originalClassesDirs
-        val transformedClassesDir =
-            project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
+        val transformedClassesDir = project.layout.buildDirectory
+            .dir("classes/atomicfu/${target.name}/${compilation.name}")
         val transformTask = when (target.platformType) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
                 // skip transformation task if transformation is turned off or ir transformation is enabled
@@ -269,7 +272,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 }
                 project.createJsTransformTask(compilation).configureJsTask(
                     compilation.compileAllTaskName,
-                    transformedClassesDir,
+                    transformedClassesDir.get().asFile,
                     originalClassesDirs,
                     config
                 )
@@ -402,7 +405,7 @@ fun Project.createJvmTransformTask(sourceSet: SourceSet): AtomicFUTransformTask 
 fun AtomicFUTransformTask.configureJvmTask(
     classpath: FileCollection,
     classesTaskName: String,
-    transformedClassesDir: File,
+    transformedClassesDir: Provider<Directory>,
     originalClassesDir: FileCollection,
     config: AtomicFUPluginExtension
 ): ConventionTask =
@@ -410,7 +413,7 @@ fun AtomicFUTransformTask.configureJvmTask(
         dependsOn(classesTaskName)
         classPath = classpath
         inputFiles = originalClassesDir
-        outputDir = transformedClassesDir
+        destinationDirectory.value(transformedClassesDir)
         jvmVariant = config.jvmVariant
         verbose = config.verbose
     }
@@ -448,13 +451,29 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 }
 
 @CacheableTask
-open class AtomicFUTransformTask : ConventionTask() {
+abstract class AtomicFUTransformTask : ConventionTask() {
+    @get:Inject
+    internal abstract val providerFactory: ProviderFactory
+
+    @get:Inject
+    internal abstract val projectLayout: ProjectLayout
+
     @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
 
-    @OutputDirectory
-    lateinit var outputDir: File
+    @Suppress("unused")
+    @Deprecated(
+        message = "Replaced with 'destinationDirectory'",
+        replaceWith = ReplaceWith("destinationDirectory")
+    )
+    @get:Internal
+    var outputDir: File
+        get() = destinationDirectory.get().asFile
+        set(value) { destinationDirectory.value(projectLayout.dir(providerFactory.provider { value })) }
+
+    @get:OutputDirectory
+    abstract val destinationDirectory: DirectoryProperty
 
     @Classpath
     @InputFiles
@@ -470,7 +489,7 @@ open class AtomicFUTransformTask : ConventionTask() {
     fun transform() {
         val cp = classPath.files.map { it.absolutePath }
         inputFiles.files.forEach { inputDir ->
-            AtomicFUTransformer(cp, inputDir, outputDir).let { t ->
+            AtomicFUTransformer(cp, inputDir, destinationDirectory.get().asFile).let { t ->
                 t.jvmVariant = jvmVariant.toJvmVariant()
                 t.verbose = verbose
                 t.transform()
