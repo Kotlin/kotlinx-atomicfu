@@ -270,7 +270,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 if (!config.transformJs || (needsJsIrTransformation(target))) {
                     return@compilations
                 }
-                project.createJsTransformTask(compilation).configureJsTask(
+                project.registerJsTransformTask(compilation).configureJsTask(
                     compilation.compileAllTaskName,
                     transformedClassesDir,
                     originalClassesDirs,
@@ -393,8 +393,8 @@ fun Project.registerJvmTransformTask(compilation: KotlinCompilation<*>): TaskPro
         AtomicFUTransformTask::class.java
     )
 
-fun Project.createJsTransformTask(compilation: KotlinCompilation<*>): AtomicFUTransformJsTask =
-    tasks.create(
+fun Project.registerJsTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformJsTask> =
+    tasks.register(
         "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
         AtomicFUTransformJsTask::class.java
     )
@@ -417,17 +417,19 @@ fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
         }
     }
 
-fun AtomicFUTransformJsTask.configureJsTask(
+fun TaskProvider<AtomicFUTransformJsTask>.configureJsTask(
     classesTaskName: String,
     transformedClassesDir: Provider<Directory>,
     originalClassesDir: FileCollection,
     config: AtomicFUPluginExtension
-): ConventionTask =
+): TaskProvider<AtomicFUTransformJsTask> =
     apply {
-        dependsOn(classesTaskName)
-        inputFiles = originalClassesDir
-        destinationDirectory.value(transformedClassesDir)
-        verbose = config.verbose
+        configure {
+            it.dependsOn(classesTaskName)
+            it.inputFiles = originalClassesDir
+            it.destinationDirectory.value(transformedClassesDir)
+            it.verbose = config.verbose
+        }
     }
 
 fun Jar.setupJarManifest(multiRelease: Boolean) {
