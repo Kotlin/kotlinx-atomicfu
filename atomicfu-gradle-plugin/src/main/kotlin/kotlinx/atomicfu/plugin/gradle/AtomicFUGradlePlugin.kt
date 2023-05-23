@@ -272,7 +272,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 }
                 project.createJsTransformTask(compilation).configureJsTask(
                     compilation.compileAllTaskName,
-                    transformedClassesDir.get().asFile,
+                    transformedClassesDir,
                     originalClassesDirs,
                     config
                 )
@@ -419,14 +419,14 @@ fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
 
 fun AtomicFUTransformJsTask.configureJsTask(
     classesTaskName: String,
-    transformedClassesDir: File,
+    transformedClassesDir: Provider<Directory>,
     originalClassesDir: FileCollection,
     config: AtomicFUPluginExtension
 ): ConventionTask =
     apply {
         dependsOn(classesTaskName)
         inputFiles = originalClassesDir
-        outputDir = transformedClassesDir
+        destinationDirectory.value(transformedClassesDir)
         verbose = config.verbose
     }
 
@@ -498,13 +498,30 @@ abstract class AtomicFUTransformTask : ConventionTask() {
 }
 
 @CacheableTask
-open class AtomicFUTransformJsTask : ConventionTask() {
+abstract class AtomicFUTransformJsTask : ConventionTask() {
+
+    @get:Inject
+    internal abstract val providerFactory: ProviderFactory
+
+    @get:Inject
+    internal abstract val projectLayout: ProjectLayout
+
     @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
 
-    @OutputDirectory
-    lateinit var outputDir: File
+    @Suppress("unused")
+    @Deprecated(
+        message = "Replaced with 'destinationDirectory'",
+        replaceWith = ReplaceWith("destinationDirectory")
+    )
+    @get:Internal
+    var outputDir: File
+        get() = destinationDirectory.get().asFile
+        set(value) { destinationDirectory.value(projectLayout.dir(providerFactory.provider { value })) }
+
+    @get:OutputDirectory
+    abstract val destinationDirectory: DirectoryProperty
 
     @Input
     var verbose = false
@@ -512,7 +529,7 @@ open class AtomicFUTransformJsTask : ConventionTask() {
     @TaskAction
     fun transform() {
         inputFiles.files.forEach { inputDir ->
-            AtomicFUTransformerJS(inputDir, outputDir).let { t ->
+            AtomicFUTransformerJS(inputDir, destinationDirectory.get().asFile).let { t ->
                 t.verbose = verbose
                 t.transform()
             }
