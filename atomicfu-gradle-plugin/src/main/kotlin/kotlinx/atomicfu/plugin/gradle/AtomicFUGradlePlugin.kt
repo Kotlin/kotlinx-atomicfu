@@ -249,7 +249,14 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         val compilationTask = compilation.compileTaskProvider as TaskProvider<KotlinCompileTool>
         val originalDestinationDirectory = project.layout.buildDirectory
             .dir("classes/atomicfu-orig/${target.name}/${compilation.name}")
-        compilationTask.configure { it.destinationDirectory.value(originalDestinationDirectory) }
+        compilationTask.configure {
+            if (it is Kotlin2JsCompile) {
+                @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "EXPOSED_PARAMETER_TYPE")
+                it.defaultDestinationDirectory.value(originalDestinationDirectory)
+            } else {
+                it.destinationDirectory.value(originalDestinationDirectory)
+            }
+        }
         val originalClassesDirs: FileCollection = project.objects.fileCollection().from(
             compilationTask.flatMap { it.destinationDirectory }
         )
@@ -277,12 +284,16 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 if (!config.transformJs || (needsJsIrTransformation(target))) {
                     return@compilations
                 }
-                project.registerJsTransformTask(compilation).configureJsTask(
-                    compilation.compileAllTaskName,
-                    transformedClassesDir,
-                    originalClassesDirs,
-                    config
-                )
+                project.registerJsTransformTask(compilation)
+                    .configureJsTask(
+                        compilation.compileAllTaskName,
+                        transformedClassesDir,
+                        originalClassesDirs,
+                        config
+                    )
+                    .also {
+                        compilation.defaultSourceSet.kotlin.compiledBy(it, AtomicFUTransformJsTask::destinationDirectory)
+                    }
             }
             else -> error("Unsupported transformation platform '${target.platformType}'")
         }
