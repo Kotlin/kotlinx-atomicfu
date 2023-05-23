@@ -257,7 +257,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
                 // skip transformation task if transformation is turned off or ir transformation is enabled
                 if (!config.transformJvm || rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)) return@compilations
-                project.createJvmTransformTask(compilation).configureJvmTask(
+                project.registerJvmTransformTask(compilation).configureJvmTask(
                     compilation.compileDependencyFiles,
                     compilation.compileAllTaskName,
                     transformedClassesDir,
@@ -387,8 +387,8 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
 
 fun String.toJvmVariant(): JvmVariant = enumValueOf(toUpperCase(Locale.US))
 
-fun Project.createJvmTransformTask(compilation: KotlinCompilation<*>): AtomicFUTransformTask =
-    tasks.create(
+fun Project.registerJvmTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformTask> =
+    tasks.register(
         "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
         AtomicFUTransformTask::class.java
     )
@@ -399,23 +399,22 @@ fun Project.createJsTransformTask(compilation: KotlinCompilation<*>): AtomicFUTr
         AtomicFUTransformJsTask::class.java
     )
 
-fun Project.createJvmTransformTask(sourceSet: SourceSet): AtomicFUTransformTask =
-    tasks.create(sourceSet.getTaskName("transform", "atomicfuClasses"), AtomicFUTransformTask::class.java)
-
-fun AtomicFUTransformTask.configureJvmTask(
+fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
     classpath: FileCollection,
     classesTaskName: String,
     transformedClassesDir: Provider<Directory>,
     originalClassesDir: FileCollection,
     config: AtomicFUPluginExtension
-): ConventionTask =
+): TaskProvider<AtomicFUTransformTask> =
     apply {
-        dependsOn(classesTaskName)
-        classPath = classpath
-        inputFiles = originalClassesDir
-        destinationDirectory.value(transformedClassesDir)
-        jvmVariant = config.jvmVariant
-        verbose = config.verbose
+        configure {
+            it.dependsOn(classesTaskName)
+            it.classPath = classpath
+            it.inputFiles = originalClassesDir
+            it.destinationDirectory.value(transformedClassesDir)
+            it.jvmVariant = config.jvmVariant
+            it.verbose = config.verbose
+        }
     }
 
 fun AtomicFUTransformJsTask.configureJsTask(
