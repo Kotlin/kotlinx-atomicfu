@@ -28,5 +28,9 @@ internal fun BuildResult.assertTaskUpToDate(task: String) {
 }
 
 private fun BuildResult.assertTaskOutcome(taskOutcome: TaskOutcome, taskName: String) {
-    assertEquals(taskOutcome, task(taskName)?.outcome)
+    assertEquals(
+        taskOutcome,
+        task(taskName)?.outcome,
+        "Task $taskName does not have ${taskOutcome.name} outcome"
+    )
 }
