@@ -247,6 +247,9 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         // make copy of original classes directory
         @Suppress("UNCHECKED_CAST")
         val compilationTask = compilation.compileTaskProvider as TaskProvider<KotlinCompileTool>
+        val originalDestinationDirectory = project.layout.buildDirectory
+            .dir("classes/atomicfu-orig/${target.name}/${compilation.name}")
+        compilationTask.configure { it.destinationDirectory.value(originalDestinationDirectory) }
         val originalClassesDirs: FileCollection = project.objects.fileCollection().from(
             compilationTask.flatMap { it.destinationDirectory }
         )
@@ -257,13 +260,17 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
                 // skip transformation task if transformation is turned off or ir transformation is enabled
                 if (!config.transformJvm || rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)) return@compilations
-                project.registerJvmTransformTask(compilation).configureJvmTask(
-                    compilation.compileDependencyFiles,
-                    compilation.compileAllTaskName,
-                    transformedClassesDir,
-                    originalClassesDirs,
-                    config
-                )
+                project.registerJvmTransformTask(compilation)
+                    .configureJvmTask(
+                        compilation.compileDependencyFiles,
+                        compilation.compileAllTaskName,
+                        transformedClassesDir,
+                        originalClassesDirs,
+                        config
+                    )
+                    .also {
+                        compilation.defaultSourceSet.kotlin.compiledBy(it, AtomicFUTransformTask::destinationDirectory)
+                    }
             }
             KotlinPlatformType.js -> {
                 // skip when js transformation is not needed or when IR is transformed
@@ -280,6 +287,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             else -> error("Unsupported transformation platform '${target.platformType}'")
         }
         //now transformTask is responsible for compiling this source set into the classes directory
+        compilation.defaultSourceSet.kotlin.destinationDirectory.value(transformedClassesDir)
         classesDirs.setFrom(transformedClassesDir)
         classesDirs.setBuiltBy(listOf(transformTask))
         tasks.withType(Jar::class.java).configureEach {
@@ -291,9 +299,8 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         if (compilationType == CompilationType.TEST) {
             val mainCompilation =
                 compilation.target.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
-            val originalMainClassesDirs = project.files(
-                // use Callable because there is no guarantee that main is configured before test
-                Callable { originalDirsByCompilation[mainCompilation]!! }
+            val originalMainClassesDirs = project.objects.fileCollection().from(
+                mainCompilation.compileTaskProvider.flatMap { (it as KotlinCompileTool).destinationDirectory }
             )
 
             // KGP >= 1.7.0 has breaking changes in task hierarchy:
@@ -309,7 +316,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractKotlinCompileTool<*>)
                     ?.libraries
                     ?.setFrom(
-                        originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
+                        originalMainClassesDirs + compilation.compileDependencyFiles
                     )
             }
 
