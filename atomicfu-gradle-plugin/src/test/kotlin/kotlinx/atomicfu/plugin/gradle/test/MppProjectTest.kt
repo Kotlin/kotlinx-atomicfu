@@ -50,7 +50,7 @@ class MppLegacyTransformationTest : BaseKotlinGradleTest("mpp-simple") {
     fun testClasspath() {
         runner.build()
         checkJvmCompilationClasspath(
-            originalClassFile = "build/classes/kotlin/jvm/main/IntArithmetic.class",
+            originalClassFile = "build/classes/atomicfu-orig/jvm/main/IntArithmetic.class",
             transformedClassFile = "build/classes/atomicfu/jvm/main/IntArithmetic.class"
         )
         checkJsCompilationClasspath()
@@ -112,7 +112,7 @@ class MppJvmIrTransformationTest : BaseKotlinGradleTest("mpp-simple") {
     @Test
     fun testAtomicfuReferences() {
         runner.build()
-        checkBytecode("build/classes/kotlin/jvm/main/IntArithmetic.class")
+        checkBytecode("build/classes/atomicfu-orig/jvm/main/IntArithmetic.class")
     }
 }
 
@@ -217,6 +217,6 @@ class MppBothIrTransformationTest : BaseKotlinGradleTest("mpp-simple") {
     @Test
     fun testAtomicfuReferences() {
         runner.build()
-        checkBytecode("build/classes/kotlin/jvm/main/IntArithmetic.class")
+        checkBytecode("build/classes/atomicfu-orig/jvm/main/IntArithmetic.class")
     }
 }
