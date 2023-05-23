@@ -281,9 +281,11 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         }
         //now transformTask is responsible for compiling this source set into the classes directory
         classesDirs.setFrom(transformedClassesDir)
-        classesDirs.builtBy(transformTask)
-        (tasks.findByName(target.artifactsTaskName) as? Jar)?.apply {
-            setupJarManifest(multiRelease = config.jvmVariant.toJvmVariant() == JvmVariant.BOTH)
+        classesDirs.setBuiltBy(listOf(transformTask))
+        tasks.withType(Jar::class.java).configureEach {
+            if (name == target.artifactsTaskName) {
+                it.setupJarManifest(multiRelease = config.jvmVariant.toJvmVariant() == JvmVariant.BOTH)
+            }
         }
         // test should compile and run against original production binaries
         if (compilationType == CompilationType.TEST) {
