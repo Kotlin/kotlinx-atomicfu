@@ -242,8 +242,11 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             ?: return@compilations // skip unknown compilations
         val classesDirs = compilation.output.classesDirs
         // make copy of original classes directory
-        val originalClassesDirs: FileCollection =
-            project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
+        @Suppress("UNCHECKED_CAST")
+        val compilationTask = compilation.compileTaskProvider as TaskProvider<KotlinCompileTool>
+        val originalClassesDirs: FileCollection = project.objects.fileCollection().from(
+            compilationTask.flatMap { it.destinationDirectory }
+        )
         originalDirsByCompilation[compilation] = originalClassesDirs
         val transformedClassesDir =
             project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
