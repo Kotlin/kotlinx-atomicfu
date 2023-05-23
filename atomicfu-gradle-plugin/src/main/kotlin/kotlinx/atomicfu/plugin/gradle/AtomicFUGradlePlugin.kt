@@ -9,10 +9,13 @@ import org.gradle.api.*
 import org.gradle.api.file.*
 import org.gradle.api.internal.*
 import org.gradle.api.plugins.*
+import org.gradle.api.provider.Provider
+import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
+import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
@@ -23,6 +26,7 @@ import org.jetbrains.kotlin.gradle.targets.js.*
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlinx.atomicfu.gradle.*
+import javax.inject.Inject
 
 private const val EXTENSION_NAME = "atomicfu"
 private const val ORIGINAL_DIR_NAME = "originalClassesDir"
@@ -34,15 +38,36 @@ private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
 private const val ENABLE_JS_IR_TRANSFORMATION_LEGACY = "kotlinx.atomicfu.enableIrTransformation"
 private const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 private const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
+private const val MIN_SUPPORTED_GRADLE_VERSION = "7.0"
+private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) = project.run {
+        checkCompatibility()
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
         applyAtomicfuCompilerPlugin()
         configureDependencies()
         configureTasks()
+    }
+}
+
+private fun Project.checkCompatibility() {
+    val currentGradleVersion = GradleVersion.current()
+    val kotlinVersion = getKotlinVersion()
+    val minSupportedVersion = GradleVersion.version(MIN_SUPPORTED_GRADLE_VERSION)
+    if (currentGradleVersion < minSupportedVersion) {
+        throw GradleException(
+            "The current Gradle version is not compatible with Atomicfu gradle plugin. " +
+                    "Please use Gradle $MIN_SUPPORTED_GRADLE_VERSION or newer, or the previous version of Atomicfu gradle plugin."
+        )
+    }
+    if (!kotlinVersion.atLeast(1, 7, 0)) {
+        throw GradleException(
+            "The current Kotlin gradle plugin version is not compatible with Atomicfu gradle plugin. " +
+                    "Please use Kotlin $MIN_SUPPORTED_KGP_VERSION or newer, or the previous version of Atomicfu gradle plugin."
+        )
     }
 }
 
@@ -242,68 +267,79 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             ?: return@compilations // skip unknown compilations
         val classesDirs = compilation.output.classesDirs
         // make copy of original classes directory
-        val originalClassesDirs: FileCollection =
-            project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
+        @Suppress("UNCHECKED_CAST")
+        val compilationTask = compilation.compileTaskProvider as TaskProvider<KotlinCompileTool>
+        val originalDestinationDirectory = project.layout.buildDirectory
+            .dir("classes/atomicfu-orig/${target.name}/${compilation.name}")
+        compilationTask.configure {
+            if (it is Kotlin2JsCompile) {
+                @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "EXPOSED_PARAMETER_TYPE")
+                it.defaultDestinationDirectory.value(originalDestinationDirectory)
+            } else {
+                it.destinationDirectory.value(originalDestinationDirectory)
+            }
+        }
+        val originalClassesDirs: FileCollection = project.objects.fileCollection().from(
+            compilationTask.flatMap { it.destinationDirectory }
+        )
         originalDirsByCompilation[compilation] = originalClassesDirs
-        val transformedClassesDir =
-            project.buildDir.resolve("classes/atomicfu/${target.name}/${compilation.name}")
+        val transformedClassesDir = project.layout.buildDirectory
+            .dir("classes/atomicfu/${target.name}/${compilation.name}")
         val transformTask = when (target.platformType) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
                 // skip transformation task if transformation is turned off or ir transformation is enabled
                 if (!config.transformJvm || rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)) return@compilations
-                project.createJvmTransformTask(compilation).configureJvmTask(
-                    compilation.compileDependencyFiles,
-                    compilation.compileAllTaskName,
-                    transformedClassesDir,
-                    originalClassesDirs,
-                    config
-                )
+                project.registerJvmTransformTask(compilation)
+                    .configureJvmTask(
+                        compilation.compileDependencyFiles,
+                        compilation.compileAllTaskName,
+                        transformedClassesDir,
+                        originalClassesDirs,
+                        config
+                    )
+                    .also {
+                        compilation.defaultSourceSet.kotlin.compiledBy(it, AtomicFUTransformTask::destinationDirectory)
+                    }
             }
             KotlinPlatformType.js -> {
                 // skip when js transformation is not needed or when IR is transformed
                 if (!config.transformJs || (needsJsIrTransformation(target))) {
                     return@compilations
                 }
-                project.createJsTransformTask(compilation).configureJsTask(
-                    compilation.compileAllTaskName,
-                    transformedClassesDir,
-                    originalClassesDirs,
-                    config
-                )
+                project.registerJsTransformTask(compilation)
+                    .configureJsTask(
+                        compilation.compileAllTaskName,
+                        transformedClassesDir,
+                        originalClassesDirs,
+                        config
+                    )
+                    .also {
+                        compilation.defaultSourceSet.kotlin.compiledBy(it, AtomicFUTransformJsTask::destinationDirectory)
+                    }
             }
             else -> error("Unsupported transformation platform '${target.platformType}'")
         }
         //now transformTask is responsible for compiling this source set into the classes directory
+        compilation.defaultSourceSet.kotlin.destinationDirectory.value(transformedClassesDir)
         classesDirs.setFrom(transformedClassesDir)
-        classesDirs.builtBy(transformTask)
-        (tasks.findByName(target.artifactsTaskName) as? Jar)?.apply {
-            setupJarManifest(multiRelease = config.jvmVariant.toJvmVariant() == JvmVariant.BOTH)
+        classesDirs.setBuiltBy(listOf(transformTask))
+        tasks.withType(Jar::class.java).configureEach {
+            if (name == target.artifactsTaskName) {
+                it.setupJarManifest(multiRelease = config.jvmVariant.toJvmVariant() == JvmVariant.BOTH)
+            }
         }
         // test should compile and run against original production binaries
         if (compilationType == CompilationType.TEST) {
             val mainCompilation =
                 compilation.target.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
-            val originalMainClassesDirs = project.files(
-                // use Callable because there is no guarantee that main is configured before test
-                Callable { originalDirsByCompilation[mainCompilation]!! }
+            val originalMainClassesDirs = project.objects.fileCollection().from(
+                mainCompilation.compileTaskProvider.flatMap { (it as KotlinCompileTool).destinationDirectory }
             )
-
-            // KGP >= 1.7.0 has breaking changes in task hierarchy:
-            // https://youtrack.jetbrains.com/issue/KT-32805#focus=Comments-27-5915479.0-0
-            val (majorVersion, minorVersion) = getKotlinPluginVersion()
-                .split('.')
-                .take(2)
-                .map { it.toInt() }
-            if (majorVersion == 1 && minorVersion < 7) {
-                (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
-                    originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
-            } else {
-                (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractKotlinCompileTool<*>)
-                    ?.libraries
-                    ?.setFrom(
-                        originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
-                    )
-            }
+            (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractKotlinCompileTool<*>)
+                ?.libraries
+                ?.setFrom(
+                    originalMainClassesDirs + compilation.compileDependencyFiles
+                )
 
             (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
                 originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
@@ -381,48 +417,49 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
 
 fun String.toJvmVariant(): JvmVariant = enumValueOf(toUpperCase(Locale.US))
 
-fun Project.createJvmTransformTask(compilation: KotlinCompilation<*>): AtomicFUTransformTask =
-    tasks.create(
+fun Project.registerJvmTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformTask> =
+    tasks.register(
         "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
         AtomicFUTransformTask::class.java
     )
 
-fun Project.createJsTransformTask(compilation: KotlinCompilation<*>): AtomicFUTransformJsTask =
-    tasks.create(
+fun Project.registerJsTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformJsTask> =
+    tasks.register(
         "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
         AtomicFUTransformJsTask::class.java
     )
 
-fun Project.createJvmTransformTask(sourceSet: SourceSet): AtomicFUTransformTask =
-    tasks.create(sourceSet.getTaskName("transform", "atomicfuClasses"), AtomicFUTransformTask::class.java)
-
-fun AtomicFUTransformTask.configureJvmTask(
+fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
     classpath: FileCollection,
     classesTaskName: String,
-    transformedClassesDir: File,
+    transformedClassesDir: Provider<Directory>,
     originalClassesDir: FileCollection,
     config: AtomicFUPluginExtension
-): ConventionTask =
+): TaskProvider<AtomicFUTransformTask> =
     apply {
-        dependsOn(classesTaskName)
-        classPath = classpath
-        inputFiles = originalClassesDir
-        outputDir = transformedClassesDir
-        jvmVariant = config.jvmVariant
-        verbose = config.verbose
+        configure {
+            it.dependsOn(classesTaskName)
+            it.classPath = classpath
+            it.inputFiles = originalClassesDir
+            it.destinationDirectory.value(transformedClassesDir)
+            it.jvmVariant = config.jvmVariant
+            it.verbose = config.verbose
+        }
     }
 
-fun AtomicFUTransformJsTask.configureJsTask(
+fun TaskProvider<AtomicFUTransformJsTask>.configureJsTask(
     classesTaskName: String,
-    transformedClassesDir: File,
+    transformedClassesDir: Provider<Directory>,
     originalClassesDir: FileCollection,
     config: AtomicFUPluginExtension
-): ConventionTask =
+): TaskProvider<AtomicFUTransformJsTask> =
     apply {
-        dependsOn(classesTaskName)
-        inputFiles = originalClassesDir
-        outputDir = transformedClassesDir
-        verbose = config.verbose
+        configure {
+            it.dependsOn(classesTaskName)
+            it.inputFiles = originalClassesDir
+            it.destinationDirectory.value(transformedClassesDir)
+            it.verbose = config.verbose
+        }
     }
 
 fun Jar.setupJarManifest(multiRelease: Boolean) {
@@ -445,13 +482,29 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 }
 
 @CacheableTask
-open class AtomicFUTransformTask : ConventionTask() {
+abstract class AtomicFUTransformTask : ConventionTask() {
+    @get:Inject
+    internal abstract val providerFactory: ProviderFactory
+
+    @get:Inject
+    internal abstract val projectLayout: ProjectLayout
+
     @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
 
-    @OutputDirectory
-    lateinit var outputDir: File
+    @Suppress("unused")
+    @Deprecated(
+        message = "Replaced with 'destinationDirectory'",
+        replaceWith = ReplaceWith("destinationDirectory")
+    )
+    @get:Internal
+    var outputDir: File
+        get() = destinationDirectory.get().asFile
+        set(value) { destinationDirectory.value(projectLayout.dir(providerFactory.provider { value })) }
+
+    @get:OutputDirectory
+    abstract val destinationDirectory: DirectoryProperty
 
     @Classpath
     @InputFiles
@@ -467,7 +520,7 @@ open class AtomicFUTransformTask : ConventionTask() {
     fun transform() {
         val cp = classPath.files.map { it.absolutePath }
         inputFiles.files.forEach { inputDir ->
-            AtomicFUTransformer(cp, inputDir, outputDir).let { t ->
+            AtomicFUTransformer(cp, inputDir, destinationDirectory.get().asFile).let { t ->
                 t.jvmVariant = jvmVariant.toJvmVariant()
                 t.verbose = verbose
                 t.transform()
@@ -477,13 +530,30 @@ open class AtomicFUTransformTask : ConventionTask() {
 }
 
 @CacheableTask
-open class AtomicFUTransformJsTask : ConventionTask() {
+abstract class AtomicFUTransformJsTask : ConventionTask() {
+
+    @get:Inject
+    internal abstract val providerFactory: ProviderFactory
+
+    @get:Inject
+    internal abstract val projectLayout: ProjectLayout
+
     @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
     lateinit var inputFiles: FileCollection
 
-    @OutputDirectory
-    lateinit var outputDir: File
+    @Suppress("unused")
+    @Deprecated(
+        message = "Replaced with 'destinationDirectory'",
+        replaceWith = ReplaceWith("destinationDirectory")
+    )
+    @get:Internal
+    var outputDir: File
+        get() = destinationDirectory.get().asFile
+        set(value) { destinationDirectory.value(projectLayout.dir(providerFactory.provider { value })) }
+
+    @get:OutputDirectory
+    abstract val destinationDirectory: DirectoryProperty
 
     @Input
     var verbose = false
@@ -491,7 +561,7 @@ open class AtomicFUTransformJsTask : ConventionTask() {
     @TaskAction
     fun transform() {
         inputFiles.files.forEach { inputDir ->
-            AtomicFUTransformerJS(inputDir, outputDir).let { t ->
+            AtomicFUTransformerJS(inputDir, destinationDirectory.get().asFile).let { t ->
                 t.verbose = verbose
                 t.transform()
             }
