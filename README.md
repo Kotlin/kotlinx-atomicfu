@@ -12,6 +12,7 @@
 **Atomicfu** is a multiplatform library that provides the idiomatic and effective way of using atomic operations in Kotlin.
 
 ## Table of contents
+- [Requirements](#requirements)
 - [Features](#features)
 - [Example](#example)
 - [Quickstart](#quickstart)
@@ -31,6 +32,13 @@
   - [Tracing operations](#tracing-operations)
 - [Kotlin/Native support](#kotlin-native-support)
 
+## Requirements
+
+Starting from version `0.21.0` of the library your project is required to use:
+
+* Gradle `7.0` or newer
+
+* Kotlin `1.7.0` or newer
 
 ## Features
 
