@@ -1,5 +1,15 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.21.0
+
+* Updated Kotlin to 1.8.20.
+* Updated Gradle to 7.3 (#300).
+* Updated kotlinx.metadata version to 0.6.0 (#281).
+* Minimal supported KGP(1.7.0) and Gradle(7.0) versions are set since this release.
+* Removed JS Legacy configurations for KGP >= 1.9.0 (#296).
+* Fixed class duplication (from original and transformed directories) in Jar (#301).
+* Original class directories are not modified in case of compiler plugin application (#312).
+
 # Version 0.20.2
 
 * Fix for unresolved `kotlinx-atomicfu-runtime` dependency error (https://youtrack.jetbrains.com/issue/KT-57235),
