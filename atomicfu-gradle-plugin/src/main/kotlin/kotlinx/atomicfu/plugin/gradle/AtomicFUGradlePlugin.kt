@@ -313,23 +313,11 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             val originalMainClassesDirs = project.objects.fileCollection().from(
                 mainCompilation.compileTaskProvider.flatMap { (it as KotlinCompileTool).destinationDirectory }
             )
-
-            // KGP >= 1.7.0 has breaking changes in task hierarchy:
-            // https://youtrack.jetbrains.com/issue/KT-32805#focus=Comments-27-5915479.0-0
-            val (majorVersion, minorVersion) = getKotlinPluginVersion()
-                .split('.')
-                .take(2)
-                .map { it.toInt() }
-            if (majorVersion == 1 && minorVersion < 7) {
-                (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractCompile)?.classpath =
-                    originalMainClassesDirs + compilation.compileDependencyFiles - mainCompilation.output.classesDirs
-            } else {
-                (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractKotlinCompileTool<*>)
-                    ?.libraries
-                    ?.setFrom(
-                        originalMainClassesDirs + compilation.compileDependencyFiles
-                    )
-            }
+            (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractKotlinCompileTool<*>)
+                ?.libraries
+                ?.setFrom(
+                    originalMainClassesDirs + compilation.compileDependencyFiles
+                )
 
             (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
                 originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
