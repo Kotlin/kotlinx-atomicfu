@@ -21,11 +21,27 @@ public actual fun atomic(initial: Int, trace: TraceBase): AtomicInt = AtomicInt(
 @JsName(ATOMIC_INT_FACTORY_BINARY_COMPATIBILITY)
 public actual fun atomic(initial: Int): AtomicInt = atomic(initial, None)
 
+@OptIn(ExperimentalUnsignedTypes::class)
+@JsName(ATOMIC_UINT_FACTORY)
+public actual fun atomic(initial: UInt, trace: TraceBase): AtomicUInt = AtomicUInt(initial)
+
+@OptIn(ExperimentalUnsignedTypes::class)
+@JsName(ATOMIC_UINT_FACTORY_BINARY_COMPATIBILITY)
+public actual fun atomic(initial: UInt): AtomicUInt = atomic(initial, None)
+
 @JsName(ATOMIC_LONG_FACTORY)
 public actual fun atomic(initial: Long, trace: TraceBase): AtomicLong = AtomicLong(initial)
 
 @JsName(ATOMIC_LONG_FACTORY_BINARY_COMPATIBILITY)
 public actual fun atomic(initial: Long): AtomicLong = atomic(initial, None)
+
+@OptIn(ExperimentalUnsignedTypes::class)
+@JsName(ATOMIC_ULONG_FACTORY)
+public actual fun atomic(initial: ULong, trace: TraceBase): AtomicULong = AtomicULong(initial)
+
+@OptIn(ExperimentalUnsignedTypes::class)
+@JsName(ATOMIC_ULONG_FACTORY_BINARY_COMPATIBILITY)
+public actual fun atomic(initial: ULong): AtomicULong = atomic(initial, None)
 
 @JsName(ATOMIC_BOOLEAN_FACTORY)
 public actual fun atomic(initial: Boolean, trace: TraceBase): AtomicBoolean = AtomicBoolean(initial)
@@ -151,6 +167,78 @@ public actual class AtomicInt internal constructor(value: Int) {
     override fun toString(): String = value.toString()
 }
 
+// ==================================== AtomicUInt ====================================
+
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual class AtomicUInt internal constructor(value: UInt) {
+    @JsName(ATOMIC_VALUE)
+    public actual var value: UInt = value
+
+    actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): UInt = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: UInt) { this.value = value }
+
+    public actual inline fun lazySet(value: UInt) { this.value = value }
+
+    @JsName(COMPARE_AND_SET)
+    public actual fun compareAndSet(expect: UInt, update: UInt): Boolean {
+        if (value != expect) return false
+        value = update
+        return true
+    }
+
+    @JsName(GET_AND_SET)
+    public actual fun getAndSet(value: UInt): UInt {
+        val oldValue = this.value
+        this.value = value
+        return oldValue
+    }
+
+    @JsName(GET_AND_INCREMENT_UINT)
+    public actual fun getAndIncrement(): UInt = value++
+
+    @JsName(GET_AND_DECREMENT_UINT)
+    public actual fun getAndDecrement(): UInt = value--
+
+    @JsName(GET_AND_ADD_UINT)
+    public actual fun getAndAdd(delta: UInt): UInt {
+        val oldValue = value
+        value += delta
+        return oldValue
+    }
+
+    @JsName(ADD_AND_GET_UINT)
+    public actual fun addAndGet(delta: UInt): UInt {
+        value += delta
+        return value
+    }
+
+    @JsName(GET_AND_SUB)
+    actual fun getAndSub(delta: UInt): UInt {
+        val oldValue = value
+        value -= delta
+        return oldValue
+    }
+
+    @JsName(SUB_AND_GET)
+    actual fun subAndGet(delta: UInt): UInt {
+        value -= delta
+        return value
+    }
+
+    @JsName(INCREMENT_AND_GET_UINT)
+    public actual fun incrementAndGet(): UInt = ++value
+
+    @JsName(DECREMENT_AND_GET_UINT)
+    public actual fun decrementAndGet(): UInt = --value
+
+    public actual inline operator fun plusAssign(delta: UInt) { getAndAdd(delta) }
+
+    public actual inline operator fun minusAssign(delta: UInt) { getAndSub(delta) }
+
+    override fun toString(): String = value.toString()
+}
+
 // ==================================== AtomicLong ====================================
 
 public actual class AtomicLong internal constructor(value: Long) {
@@ -205,6 +293,78 @@ public actual class AtomicLong internal constructor(value: Long) {
     public actual inline operator fun plusAssign(delta: Long) { getAndAdd(delta) }
 
     public actual inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
+
+    override fun toString(): String = value.toString()
+}
+
+// ==================================== AtomicUInt ====================================
+
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual class AtomicULong internal constructor(value: ULong) {
+    @JsName(ATOMIC_VALUE)
+    public actual var value: ULong = value
+
+    actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): ULong = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: ULong) { this.value = value }
+
+    public actual inline fun lazySet(value: ULong) { this.value = value }
+
+    @JsName(COMPARE_AND_SET)
+    public actual fun compareAndSet(expect: ULong, update: ULong): Boolean {
+        if (value != expect) return false
+        value = update
+        return true
+    }
+
+    @JsName(GET_AND_SET)
+    public actual fun getAndSet(value: ULong): ULong {
+        val oldValue = this.value
+        this.value = value
+        return oldValue
+    }
+
+    @JsName(GET_AND_INCREMENT_ULONG)
+    public actual fun getAndIncrement(): ULong = value++
+
+    @JsName(GET_AND_DECREMENT_ULONG)
+    public actual fun getAndDecrement(): ULong = value--
+
+    @JsName(GET_AND_ADD_ULONG)
+    public actual fun getAndAdd(delta: ULong): ULong {
+        val oldValue = value
+        value += delta
+        return oldValue
+    }
+
+    @JsName(ADD_AND_GET_ULONG)
+    public actual fun addAndGet(delta: ULong): ULong {
+        value += delta
+        return value
+    }
+
+    @JsName(GET_AND_SUB_ULONG)
+    actual fun getAndSub(delta: ULong): ULong {
+        val oldValue = value
+        value -= delta
+        return oldValue
+    }
+
+    @JsName(SUB_AND_GET_ULONG)
+    actual fun subAndGet(delta: ULong): ULong {
+        value -= delta
+        return value
+    }
+
+    @JsName(INCREMENT_AND_GET_ULONG)
+    public actual fun incrementAndGet(): ULong = ++value
+
+    @JsName(DECREMENT_AND_GET_ULONG)
+    public actual fun decrementAndGet(): ULong = --value
+
+    public actual inline operator fun plusAssign(delta: ULong) { getAndAdd(delta) }
+
+    public actual inline operator fun minusAssign(delta: ULong) { getAndSub(delta) }
 
     override fun toString(): String = value.toString()
 }
