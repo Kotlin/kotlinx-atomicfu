@@ -130,6 +130,46 @@ public actual value class AtomicInt internal constructor(@PublishedApi internal 
     override fun toString(): String = value.toString()
 }
 
+// ==================================== AtomicInt ====================================
+
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual value class AtomicUInt internal constructor(@PublishedApi internal val a: KAtomicInt) {
+    public actual inline var value: UInt
+        get() = a.value.toUInt()
+        set(value) { a.value = value.toInt() }
+
+    actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): UInt = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: UInt) { this.value = value }
+
+    public actual inline fun lazySet(value: UInt) { a.value = value.toInt() }
+
+    public actual inline fun compareAndSet(expect: UInt, update: UInt): Boolean =
+        a.compareAndSet(expect.toInt(), update.toInt())
+
+    public actual fun getAndSet(value: UInt): UInt {
+        while (true) {
+            val value = value.toInt()
+            val cur = a.value
+            if (cur == value) return cur.toUInt()
+            if (a.compareAndSet(cur, value)) return cur.toUInt()
+        }
+    }
+
+    public actual inline fun getAndIncrement(): UInt = a.addAndGet(1) - 1
+    public actual inline fun getAndDecrement(): UInt = a.addAndGet(-1) + 1
+    public actual inline fun getAndAdd(delta: UInt): UInt = a.addAndGet(delta) - delta
+    public actual inline fun addAndGet(delta: UInt): UInt = a.addAndGet(delta)
+    public actual inline fun incrementAndGet(): UInt = a.addAndGet(1)
+    public actual inline fun decrementAndGet(): UInt = a.addAndGet(-1)
+
+    public actual inline operator fun plusAssign(delta: UInt) { getAndAdd(delta) }
+    public actual inline operator fun minusAssign(delta: UInt) { getAndAdd(-delta) }
+
+    override fun toString(): String = value.toString()
+}
+
 // ==================================== AtomicLong ====================================
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")

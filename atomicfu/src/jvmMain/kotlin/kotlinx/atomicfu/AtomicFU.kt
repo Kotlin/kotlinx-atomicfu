@@ -40,6 +40,21 @@ public actual fun atomic(initial: Int, trace: TraceBase): AtomicInt = AtomicInt(
 public actual fun atomic(initial: Int): AtomicInt = atomic(initial, None)
 
 /**
+ * Creates atomic [UInt] with a given [initial] value.
+ *
+ * It can only be used in initialize of private read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialInt)
+ * ```
+ */
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual fun atomic(initial: UInt, trace: TraceBase): AtomicUInt = AtomicUInt(initial, trace)
+
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual fun atomic(initial: UInt): AtomicUInt = atomic(initial, None)
+
+/**
  * Creates atomic [Long] with a given [initial] value.
  *
  * It can only be used in initialize of private read-only property, like this:
@@ -51,6 +66,21 @@ public actual fun atomic(initial: Int): AtomicInt = atomic(initial, None)
 public actual fun atomic(initial: Long, trace: TraceBase): AtomicLong = AtomicLong(initial, trace)
 
 public actual fun atomic(initial: Long): AtomicLong = atomic(initial, None)
+
+/**
+ * Creates atomic [ULong] with a given [initial] value.
+ *
+ * It can only be used in initialize of private read-only property, like this:
+ *
+ * ```
+ * private val f = atomic(initialLong)
+ * ```
+ */
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual fun atomic(initial: ULong, trace: TraceBase): AtomicULong = AtomicULong(initial, trace)
+
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual fun atomic(initial: ULong): AtomicULong = atomic(initial, None)
 
 /**
  * Creates atomic [Boolean] with a given [initial] value.
@@ -309,6 +339,149 @@ public actual class AtomicInt internal constructor(value: Int, val trace: TraceB
     }
 }
 
+// ==================================== AtomicUInt ====================================
+
+/**
+ * Atomic reference to an [UInt] variable with volatile reads/writes via
+ * [value] property and various atomic read-modify-write operations
+ * like [compareAndSet] and others.
+ */
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual class AtomicUInt internal constructor(value: UInt, val trace: TraceBase) {
+    /**
+     * Reads/writes of this property maps to read/write of volatile variable.
+     */
+    @Volatile
+    public actual var value: UInt = value
+        set(value) {
+            field = value
+            if (trace !== None) trace { "set($value)" }
+        }
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): UInt = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: UInt) { this.value = value }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.lazySet].
+     */
+    public actual fun lazySet(value: UInt) {
+        FU.lazySet(this, value.toInt())
+        if (trace !== None) trace { "lazySet($value)" }
+    }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.compareAndSet].
+     */
+    public actual fun compareAndSet(expect: UInt, update: UInt): Boolean {
+        val result = FU.compareAndSet(this, expect.toInt(), update.toInt())
+        if (result && trace !== None) trace { "CAS($expect, $update)" }
+        return result
+    }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.getAndSet].
+     */
+    public actual fun getAndSet(value: UInt): UInt {
+        val oldValue = FU.getAndSet(this, value.toInt())
+        if (trace !== None) trace { "getAndSet($value):$oldValue" }
+        return oldValue.toUInt()
+    }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.getAndIncrement].
+     */
+    public actual fun getAndIncrement(): UInt {
+        val oldValue = this.getAndAdd(1U)
+        if (trace !== None) trace { "getAndInc():$oldValue" }
+        return oldValue
+    }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.getAndDecrement].
+     */
+    public actual fun getAndDecrement(): UInt {
+        val oldValue = this.getAndSub(1U)
+        if (trace !== None) trace { "getAndDec():$oldValue" }
+        return oldValue
+    }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.getAndAdd].
+     */
+    public actual fun getAndAdd(delta: UInt): UInt {
+        val oldValue = FU.getAndUpdate(this) { (it.toUInt() + delta).toInt() }
+        if (trace !== None) trace { "getAndAdd($delta):$oldValue" }
+        return oldValue.toUInt()
+    }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.addAndGet].
+     */
+    public actual fun addAndGet(delta: UInt): UInt {
+        val newValue = FU.updateAndGet(this) { (it.toUInt() + delta).toInt() }
+        if (trace !== None) trace { "addAndGet($delta):$newValue" }
+        return newValue.toUInt()
+    }
+    /**
+     * Atomically subtracts the given value to the current value
+     * of the field of the given object managed by this updater.
+     */
+    actual fun getAndSub(delta: UInt): UInt {
+        val oldValue = FU.getAndUpdate(this) { (it.toUInt() - delta).toInt() }
+        if (trace !== None) trace { "getAndAdd($delta):$oldValue" }
+        return oldValue.toUInt()
+    }
+
+    /**
+     * Atomically subtracts the given value to the current value
+     * of the field of the given object managed by this updater.
+     */
+    actual fun subAndGet(delta: UInt): UInt {
+        val newValue = FU.updateAndGet(this) { (it.toUInt() - delta).toInt() }
+        if (trace !== None) trace { "addAndGet($delta):$newValue" }
+        return newValue.toUInt()
+    }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.incrementAndGet].
+     */
+    public actual fun incrementAndGet(): UInt {
+        val newValue = this.addAndGet(1U)
+        if (trace !== None) trace { "incAndGet():$newValue" }
+        return newValue
+    }
+
+    /**
+     * Maps to [AtomicIntegerFieldUpdater.decrementAndGet].
+     */
+    public actual fun decrementAndGet(): UInt {
+        val newValue = this.subAndGet(1U)
+        if (trace !== None) trace { "decAndGet():$newValue" }
+        return newValue
+    }
+
+    /**
+     * Performs atomic addition of [delta].
+     */
+    public actual inline operator fun plusAssign(delta: UInt) {
+        getAndAdd(delta)
+    }
+
+    /**
+     * Performs atomic subtraction of [delta].
+     */
+    public actual inline operator fun minusAssign(delta: UInt) {
+        getAndSub(delta)
+    }
+
+    override fun toString(): String = value.toString()
+
+    private companion object {
+        private val FU = AtomicIntegerFieldUpdater.newUpdater(AtomicUInt::class.java, "value")
+    }
+}
+
 // ==================================== AtomicLong ====================================
 
 /**
@@ -429,5 +602,149 @@ public actual class AtomicLong internal constructor(value: Long, val trace: Trac
 
     private companion object {
         private val FU = AtomicLongFieldUpdater.newUpdater(AtomicLong::class.java, "value")
+    }
+}
+
+
+// ==================================== AtomicULong ====================================
+
+/**
+ * Atomic reference to an [ULong] variable with volatile reads/writes via
+ * [value] property and various atomic read-modify-write operations
+ * like [compareAndSet] and others.
+ */
+@OptIn(ExperimentalUnsignedTypes::class)
+public actual class AtomicULong internal constructor(value: ULong, val trace: TraceBase) {
+    /**
+     * Reads/writes of this property maps to read/write of volatile variable.
+     */
+    @Volatile
+    public actual var value: ULong = value
+        set(value) {
+            field = value
+            if (trace !== None) trace { "set($value)" }
+        }
+
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): ULong = value
+
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: ULong) { this.value = value }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.lazySet].
+     */
+    public actual fun lazySet(value: ULong) {
+        FU.lazySet(this, value.toLong())
+        if (trace !== None) trace { "lazySet($value)" }
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.compareAndSet].
+     */
+    public actual fun compareAndSet(expect: ULong, update: ULong): Boolean {
+        val result = FU.compareAndSet(this, expect.toLong(), update.toLong())
+        if (result && trace !== None) trace { "CAS($expect, $update)" }
+        return result
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndSet].
+     */
+    public actual fun getAndSet(value: ULong): ULong {
+        val oldValue = FU.getAndSet(this, value.toLong())
+        if (trace !== None) trace { "getAndSet($value):$oldValue" }
+        return oldValue.toULong()
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndIncrement].
+     */
+    public actual fun getAndIncrement(): ULong {
+        val oldValue = this.getAndAdd(1U)
+        if (trace !== None) trace { "getAndInc():$oldValue" }
+        return oldValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndDecrement].
+     */
+    public actual fun getAndDecrement(): ULong {
+        val oldValue = this.getAndSub(1U)
+        if (trace !== None) trace { "getAndDec():$oldValue" }
+        return oldValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.getAndAdd].
+     */
+    public actual fun getAndAdd(delta: ULong): ULong {
+        val oldValue = FU.getAndUpdate(this) { (it.toULong() + delta).toLong() }
+        if (trace !== None) trace { "getAndAdd($delta):$oldValue" }
+        return oldValue.toULong()
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.addAndGet].
+     */
+    public actual fun addAndGet(delta: ULong): ULong {
+        val newValue = FU.updateAndGet(this) { (it.toULong() + delta).toLong() }
+        if (trace !== None) trace { "addAndGet($delta):$newValue" }
+        return newValue.toULong()
+    }
+    /**
+     * Atomically subtracts the given value to the current value
+     * of the field of the given object managed by this updater.
+     */
+    actual fun getAndSub(delta: ULong): ULong {
+        val oldValue = FU.getAndUpdate(this) { (it.toULong() - delta).toLong() }
+        if (trace !== None) trace { "getAndAdd($delta):$oldValue" }
+        return oldValue.toULong()
+    }
+
+    /**
+     * Atomically subtracts the given value to the current value
+     * of the field of the given object managed by this updater.
+     */
+    actual fun subAndGet(delta: ULong): ULong {
+        val newValue = FU.updateAndGet(this) { (it.toULong() - delta).toLong() }
+        if (trace !== None) trace { "addAndGet($delta):$newValue" }
+        return newValue.toULong()
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.incrementAndGet].
+     */
+    public actual fun incrementAndGet(): ULong {
+        val newValue = this.addAndGet(1U)
+        if (trace !== None) trace { "incAndGet():$newValue" }
+        return newValue
+    }
+
+    /**
+     * Maps to [AtomicLongFieldUpdater.decrementAndGet].
+     */
+    public actual fun decrementAndGet(): ULong {
+        val newValue = this.subAndGet(1U)
+        if (trace !== None) trace { "decAndGet():$newValue" }
+        return newValue
+    }
+
+    /**
+     * Performs atomic addition of [delta].
+     */
+    public actual inline operator fun plusAssign(delta: ULong) {
+        getAndAdd(delta)
+    }
+
+    /**
+     * Performs atomic subtraction of [delta].
+     */
+    public actual inline operator fun minusAssign(delta: ULong) {
+        getAndSub(delta)
+    }
+
+    override fun toString(): String = value.toString()
+
+    private companion object {
+        private val FU = AtomicLongFieldUpdater.newUpdater(AtomicULong::class.java, "value")
     }
 }
