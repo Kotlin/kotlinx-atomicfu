@@ -34,7 +34,6 @@ buildscript {
 
     repositories {
         mavenCentral()
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven { url "https://plugins.gradle.org/m2/" }
         KotlinAggregateBuild.addDevRepositoryIfEnabled(delegate, project)
     }
@@ -60,7 +59,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         KotlinAggregateBuild.addDevRepositoryIfEnabled(delegate, project)
     }
 
