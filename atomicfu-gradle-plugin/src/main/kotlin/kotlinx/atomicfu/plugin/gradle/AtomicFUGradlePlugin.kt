@@ -285,7 +285,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         originalDirsByCompilation[compilation] = originalClassesDirs
         val transformedClassesDir = project.layout.buildDirectory
             .dir("classes/atomicfu/${target.name}/${compilation.name}")
-        when (target.platformType) {
+        val transformTask = when (target.platformType) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
                 // create transformation task only if transformation is required and JVM IR compiler transformation is not enabled
                 if (config.transformJvm && !rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)) {
@@ -318,7 +318,8 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 } else null
             }
             else -> error("Unsupported transformation platform '${target.platformType}'")
-        }?.also { transformTask ->
+        }
+        if (transformTask != null) {
             //now transformTask is responsible for compiling this source set into the classes directory
             compilation.defaultSourceSet.kotlin.destinationDirectory.value(transformedClassesDir)
             classesDirs.setFrom(transformedClassesDir)
@@ -336,15 +337,18 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             val originalMainClassesDirs = project.objects.fileCollection().from(
                 mainCompilation.compileTaskProvider.flatMap { (it as KotlinCompileTool).destinationDirectory }
             )
+            // compilationTask.destinationDirectory was changed from build/classes/kotlin/main to build/classes/atomicfu-orig/main,
+            // so we need to update libraries
             (tasks.findByName(compilation.compileKotlinTaskName) as? AbstractKotlinCompileTool<*>)
                 ?.libraries
                 ?.setFrom(
                     originalMainClassesDirs + compilation.compileDependencyFiles
                 )
-
-            (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
-                originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
-
+            if (transformTask != null) {
+                // if transform task was not created, then originalMainClassesDirs == mainCompilation.output.classesDirs
+                (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
+                    originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+            }
             compilation.compileKotlinTask.setFriendPaths(originalMainClassesDirs)
         }
     }
