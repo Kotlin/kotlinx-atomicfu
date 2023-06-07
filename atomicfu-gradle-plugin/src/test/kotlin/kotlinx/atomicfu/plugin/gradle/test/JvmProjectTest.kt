@@ -2,7 +2,6 @@ package kotlinx.atomicfu.plugin.gradle.test
 
 import kotlinx.atomicfu.plugin.gradle.internal.*
 import kotlinx.atomicfu.plugin.gradle.internal.BaseKotlinScope
-import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -44,7 +43,6 @@ class JvmLegacyTransformationTest : BaseKotlinGradleTest("jvm-simple") {
         )
 
     @Test
-    @Ignore
     fun testClasspath() {
         runner.build()
         checkJvmCompilationClasspath(
