@@ -112,7 +112,7 @@ class MppJvmIrTransformationTest : BaseKotlinGradleTest("mpp-simple") {
     @Test
     fun testAtomicfuReferences() {
         runner.build()
-        checkBytecode("build/classes/atomicfu-orig/jvm/main/IntArithmetic.class")
+        checkBytecode("build/classes/kotlin/jvm/main/IntArithmetic.class")
     }
 }
 
@@ -217,6 +217,6 @@ class MppBothIrTransformationTest : BaseKotlinGradleTest("mpp-simple") {
     @Test
     fun testAtomicfuReferences() {
         runner.build()
-        checkBytecode("build/classes/atomicfu-orig/jvm/main/IntArithmetic.class")
+        checkBytecode("build/classes/kotlin/jvm/main/IntArithmetic.class")
     }
 }
