@@ -15,7 +15,6 @@ import org.gradle.api.tasks.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
-import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
@@ -38,36 +37,15 @@ private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
 private const val ENABLE_JS_IR_TRANSFORMATION_LEGACY = "kotlinx.atomicfu.enableIrTransformation"
 private const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 private const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
-private const val MIN_SUPPORTED_GRADLE_VERSION = "7.0"
-private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) = project.run {
-        checkCompatibility()
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
         applyAtomicfuCompilerPlugin()
         configureDependencies()
         configureTasks()
-    }
-}
-
-private fun Project.checkCompatibility() {
-    val currentGradleVersion = GradleVersion.current()
-    val kotlinVersion = getKotlinVersion()
-    val minSupportedVersion = GradleVersion.version(MIN_SUPPORTED_GRADLE_VERSION)
-    if (currentGradleVersion < minSupportedVersion) {
-        throw GradleException(
-            "The current Gradle version is not compatible with Atomicfu gradle plugin. " +
-                    "Please use Gradle $MIN_SUPPORTED_GRADLE_VERSION or newer, or the previous version of Atomicfu gradle plugin."
-        )
-    }
-    if (!kotlinVersion.atLeast(1, 7, 0)) {
-        throw GradleException(
-            "The current Kotlin gradle plugin version is not compatible with Atomicfu gradle plugin. " +
-                    "Please use Kotlin $MIN_SUPPORTED_KGP_VERSION or newer, or the previous version of Atomicfu gradle plugin."
-        )
     }
 }
 
