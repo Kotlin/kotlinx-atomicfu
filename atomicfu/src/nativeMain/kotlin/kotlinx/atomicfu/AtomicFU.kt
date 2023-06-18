@@ -6,9 +6,9 @@
 
 package kotlinx.atomicfu
 
-import kotlin.native.concurrent.AtomicInt as KAtomicInt
-import kotlin.native.concurrent.AtomicLong as KAtomicLong
-import kotlin.native.concurrent.FreezableAtomicReference as KAtomicRef
+import kotlin.concurrent.AtomicInt as KAtomicInt
+import kotlin.concurrent.AtomicLong as KAtomicLong
+import kotlin.concurrent.AtomicReference as KAtomicRef
 import kotlin.native.concurrent.isFrozen
 import kotlin.native.concurrent.freeze
 import kotlin.reflect.KProperty
@@ -53,7 +53,7 @@ public actual value class AtomicRef<T> internal constructor(@PublishedApi intern
         while (true) {
             val cur = a.value
             if (cur === value) return cur
-            if (a.compareAndSwap(cur, value) === cur) return cur
+            if (a.compareAndExchange(cur, value) === cur) return cur
         }
     }
 
@@ -155,12 +155,12 @@ public actual value class AtomicLong internal constructor(@PublishedApi internal
         }
     }
 
-    public actual inline fun getAndIncrement(): Long = a.addAndGet(1) - 1
-    public actual inline fun getAndDecrement(): Long = a.addAndGet(-1) + 1
+    public actual inline fun getAndIncrement(): Long = a.addAndGet(1L) - 1
+    public actual inline fun getAndDecrement(): Long = a.addAndGet(-1L) + 1
     public actual inline fun getAndAdd(delta: Long): Long = a.addAndGet(delta) - delta
     public actual inline fun addAndGet(delta: Long): Long = a.addAndGet(delta)
-    public actual inline fun incrementAndGet(): Long = a.addAndGet(1)
-    public actual inline fun decrementAndGet(): Long = a.addAndGet(-1)
+    public actual inline fun incrementAndGet(): Long = a.addAndGet(1L)
+    public actual inline fun decrementAndGet(): Long = a.addAndGet(-1L)
 
     public actual inline operator fun plusAssign(delta: Long) { getAndAdd(delta) }
     public actual inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
