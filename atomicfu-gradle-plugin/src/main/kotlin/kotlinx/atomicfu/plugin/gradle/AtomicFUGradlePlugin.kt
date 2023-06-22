@@ -159,6 +159,10 @@ private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
     (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION) || rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY))
             && target.isJsIrTarget()
 
+private fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
+    rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION) &&
+            (target.platformType == KotlinPlatformType.jvm || target.platformType == KotlinPlatformType.androidJvm)
+
 private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
 
 private fun Project.addCompilerPluginDependency() {
@@ -263,6 +267,8 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
     val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
     val config = config
     target.compilations.all compilations@{ compilation ->
+        // do not modify directories if compiler plugin is applied
+        if (needsJvmIrTransformation(target) || needsJsIrTransformation(target)) return@compilations
         val compilationType = compilation.name.compilationNameToType()
             ?: return@compilations // skip unknown compilations
         val classesDirs = compilation.output.classesDirs

@@ -103,6 +103,6 @@ class JvmIrTransformationTest : BaseKotlinGradleTest("jvm-simple") {
     @Test
     fun testAtomicfuReferences() {
         runner.build()
-        checkBytecode("build/classes/atomicfu-orig/main/IntArithmetic.class")
+        checkBytecode("build/classes/kotlin/main/IntArithmetic.class")
     }
 }
