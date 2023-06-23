@@ -40,7 +40,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath "com.github.node-gradle:gradle-node-plugin:$gradle_node_version"
     }
 }
 
