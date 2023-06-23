@@ -2,7 +2,8 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-apply plugin: 'com.moowork.node'
+apply plugin: 'com.github.node-gradle.node'
+
 
 node {
     version = "$node_version"
