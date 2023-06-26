@@ -19,3 +19,7 @@ dependencies {
     api "org.mozilla:rhino:1.7.10"
     api "org.jetbrains.kotlinx:kotlinx-metadata-jvm:$kotlinx_metadata_version"
 }
+
+kotlin {
+    jvmToolchain(8)
+}

@@ -98,3 +98,7 @@ if (isKotlinVersionAtLeast(ext.kotlin_version, 1, 9)) {
         exclude "**/JsLegacyTransformationTest*", "**/MppLegacyTransformationTest*"
     }
 }
+
+kotlin {
+    jvmToolchain(8)
+}

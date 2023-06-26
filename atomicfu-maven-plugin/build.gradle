@@ -17,6 +17,10 @@ dependencies {
     api 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
 }
 
+kotlin {
+    jvmToolchain(8)
+}
+
 def outputDir = compileKotlin.destinationDirectory
 
 publishing.publications {
