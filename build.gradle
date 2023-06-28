@@ -73,8 +73,9 @@ allprojects {
     // This fixes "org.gradle.jvm.version" in Gradle metadata
     plugins.withType(JavaPlugin) {
         java {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(8))
+            }
         }
     }
 }
