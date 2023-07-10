@@ -21,9 +21,12 @@ ext {
 }
 
 // TODO: this block should be removed when Kotlin version is updated to 1.9.0
-// (right now it implements a toggle between IR and BOTH JS compiler types for testing of Kotlin dev builds)
-def isKotlinLowerThan_1_9_0 = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 0)
-def isKotlinLowerThan_1_9_20 = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
+// Right now it implements a toggle between IR and BOTH JS compiler types for testing of Kotlin dev builds
+def isJsLegacyCompilerEnabled = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 0)
+// TODO: this block should be removed when Kotlin version is updated to 1.9.20
+// Right now it is used for conditional removal of native targets that will be removed in 1.9.20 (iosArm32, watchosX86)
+// and is necessary for testing of Kotlin dev builds.
+def enableDeprecatedNativeTargets = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
 
 kotlin {
     targets {
@@ -35,7 +38,7 @@ kotlin {
     // JS -- always
     // TODO: JS compiler should be switched to IR-only when Kotlin version is updated to 1.9.0
     // (right now compiler type is chosen conditionally for testing of Kotlin dev builds)
-    def jsCompiler = isKotlinLowerThan_1_9_0 ? BOTH : IR
+    def jsCompiler = isJsLegacyCompilerEnabled ? BOTH : IR
     js(jsCompiler) {
         moduleName = "kotlinx-atomicfu"
         // TODO: Commented out because browser tests do not work on TeamCity
@@ -121,7 +124,7 @@ if (rootProject.ext.native_targets_enabled) {
                 addTarget(presets.watchosDeviceArm64)
 
                 // These targets will be removed in 1.9.20, remove them conditionally for the train builds
-                if (isKotlinLowerThan_1_9_20) {
+                if (enableDeprecatedNativeTargets) {
                     addTarget(presets.iosArm32)
                     addTarget(presets.watchosX86)
                 }
@@ -168,7 +171,7 @@ dependencies {
 
 // TODO: This JS Legacy configuration should be removed when Kotlin version is updated to 1.9.0,
 // (right now configurations are removed conditionally for testing of Kotlin 1.9.0-dev builds)
-if (isKotlinLowerThan_1_9_0) {
+if (isJsLegacyCompilerEnabled) {
 
     // ==== CONFIGURE JS =====
 
