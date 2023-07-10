@@ -21,8 +21,12 @@ ext {
 }
 
 // TODO: this block should be removed when Kotlin version is updated to 1.9.0
-// (right now it implements a toggle between IR and BOTH JS compiler types for testing of Kotlin dev builds)
-def isJsLegacyCompilerEnabled = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9)
+// Right now it implements a toggle between IR and BOTH JS compiler types for testing of Kotlin dev builds
+def isJsLegacyCompilerEnabled = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 0)
+// TODO: this block should be removed when Kotlin version is updated to 1.9.20
+// Right now it is used for conditional removal of native targets that will be removed in 1.9.20 (iosArm32, watchosX86)
+// and is necessary for testing of Kotlin dev builds.
+def enableDeprecatedNativeTargets = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
 
 kotlin {
     targets {
@@ -119,9 +123,11 @@ if (rootProject.ext.native_targets_enabled) {
                 addTarget(presets.mingwX64)
                 addTarget(presets.watchosDeviceArm64)
 
-                // Deprecated, remove after 1.9.0
-                addTarget(presets.iosArm32)
-                addTarget(presets.watchosX86)
+                // These targets will be removed in 1.9.20, remove them conditionally for the train builds
+                if (enableDeprecatedNativeTargets) {
+                    addTarget(presets.iosArm32)
+                    addTarget(presets.watchosX86)
+                }
             }
         }
 
