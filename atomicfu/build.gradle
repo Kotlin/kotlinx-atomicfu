@@ -22,7 +22,8 @@ ext {
 
 // TODO: this block should be removed when Kotlin version is updated to 1.9.0
 // (right now it implements a toggle between IR and BOTH JS compiler types for testing of Kotlin dev builds)
-def isKotlinLowerThan_1_9_0 = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9)
+def isKotlinLowerThan_1_9_0 = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 0)
+def isKotlinLowerThan_1_9_20 = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
 
 kotlin {
     targets {
@@ -119,8 +120,8 @@ if (rootProject.ext.native_targets_enabled) {
                 addTarget(presets.mingwX64)
                 addTarget(presets.watchosDeviceArm64)
 
-                if (isKotlinLowerThan_1_9_0) {
-                    // Deprecated, remove after 1.9.0
+                // These targets will be removed in 1.9.20, remove them conditionally for the train builds
+                if (isKotlinLowerThan_1_9_20) {
                     addTarget(presets.iosArm32)
                     addTarget(presets.watchosX86)
                 }
