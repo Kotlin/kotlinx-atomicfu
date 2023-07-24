@@ -2,12 +2,19 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "CanBePrimaryConstructorProperty")
+@file:Suppress(
+    "NOTHING_TO_INLINE",
+    "RedundantVisibilityModifier",
+    "CanBePrimaryConstructorProperty",
+    "INVISIBLE_REFERENCE",
+    "INVISIBLE_MEMBER"
+)
 
 package kotlinx.atomicfu
 
-import kotlin.reflect.KProperty
 import kotlinx.atomicfu.TraceBase.None
+import kotlin.internal.InlineOnly
+import kotlin.reflect.KProperty
 
 @JsName(ATOMIC_REF_FACTORY)
 public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = AtomicRef<T>(initial)
@@ -39,8 +46,10 @@ public actual class AtomicRef<T> internal constructor(value: T) {
     @JsName(ATOMIC_VALUE)
     public actual var value: T = value
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) { this.value = value }
 
     public actual inline fun lazySet(value: T) { this.value = value }
@@ -68,8 +77,10 @@ public actual class AtomicBoolean internal constructor(value: Boolean) {
     @JsName(ATOMIC_VALUE)
     public actual var value: Boolean = value
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { this.value = value }
 
     public actual inline fun lazySet(value: Boolean) {
@@ -99,8 +110,10 @@ public actual class AtomicInt internal constructor(value: Int) {
     @JsName(ATOMIC_VALUE)
     public actual var value: Int = value
 
+    @InlineOnly
     actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) { this.value = value }
 
     public actual inline fun lazySet(value: Int) { this.value = value }
@@ -157,8 +170,10 @@ public actual class AtomicLong internal constructor(value: Long) {
     @JsName(ATOMIC_VALUE)
     public actual var value: Long = value
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Long = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) { this.value = value }
 
     public actual inline fun lazySet(value: Long) { this.value = value }

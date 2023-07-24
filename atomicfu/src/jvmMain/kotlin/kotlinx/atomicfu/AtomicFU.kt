@@ -3,7 +3,7 @@
  */
 
 @file:JvmName("AtomicFU")
-@file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier")
+@file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package kotlinx.atomicfu
 
@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.reflect.KProperty
 import kotlinx.atomicfu.TraceBase.None
+import kotlin.internal.InlineOnly
 
 /**
  * Creates atomic reference with a given [initial] value.
@@ -84,8 +85,10 @@ public actual class AtomicRef<T> internal constructor(value: T, val trace: Trace
             if (trace !== None) trace { "set($value)" }
         }
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) { this.value = value }
 
     /**
@@ -135,8 +138,10 @@ public actual class AtomicBoolean internal constructor(v: Boolean, val trace: Tr
     @Volatile
     private var _value: Int = if (v) 1 else 0
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { this.value = value }
 
     /**
@@ -204,8 +209,10 @@ public actual class AtomicInt internal constructor(value: Int, val trace: TraceB
             if (trace !== None) trace { "set($value)" }
         }
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) { this.value = value }
 
     /**
@@ -327,8 +334,10 @@ public actual class AtomicLong internal constructor(value: Long, val trace: Trac
             if (trace !== None) trace { "set($value)" }
         }
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Long = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) { this.value = value }
 
     /**
