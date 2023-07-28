@@ -2,7 +2,13 @@
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "CanBePrimaryConstructorProperty")
+@file:Suppress(
+    "NOTHING_TO_INLINE",
+    "RedundantVisibilityModifier",
+    "CanBePrimaryConstructorProperty",
+    "INVISIBLE_REFERENCE",
+    "INVISIBLE_MEMBER"
+)
 
 package kotlinx.atomicfu
 
@@ -13,6 +19,7 @@ import kotlin.native.concurrent.isFrozen
 import kotlin.native.concurrent.freeze
 import kotlin.reflect.KProperty
 import kotlinx.atomicfu.TraceBase.None
+import kotlin.internal.InlineOnly
 
 public actual fun <T> atomic(initial: T, trace: TraceBase): AtomicRef<T> = AtomicRef<T>(KAtomicRef(initial))
 public actual fun <T> atomic(initial: T): AtomicRef<T> = atomic(initial, None)
@@ -34,8 +41,10 @@ public actual value class AtomicRef<T> internal constructor(@PublishedApi intern
             a.value = value
         }
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) { this.value = value }
 
     public actual inline fun lazySet(value: T) {
@@ -100,8 +109,10 @@ public actual value class AtomicInt internal constructor(@PublishedApi internal 
         get() = a.value
         set(value) { a.value = value }
 
+    @InlineOnly
     actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) { this.value = value }
 
     public actual inline fun lazySet(value: Int) { a.value = value }
