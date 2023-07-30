@@ -23,40 +23,41 @@ class MetadataTransformer(
     @Suppress("UNCHECKED_CAST")
     fun transformMetadata(metadataAnnotation: AnnotationNode): Boolean {
         val map = metadataAnnotation.asMap()
-        val hdr = KotlinClassHeader(
-            map["k"] as Int?,
-            (map["mv"] as? List<Int>)?.toIntArray(),
-            (map["d1"] as? List<String>)?.toTypedArray(),
-            (map["d2"] as? List<String>)?.toTypedArray(),
-            map["xs"] as String?,
-            map["pn"] as String?,
-            map["xi"] as Int?
+        val metadata = Metadata(
+            kind = map["k"] as Int?,
+            metadataVersion = (map["mv"] as? List<Int>)?.toIntArray(),
+            data1 = (map["d1"] as? List<String>)?.toTypedArray(),
+            data2 = (map["d2"] as? List<String>)?.toTypedArray(),
+            extraString = map["xs"] as String?,
+            packageName = map["pn"] as String?,
+            extraInt = map["xi"] as Int?
         )
-        val result = when (val metadata = KotlinClassMetadata.read(hdr)) {
+        val transformedMetadata = when (val kotlinClassMetadata = KotlinClassMetadata.read(metadata)) {
             is KotlinClassMetadata.Class -> {
                 val w = KotlinClassMetadata.Class.Writer()
-                metadata.accept(ClassFilter(w))
-                w.write(hdr.metadataVersion, hdr.extraInt)
+                kotlinClassMetadata.accept(ClassFilter(w))
+                val transformedKotlinClassMetadata = w.write(metadata.metadataVersion, metadata.extraInt)
+                KotlinClassMetadata.writeClass(transformedKotlinClassMetadata.kmClass)
             }
             is KotlinClassMetadata.FileFacade -> {
                 val w = KotlinClassMetadata.FileFacade.Writer()
-                metadata.accept(PackageFilter(w))
-                w.write(hdr.metadataVersion, hdr.extraInt)
+                kotlinClassMetadata.accept(PackageFilter(w))
+                val transformedKotlinClassMetadata = w.write(metadata.metadataVersion, metadata.extraInt)
+                KotlinClassMetadata.writeFileFacade(transformedKotlinClassMetadata.kmPackage)
             }
             is KotlinClassMetadata.MultiFileClassPart -> {
                 val w = KotlinClassMetadata.MultiFileClassPart.Writer()
-                metadata.accept(PackageFilter(w))
-                w.write(metadata.facadeClassName, hdr.metadataVersion, hdr.extraInt)
+                kotlinClassMetadata.accept(PackageFilter(w))
+                val transformedKotlinClassMetadata = w.write(kotlinClassMetadata.facadeClassName, metadata.metadataVersion, metadata.extraInt)
+                KotlinClassMetadata.writeMultiFileClassPart(transformedKotlinClassMetadata.kmPackage, transformedKotlinClassMetadata.facadeClassName)
             }
             else -> return false // not transformed
         }
         if (!transformed) return false
-        result.apply {
-            with (metadataAnnotation) {
-                // read resulting header & update annotation data
-                setKey("d1", annotationData.data1.toList())
-                setKey("d2", annotationData.data2.toList())
-            }
+        with (metadataAnnotation) {
+            // read resulting header & update annotation data
+            setKey("d1", transformedMetadata.data1.toList())
+            setKey("d2", transformedMetadata.data2.toList())
         }
         return true // transformed
     }
@@ -208,7 +209,7 @@ private val SynchronizedObjectAlias = KmClassifier.TypeAlias("kotlinx/atomicfu/l
 
 private val ReentrantLockAlias = KmClassifier.TypeAlias("kotlinx/atomicfu/locks/ReentrantLock")
 private val ReentrantLockType = KmType(0).apply {
-    classifier = KmClassifier.Class("java/util/concurrent/locks/ReentrantLock")        
+    classifier = KmClassifier.Class("java/util/concurrent/locks/ReentrantLock")
 }
 
 @Suppress("UNCHECKED_CAST")
