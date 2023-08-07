@@ -91,7 +91,6 @@ if (rootProject.ext.native_targets_enabled) {
             } else {
                 addTarget(presets.linuxX64)
                 addTarget(presets.iosArm64)
-                addTarget(presets.iosArm32)
                 addTarget(presets.iosX64)
                 addTarget(presets.macosX64)
                 addTarget(presets.mingwX64)
@@ -99,7 +98,6 @@ if (rootProject.ext.native_targets_enabled) {
                 addTarget(presets.tvosX64)
                 addTarget(presets.watchosArm32)
                 addTarget(presets.watchosArm64)
-                addTarget(presets.watchosX86)
                 addTarget(presets.watchosX64)
 
                 addTarget(presets.iosSimulatorArm64)
