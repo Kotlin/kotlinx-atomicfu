@@ -7,10 +7,13 @@ import kotlin.native.concurrent.*
 import kotlin.native.internal.NativePtr
 import kotlinx.atomicfu.locks.SynchronizedObject.Status.*
 
+@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
 public actual open class SynchronizedObject {
 
+    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     protected val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
 
+    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     public fun lock() {
         val currentThreadId = pthread_self()!!
         while (true) {
@@ -62,6 +65,7 @@ public actual open class SynchronizedObject {
         }
     }
 
+    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     public fun tryLock(): Boolean {
         val currentThreadId = pthread_self()!!
         while (true) {
@@ -82,6 +86,7 @@ public actual open class SynchronizedObject {
         }
     }
 
+    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     public fun unlock() {
         val currentThreadId = pthread_self()!!
         while (true) {
