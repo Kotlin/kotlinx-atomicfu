@@ -8,7 +8,7 @@ class ArithmeticTest {
     @Test
     fun testInt() {
         val a = IntArithmetic()
-        doWork(a)
+        a.doWork()
         check(a.x == 8)
     }
 }
