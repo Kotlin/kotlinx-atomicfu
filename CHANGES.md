@@ -1,5 +1,14 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.22.0
+
+* Updated Kotlin to 1.9.0 (#330).
+* Updated gradle version to 8.1 (#319).
+* Updated kotlinx.metadata version 0.7.0 (#327).
+* Conditionally removed targets that are removed after 1.9.20 (iosArm32, watchosX86). (#320).
+* Removed obsolete no longer supported kotlin.mpp.enableCompatibilityMetadataVariant (#326).
+* Complied with new compiler restriction on actual declaration annotations (#325).
+
 # Version 0.21.0
 
 * Updated Kotlin to 1.8.20.
