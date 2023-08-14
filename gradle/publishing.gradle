@@ -30,7 +30,7 @@ publishing {
     repositories { // this: closure
         PublishingKt.configureMavenPublication(delegate, project)
     }
-    
+
     if (!isMultiplatform) {
         // Configure java publications for non-MPP projects
         publications {
@@ -60,5 +60,9 @@ publishing {
         if (it.name != "kotlinMultiplatform") { // The root module gets the JVM's javadoc JAR
             it.artifact(javadocJar)
         }
+    }
+
+    tasks.withType(PublishToMavenRepository).configureEach {
+        dependsOn(tasks.withType(Sign))
     }
 }
