@@ -102,3 +102,7 @@ if (build_snapshot_train) {
 
 // main deployment task
 task deploy(dependsOn: getTasksByName("publish", true) + getTasksByName("publishNpm", true))
+
+extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension.class).with {
+    it.nodeVersion = "20.2.0"
+}

@@ -50,7 +50,7 @@ kotlin {
     jvm()
 
     wasm() {
-      d8()
+      nodejs()
     }
 
     sourceSets {
@@ -404,4 +404,3 @@ afterEvaluate {
 tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
     dependsOn(tasks["generatePomFileForJvmPublication"])
 }
-
