@@ -66,6 +66,9 @@ kotlin {
             }
         }
         jsMain {
+            kotlin {
+                srcDir 'src/jsWasmMain'
+            }
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-stdlib-js'
             }
@@ -73,6 +76,14 @@ kotlin {
         jsTest {
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-test-js'
+            }
+        }
+        wasmMain {
+            kotlin {
+                srcDir 'src/jsWasmMain'
+            }
+            dependencies {
+                implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm'
             }
         }
         wasmTest {

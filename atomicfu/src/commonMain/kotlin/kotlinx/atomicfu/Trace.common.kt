@@ -6,7 +6,6 @@
 
 package kotlinx.atomicfu
 
-import kotlin.js.JsName
 import kotlin.internal.InlineOnly
 
 /**
@@ -66,30 +65,30 @@ public expect val traceFormatDefault: TraceFormat
 /**
  * Base class for implementations of `Trace`.
  */
-@JsName(TRACE_BASE_CONSTRUCTOR)
+@OptionalJsName(TRACE_BASE_CONSTRUCTOR)
 public open class TraceBase internal constructor() {
     /**
      * Accepts the logging [event] and appends it to the trace.
      */
-    @JsName(TRACE_APPEND_1)
+    @OptionalJsName(TRACE_APPEND_1)
     public open fun append(event: Any) {}
 
     /**
      * Accepts the logging events [event1], [event2] and appends them to the trace.
      */
-    @JsName(TRACE_APPEND_2)
+    @OptionalJsName(TRACE_APPEND_2)
     public open fun append(event1: Any, event2: Any) {}
 
     /**
      * Accepts the logging events [event1], [event2], [event3] and appends them to the trace.
      */
-    @JsName(TRACE_APPEND_3)
+    @OptionalJsName(TRACE_APPEND_3)
     public open fun append(event1: Any, event2: Any, event3: Any) {}
 
     /**
      * Accepts the logging events [event1], [event2], [event3], [event4] and appends them to the trace.
      */
-    @JsName(TRACE_APPEND_4)
+    @OptionalJsName(TRACE_APPEND_4)
     public open fun append(event1: Any, event2: Any, event3: Any, event4: Any) {}
 
     /**
