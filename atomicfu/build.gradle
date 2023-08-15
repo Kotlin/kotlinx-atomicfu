@@ -44,7 +44,7 @@ kotlin {
     jvm()
 
     wasm() {
-      d8()
+      nodejs()
     }
 
     sourceSets {
