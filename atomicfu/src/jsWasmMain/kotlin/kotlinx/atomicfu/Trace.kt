@@ -5,10 +5,10 @@
 package kotlinx.atomicfu
 
 @Suppress("FunctionName")
-@JsName(TRACE_FACTORY_FUNCTION)
+@OptionalJsName(TRACE_FACTORY_FUNCTION)
 public actual fun Trace(size: Int, format: TraceFormat): TraceBase = TraceBase.None
 
-@JsName(TRACE_NAMED)
+@OptionalJsName(TRACE_NAMED)
 public actual fun TraceBase.named(name: String): TraceBase = TraceBase.None
 
 public actual val traceFormatDefault: TraceFormat = TraceFormat()

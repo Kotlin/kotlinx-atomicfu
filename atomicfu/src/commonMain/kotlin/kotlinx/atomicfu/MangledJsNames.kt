@@ -1,7 +1,7 @@
 package kotlinx.atomicfu
 
 /**
- * All atomicfu declarations are annotated with [@JsName][kotlin.js.JsName] to have specific names in JS output.
+ * All atomicfu declarations are annotated with [@OptionalJsName][kotlin.js.JsName] to have specific names in JS output.
  * JS output transformer relies on these mangled names to erase all atomicfu references.
  */
 
