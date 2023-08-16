@@ -1,5 +1,8 @@
 package kotlinx.atomicfu
 
+/**
+ * This annotation actualized with JsName in JS platform and not actualized in others.
+ */
 @OptIn(ExperimentalMultiplatform::class)
 @OptionalExpectation
 @Retention(AnnotationRetention.BINARY)
