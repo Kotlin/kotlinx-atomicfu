@@ -310,7 +310,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                         }
                 } else null
             }
-            KotlinPlatformType.js, KotlinPlatformType.wasm -> {
+            KotlinPlatformType.js -> {
                 // create transformation task only if transformation is required and JS IR compiler transformation is not enabled
                 if (config.transformJs && !needsJsIrTransformation(target)) {
                     project.registerJsTransformTask(compilation)
@@ -325,6 +325,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                         }
                 } else null
             }
+            KotlinPlatformType.wasm -> null
             else -> error("Unsupported transformation platform '${target.platformType}'")
         }
         if (transformTask != null) {
