@@ -25,6 +25,10 @@ ext {
 // and is necessary for testing of Kotlin dev builds.
 def enableDeprecatedNativeTargets = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
 
+// Right now it is used for conditional dependency named in wasm stdlib and kotlin.test for 1.9.20
+// and is necessary for testing of Kotlin dev builds.
+def isNewWasmTargetEnabled = isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
+
 kotlin {
     targets {
         delegate.metaClass.addTarget = { preset ->
@@ -43,8 +47,14 @@ kotlin {
     // JVM -- always
     jvm()
 
-    wasm() {
-      nodejs()
+    if (isNewWasmTargetEnabled) {
+        wasmJs {
+            nodejs()
+        }
+    } else {
+        wasm {
+            nodejs()
+        }
     }
 
     sourceSets {
@@ -59,10 +69,13 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test-annotations-common'
             }
         }
+
+        jsWasmMain {
+            dependsOn(sourceSets.commonMain)
+        }
+
         jsMain {
-            kotlin {
-                srcDir 'src/jsWasmMain'
-            }
+            dependsOn(sourceSets.jsWasmMain)
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-stdlib-js'
             }
@@ -72,17 +85,35 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test-js'
             }
         }
-        wasmMain {
-            kotlin {
-                srcDir 'src/jsWasmMain'
+
+        if (isNewWasmTargetEnabled) {
+            wasmJsMain {
+                dependsOn(sourceSets.jsWasmMain)
+                dependencies {
+                    implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm-js'
+                }
             }
-            dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm'
+        } else {
+            wasmMain {
+                dependsOn(sourceSets.jsWasmMain)
+                dependencies {
+                    implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm'
+                }
             }
         }
-        wasmTest {
-            dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-test-wasm'
+
+
+        if (isNewWasmTargetEnabled) {
+            wasmJsTest {
+                dependencies {
+                    implementation 'org.jetbrains.kotlin:kotlin-test-wasm-js'
+                }
+            }
+        } else {
+            wasmTest {
+                dependencies {
+                    implementation 'org.jetbrains.kotlin:kotlin-test-wasm'
+                }
             }
         }
         jvmMain {
