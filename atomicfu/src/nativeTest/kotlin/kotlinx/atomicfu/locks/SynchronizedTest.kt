@@ -1,5 +1,6 @@
 package kotlinx.atomicfu.locks
 
+import kotlin.concurrent.AtomicInt
 import kotlin.native.concurrent.*
 import kotlin.test.*
 
