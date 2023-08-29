@@ -23,7 +23,6 @@ buildscript {
             throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
         }
         repositories {
-            mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
@@ -36,6 +35,7 @@ buildscript {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
         KotlinAggregateBuild.addDevRepositoryIfEnabled(delegate, project)
+        mavenLocal()
     }
 
     dependencies {
@@ -50,7 +50,6 @@ allprojects {
     if (build_snapshot_train) {
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
         repositories {
-            mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
@@ -60,6 +59,7 @@ allprojects {
     repositories {
         mavenCentral()
         KotlinAggregateBuild.addDevRepositoryIfEnabled(delegate, project)
+        mavenLocal()
     }
 
     def deployVersion = properties['DeployVersion']
