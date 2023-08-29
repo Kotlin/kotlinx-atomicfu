@@ -23,7 +23,6 @@ buildscript {
             throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with a snapshot compiler")
         }
         repositories {
-            mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
@@ -56,7 +55,6 @@ allprojects {
     if (build_snapshot_train) {
         project.kotlin_version = project.findProperty("kotlin_snapshot_version")
         repositories {
-            mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
