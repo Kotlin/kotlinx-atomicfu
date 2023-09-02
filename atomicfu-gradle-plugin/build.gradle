@@ -83,10 +83,3 @@ task createClasspathManifest {
 dependencies {
     testRuntimeOnly files(createClasspathManifest)
 }
-
-// Skip these tests if Kotlin version >= 1.9.0, as JS Legacy is no longer supported there
-if (isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 0)) {
-    test {
-        exclude "**/JsLegacyTransformationTest*", "**/MppLegacyTransformationTest*"
-    }
-}
