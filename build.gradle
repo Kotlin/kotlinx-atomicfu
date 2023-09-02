@@ -5,43 +5,41 @@
 import org.jetbrains.kotlin.konan.target.HostManager
 
 buildscript {
-
+    def overridingKotlinVersion = KotlinConfiguration.getOverridingKotlinVersion(project)
+    if (overridingKotlinVersion != null) { project.kotlin_version = overridingKotlinVersion }
 
     /*
-     * These property group is used to build kotlinx.atomicfu against Kotlin compiler snapshot.
-     * How does it work:
-     * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version,
-     * Additionally, mavenLocal and Sonatype snapshots are added to repository list (the former is required for AFU and public
-     * the latter is required for compiler snapshots).
+     * This property group is used to build kotlinx.atomicfu against Kotlin compiler snapshots.
+     * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version.
+     * Additionally, mavenLocal and Sonatype snapshots are added to repository list
+     * (the former is required for AFU and public, the latter is required for compiler snapshots).
      * DO NOT change the name of these properties without adapting kotlinx.train build chain.
      */
-    def prop = rootProject.properties['build_snapshot_train']
-    ext.build_snapshot_train = prop != null && prop != ""
+    def buildSnapshotTrainGradleProperty = project.findProperty("build_snapshot_train")
+    ext.build_snapshot_train = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
     if (build_snapshot_train) {
-        ext.kotlin_version = rootProject.properties['kotlin_snapshot_version']
-        if (kotlin_version == null) {
-            throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
+        project.kotlin_version = project.findProperty("kotlin_snapshot_version")
+        if (project.kotlin_version == null) {
+            throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with a snapshot compiler")
         }
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
-    // These two flags are enabled in train builds for JVM IR compiler testing
-    ext.jvm_ir_enabled = rootProject.properties['enable_jvm_ir'] != null
-    ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
-
 
     repositories {
         mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
-        KotlinAggregateBuild.addDevRepositoryIfEnabled(delegate, project)
+        gradlePluginPortal()
+        KotlinConfiguration.addCustomKotlinRepositoryIfEnabled(delegate, project)
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.github.node-gradle:gradle-node-plugin:$gradle_node_version"
     }
+
+    ext.native_targets_enabled = !project.hasProperty("disable_native_targets")
 }
 
 plugins {
@@ -51,31 +49,35 @@ plugins {
 allprojects {
     // the only place where HostManager could be instantiated
     project.ext.hostManager = new HostManager()
+
+    def overridingKotlinVersion = KotlinConfiguration.getOverridingKotlinVersion(project)
+    if (overridingKotlinVersion != null) { project.kotlin_version = overridingKotlinVersion }
+
     if (build_snapshot_train) {
-        kotlin_version = rootProject.properties['kotlin_snapshot_version']
+        project.kotlin_version = project.findProperty("build_snapshot_train")
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
 
-    logger.info("Using Kotlin compiler $kotlin_version for $it")
+    logger.info("Using Kotlin compiler ${project.kotlin_version} for project ${project.name}")
 
     repositories {
         mavenCentral()
-        KotlinAggregateBuild.addDevRepositoryIfEnabled(delegate, project)
+        KotlinConfiguration.addCustomKotlinRepositoryIfEnabled(delegate, project)
     }
 
-    def deployVersion = properties['DeployVersion']
-    if (deployVersion != null) version = deployVersion
+    def deployVersion = project.findProperty("DeployVersion")
+    if (deployVersion != null) project.version = deployVersion
 
-    // 'atomicfu-native' check is a kludge so that existing YouTrack config works, todo: remove
-    if (project != rootProject && project.name != 'atomicfu-native') {
+    // atomicfu-native check is a kludge so that existing YouTrack config works, todo: remove
+    if (project != rootProject && project.name != "atomicfu-native") {
         apply from: rootProject.file("gradle/publishing.gradle")
     }
 
-    // This fixes "org.gradle.jvm.version" in Gradle metadata
-    plugins.withType(JavaPlugin) {
+    // this fixes "org.gradle.jvm.version" in Gradle metadata
+    plugins.withType(JavaPlugin).configureEach {
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(8))
@@ -84,12 +86,11 @@ allprojects {
     }
 }
 
-logger.info("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 if (build_snapshot_train) {
     afterEvaluate {
         println "Manifest of kotlin-compiler-embeddable.jar for atomicfu"
         configure(subprojects.findAll { it.name == "atomicfu" }) {
-            configurations.matching { it.name == "kotlinCompilerClasspath" }.all {
+            configurations.matching { it.name == "kotlinCompilerClasspath" }.configureEach {
                 resolvedConfiguration.getFiles().findAll { it.name.contains("kotlin-compiler-embeddable") }.each {
                     def manifest = zipTree(it).matching {
                         include 'META-INF/MANIFEST.MF'
