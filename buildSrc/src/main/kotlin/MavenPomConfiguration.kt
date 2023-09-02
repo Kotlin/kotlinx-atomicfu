@@ -7,8 +7,8 @@ fun MavenPom.configureMavenPluginPomAttributes(
     project: Project,
     outputDir: String
 ) {
-    val kotlinDevRepoUrl = getKotlinDevRepositoryUrl(project)
-    val buildSnapshots = project.rootProject.properties["build_snapshot_train"] != null
+    val customKotlinRepoURL = getCustomKotlinRepositoryURL(project)
+    val buildSnapshots = project.hasProperty("build_snapshot_train")
     name.set(project.name)
     packaging = "maven-plugin"
     description.set("Atomicfu Maven Plugin")
@@ -22,10 +22,10 @@ fun MavenPom.configureMavenPluginPomAttributes(
             appendNode("properties")
                 .appendNode("project.build.sourceEncoding", "UTF-8")
             with(appendNode("repositories")) {
-                if (!kotlinDevRepoUrl.isNullOrEmpty()) {
+                if (!customKotlinRepoURL.isNullOrEmpty()) {
                     with(appendNode("repository")) {
                         appendNode("id", "dev")
-                        appendNode("url", kotlinDevRepoUrl)
+                        appendNode("url", customKotlinRepoURL)
                     }
                 }
                 if (buildSnapshots) {

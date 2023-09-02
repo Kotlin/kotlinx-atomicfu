@@ -163,7 +163,7 @@ configurations {
 
 apply from: rootProject.file('gradle/compile-options.gradle')
 
-ext.configureKotlin(true)
+ext.configureKotlin()
 
 dependencies {
     transformer project(":atomicfu-transformer")
