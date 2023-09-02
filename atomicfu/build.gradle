@@ -20,9 +20,6 @@ ext {
     }
 }
 
-// TODO: this block should be removed when Kotlin version is updated to 1.9.0
-// Right now it implements a toggle between IR and BOTH JS compiler types for testing of Kotlin dev builds
-def isJsLegacyCompilerEnabled = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 0)
 // TODO: this block should be removed when Kotlin version is updated to 1.9.20
 // Right now it is used for conditional removal of native targets that will be removed in 1.9.20 (iosArm32, watchosX86)
 // and is necessary for testing of Kotlin dev builds.
@@ -36,12 +33,9 @@ kotlin {
     }
 
     // JS -- always
-    // TODO: JS compiler should be switched to IR-only when Kotlin version is updated to 1.9.0
-    // (right now compiler type is chosen conditionally for testing of Kotlin dev builds)
-    def jsCompiler = isJsLegacyCompilerEnabled ? BOTH : IR
-    js(jsCompiler) {
+    js(IR) {
         moduleName = "kotlinx-atomicfu"
-        // TODO: Commented out because browser tests do not work on TeamCity
+        // TODO: commented out because browser tests do not work on TeamCity
         // browser()
         nodejs()
     }
@@ -167,71 +161,6 @@ ext.configureKotlin()
 
 dependencies {
     transformer project(":atomicfu-transformer")
-}
-
-// TODO: This JS Legacy configuration should be removed when Kotlin version is updated to 1.9.0,
-// (right now configurations are removed conditionally for testing of Kotlin 1.9.0-dev builds)
-if (isJsLegacyCompilerEnabled) {
-
-    // ==== CONFIGURE JS =====
-
-    def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
-            ? compileKotlinJsLegacy.getClass()
-            : compileKotlinJs.getClass()
-
-    tasks.withType(compileJsLegacy).configureEach {
-        kotlinOptions {
-            moduleKind = "umd"
-            sourceMap = true
-            metaInfo = true
-        }
-    }
-
-    apply from: file("$rootProject.projectDir/gradle/node-js.gradle")
-    apply from: file("$rootProject.projectDir/gradle/publish-npm-js.gradle")
-
-    // Workaround the problem with Node downloading
-    repositories.whenObjectAdded {
-        if (it instanceof IvyArtifactRepository) {
-            metadataSources {
-                artifact()
-            }
-        }
-    }
-
-    def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
-            ? compileTestKotlinJsLegacy
-            : compileTestKotlinJs
-
-    def transformedJsFile = compileTestJsLegacy.kotlinOptions.outputFile
-    compileTestJsLegacy.configure {
-        kotlinOptions {
-            // NOTE: Module base-name must be equal to the package name declared in package.json
-            def baseName = "kotlinx-atomicfu"
-            outputFile = new File(new File(outputFile).parent, baseName + ".js")
-        }
-    }
-    def originalJsFile = compileTestJsLegacy.kotlinOptions.outputFile
-
-    task transformJS(type: JavaExec, dependsOn: [compileTestJsLegacy]) {
-        main = "kotlinx.atomicfu.transformer.AtomicFUTransformerJSKt"
-        args = [originalJsFile, transformedJsFile]
-        classpath = configurations.transformer
-        inputs.file(originalJsFile)
-        outputs.file(transformedJsFile)
-    }
-
-    if (project.tasks.findByName('jsLegacyNodeTest')) {
-        jsLegacyNodeTest.dependsOn transformJS
-        jsLegacyNodeTest.configure {
-            inputFileProperty.set(new File(transformedJsFile))
-        }
-    } else {
-        jsNodeTest.dependsOn transformJS
-        jsNodeTest.configure {
-            inputFileProperty.set(new File(transformedJsFile))
-        }
-    }
 }
 
 // ==== CONFIGURE JVM =====
