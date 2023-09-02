@@ -26,6 +26,9 @@ abstract class BaseKotlinGradleTest(private val projectName: String) {
         createProject()
         runner {
             arguments.add(":build")
+            getFileOrNull("kotlin-repo-url.txt")?.let { kotlinRepoURLResource ->
+                arguments.add("-Pkotlin_repo_url=${kotlinRepoURLResource.readText()}")
+            }
         }
     }
 

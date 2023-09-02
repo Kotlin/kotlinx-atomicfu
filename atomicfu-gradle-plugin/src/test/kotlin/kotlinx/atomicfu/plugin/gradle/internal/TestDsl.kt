@@ -127,6 +127,12 @@ internal class Runner {
 internal fun readFileList(fileName: String): String =
     getFile(fileName).readText()
 
+internal fun getFileOrNull(fileName: String): File? {
+    return BaseKotlinGradleTest::class.java.classLoader.getResource(fileName)?.let {
+        resource -> File(resource.toURI())
+    }
+}
+
 internal fun getFile(fileName: String): File {
     val resource = BaseKotlinGradleTest::class.java.classLoader.getResource(fileName)
         ?: throw IllegalStateException("Could not find resource '$fileName'")

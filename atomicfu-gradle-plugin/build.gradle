@@ -79,7 +79,21 @@ task createClasspathManifest {
     }
 }
 
+task createKotlinRepoUrlResource {
+    def customKotlinRepoUrl = KotlinConfiguration.getCustomKotlinRepositoryURL(project)
+    if (customKotlinRepoUrl == null) return
+
+    def outputDir = file("$buildDir/$name")
+    outputs.dir outputDir
+
+    doLast {
+        outputDir.mkdirs()
+        file("$outputDir/kotlin-repo-url.txt").text = customKotlinRepoUrl
+    }
+}
+
 // Add the classpath file to the test runtime classpath
 dependencies {
     testRuntimeOnly files(createClasspathManifest)
+    testRuntimeOnly files(createKotlinRepoUrlResource)
 }
