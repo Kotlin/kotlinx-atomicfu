@@ -372,7 +372,7 @@ tasks.named("jvmJar") {
     manifest {
         attributes(["Multi-Release": true])
     }
-    from(compileJavaModuleInfo) {
+    from(compileJavaModuleInfo.destinationDirectory) {
         into("META-INF/versions/9/")
     }
 }
