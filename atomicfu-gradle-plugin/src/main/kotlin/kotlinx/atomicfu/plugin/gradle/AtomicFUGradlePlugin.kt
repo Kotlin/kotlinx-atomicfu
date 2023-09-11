@@ -8,11 +8,9 @@ import kotlinx.atomicfu.transformer.*
 import org.gradle.api.*
 import org.gradle.api.file.*
 import org.gradle.api.internal.*
-import org.gradle.api.plugins.*
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
-import org.gradle.api.tasks.compile.*
 import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
 import org.gradle.util.*
@@ -21,7 +19,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.*
 import java.util.*
-import java.util.concurrent.*
 import org.jetbrains.kotlin.gradle.targets.js.*
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -71,58 +68,6 @@ private fun Project.checkCompatibility() {
     }
 }
 
-private fun Project.configureDependencies() {
-    withPluginWhenEvaluatedDependencies("kotlin") { version ->
-        dependencies.add(
-            if (config.transformJvm) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
-            getAtomicfuDependencyNotation(Platform.JVM, version)
-        )
-        dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JVM, version))
-    }
-    withPluginWhenEvaluatedDependencies("org.jetbrains.kotlin.js") { version ->
-        dependencies.add(
-            if (config.transformJs) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
-            getAtomicfuDependencyNotation(Platform.JS, version)
-        )
-        dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JS, version))
-        addCompilerPluginDependency()
-    }
-    withPluginWhenEvaluatedDependencies("kotlin-multiplatform") { version ->
-        configureMultiplatformPluginDependencies(version)
-    }
-}
-
-private fun Project.configureTasks() {
-    val config = config
-    withPluginWhenEvaluated("kotlin") {
-        if (config.transformJvm) configureJvmTransformation()
-    }
-    withPluginWhenEvaluated("org.jetbrains.kotlin.js") {
-        if (config.transformJs) configureJsTransformation()
-    }
-    withPluginWhenEvaluated("kotlin-multiplatform") {
-        configureMultiplatformTransformation()
-    }
-}
-
-private data class KotlinVersion(val major: Int, val minor: Int, val patch: Int)
-
-private fun Project.getKotlinVersion(): KotlinVersion {
-    val kotlinVersion = getKotlinPluginVersion()
-    val (major, minor) = kotlinVersion
-        .split('.')
-        .take(2)
-        .map { it.toInt() }
-    val patch = kotlinVersion.substringAfterLast('.').substringBefore('-').toInt()
-    return KotlinVersion(major, minor, patch)
-}
-
-private fun KotlinVersion.atLeast(major: Int, minor: Int, patch: Int) =
-    this.major == major && (this.minor == minor && this.patch >= patch || this.minor > minor) || this.major > major
-
-// kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
-private fun Project.isCompilerPluginAvailable() = getKotlinVersion().atLeast(1, 6, 20)
-
 private fun Project.applyAtomicfuCompilerPlugin() {
     val kotlinVersion = getKotlinVersion()
     // for KGP >= 1.7.20:
@@ -146,6 +91,69 @@ private fun Project.applyAtomicfuCompilerPlugin() {
     }
 }
 
+private fun Project.configureDependencies() {
+    withPluginWhenEvaluatedDependencies("kotlin") { version ->
+        dependencies.add(
+            if (config.transformJvm) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
+            getAtomicfuDependencyNotation(Platform.JVM, version)
+        )
+        dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JVM, version))
+    }
+    withPluginWhenEvaluatedDependencies("org.jetbrains.kotlin.js") { version ->
+        dependencies.add(
+            if (config.transformJs) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
+            getAtomicfuDependencyNotation(Platform.JS, version)
+        )
+        dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JS, version))
+        addJsCompilerPluginRuntimeDependency()
+    }
+    withPluginWhenEvaluatedDependencies("kotlin-multiplatform") { version ->
+        addJsCompilerPluginRuntimeDependency()
+        configureMultiplatformPluginDependencies(version)
+    }
+}
+
+private fun Project.configureMultiplatformPluginDependencies(version: String) {
+    val multiplatformExtension = kotlinExtension as? KotlinMultiplatformExtension ?: error("Expected kotlin multiplatform extension")
+    val atomicfuDependency = "org.jetbrains.kotlinx:atomicfu:$version"
+    multiplatformExtension.sourceSets.getByName("commonMain").dependencies {
+        compileOnly(atomicfuDependency)
+    }
+    multiplatformExtension.sourceSets.getByName("commonTest").dependencies {
+        implementation(atomicfuDependency)
+    }
+    // Include atomicfu as a dependency for publication when transformation for the target is disabled
+    multiplatformExtension.targets.all { target ->
+        if (isTransformationDisabled(target)) {
+            target.compilations.all { compilation ->
+                compilation
+                    .defaultSourceSet
+                    .dependencies {
+                        implementation(atomicfuDependency)
+                    }
+            }
+        }
+    }
+}
+
+private data class KotlinVersion(val major: Int, val minor: Int, val patch: Int)
+
+private fun Project.getKotlinVersion(): KotlinVersion {
+    val kotlinVersion = getKotlinPluginVersion()
+    val (major, minor) = kotlinVersion
+        .split('.')
+        .take(2)
+        .map { it.toInt() }
+    val patch = kotlinVersion.substringAfterLast('.').substringBefore('-').toInt()
+    return KotlinVersion(major, minor, patch)
+}
+
+private fun KotlinVersion.atLeast(major: Int, minor: Int, patch: Int) =
+    this.major == major && (this.minor == minor && this.patch >= patch || this.minor > minor) || this.major > major
+
+// kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
+private fun Project.isCompilerPluginAvailable() = getKotlinVersion().atLeast(1, 6, 20)
+
 private fun Project.getBooleanProperty(name: String) =
     rootProject.findProperty(name)?.toString()?.toBooleanStrict() ?: false
 
@@ -165,7 +173,15 @@ private fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
 
 private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
 
-private fun Project.addCompilerPluginDependency() {
+private fun Project.isTransformationDisabled(target: KotlinTarget): Boolean {
+    val platformType = target.platformType
+    return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
+            !config.transformJs && platformType == KotlinPlatformType.js
+}
+
+// Adds kotlinx-atomicfu-runtime as an implementation dependency to the JS IR target:
+// it provides inline methods that replace atomic methods from the library and is needed at runtime.
+private fun Project.addJsCompilerPluginRuntimeDependency() {
     if (isCompilerPluginAvailable()) {
         withKotlinTargets { target ->
             if (target.isJsIrTarget()) {
@@ -207,7 +223,7 @@ private fun getAtomicfuDependencyNotation(platform: Platform, version: String): 
 
 // Note "afterEvaluate" does nothing when the project is already in executed state, so we need
 // a special check for this case
-fun <T> Project.whenEvaluated(fn: Project.() -> T) {
+private fun <T> Project.whenEvaluated(fn: Project.() -> T) {
     if (state.executed) {
         fn()
     } else {
@@ -215,17 +231,17 @@ fun <T> Project.whenEvaluated(fn: Project.() -> T) {
     }
 }
 
-fun Project.withPluginWhenEvaluated(plugin: String, fn: Project.() -> Unit) {
+private fun Project.withPluginWhenEvaluated(plugin: String, fn: Project.() -> Unit) {
     pluginManager.withPlugin(plugin) { whenEvaluated(fn) }
 }
 
-fun Project.withPluginWhenEvaluatedDependencies(plugin: String, fn: Project.(version: String) -> Unit) {
+private fun Project.withPluginWhenEvaluatedDependencies(plugin: String, fn: Project.(version: String) -> Unit) {
     withPluginWhenEvaluated(plugin) {
         config.dependenciesVersion?.let { fn(it) }
     }
 }
 
-fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
+private fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
     extensions.findByType(KotlinTargetsContainer::class.java)?.let { kotlinExtension ->
         // find all compilations given sourceSet belongs to
         kotlinExtension.targets
@@ -246,16 +262,29 @@ private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileColle
     }
 }
 
-fun Project.configureJvmTransformation() {
+private fun Project.configureTasks() {
+    val config = config
+    withPluginWhenEvaluated("kotlin") {
+        if (config.transformJvm) configureJvmTransformation()
+    }
+    withPluginWhenEvaluated("org.jetbrains.kotlin.js") {
+        if (config.transformJs) configureJsTransformation()
+    }
+    withPluginWhenEvaluated("kotlin-multiplatform") {
+        configureMultiplatformTransformation()
+    }
+}
+
+private fun Project.configureJvmTransformation() {
     if (kotlinExtension is KotlinJvmProjectExtension || kotlinExtension is KotlinAndroidProjectExtension) {
         configureTransformationForTarget((kotlinExtension as KotlinSingleTargetExtension<*>).target)
     }
 }
 
-fun Project.configureJsTransformation() =
+private fun Project.configureJsTransformation() =
     configureTransformationForTarget((kotlinExtension as KotlinJsProjectExtension).js())
 
-fun Project.configureMultiplatformTransformation() =
+private fun Project.configureMultiplatformTransformation() =
     withKotlinTargets { target ->
         if (target.platformType == KotlinPlatformType.common || target.platformType == KotlinPlatformType.native) {
             return@withKotlinTargets // skip the common & native targets -- no transformation for them
@@ -360,87 +389,21 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
     }
 }
 
-fun Project.sourceSetsByCompilation(): Map<KotlinSourceSet, List<KotlinCompilation<*>>> {
-    val sourceSetsByCompilation = hashMapOf<KotlinSourceSet, MutableList<KotlinCompilation<*>>>()
-    withKotlinTargets { target ->
-        target.compilations.forEach { compilation ->
-            compilation.allKotlinSourceSets.forEach { sourceSet ->
-                sourceSetsByCompilation.getOrPut(sourceSet) { mutableListOf() }.add(compilation)
-            }
-        }
-    }
-    return sourceSetsByCompilation
-}
+private fun String.toJvmVariant(): JvmVariant = enumValueOf(toUpperCase(Locale.US))
 
-fun Project.configureMultiplatformPluginDependencies(version: String) {
-    if (rootProject.getBooleanProperty("kotlin.mpp.enableGranularSourceSetsMetadata")) {
-        addCompilerPluginDependency()
-        val mainConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
-            .getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
-            .compileOnlyConfigurationName
-        dependencies.add(mainConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
-
-        val testConfigurationName = project.extensions.getByType(KotlinMultiplatformExtension::class.java).sourceSets
-            .getByName(KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME)
-            .implementationConfigurationName
-        dependencies.add(testConfigurationName, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
-
-        // For each source set that is only used in Native compilations, add an implementation dependency so that it
-        // gets published and is properly consumed as a transitive dependency:
-        sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
-            val isSharedNativeSourceSet = compilations.all {
-                it.platformType == KotlinPlatformType.common || it.platformType == KotlinPlatformType.native
-            }
-            if (isSharedNativeSourceSet) {
-                val configuration = sourceSet.implementationConfigurationName
-                dependencies.add(configuration, getAtomicfuDependencyNotation(Platform.MULTIPLATFORM, version))
-            }
-        }
-    } else {
-        sourceSetsByCompilation().forEach { (sourceSet, compilations) ->
-            addCompilerPluginDependency()
-            val platformTypes = compilations.map { it.platformType }.toSet()
-            val compilationNames = compilations.map { it.compilationName }.toSet()
-            if (compilationNames.size != 1)
-                error("Source set '${sourceSet.name}' of project '$name' is part of several compilations $compilationNames")
-            val compilationType = compilationNames.single().compilationNameToType()
-                ?: return@forEach // skip unknown compilations
-            val platform =
-                if (platformTypes.size > 1) Platform.MULTIPLATFORM else // mix of platform types -> "common"
-                    when (platformTypes.single()) {
-                        KotlinPlatformType.common -> Platform.MULTIPLATFORM
-                        KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> Platform.JVM
-                        KotlinPlatformType.js -> Platform.JS
-                        KotlinPlatformType.native, KotlinPlatformType.wasm -> Platform.NATIVE
-                    }
-            val configurationName = when {
-                // impl dependency for native (there is no transformation)
-                platform == Platform.NATIVE -> sourceSet.implementationConfigurationName
-                // compileOnly dependency for main compilation (commonMain, jvmMain, jsMain)
-                compilationType == CompilationType.MAIN -> sourceSet.compileOnlyConfigurationName
-                // impl dependency for tests
-                else -> sourceSet.implementationConfigurationName
-            }
-            dependencies.add(configurationName, getAtomicfuDependencyNotation(platform, version))
-        }
-    }
-}
-
-fun String.toJvmVariant(): JvmVariant = enumValueOf(toUpperCase(Locale.US))
-
-fun Project.registerJvmTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformTask> =
+private fun Project.registerJvmTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformTask> =
     tasks.register(
         "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
         AtomicFUTransformTask::class.java
     )
 
-fun Project.registerJsTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformJsTask> =
+private fun Project.registerJsTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformJsTask> =
     tasks.register(
         "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
         AtomicFUTransformJsTask::class.java
     )
 
-fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
+private fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
     classpath: FileCollection,
     classesTaskName: String,
     transformedClassesDir: Provider<Directory>,
@@ -458,7 +421,7 @@ fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
         }
     }
 
-fun TaskProvider<AtomicFUTransformJsTask>.configureJsTask(
+private fun TaskProvider<AtomicFUTransformJsTask>.configureJsTask(
     classesTaskName: String,
     transformedClassesDir: Provider<Directory>,
     originalClassesDir: FileCollection,
@@ -473,16 +436,13 @@ fun TaskProvider<AtomicFUTransformJsTask>.configureJsTask(
         }
     }
 
-fun Jar.setupJarManifest(multiRelease: Boolean) {
+private fun Jar.setupJarManifest(multiRelease: Boolean) {
     if (multiRelease) {
         manifest.attributes.apply {
             put("Multi-Release", "true")
         }
     }
 }
-
-val Project.sourceSets: SourceSetContainer
-    get() = convention.getPlugin(JavaPluginConvention::class.java).sourceSets
 
 class AtomicFUPluginExtension(pluginVersion: String?) {
     var dependenciesVersion = pluginVersion
