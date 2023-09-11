@@ -4,25 +4,6 @@ public class kotlinx/atomicfu/plugin/gradle/AtomicFUGradlePlugin : org/gradle/ap
 	public fun apply (Lorg/gradle/api/Project;)V
 }
 
-public final class kotlinx/atomicfu/plugin/gradle/AtomicFUGradlePluginKt {
-	public static final fun configureJsTask (Lorg/gradle/api/tasks/TaskProvider;Ljava/lang/String;Lorg/gradle/api/provider/Provider;Lorg/gradle/api/file/FileCollection;Lkotlinx/atomicfu/plugin/gradle/AtomicFUPluginExtension;)Lorg/gradle/api/tasks/TaskProvider;
-	public static final fun configureJsTransformation (Lorg/gradle/api/Project;)V
-	public static final fun configureJvmTask (Lorg/gradle/api/tasks/TaskProvider;Lorg/gradle/api/file/FileCollection;Ljava/lang/String;Lorg/gradle/api/provider/Provider;Lorg/gradle/api/file/FileCollection;Lkotlinx/atomicfu/plugin/gradle/AtomicFUPluginExtension;)Lorg/gradle/api/tasks/TaskProvider;
-	public static final fun configureJvmTransformation (Lorg/gradle/api/Project;)V
-	public static final fun configureMultiplatformPluginDependencies (Lorg/gradle/api/Project;Ljava/lang/String;)V
-	public static final fun configureMultiplatformTransformation (Lorg/gradle/api/Project;)V
-	public static final fun getSourceSets (Lorg/gradle/api/Project;)Lorg/gradle/api/tasks/SourceSetContainer;
-	public static final fun registerJsTransformTask (Lorg/gradle/api/Project;Lorg/jetbrains/kotlin/gradle/plugin/KotlinCompilation;)Lorg/gradle/api/tasks/TaskProvider;
-	public static final fun registerJvmTransformTask (Lorg/gradle/api/Project;Lorg/jetbrains/kotlin/gradle/plugin/KotlinCompilation;)Lorg/gradle/api/tasks/TaskProvider;
-	public static final fun setupJarManifest (Lorg/gradle/jvm/tasks/Jar;Z)V
-	public static final fun sourceSetsByCompilation (Lorg/gradle/api/Project;)Ljava/util/Map;
-	public static final fun toJvmVariant (Ljava/lang/String;)Lkotlinx/atomicfu/transformer/JvmVariant;
-	public static final fun whenEvaluated (Lorg/gradle/api/Project;Lkotlin/jvm/functions/Function1;)V
-	public static final fun withKotlinTargets (Lorg/gradle/api/Project;Lkotlin/jvm/functions/Function1;)V
-	public static final fun withPluginWhenEvaluated (Lorg/gradle/api/Project;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static final fun withPluginWhenEvaluatedDependencies (Lorg/gradle/api/Project;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
-}
-
 public final class kotlinx/atomicfu/plugin/gradle/AtomicFUPluginExtension {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun getDependenciesVersion ()Ljava/lang/String;
