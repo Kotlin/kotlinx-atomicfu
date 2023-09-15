@@ -165,6 +165,10 @@ private fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
     rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION) &&
             (target.platformType == KotlinPlatformType.jvm || target.platformType == KotlinPlatformType.androidJvm)
 
+private fun Project.needsNativeIrTransformation(target: KotlinTarget): Boolean =
+        rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION) &&
+                (target.platformType == KotlinPlatformType.native)
+
 private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
 
 private fun Project.addCompilerPluginDependency() {
@@ -250,18 +254,26 @@ private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileColle
 
 fun Project.configureJvmTransformation() {
     if (kotlinExtension is KotlinJvmProjectExtension || kotlinExtension is KotlinAndroidProjectExtension) {
-        configureTransformationForTarget((kotlinExtension as KotlinSingleTargetExtension<*>).target)
+        val target = (kotlinExtension as KotlinSingleTargetExtension<*>).target
+        if (!needsJvmIrTransformation(target)) {
+            configureTransformationForTarget((kotlinExtension as KotlinSingleTargetExtension<*>).target)
+        }
     }
 }
 
-fun Project.configureJsTransformation() =
-    configureTransformationForTarget((kotlinExtension as KotlinJsProjectExtension).js())
+fun Project.configureJsTransformation() {
+    val target = (kotlinExtension as KotlinJsProjectExtension).js()
+    if (!needsJsIrTransformation(target)) {
+        configureTransformationForTarget((kotlinExtension as KotlinJsProjectExtension).js())
+    }
+}
 
 fun Project.configureMultiplatformTransformation() =
     withKotlinTargets { target ->
-        if (target.platformType == KotlinPlatformType.common || target.platformType == KotlinPlatformType.native) {
-            return@withKotlinTargets // skip the common & native targets -- no transformation for them
-        }
+        // Skip transformation for common and native targets and in case IR transformation by the compiler plugin is enabled (for JVM or JS targets)
+        if (target.platformType == KotlinPlatformType.common  || target.platformType == KotlinPlatformType.native ||
+                needsJvmIrTransformation(target) || needsJsIrTransformation(target))
+            return@withKotlinTargets
         configureTransformationForTarget(target)
     }
 
@@ -269,8 +281,6 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
     val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
     val config = config
     target.compilations.all compilations@{ compilation ->
-        // do not modify directories if compiler plugin is applied
-        if (needsJvmIrTransformation(target) || needsJsIrTransformation(target)) return@compilations
         val compilationType = compilation.name.compilationNameToType()
             ?: return@compilations // skip unknown compilations
         val classesDirs = compilation.output.classesDirs
@@ -296,7 +306,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         val transformTask = when (target.platformType) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
                 // create transformation task only if transformation is required and JVM IR compiler transformation is not enabled
-                if (config.transformJvm && !rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)) {
+                if (config.transformJvm && !needsJvmIrTransformation(target)) {
                     project.registerJvmTransformTask(compilation)
                         .configureJvmTask(
                             compilation.compileDependencyFiles,
@@ -415,10 +425,11 @@ fun Project.configureMultiplatformPluginDependencies(version: String) {
                         KotlinPlatformType.js -> Platform.JS
                         KotlinPlatformType.native, KotlinPlatformType.wasm -> Platform.NATIVE
                     }
+
             val configurationName = when {
                 // impl dependency for native when IR transformation is off
                 platform == Platform.NATIVE && !project.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION) -> sourceSet.implementationConfigurationName
-                // compileOnly dependency for main compilation (commonMain, jvmMain, jsMain)
+                // compileOnly dependency for main compilation (commonMain, jvmMain, jsMain, nativeMain)
                 compilationType == CompilationType.MAIN -> sourceSet.compileOnlyConfigurationName
                 // impl dependency for tests
                 else -> sourceSet.implementationConfigurationName
