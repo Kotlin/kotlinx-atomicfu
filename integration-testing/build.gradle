@@ -50,12 +50,8 @@ repositories {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-kotlin {
-    jvmToolchain(11)
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 dependencies {
@@ -80,4 +76,14 @@ task mavenTest(type: Test) {
     def sourceSet = sourceSets.mavenTest
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
