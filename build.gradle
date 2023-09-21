@@ -4,6 +4,8 @@
 
 import org.jetbrains.kotlin.konan.target.HostManager
 
+import static KotlinVersion.isKotlinVersionAtLeast
+
 buildscript {
     def overridingKotlinVersion = KotlinConfiguration.getOverridingKotlinVersion(project)
     if (overridingKotlinVersion != null) { project.kotlin_version = overridingKotlinVersion }
@@ -106,6 +108,21 @@ if (build_snapshot_train) {
 // main deployment task
 task deploy(dependsOn: getTasksByName("publish", true) + getTasksByName("publishNpm", true))
 
+// Right now it is used for switching nodejs version which is supports generated wasm bytecode
+def isNewWasmTargetEnabled = isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
 extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension.class).with {
-    it.nodeVersion = "20.2.0"
+    if (isNewWasmTargetEnabled) {
+        // canary nodejs that supports recent Wasm GC changes
+        it.nodeVersion = '21.0.0-v8-canary202309167e82ab1fa2'
+        it.nodeDownloadBaseUrl = 'https://nodejs.org/download/v8-canary'
+    } else {
+        it.nodeVersion = '20.2.0'
+    }
+}
+
+// We need to ignore unsupported engines (i.e. canary) for npm
+if (isNewWasmTargetEnabled) {
+    tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask).configureEach {
+        args.add("--ignore-engines")
+    }
 }
