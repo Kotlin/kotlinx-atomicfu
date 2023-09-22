@@ -1,0 +1,19 @@
+public final class kotlinx/atomicfu/plugin/TransformMojo : org/apache/maven/plugin/AbstractMojo {
+	public field classpath Ljava/util/List;
+	public field input Ljava/io/File;
+	public field jvmVariant Lkotlinx/atomicfu/transformer/JvmVariant;
+	public field output Ljava/io/File;
+	public fun <init> ()V
+	public fun execute ()V
+	public final fun getClasspath ()Ljava/util/List;
+	public final fun getInput ()Ljava/io/File;
+	public final fun getJvmVariant ()Lkotlinx/atomicfu/transformer/JvmVariant;
+	public final fun getOutput ()Ljava/io/File;
+	public final fun getVerbose ()Z
+	public final fun setClasspath (Ljava/util/List;)V
+	public final fun setInput (Ljava/io/File;)V
+	public final fun setJvmVariant (Lkotlinx/atomicfu/transformer/JvmVariant;)V
+	public final fun setOutput (Ljava/io/File;)V
+	public final fun setVerbose (Z)V
+}
+

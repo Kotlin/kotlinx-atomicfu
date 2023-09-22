@@ -44,6 +44,10 @@ buildscript {
     }
 }
 
+plugins {
+    id 'org.jetbrains.kotlinx.binary-compatibility-validator' version '0.13.2'
+}
+
 allprojects {
     // the only place where HostManager could be instantiated
     project.ext.hostManager = new HostManager()
