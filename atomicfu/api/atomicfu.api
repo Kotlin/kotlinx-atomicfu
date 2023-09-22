@@ -1,0 +1,137 @@
+public final class kotlinx/atomicfu/AtomicArray {
+	public final fun get (I)Lkotlinx/atomicfu/AtomicRef;
+	public final fun getSize ()I
+}
+
+public final class kotlinx/atomicfu/AtomicBoolean {
+	public final fun compareAndSet (ZZ)Z
+	public final fun getAndSet (Z)Z
+	public final fun getTrace ()Lkotlinx/atomicfu/TraceBase;
+	public final fun getValue ()Z
+	public final fun lazySet (Z)V
+	public final fun setValue (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/AtomicBooleanArray {
+	public fun <init> (I)V
+	public final fun get (I)Lkotlinx/atomicfu/AtomicBoolean;
+	public final fun getSize ()I
+}
+
+public final class kotlinx/atomicfu/AtomicFU {
+	public static final fun atomic (I)Lkotlinx/atomicfu/AtomicInt;
+	public static final fun atomic (ILkotlinx/atomicfu/TraceBase;)Lkotlinx/atomicfu/AtomicInt;
+	public static final fun atomic (J)Lkotlinx/atomicfu/AtomicLong;
+	public static final fun atomic (JLkotlinx/atomicfu/TraceBase;)Lkotlinx/atomicfu/AtomicLong;
+	public static final fun atomic (Ljava/lang/Object;)Lkotlinx/atomicfu/AtomicRef;
+	public static final fun atomic (Ljava/lang/Object;Lkotlinx/atomicfu/TraceBase;)Lkotlinx/atomicfu/AtomicRef;
+	public static final fun atomic (Z)Lkotlinx/atomicfu/AtomicBoolean;
+	public static final fun atomic (ZLkotlinx/atomicfu/TraceBase;)Lkotlinx/atomicfu/AtomicBoolean;
+	public static synthetic fun atomic$default (ILkotlinx/atomicfu/TraceBase;ILjava/lang/Object;)Lkotlinx/atomicfu/AtomicInt;
+	public static synthetic fun atomic$default (JLkotlinx/atomicfu/TraceBase;ILjava/lang/Object;)Lkotlinx/atomicfu/AtomicLong;
+	public static synthetic fun atomic$default (Ljava/lang/Object;Lkotlinx/atomicfu/TraceBase;ILjava/lang/Object;)Lkotlinx/atomicfu/AtomicRef;
+	public static synthetic fun atomic$default (ZLkotlinx/atomicfu/TraceBase;ILjava/lang/Object;)Lkotlinx/atomicfu/AtomicBoolean;
+}
+
+public final class kotlinx/atomicfu/AtomicFU_commonKt {
+	public static final fun atomicArrayOfNulls (I)Lkotlinx/atomicfu/AtomicArray;
+	public static final fun getAndUpdate (Lkotlinx/atomicfu/AtomicBoolean;Lkotlin/jvm/functions/Function1;)Z
+	public static final fun getAndUpdate (Lkotlinx/atomicfu/AtomicInt;Lkotlin/jvm/functions/Function1;)I
+	public static final fun getAndUpdate (Lkotlinx/atomicfu/AtomicLong;Lkotlin/jvm/functions/Function1;)J
+	public static final fun getAndUpdate (Lkotlinx/atomicfu/AtomicRef;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun loop (Lkotlinx/atomicfu/AtomicBoolean;Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final fun loop (Lkotlinx/atomicfu/AtomicInt;Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final fun loop (Lkotlinx/atomicfu/AtomicLong;Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final fun loop (Lkotlinx/atomicfu/AtomicRef;Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public static final fun update (Lkotlinx/atomicfu/AtomicBoolean;Lkotlin/jvm/functions/Function1;)V
+	public static final fun update (Lkotlinx/atomicfu/AtomicInt;Lkotlin/jvm/functions/Function1;)V
+	public static final fun update (Lkotlinx/atomicfu/AtomicLong;Lkotlin/jvm/functions/Function1;)V
+	public static final fun update (Lkotlinx/atomicfu/AtomicRef;Lkotlin/jvm/functions/Function1;)V
+	public static final fun updateAndGet (Lkotlinx/atomicfu/AtomicBoolean;Lkotlin/jvm/functions/Function1;)Z
+	public static final fun updateAndGet (Lkotlinx/atomicfu/AtomicInt;Lkotlin/jvm/functions/Function1;)I
+	public static final fun updateAndGet (Lkotlinx/atomicfu/AtomicLong;Lkotlin/jvm/functions/Function1;)J
+	public static final fun updateAndGet (Lkotlinx/atomicfu/AtomicRef;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+}
+
+public final class kotlinx/atomicfu/AtomicInt {
+	public final fun addAndGet (I)I
+	public final fun compareAndSet (II)Z
+	public final fun decrementAndGet ()I
+	public final fun getAndAdd (I)I
+	public final fun getAndDecrement ()I
+	public final fun getAndIncrement ()I
+	public final fun getAndSet (I)I
+	public final fun getTrace ()Lkotlinx/atomicfu/TraceBase;
+	public final fun getValue ()I
+	public final fun incrementAndGet ()I
+	public final fun lazySet (I)V
+	public final fun minusAssign (I)V
+	public final fun plusAssign (I)V
+	public final fun setValue (I)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/AtomicIntArray {
+	public fun <init> (I)V
+	public final fun get (I)Lkotlinx/atomicfu/AtomicInt;
+	public final fun getSize ()I
+}
+
+public final class kotlinx/atomicfu/AtomicLong {
+	public final fun addAndGet (J)J
+	public final fun compareAndSet (JJ)Z
+	public final fun decrementAndGet ()J
+	public final fun getAndAdd (J)J
+	public final fun getAndDecrement ()J
+	public final fun getAndIncrement ()J
+	public final fun getAndSet (J)J
+	public final fun getTrace ()Lkotlinx/atomicfu/TraceBase;
+	public final fun getValue ()J
+	public final fun incrementAndGet ()J
+	public final fun lazySet (J)V
+	public final fun minusAssign (J)V
+	public final fun plusAssign (J)V
+	public final fun setValue (J)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/AtomicLongArray {
+	public fun <init> (I)V
+	public final fun get (I)Lkotlinx/atomicfu/AtomicLong;
+	public final fun getSize ()I
+}
+
+public final class kotlinx/atomicfu/AtomicRef {
+	public final fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;)Z
+	public final fun getAndSet (Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun getTrace ()Lkotlinx/atomicfu/TraceBase;
+	public final fun getValue ()Ljava/lang/Object;
+	public final fun lazySet (Ljava/lang/Object;)V
+	public final fun setValue (Ljava/lang/Object;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public class kotlinx/atomicfu/TraceBase {
+	public fun append (Ljava/lang/Object;)V
+	public fun append (Ljava/lang/Object;Ljava/lang/Object;)V
+	public fun append (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+	public fun append (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+}
+
+public final class kotlinx/atomicfu/TraceBase$None : kotlinx/atomicfu/TraceBase {
+	public static final field INSTANCE Lkotlinx/atomicfu/TraceBase$None;
+}
+
+public class kotlinx/atomicfu/TraceFormat {
+	public fun <init> ()V
+	public fun format (ILjava/lang/Object;)Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/TraceKt {
+	public static final fun Trace (ILkotlinx/atomicfu/TraceFormat;)Lkotlinx/atomicfu/TraceBase;
+	public static synthetic fun Trace$default (ILkotlinx/atomicfu/TraceFormat;ILjava/lang/Object;)Lkotlinx/atomicfu/TraceBase;
+	public static final fun getTraceFormatDefault ()Lkotlinx/atomicfu/TraceFormat;
+	public static final fun named (Lkotlinx/atomicfu/TraceBase;Ljava/lang/String;)Lkotlinx/atomicfu/TraceBase;
+}
+

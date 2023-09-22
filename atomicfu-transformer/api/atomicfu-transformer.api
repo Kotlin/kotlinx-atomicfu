@@ -1,0 +1,235 @@
+public final class kotlinx/atomicfu/transformer/AbortKt {
+	public static final fun abort (Ljava/lang/String;Lorg/objectweb/asm/tree/AbstractInsnNode;)Ljava/lang/Void;
+	public static synthetic fun abort$default (Ljava/lang/String;Lorg/objectweb/asm/tree/AbstractInsnNode;ILjava/lang/Object;)Ljava/lang/Void;
+}
+
+public final class kotlinx/atomicfu/transformer/AbortTransform : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Lorg/objectweb/asm/tree/AbstractInsnNode;)V
+	public synthetic fun <init> (Ljava/lang/String;Lorg/objectweb/asm/tree/AbstractInsnNode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getI ()Lorg/objectweb/asm/tree/AbstractInsnNode;
+}
+
+public final class kotlinx/atomicfu/transformer/AsmUtilKt {
+	public static final fun accessToInvokeOpcode (I)I
+	public static final fun atIndex (Lorg/objectweb/asm/tree/AbstractInsnNode;Lorg/objectweb/asm/tree/InsnList;)Ljava/lang/String;
+	public static final fun forVarLoads (ILorg/objectweb/asm/tree/LabelNode;Lorg/objectweb/asm/tree/LabelNode;Lkotlin/jvm/functions/Function1;)V
+	public static final fun getInsnOrNull (Lorg/objectweb/asm/tree/AbstractInsnNode;Lorg/objectweb/asm/tree/AbstractInsnNode;Lkotlin/jvm/functions/Function1;)Lorg/objectweb/asm/tree/AbstractInsnNode;
+	public static final fun getLine (Lorg/objectweb/asm/tree/AbstractInsnNode;)Ljava/lang/Integer;
+	public static final fun getNextUseful (Lorg/objectweb/asm/tree/AbstractInsnNode;)Lorg/objectweb/asm/tree/AbstractInsnNode;
+	public static final fun getOwnerPackageName (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getThisOrPrevUseful (Lorg/objectweb/asm/tree/AbstractInsnNode;)Lorg/objectweb/asm/tree/AbstractInsnNode;
+	public static final fun isAload (Lorg/objectweb/asm/tree/AbstractInsnNode;I)Z
+	public static final fun isAreturn (Lorg/objectweb/asm/tree/AbstractInsnNode;)Z
+	public static final fun isGetField (Lorg/objectweb/asm/tree/AbstractInsnNode;Ljava/lang/String;)Z
+	public static final fun isGetFieldOrGetStatic (Lorg/objectweb/asm/tree/AbstractInsnNode;)Z
+	public static final fun isGetStatic (Lorg/objectweb/asm/tree/AbstractInsnNode;Ljava/lang/String;)Z
+	public static final fun isInvokeVirtual (Lorg/objectweb/asm/tree/AbstractInsnNode;)Z
+	public static final fun isReturn (Lorg/objectweb/asm/tree/AbstractInsnNode;)Z
+	public static final fun isTypeReturn (Lorg/objectweb/asm/tree/AbstractInsnNode;Lorg/objectweb/asm/Type;)Z
+	public static final fun listUseful (Lorg/objectweb/asm/tree/InsnList;I)Ljava/util/List;
+	public static synthetic fun listUseful$default (Lorg/objectweb/asm/tree/InsnList;IILjava/lang/Object;)Ljava/util/List;
+	public static final fun localVar (Lorg/objectweb/asm/tree/MethodNode;ILorg/objectweb/asm/tree/AbstractInsnNode;)Lorg/objectweb/asm/tree/LocalVariableNode;
+	public static final fun nextVarLoad (ILorg/objectweb/asm/tree/AbstractInsnNode;)Lorg/objectweb/asm/tree/VarInsnNode;
+	public static final fun toText (Lorg/objectweb/asm/tree/AbstractInsnNode;)Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformer : kotlinx/atomicfu/transformer/AtomicFUTransformerBase {
+	public fun <init> (Ljava/util/List;Ljava/io/File;Ljava/io/File;Lkotlinx/atomicfu/transformer/JvmVariant;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/io/File;Ljava/io/File;Lkotlinx/atomicfu/transformer/JvmVariant;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getJvmVariant ()Lkotlinx/atomicfu/transformer/JvmVariant;
+	public final fun setJvmVariant (Lkotlinx/atomicfu/transformer/JvmVariant;)V
+	public fun transform ()V
+}
+
+public abstract class kotlinx/atomicfu/transformer/AtomicFUTransformerBase {
+	public fun <init> (Ljava/io/File;Ljava/io/File;)V
+	protected final fun debug (Ljava/lang/String;Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;)V
+	public static synthetic fun debug$default (Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase;Ljava/lang/String;Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;ILjava/lang/Object;)V
+	protected final fun div (Ljava/io/File;Ljava/lang/String;)Ljava/io/File;
+	protected final fun error (Ljava/lang/String;Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;)V
+	public static synthetic fun error$default (Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase;Ljava/lang/String;Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;ILjava/lang/Object;)V
+	public final fun getInputDir ()Ljava/io/File;
+	protected final fun getLastError ()Ljava/lang/Throwable;
+	public final fun getOutputDir ()Ljava/io/File;
+	protected final fun getTransformed ()Z
+	public final fun getVerbose ()Z
+	protected final fun info (Ljava/lang/String;Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;)V
+	public static synthetic fun info$default (Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase;Ljava/lang/String;Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;ILjava/lang/Object;)V
+	protected final fun isClassFile (Ljava/io/File;)Z
+	protected final fun mkdirsAndWrite (Ljava/io/File;[B)V
+	public final fun setInputDir (Ljava/io/File;)V
+	protected final fun setLastError (Ljava/lang/Throwable;)V
+	public final fun setOutputDir (Ljava/io/File;)V
+	protected final fun setTransformed (Z)V
+	public final fun setVerbose (Z)V
+	protected final fun toOutputFile (Ljava/io/File;)Ljava/io/File;
+	public abstract fun transform ()V
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo {
+	public fun <init> (Lkotlinx/atomicfu/transformer/MethodId;Ljava/lang/String;Lorg/objectweb/asm/tree/AbstractInsnNode;Lorg/objectweb/asm/tree/InsnList;)V
+	public synthetic fun <init> (Lkotlinx/atomicfu/transformer/MethodId;Ljava/lang/String;Lorg/objectweb/asm/tree/AbstractInsnNode;Lorg/objectweb/asm/tree/InsnList;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlinx/atomicfu/transformer/MethodId;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lorg/objectweb/asm/tree/AbstractInsnNode;
+	public final fun component4 ()Lorg/objectweb/asm/tree/InsnList;
+	public final fun copy (Lkotlinx/atomicfu/transformer/MethodId;Ljava/lang/String;Lorg/objectweb/asm/tree/AbstractInsnNode;Lorg/objectweb/asm/tree/InsnList;)Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;
+	public static synthetic fun copy$default (Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;Lkotlinx/atomicfu/transformer/MethodId;Ljava/lang/String;Lorg/objectweb/asm/tree/AbstractInsnNode;Lorg/objectweb/asm/tree/InsnList;ILjava/lang/Object;)Lkotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getI ()Lorg/objectweb/asm/tree/AbstractInsnNode;
+	public final fun getInsnList ()Lorg/objectweb/asm/tree/InsnList;
+	public final fun getMethod ()Lkotlinx/atomicfu/transformer/MethodId;
+	public final fun getSource ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS : kotlinx/atomicfu/transformer/AtomicFUTransformerBase {
+	public fun <init> (Ljava/io/File;Ljava/io/File;)V
+	public fun transform ()V
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$AtomicConstructorDetector : org/mozilla/javascript/ast/NodeVisitor {
+	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
+	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$AtomicOperationsInliner : org/mozilla/javascript/ast/NodeVisitor {
+	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
+	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$DelegatedPropertyAccessorsVisitor : org/mozilla/javascript/ast/NodeVisitor {
+	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
+	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$DependencyEraser : org/mozilla/javascript/ast/NodeVisitor {
+	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
+	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$FieldDelegatesVisitor : org/mozilla/javascript/ast/NodeVisitor {
+	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
+	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$ReceiverResolver : org/mozilla/javascript/ast/NodeVisitor {
+	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;Ljava/lang/String;)V
+	public final fun getReceiver ()Lorg/mozilla/javascript/ast/AstNode;
+	public final fun setReceiver (Lorg/mozilla/javascript/ast/AstNode;)V
+	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$TopLevelDelegatedFieldsAccessorVisitor : org/mozilla/javascript/ast/NodeVisitor {
+	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
+	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$TransformVisitor : org/mozilla/javascript/ast/NodeVisitor {
+	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
+	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJSKt {
+	public static final fun main ([Ljava/lang/String;)V
+}
+
+public final class kotlinx/atomicfu/transformer/AtomicFUTransformerKt {
+	public static final fun main ([Ljava/lang/String;)V
+}
+
+public final class kotlinx/atomicfu/transformer/FieldId {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lkotlinx/atomicfu/transformer/FieldId;
+	public static synthetic fun copy$default (Lkotlinx/atomicfu/transformer/FieldId;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lkotlinx/atomicfu/transformer/FieldId;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDesc ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOwner ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/transformer/FieldInfo {
+	public fun <init> (Lkotlinx/atomicfu/transformer/FieldId;Lorg/objectweb/asm/Type;Z)V
+	public synthetic fun <init> (Lkotlinx/atomicfu/transformer/FieldId;Lorg/objectweb/asm/Type;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAccessors ()Ljava/util/Set;
+	public final fun getFieldId ()Lkotlinx/atomicfu/transformer/FieldId;
+	public final fun getFieldType ()Lorg/objectweb/asm/Type;
+	public final fun getFuName ()Ljava/lang/String;
+	public final fun getFuType ()Lorg/objectweb/asm/Type;
+	public final fun getHasAtomicOps ()Z
+	public final fun getHasExternalAccess ()Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOwner ()Ljava/lang/String;
+	public final fun getOwnerType ()Lorg/objectweb/asm/Type;
+	public final fun getPrimitiveType (Z)Lorg/objectweb/asm/Type;
+	public final fun getRefVolatileClassName ()Ljava/lang/String;
+	public final fun getStaticRefVolatileField ()Ljava/lang/String;
+	public final fun getTypeInfo ()Lkotlinx/atomicfu/transformer/TypeInfo;
+	public final fun isArray ()Z
+	public final fun isStatic ()Z
+	public final fun setHasAtomicOps (Z)V
+	public final fun setHasExternalAccess (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/transformer/FlowAnalyzer {
+	public fun <init> (Lorg/objectweb/asm/tree/AbstractInsnNode;)V
+	public final fun execute ()Lorg/objectweb/asm/tree/AbstractInsnNode;
+	public final fun getInitStart (I)Lorg/objectweb/asm/tree/AbstractInsnNode;
+	public final fun getUncheckedCastInsn ()Lorg/objectweb/asm/tree/AbstractInsnNode;
+	public final fun getValueArgInitLast ()Lorg/objectweb/asm/tree/AbstractInsnNode;
+}
+
+public final class kotlinx/atomicfu/transformer/JvmVariant : java/lang/Enum {
+	public static final field BOTH Lkotlinx/atomicfu/transformer/JvmVariant;
+	public static final field FU Lkotlinx/atomicfu/transformer/JvmVariant;
+	public static final field VH Lkotlinx/atomicfu/transformer/JvmVariant;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lkotlinx/atomicfu/transformer/JvmVariant;
+	public static fun values ()[Lkotlinx/atomicfu/transformer/JvmVariant;
+}
+
+public final class kotlinx/atomicfu/transformer/MetadataTransformer {
+	public fun <init> (Ljava/util/Set;Ljava/util/Set;)V
+	public final fun transformMetadata (Lorg/objectweb/asm/tree/AnnotationNode;)Z
+}
+
+public final class kotlinx/atomicfu/transformer/MetadataTransformerKt {
+	public static final field KOTLIN_METADATA_DESC Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/transformer/MethodId {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()I
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)Lkotlinx/atomicfu/transformer/MethodId;
+	public static synthetic fun copy$default (Lkotlinx/atomicfu/transformer/MethodId;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lkotlinx/atomicfu/transformer/MethodId;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDesc ()Ljava/lang/String;
+	public final fun getInvokeOpcode ()I
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOwner ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/atomicfu/transformer/TransformerException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class kotlinx/atomicfu/transformer/TypeInfo {
+	public fun <init> (Lorg/objectweb/asm/Type;Lorg/objectweb/asm/Type;Lorg/objectweb/asm/Type;)V
+	public final fun getFuType ()Lorg/objectweb/asm/Type;
+	public final fun getOriginalType ()Lorg/objectweb/asm/Type;
+	public final fun getTransformedType ()Lorg/objectweb/asm/Type;
+}
+
