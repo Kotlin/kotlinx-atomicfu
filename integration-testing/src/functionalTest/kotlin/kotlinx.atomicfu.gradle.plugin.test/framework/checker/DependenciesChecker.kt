@@ -59,6 +59,19 @@ internal fun GradleBuild.checkMppWasmWasiImplementationDependencies() {
     checkAtomicfuDependencyIsPresent(listOf("wasmWasiCompileClasspath", "wasmWasiRuntimeClasspath"), commonAtomicfuDependency)
 }
 
+// Checks Native target of an MPP project
+internal fun GradleBuild.checkMppNativeCompileOnlyDependencies() {
+    // Here the name of the native target is hardcoded because the tested mpp-sample project declares this target and
+    // KGP generates the same set of depependencies for every declared native target ([mingwX64|linuxX64|macosX64...]CompileKlibraries)
+    checkAtomicfuDependencyIsPresent(listOf("macosX64CompileKlibraries"), commonAtomicfuDependency)
+    checkAtomicfuDependencyIsAbsent(listOf("macosX64MainImplementation"), commonAtomicfuDependency)
+}
+
+// Checks Native target of an MPP project
+internal fun GradleBuild.checkMppNativeImplementationDependencies() {
+    checkAtomicfuDependencyIsPresent(listOf("macosX64CompileKlibraries", "macosX64MainImplementation"), commonAtomicfuDependency)
+}
+
 // Some dependencies may be not resolvable but consumable and will not be present in the output of :dependencies task,
 // in this case we should check .pom or .module file of the published project.
 // This method checks if the .module file in the sample project publication contains org.jetbrains.kotlinx:atomicfu dependency included.

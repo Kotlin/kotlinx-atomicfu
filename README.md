@@ -9,7 +9,7 @@
 >We do provide a compatibility of atomicfu-transformed artifacts between releases, but we do not provide 
 >strict compatibility guarantees on plugin API and its general stability between Kotlin versions.
 
-**Atomicfu** is a multiplatform library that provides the idiomatic and effective way of using atomic operations in Kotlin.
+**Atomicfu** is a multiplatform library that provides the idiomatic and efficient way of using atomic operations in Kotlin.
 
 ## Table of contents
 - [Requirements](#requirements)
@@ -247,17 +247,13 @@ public var foo: T by _foo            // public delegated property (val/var)
   (more specifically, `complex_expression` should not have branches in its compiled representation).
   Extract `complex_expression` into a variable when needed.
 
-## Transformation modes
+## Atomicfu compiler plugin
 
-Basically, Atomicfu library provides an effective usage of atomic values by performing the transformations of the compiled code.
-For JVM and JS there 2 transformation modes available: 
-* **Post-compilation transformation** that modifies the compiled bytecode or `*.js` files. 
-* **IR transformation** that is performed by the atomicfu compiler plugin.
-
-### Atomicfu compiler plugin
-
-Compiler plugin transformation is less fragile than transformation of the compiled sources 
-as it depends on the compiler IR tree.
+To provide a user-friendly atomic API on the frontend and efficient usage of atomic values on the backend kotlinx-atomicfu library uses the compiler plugin to transform 
+IR for all the target backends: 
+* **JVM**: atomics are replaced with `java.util.concurrent.atomic.AtomicXxxFieldUpdater`.
+* **Native**: atomics are implemented via atomic intrinsics on Kotlin/Native.
+* **JS**: atomics are unboxed and represented as plain values.
 
 To turn on IR transformation set these properties in your `gradle.properties` file:
 
@@ -266,6 +262,7 @@ To turn on IR transformation set these properties in your `gradle.properties` fi
 
 ```groovy
 kotlinx.atomicfu.enableJvmIrTransformation=true // for JVM IR transformation
+kotlinx.atomicfu.enableNativeIrTransformation=true // for Native IR transformation
 kotlinx.atomicfu.enableJsIrTransformation=true // for JS IR transformation
 ```
 

@@ -8,6 +8,7 @@ import kotlinx.atomicfu.gradle.plugin.test.framework.runner.GradleBuild
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.cleanAndBuild
 import org.objectweb.asm.*
 import java.io.File
+import java.net.URLClassLoader
 import kotlin.test.assertFalse
 
 internal abstract class ArtifactChecker(private val targetDir: File) {
@@ -15,7 +16,7 @@ internal abstract class ArtifactChecker(private val targetDir: File) {
     private val ATOMIC_FU_REF = "Lkotlinx/atomicfu/".toByteArray()
     protected val KOTLIN_METADATA_DESC = "Lkotlin/Metadata;"
 
-    private val projectName = targetDir.name.substringBeforeLast("-")
+    protected val projectName = targetDir.name.substringBeforeLast("-")
 
     val buildDir
         get() = targetDir.resolve("build").also {
@@ -60,8 +61,60 @@ private class BytecodeChecker(targetDir: File) : ArtifactChecker(targetDir) {
     }
 }
 
+private class KlibChecker(targetDir: File) : ArtifactChecker(targetDir) {
+
+    val nativeJar = System.getProperty("kotlin.native.jar")
+
+    val classLoader: ClassLoader = URLClassLoader(arrayOf(File(nativeJar).toURI().toURL()), this.javaClass.classLoader)
+
+    private fun invokeKlibTool(
+        kotlinNativeClassLoader: ClassLoader?,
+        klibFile: File,
+        functionName: String,
+        hasOutput: Boolean,
+        vararg args: Any
+    ): String {
+        val libraryClass = Class.forName("org.jetbrains.kotlin.cli.klib.Library", true, kotlinNativeClassLoader)
+        val entryPoint = libraryClass.declaredMethods.single { it.name == functionName }
+        val lib = libraryClass.getDeclaredConstructor(String::class.java, String::class.java, String::class.java)
+            .newInstance(klibFile.canonicalPath, null, "host")
+
+        val output = StringBuilder()
+
+        // This is a hack. It would be better to get entryPoint properly
+        if (args.isNotEmpty()) {
+            entryPoint.invoke(lib, output, *args)
+        } else if (hasOutput) {
+            entryPoint.invoke(lib, output)
+        } else {
+            entryPoint.invoke(lib)
+        }
+        return output.toString()
+    }
+
+    override fun checkReferences() {
+        val myKlib = buildDir.resolve("classes/kotlin/macosX64/main/klib/$projectName.klib")
+        require(myKlib.exists()) { "Native klib is not found: ${myKlib.path}" }
+        val klibIr = invokeKlibTool(
+            kotlinNativeClassLoader = classLoader,
+            klibFile = myKlib,
+            functionName = "ir",
+            hasOutput = true,
+            false
+        )
+        assertFalse(klibIr.toByteArray().findAtomicfuRef(), "Found kotlinx/atomicfu in klib ${myKlib.path}:\n $klibIr")
+    }
+}
+
 internal fun GradleBuild.buildAndCheckBytecode() {
     val buildResult = cleanAndBuild()
     require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
     BytecodeChecker(this.targetDir).checkReferences()
+}
+
+// TODO: klib checks are skipped for now because of this problem KT-61143
+internal fun GradleBuild.buildAndCheckNativeKlib() {
+    val buildResult = cleanAndBuild()
+    require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
+    KlibChecker(this.targetDir).checkReferences()
 }

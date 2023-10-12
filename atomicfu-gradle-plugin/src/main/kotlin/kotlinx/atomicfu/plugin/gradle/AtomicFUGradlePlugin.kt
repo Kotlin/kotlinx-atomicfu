@@ -35,6 +35,7 @@ private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
 private const val ENABLE_JS_IR_TRANSFORMATION_LEGACY = "kotlinx.atomicfu.enableIrTransformation"
 private const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 private const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
+private const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
 private const val MIN_SUPPORTED_GRADLE_VERSION = "7.0"
 private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 
@@ -78,6 +79,7 @@ private fun Project.applyAtomicfuCompilerPlugin() {
         extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
             isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
             isJvmIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)
+            isNativeIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION)
         }
     } else {
         // for KGP >= 1.6.20 && KGP <= 1.7.20:
@@ -171,6 +173,11 @@ private fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
     rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION) &&
             (target.platformType == KotlinPlatformType.jvm || target.platformType == KotlinPlatformType.androidJvm)
 
+private fun Project.needsNativeIrTransformation(target: KotlinTarget): Boolean =
+    rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION) &&
+            (target.platformType == KotlinPlatformType.native)
+
+
 private fun KotlinTarget.isJsIrTarget() =
     (this is KotlinJsTarget && this.irTarget != null) ||
             (this is KotlinJsIrTarget && this.platformType != KotlinPlatformType.wasm)
@@ -179,7 +186,8 @@ private fun Project.isTransformationDisabled(target: KotlinTarget): Boolean {
     val platformType = target.platformType
     return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
             !config.transformJs && platformType == KotlinPlatformType.js ||
-            platformType == KotlinPlatformType.wasm
+            platformType == KotlinPlatformType.wasm ||
+            !needsNativeIrTransformation(target) && platformType == KotlinPlatformType.native
 }
 
 // Adds kotlinx-atomicfu-runtime as an implementation dependency to the JS IR target:
@@ -280,20 +288,29 @@ private fun Project.configureTasks() {
 
 private fun Project.configureJvmTransformation() {
     if (kotlinExtension is KotlinJvmProjectExtension || kotlinExtension is KotlinAndroidProjectExtension) {
-        configureTransformationForTarget((kotlinExtension as KotlinSingleTargetExtension<*>).target)
+        val target = (kotlinExtension as KotlinSingleTargetExtension<*>).target
+        if (!needsJvmIrTransformation(target)) {
+            configureTransformationForTarget(target)   
+        }
     }
 }
 
-private fun Project.configureJsTransformation() =
-    configureTransformationForTarget((kotlinExtension as KotlinJsProjectExtension).js())
+private fun Project.configureJsTransformation() {
+    val target = (kotlinExtension as KotlinJsProjectExtension).js()
+    if (!needsJsIrTransformation(target)) {
+        configureTransformationForTarget(target)
+    }
+}
 
 private fun Project.configureMultiplatformTransformation() =
     withKotlinTargets { target ->
+        // Skip transformation for common, native and wasm targets or in case IR transformation by the compiler plugin is enabled (for JVM or JS targets)
         if (target.platformType == KotlinPlatformType.common || 
             target.platformType == KotlinPlatformType.native ||
-            target.platformType == KotlinPlatformType.wasm
+            target.platformType == KotlinPlatformType.wasm ||
+            needsJvmIrTransformation(target) || needsJsIrTransformation(target)
            ) {
-            return@withKotlinTargets // skip creation of transformation task for common, native and wasm targets
+            return@withKotlinTargets
         }
         configureTransformationForTarget(target)
     }
@@ -302,8 +319,6 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
     val originalDirsByCompilation = hashMapOf<KotlinCompilation<*>, FileCollection>()
     val config = config
     target.compilations.all compilations@{ compilation ->
-        // do not modify directories if compiler plugin is applied
-        if (needsJvmIrTransformation(target) || needsJsIrTransformation(target)) return@compilations
         val compilationType = compilation.name.compilationNameToType()
             ?: return@compilations // skip unknown compilations
         val classesDirs = compilation.output.classesDirs
@@ -329,7 +344,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         val transformTask = when (target.platformType) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
                 // create transformation task only if transformation is required and JVM IR compiler transformation is not enabled
-                if (config.transformJvm && !rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)) {
+                if (config.transformJvm) {
                     project.registerJvmTransformTask(compilation)
                         .configureJvmTask(
                             compilation.compileDependencyFiles,
