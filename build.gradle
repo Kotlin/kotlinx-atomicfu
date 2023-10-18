@@ -54,7 +54,7 @@ allprojects {
     if (overridingKotlinVersion != null) { project.kotlin_version = overridingKotlinVersion }
 
     if (build_snapshot_train) {
-        project.kotlin_version = project.findProperty("build_snapshot_train")
+        project.kotlin_version = project.findProperty("kotlin_snapshot_version")
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
