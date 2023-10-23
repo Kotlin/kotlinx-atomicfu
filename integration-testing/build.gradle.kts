@@ -100,11 +100,10 @@ val functionalTest by tasks.registering(Test::class) {
 tasks.check { dependsOn(mavenTest, functionalTest) }
 
 // Setup K/N infrastructure to use klib utility in tests
+// TODO: klib checks are skipped for now because of this problem KT-61143
 val Project.konanHome: String
 get() = project.properties["kotlin.native.home"]?.toString()
         ?: NativeCompilerDownloader(project).compilerDirectory.absolutePath
-
-println("kotlin.native.home = ${project.konanHome}")
 
 val embeddableJar = File(project.konanHome).resolve("konan/lib/kotlin-native-compiler-embeddable.jar")
 
