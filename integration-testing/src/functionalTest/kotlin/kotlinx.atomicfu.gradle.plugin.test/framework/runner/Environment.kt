@@ -22,9 +22,7 @@ internal fun getLocalRepoDir(targetDir: File): File =
         require(it.exists() && it.isDirectory) { "Could not find local repository `build/.m2/` in the project directory: ${targetDir.path}" }
     }
 
+// The project is published in the local repo directory /build/.m2/ with DUMMY_VERSION
 internal fun getSampleProjectJarModuleFile(targetDir: File, projectName: String): File =
     getLocalRepoDir(targetDir).resolve("kotlinx/atomicfu/examples/$projectName/$DUMMY_VERSION").walkBottomUp()
         .singleOrNull { it.name.endsWith(".module") }  ?: error("Could not find jar module file in local repository of the project $projectName: ${getLocalRepoDir(targetDir)}")
-
-
-internal enum class Platform(val prefix: String) { JVM("jvm"), JS("js"), NATIVE("") } // todo pass platform name for Native platform

@@ -15,7 +15,7 @@ class MppProjectTest {
     fun testMppJvm1() {
         mppSample.enableJvmIrTransformation = true
         mppSample.checkMppJvmCompileOnlyDependencies()
-        mppSample.checkCosumableDependencies()
+        mppSample.checkConsumableDependencies()
         mppSample.buildAndCheckBytecode()
     }
 
@@ -23,20 +23,22 @@ class MppProjectTest {
     fun testMppJvm2() {
         mppSample.enableJvmIrTransformation = false
         mppSample.checkMppJvmCompileOnlyDependencies()
-        mppSample.checkCosumableDependencies()
+        mppSample.checkConsumableDependencies()
         mppSample.buildAndCheckBytecode()
     }
 
-    // TODO: JS klib should be checked for atomicfu references
+    // TODO: JS klib will be checked for kotlinx.atomicfu references when this issue KT-61143 is fixed.
     @Test
     fun testMppJs1() {
         mppSample.enableJsIrTransformation = true
         assert(mppSample.build().isSuccessful)
+        mppSample.checkConsumableDependencies()
     }
 
     @Test
     fun testMppJs2() {
         mppSample.enableJsIrTransformation = false
         assert(mppSample.build().isSuccessful)
+        mppSample.checkConsumableDependencies()
     }
 }
