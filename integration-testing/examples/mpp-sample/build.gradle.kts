@@ -33,7 +33,7 @@ repositories {
 
 kotlin {
     jvm()
-    //js()
+    js()
 
     val hostOs = System.getProperty("os.name")
     val isArm64 = System.getProperty("os.arch") == "aarch64"
@@ -55,7 +55,7 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
             }
         }
     }

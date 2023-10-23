@@ -14,7 +14,6 @@ private val jvmAtomicfuDependency = "org.jetbrains.kotlinx:atomicfu-jvm:$atomicf
 
 private fun GradleBuild.checkAtomicfuDependencyIsPresent(configurations: List<String>, atomicfuDependency: String) {
     val dependencies = dependencies()
-    println("AAAA, $dependencies")
     for (config in configurations) {
         val configDependencies = dependencies.getDependenciesForConfig(config)
         check(configDependencies.contains(atomicfuDependency)) { "Expected $atomicfuDependency in configuration $config, but it was not found." }
@@ -51,13 +50,13 @@ internal fun GradleBuild.checkMppJvmCompileOnlyDependencies() {
     checkAtomicfuDependencyIsAbsent(listOf("jvmRuntimeClasspath", "jvmApiElements", "jvmRuntimeElements"), commonAtomicfuDependency)
 }
 
-// Some dependencies may be no resolvable but consumable and will not be present in the output of :dependencies task,
-// in this case we should check .pom or .module file of the published project
-// This method checks if the sample project .module file contains org.jetbrains.kotlinx:atomicfu dependency included.
+// Some dependencies may be not resolvable but consumable and will not be present in the output of :dependencies task,
+// in this case we should check .pom or .module file of the published project.
+// This method checks if the .module file in the sample project publication contains org.jetbrains.kotlinx:atomicfu dependency included.
 // It searches for:
 // "group": "org.jetbrains.kotlinx",
 // "module": "atomicfu-*", atomicfu or atomicfu-jvm
-internal fun GradleBuild.checkCosumableDependencies() {
+internal fun GradleBuild.checkConsumableDependencies() {
     publishToLocalRepository()
     val moduleFile = getSampleProjectJarModuleFile(targetDir, projectName)
     val lines = moduleFile.readText().lines()
