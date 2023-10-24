@@ -7,30 +7,10 @@ package kotlinx.atomicfu.gradle.plugin.test.framework.runner
 import java.io.File
 import java.nio.file.Files
 
-internal interface GradleBuild {
-    val projectName: String
-
-    val targetDir: File
-
-    var enableJvmIrTransformation: Boolean
-
-    var enableJsIrTransformation: Boolean
-
-    var enableNativeIrTransformation: Boolean
-
-    fun runGradle(commands: List<String>): BuildResult
-
-    fun clear()
-}
-
-private class GradleBuildImpl(
-    override val projectName: String,
-    override val targetDir: File
-) : GradleBuild {
-
-    override var enableJvmIrTransformation = false
-    override var enableJsIrTransformation = false
-    override var enableNativeIrTransformation = false
+internal class GradleBuild(val projectName: String, val targetDir: File) {
+    var enableJvmIrTransformation = false
+    var enableJsIrTransformation = false
+    var enableNativeIrTransformation = false
 
     private val properties
         get() = buildList {
@@ -41,12 +21,12 @@ private class GradleBuildImpl(
 
     private var runCount = 0
 
-    override fun runGradle(commands: List<String>): BuildResult =
+    fun runGradle(commands: List<String>): BuildResult =
         buildGradleByShell(runCount++, commands, properties).also {
             require(it.isSuccessful) { "Running $commands on project $projectName FAILED with error:\n" + it.output }
         }
 
-    override fun clear() { targetDir.deleteRecursively() }
+    fun clear() { targetDir.deleteRecursively() }
 }
 
 internal class BuildResult(exitCode: Int, private val logFile: File) {
@@ -79,5 +59,5 @@ internal fun createGradleBuildFromSources(projectName: String): GradleBuild {
     val targetDir = Files.createTempDirectory("${projectName.substringAfterLast('/')}-").toFile().apply {
         projectDir.copyRecursively(this)
     }
-    return GradleBuildImpl(projectName, targetDir)
+    return GradleBuild(projectName, targetDir)
 }

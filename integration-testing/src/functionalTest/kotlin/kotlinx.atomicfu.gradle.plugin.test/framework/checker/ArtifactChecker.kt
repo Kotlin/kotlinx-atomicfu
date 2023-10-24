@@ -10,7 +10,7 @@ import org.objectweb.asm.*
 import java.io.File
 import kotlin.test.assertFalse
 
-internal abstract class ArtifactChecker(val targetDir: File) {
+internal abstract class ArtifactChecker(private val targetDir: File) {
 
     private val ATOMIC_FU_REF = "Lkotlinx/atomicfu/".toByteArray()
     protected val KOTLIN_METADATA_DESC = "Lkotlin/Metadata;"
@@ -25,7 +25,7 @@ internal abstract class ArtifactChecker(val targetDir: File) {
     abstract fun checkReferences()
 
     protected fun ByteArray.findAtomicfuRef(): Boolean {
-        loop@for (i in 0 until this.size - ATOMIC_FU_REF.size) {
+        loop@for (i in 0 .. this.size - ATOMIC_FU_REF.size) {
             for (j in ATOMIC_FU_REF.indices) {
                 if (this[i + j] != ATOMIC_FU_REF[j]) continue@loop
             }
@@ -65,4 +65,3 @@ internal fun GradleBuild.buildAndCheckBytecode() {
     require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
     BytecodeChecker(this.targetDir).checkReferences()
 }
-
