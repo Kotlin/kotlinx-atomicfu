@@ -31,4 +31,4 @@ private fun buildSystemCommand(projectDir: File, commands: List<String>, propert
         listOf("/bin/bash", "gradlew", "-p", projectDir.canonicalPath) + commands + properties
 }
 
-private val isWindows: Boolean = System.getProperty("os.name")!!.contains("Windows")
+private val isWindows: Boolean = System.getProperty("os.name")!!.contains("Windows")   
