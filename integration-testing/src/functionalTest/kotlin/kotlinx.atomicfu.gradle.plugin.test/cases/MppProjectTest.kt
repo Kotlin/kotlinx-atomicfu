@@ -12,7 +12,7 @@ class MppProjectTest {
     private val mppSample: GradleBuild = createGradleBuildFromSources("mpp-sample")
 
     @Test
-    fun testMppJvm1() {
+    fun testMppWithEnabledJvmIrTransformation() {
         mppSample.enableJvmIrTransformation = true
         mppSample.checkMppJvmCompileOnlyDependencies()
         mppSample.checkConsumableDependencies()
@@ -20,7 +20,7 @@ class MppProjectTest {
     }
 
     @Test
-    fun testMppJvm2() {
+    fun testMppWithDisabledJvmIrTransformation() {
         mppSample.enableJvmIrTransformation = false
         mppSample.checkMppJvmCompileOnlyDependencies()
         mppSample.checkConsumableDependencies()
@@ -29,14 +29,14 @@ class MppProjectTest {
 
     // TODO: JS klib will be checked for kotlinx.atomicfu references when this issue KT-61143 is fixed.
     @Test
-    fun testMppJs1() {
+    fun testMppWithEnabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = true
         assert(mppSample.build().isSuccessful)
         mppSample.checkConsumableDependencies()
     }
 
     @Test
-    fun testMppJs2() {
+    fun testMppWithDisabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = false
         assert(mppSample.build().isSuccessful)
         mppSample.checkConsumableDependencies()
