@@ -66,8 +66,6 @@ public actual open class SynchronizedObject {
         }
     }
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx-atomicfu/issues/333
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     public fun tryLock(): Boolean {
         val currentThreadId = pthread_self()!!
         while (true) {

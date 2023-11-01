@@ -3,7 +3,6 @@
  */
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import static KotlinVersion.*
 
 apply plugin: 'kotlin-multiplatform'
 apply from: rootProject.file("gradle/targets.gradle")
@@ -20,14 +19,6 @@ ext {
     }
 }
 
-// TODO: this block should be removed when Kotlin version is updated to 1.9.20
-// Right now it is used for conditional removal of native targets that will be removed in 1.9.20 (iosArm32, watchosX86)
-// and is necessary for testing of Kotlin dev builds.
-def enableDeprecatedNativeTargets = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
-
-// Right now it is used for conditional dependency named in wasm stdlib and kotlin.test for 1.9.20
-// and is necessary for testing of Kotlin dev builds.
-def isNewWasmTargetEnabled = isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
 
 kotlin {
     targets {
@@ -47,14 +38,9 @@ kotlin {
     // JVM -- always
     jvm()
 
-    if (isNewWasmTargetEnabled) {
-        wasmJs {
-            nodejs()
-        }
-    } else {
-        wasm {
-            nodejs()
-        }
+    // Wasm -- always
+    wasmJs {
+        nodejs()
     }
 
     sourceSets {
@@ -86,36 +72,19 @@ kotlin {
             }
         }
 
-        if (isNewWasmTargetEnabled) {
-            wasmJsMain {
-                dependsOn(sourceSets.jsAndWasmSharedMain)
-                dependencies {
-                    implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm-js'
-                }
-            }
-        } else {
-            wasmMain {
-                dependsOn(sourceSets.jsWasmMain)
-                dependencies {
-                    implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm'
-                }
+        wasmJsMain {
+            dependsOn(sourceSets.jsAndWasmSharedMain)
+            dependencies {
+                implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm-js'
             }
         }
 
-
-        if (isNewWasmTargetEnabled) {
-            wasmJsTest {
-                dependencies {
-                    implementation 'org.jetbrains.kotlin:kotlin-test-wasm-js'
-                }
-            }
-        } else {
-            wasmTest {
-                dependencies {
-                    implementation 'org.jetbrains.kotlin:kotlin-test-wasm'
-                }
+        wasmJsTest {
+            dependencies {
+                implementation 'org.jetbrains.kotlin:kotlin-test-wasm-js'
             }
         }
+
         jvmMain {
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-stdlib'
@@ -167,12 +136,6 @@ if (rootProject.ext.native_targets_enabled) {
                 addTarget(presets.androidNativeX64)
                 addTarget(presets.mingwX64)
                 addTarget(presets.watchosDeviceArm64)
-
-                // These targets will be removed in 1.9.20, remove them conditionally for the train builds
-                if (enableDeprecatedNativeTargets) {
-                    addTarget(presets.iosArm32)
-                    addTarget(presets.watchosX86)
-                }
             }
         }
 
