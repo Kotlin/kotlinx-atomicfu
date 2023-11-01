@@ -70,12 +70,12 @@ kotlin {
             }
         }
 
-        jsWasmMain {
+        jsAndWasmSharedMain {
             dependsOn(sourceSets.commonMain)
         }
 
         jsMain {
-            dependsOn(sourceSets.jsWasmMain)
+            dependsOn(sourceSets.jsAndWasmSharedMain)
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-stdlib-js'
             }
@@ -88,7 +88,7 @@ kotlin {
 
         if (isNewWasmTargetEnabled) {
             wasmJsMain {
-                dependsOn(sourceSets.jsWasmMain)
+                dependsOn(sourceSets.jsAndWasmSharedMain)
                 dependencies {
                     implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm-js'
                 }
