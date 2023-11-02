@@ -31,14 +31,14 @@ class MppProjectTest {
     @Test
     fun testMppWithEnabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = true
-        assert(mppSample.build().isSuccessful)
+        assert(mppSample.cleanAndBuild().isSuccessful)
         mppSample.checkConsumableDependencies()
     }
 
     @Test
     fun testMppWithDisabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = false
-        assert(mppSample.build().isSuccessful)
+        assert(mppSample.cleanAndBuild().isSuccessful)
         mppSample.checkConsumableDependencies()
     }
 }

@@ -25,8 +25,6 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
         buildGradleByShell(runCount++, commands, properties).also {
             require(it.isSuccessful) { "Running $commands on project $projectName FAILED with error:\n" + it.output }
         }
-
-    fun clear() { targetDir.deleteRecursively() }
 }
 
 internal class BuildResult(exitCode: Int, private val logFile: File) {
