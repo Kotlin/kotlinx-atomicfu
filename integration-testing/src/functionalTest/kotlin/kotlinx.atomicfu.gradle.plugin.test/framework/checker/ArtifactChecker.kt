@@ -5,7 +5,7 @@
 package kotlinx.atomicfu.gradle.plugin.test.framework.checker
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.GradleBuild
-import kotlinx.atomicfu.gradle.plugin.test.framework.runner.build
+import kotlinx.atomicfu.gradle.plugin.test.framework.runner.cleanAndBuild
 import org.objectweb.asm.*
 import java.io.File
 import kotlin.test.assertFalse
@@ -15,7 +15,7 @@ internal abstract class ArtifactChecker(private val targetDir: File) {
     private val ATOMIC_FU_REF = "Lkotlinx/atomicfu/".toByteArray()
     protected val KOTLIN_METADATA_DESC = "Lkotlin/Metadata;"
 
-    protected val projectName = targetDir.name.substringBeforeLast("-")
+    private val projectName = targetDir.name.substringBeforeLast("-")
 
     val buildDir
         get() = targetDir.resolve("build").also {
@@ -61,7 +61,7 @@ private class BytecodeChecker(targetDir: File) : ArtifactChecker(targetDir) {
 }
 
 internal fun GradleBuild.buildAndCheckBytecode() {
-    val buildResult = build()
+    val buildResult = cleanAndBuild()
     require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
     BytecodeChecker(this.targetDir).checkReferences()
 }

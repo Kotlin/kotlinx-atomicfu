@@ -4,9 +4,7 @@
 
 package kotlinx.atomicfu.gradle.plugin.test.framework.runner
 
-internal fun GradleBuild.clean(): BuildResult = runGradle(listOf("clean"))
-
-internal fun GradleBuild.build(): BuildResult = runGradle(listOf("clean", "build"))
+internal fun GradleBuild.cleanAndBuild(): BuildResult = runGradle(listOf("clean", "build"))
 
 internal fun GradleBuild.dependencies(): BuildResult = runGradle(listOf("dependencies"))
 
