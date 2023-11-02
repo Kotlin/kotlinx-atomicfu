@@ -43,7 +43,7 @@ internal class BuildResult(exitCode: Int, private val logFile: File) {
         }
         while(index < lines.size) {
             val line = lines[index++]
-            if (line.isBlank()) break
+            if (line.isBlank() || line == "No dependencies") break
             // trim leading indentations (\---) and symbols in the end (*):
             // \--- org.jetbrains.kotlinx:atomicfu:0.22.0-SNAPSHOT (n)
             result.add(line.dropWhile { !it.isLetter() }.substringBefore(" "))
