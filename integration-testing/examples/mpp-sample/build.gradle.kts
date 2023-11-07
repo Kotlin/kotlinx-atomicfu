@@ -31,7 +31,12 @@ repositories {
 
 kotlin {
     jvm()
+    
     js()
+    
+    wasmJs {}
+    wasmWasi {}
+    
     macosArm64()
     macosX64()
     linuxArm64()

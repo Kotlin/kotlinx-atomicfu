@@ -41,4 +41,11 @@ class MppProjectTest {
         assert(mppSample.cleanAndBuild().isSuccessful)
         mppSample.checkConsumableDependencies()
     }
+    
+    @Test
+    fun testMppWasmBuild() {
+        assert(mppSample.cleanAndBuild().isSuccessful)
+        mppSample.dependencies()
+        mppSample.checkMppWasmJsImplementationDependencies()
+    }
 }

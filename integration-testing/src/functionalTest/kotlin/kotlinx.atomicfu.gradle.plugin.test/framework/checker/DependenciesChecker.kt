@@ -50,6 +50,11 @@ internal fun GradleBuild.checkMppJvmCompileOnlyDependencies() {
     checkAtomicfuDependencyIsAbsent(listOf("jvmRuntimeClasspath", "jvmApiElements", "jvmRuntimeElements"), commonAtomicfuDependency)
 }
 
+// Checks wasmJs target of an MPP project
+internal fun GradleBuild.checkMppWasmJsImplementationDependencies() {
+    checkAtomicfuDependencyIsPresent(listOf("wasmJsCompileClasspath", "wasmJsRuntimeClasspath"), commonAtomicfuDependency)
+}
+
 // Some dependencies may be not resolvable but consumable and will not be present in the output of :dependencies task,
 // in this case we should check .pom or .module file of the published project.
 // This method checks if the .module file in the sample project publication contains org.jetbrains.kotlinx:atomicfu dependency included.
