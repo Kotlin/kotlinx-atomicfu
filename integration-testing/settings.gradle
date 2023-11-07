@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = "kotlinx-atomicfu-integration-testing"
 include 'mavenTest'
 include 'functionalTest'
 
+rootProject.name = "integration-testing"
