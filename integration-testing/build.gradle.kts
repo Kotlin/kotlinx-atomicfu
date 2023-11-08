@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -70,6 +71,10 @@ val functionalTest by tasks.registering(Test::class) {
     systemProperties["kotlinVersion"] = kotlin_version
     systemProperties["atomicfuVersion"] = atomicfu_snapshot_version
     
+    dependsOn(checkAfterPublish)
+}
+
+tasks.withType<KotlinCompile<*>>{
     dependsOn(checkAfterPublish)
 }
 
