@@ -1,10 +1,5 @@
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
 
-repositories {
-    mavenLocal()
-    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-}
-
 plugins {
     kotlin("jvm")
 }
@@ -32,7 +27,8 @@ dependencies {
     implementation(kotlin("script-runtime"))
 }
 
-val atomicfu_snapshot_version = rootProject.properties["version"]
+val kotlin_version = providers.gradleProperty("kotlin_version").orNull
+val atomicfu_snapshot_version = providers.gradleProperty("version").orNull
 
 sourceSets {
     create("mavenTest") {
@@ -71,6 +67,7 @@ val functionalTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["functionalTest"].output.classesDirs
     classpath = sourceSets["functionalTest"].runtimeClasspath
 
+    systemProperties["kotlinVersion"] = kotlin_version
     systemProperties["atomicfuVersion"] = atomicfu_snapshot_version
     
     dependsOn(checkAfterPublish)
