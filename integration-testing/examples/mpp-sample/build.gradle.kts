@@ -19,7 +19,7 @@ group = "kotlinx.atomicfu.examples"
 version = "DUMMY_VERSION"
 
 plugins {
-    kotlin("multiplatform") version "${project.properties["kotlin_version"]}"
+    kotlin("multiplatform")
     `maven-publish`
 }
 

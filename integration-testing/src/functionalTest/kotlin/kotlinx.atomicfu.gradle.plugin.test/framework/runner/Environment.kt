@@ -6,12 +6,15 @@ package kotlinx.atomicfu.gradle.plugin.test.framework.runner
 
 import java.io.File
 
+internal const val ATOMICFU_VERSION = "atomicfu_version"
+internal const val KOTLIN_VERSION = "kotlin_version"
 internal const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
 internal const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 internal const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
 internal const val DUMMY_VERSION = "DUMMY_VERSION"
 
 internal val atomicfuVersion = System.getProperty("atomicfuVersion")
+internal val kotlinVersion = System.getProperty("kotlinVersion")
 
 internal val gradleWrapperDir = File("..")
 

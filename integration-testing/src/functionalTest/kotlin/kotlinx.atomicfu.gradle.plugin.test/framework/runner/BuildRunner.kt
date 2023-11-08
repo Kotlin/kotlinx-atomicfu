@@ -14,6 +14,8 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
 
     private val properties
         get() = buildList {
+            add("-P$KOTLIN_VERSION=$kotlinVersion")
+            add("-P${ATOMICFU_VERSION}=$atomicfuVersion")
             add("-P$ENABLE_JVM_IR_TRANSFORMATION=$enableJvmIrTransformation")
             add("-P$ENABLE_JS_IR_TRANSFORMATION=$enableJsIrTransformation")
             add("-P$ENABLE_NATIVE_IR_TRANSFORMATION=$enableNativeIrTransformation")
