@@ -60,8 +60,8 @@ val checkAfterPublish by tasks.registering {
 val mavenTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["mavenTest"].output.classesDirs
     classpath = sourceSets["mavenTest"].runtimeClasspath
-
-    dependsOn(checkAfterPublish)
+    
+    dependsOn(":atomicfu:publishToMavenLocal")
 }
 
 val functionalTest by tasks.registering(Test::class) {
@@ -71,10 +71,6 @@ val functionalTest by tasks.registering(Test::class) {
     systemProperties["kotlinVersion"] = kotlin_version
     systemProperties["atomicfuVersion"] = atomicfu_snapshot_version
     
-    dependsOn(checkAfterPublish)
-}
-
-tasks.withType<KotlinCompile<*>>{
     dependsOn(checkAfterPublish)
 }
 
