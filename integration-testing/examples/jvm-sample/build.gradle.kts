@@ -14,7 +14,7 @@ group = "kotlinx.atomicfu.examples"
 version = "DUMMY_VERSION"
 
 plugins {
-    kotlin("jvm") version "${project.properties["kotlin_version"]}"
+    kotlin("jvm")
     `maven-publish`
 }
 
