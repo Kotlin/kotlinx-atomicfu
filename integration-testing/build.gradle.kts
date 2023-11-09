@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -21,13 +20,6 @@ kotlin {
     jvmToolchain(11)
 }
 
-dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-    implementation("org.jetbrains.kotlin:kotlin-script-runtime")
-    implementation(kotlin("script-runtime"))
-}
-
 val kotlin_version = providers.gradleProperty("kotlin_version").orNull
 val atomicfu_snapshot_version = providers.gradleProperty("version").orNull
 
@@ -35,22 +27,28 @@ sourceSets {
     create("mavenTest") {
         compileClasspath += files(sourceSets.main.get().output, configurations.testRuntimeClasspath)
         runtimeClasspath += output + compileClasspath
-        
-        dependencies {
-            implementation("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfu_snapshot_version")
-        }
     }
 
     create("functionalTest") {
         compileClasspath += files(sourceSets.main.get().output, configurations.testRuntimeClasspath)
         runtimeClasspath += output + compileClasspath
-
-        dependencies {
-            testImplementation(gradleTestKit())
-            api("org.ow2.asm:asm:9.3")
-            api("org.ow2.asm:asm-commons:9.3")
-        }
     }
+}
+
+dependencies {
+    // common dependencies
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    implementation("org.jetbrains.kotlin:kotlin-script-runtime")
+    implementation(kotlin("script-runtime"))
+
+    // mavenTest dependencies
+    "mavenTestImplementation"("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfu_snapshot_version")
+
+    // functionalTest dependencies
+    "functionalTestImplementation"(gradleTestKit())
+    "functionalTestApi"("org.ow2.asm:asm:9.3")
+    "functionalTestApi"("org.ow2.asm:asm-commons:9.3")
 }
 
 val mavenTest by tasks.registering(Test::class) {
