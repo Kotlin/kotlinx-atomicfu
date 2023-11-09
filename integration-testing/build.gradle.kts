@@ -42,10 +42,10 @@ sourceSets {
     }
 
     create("functionalTest") {
-        compileClasspath += files(sourceSets.main.get().output, configurations.testRuntimeClasspath)
-        runtimeClasspath += output + compileClasspath
-
         dependencies {
+            implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+            implementation("org.jetbrains.kotlin:kotlin-test")
+            
             testImplementation(gradleTestKit())
             api("org.ow2.asm:asm:9.3")
             api("org.ow2.asm:asm-commons:9.3")
@@ -66,8 +66,8 @@ val functionalTest by tasks.registering(Test::class) {
 
     systemProperties["kotlinVersion"] = kotlin_version
     systemProperties["atomicfuVersion"] = atomicfu_snapshot_version
-    
-    dependsOn("publishToMavenLocal")
+
+    dependsOn(":atomicfu-gradle-plugin:publishToMavenLocal")
 }
 
 tasks.check { dependsOn(mavenTest, functionalTest) }
