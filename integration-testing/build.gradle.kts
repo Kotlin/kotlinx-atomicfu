@@ -67,8 +67,7 @@ val functionalTest by tasks.registering(Test::class) {
     systemProperties["kotlinVersion"] = kotlin_version
     systemProperties["atomicfuVersion"] = atomicfu_snapshot_version
     
-    dependsOn(":atomicfu:publishToMavenLocal")
-    dependsOn(":atomicfu-gradle-plugin:publishToMavenLocal")
+    dependsOn("publishToMavenLocal")
 }
 
 tasks.check { dependsOn(mavenTest, functionalTest) }
