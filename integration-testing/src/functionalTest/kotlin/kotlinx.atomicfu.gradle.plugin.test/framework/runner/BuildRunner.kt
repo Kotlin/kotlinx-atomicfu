@@ -48,7 +48,7 @@ internal class BuildResult(exitCode: Int, private val logFile: File) {
             if (line.isBlank() || line == "No dependencies") break
             // trim leading indentations (\---) and symbols in the end (*):
             // \--- org.jetbrains.kotlinx:atomicfu:0.22.0-SNAPSHOT (n)
-            result.add(line.dropWhile { !it.isLetter() }.substringBefore(" "))
+            result.add(line.dropWhile { !it.isLetterOrDigit() }.substringBefore(" "))
         }
         return result
     }
