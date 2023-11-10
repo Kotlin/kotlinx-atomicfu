@@ -41,7 +41,7 @@ internal class BuildResult(exitCode: Int, private val logFile: File) {
         var index = 0
         while (index < lines.size) {
             val line = lines[index++]
-            if (line.takeWhile { it.isLetter() } == configuration) break
+            if (line.substringBefore(" ") == configuration) break
         }
         while(index < lines.size) {
             val line = lines[index++]
