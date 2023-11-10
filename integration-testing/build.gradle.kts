@@ -66,6 +66,9 @@ val functionalTest by tasks.registering(Test::class) {
     systemProperties["atomicfuVersion"] = atomicfu_snapshot_version
 
     dependsOn(":atomicfu-gradle-plugin:publishToMavenLocal")
+    // atomicfu-transformer and atomicfu artifacts should also be published as it's required by atomicfu-gradle-plugin.
+    dependsOn(":atomicfu-transformer:publishToMavenLocal")
+    dependsOn(":atomicfu:publishToMavenLocal")
 }
 
 tasks.check { dependsOn(mavenTest, functionalTest) }
