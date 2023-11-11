@@ -56,6 +56,8 @@ val mavenTest by tasks.registering(Test::class) {
     classpath = sourceSets["mavenTest"].runtimeClasspath
     
     dependsOn(":atomicfu:publishToMavenLocal")
+    
+    outputs.upToDateWhen { false }
 }
 
 val functionalTest by tasks.registering(Test::class) {
@@ -69,6 +71,8 @@ val functionalTest by tasks.registering(Test::class) {
     // atomicfu-transformer and atomicfu artifacts should also be published as it's required by atomicfu-gradle-plugin.
     dependsOn(":atomicfu-transformer:publishToMavenLocal")
     dependsOn(":atomicfu:publishToMavenLocal")
+    
+    outputs.upToDateWhen { false }
 }
 
 tasks.check { dependsOn(mavenTest, functionalTest) }
