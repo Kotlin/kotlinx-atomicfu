@@ -43,11 +43,9 @@ Starting from version `0.22.0` of the library your project is required to use:
 ## Features
 
 * Code it like a boxed value `atomic(0)`, but run it in production efficiently:
-  * as `java.util.concurrent.atomic.AtomicXxxFieldUpdater` on Kotlin/JVM 
+  * as `java.util.concurrent.atomic.AtomicXxxFieldUpdater` on Kotlin/JVM
   * as a plain unboxed value on Kotlin/JS
-* Multiplatform: write common Kotlin code with atomics that compiles for Kotlin JVM, JS, and Native backends:
-    * Compile-only dependency for JVM and JS (no runtime dependencies)
-    * Compile and runtime dependency for Kotlin/Native 
+* Complete multiplatform support: JVM, Native, JS and Wasm (since Kotlin 1.9.20).
 * Use Kotlin-specific extensions (e.g. inline `loop`, `update`, `updateAndGet` functions).
 * Use atomic arrays, user-defined extensions on atomics and locks (see [more features](#more-features)).
 * [Tracing operations](#tracing-operations) for debugging.
