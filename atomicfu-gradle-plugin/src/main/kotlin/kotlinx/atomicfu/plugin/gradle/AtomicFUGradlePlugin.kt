@@ -178,7 +178,8 @@ private fun KotlinTarget.isJsIrTarget() =
 private fun Project.isTransformationDisabled(target: KotlinTarget): Boolean {
     val platformType = target.platformType
     return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
-            !config.transformJs && platformType == KotlinPlatformType.js
+            !config.transformJs && platformType == KotlinPlatformType.js ||
+            platformType == KotlinPlatformType.wasm
 }
 
 // Adds kotlinx-atomicfu-runtime as an implementation dependency to the JS IR target:
@@ -288,8 +289,11 @@ private fun Project.configureJsTransformation() =
 
 private fun Project.configureMultiplatformTransformation() =
     withKotlinTargets { target ->
-        if (target.platformType == KotlinPlatformType.common || target.platformType == KotlinPlatformType.native) {
-            return@withKotlinTargets // skip the common & native targets -- no transformation for them
+        if (target.platformType == KotlinPlatformType.common || 
+            target.platformType == KotlinPlatformType.native ||
+            target.platformType == KotlinPlatformType.wasm
+           ) {
+            return@withKotlinTargets // skip creation of transformation task for common, native and wasm targets
         }
         configureTransformationForTarget(target)
     }
@@ -354,7 +358,6 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                         }
                 } else null
             }
-            KotlinPlatformType.wasm -> null
             else -> error("Unsupported transformation platform '${target.platformType}'")
         }
         if (transformTask != null) {
