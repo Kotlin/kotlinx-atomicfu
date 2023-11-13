@@ -3,6 +3,7 @@
  */
 
 import kotlinx.atomicfu.*
+import kotlin.test.*
 
 class IntArithmetic {
     private val _x = atomic(0)
