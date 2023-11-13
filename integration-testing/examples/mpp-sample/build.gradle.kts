@@ -24,9 +24,8 @@ plugins {
 apply(plugin = "kotlinx-atomicfu")
 
 repositories {
-    mavenLocal()
-    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
     mavenCentral()
+    mavenLocal()
 }
 
 kotlin {
@@ -41,6 +40,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(kotlin("stdlib"))
                 implementation(kotlin("test-junit"))
             }
         }
