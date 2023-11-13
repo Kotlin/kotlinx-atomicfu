@@ -42,13 +42,10 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib"))
-            }
-        }
-        commonTest {
-            dependencies {
                 implementation(kotlin("test-junit"))
             }
         }
+        commonTest {}
     }
 }
 

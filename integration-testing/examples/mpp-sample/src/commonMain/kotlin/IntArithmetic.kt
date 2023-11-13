@@ -10,10 +10,9 @@ class IntArithmetic {
     val x get() = _x.value
 
     fun doWork(finalValue: Int) {
-        check(x == 0)
-        _x.getAndSet(3)
-        check(x == 3)
-        _x.compareAndSet(3, finalValue)
-        check(x == finalValue)
+        assertEquals(0, x)
+        assertEquals(0, _x.getAndSet(3))
+        assertEquals(3, x)
+        assertTrue(_x.compareAndSet(3, finalValue))
     }
 }
