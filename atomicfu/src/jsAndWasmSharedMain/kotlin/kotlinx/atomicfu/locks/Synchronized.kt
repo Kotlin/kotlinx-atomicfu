@@ -2,7 +2,6 @@ package kotlinx.atomicfu.locks
 
 import kotlinx.atomicfu.REENTRANT_LOCK
 
-@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
 public actual typealias SynchronizedObject = Any
 
 @kotlinx.atomicfu.OptionalJsName(REENTRANT_LOCK)
