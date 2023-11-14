@@ -6,7 +6,7 @@ package test
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
-import kotlin.test.Test
+import kotlin.test.*
 
 class MppProjectTest {
     private val mppSample: GradleBuild = createGradleBuildFromSources("mpp-sample")
@@ -31,20 +31,20 @@ class MppProjectTest {
     @Test
     fun testMppWithEnabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = true
-        assert(mppSample.cleanAndBuild().isSuccessful)
+        assertTrue(mppSample.cleanAndBuild().isSuccessful)
         mppSample.checkConsumableDependencies()
     }
 
     @Test
     fun testMppWithDisabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = false
-        assert(mppSample.cleanAndBuild().isSuccessful)
+        assertTrue(mppSample.cleanAndBuild().isSuccessful)
         mppSample.checkConsumableDependencies()
     }
     
     @Test
     fun testMppWasmBuild() {
-        assert(mppSample.cleanAndBuild().isSuccessful)
+        assertTrue(mppSample.cleanAndBuild().isSuccessful)
         mppSample.checkMppWasmJsImplementationDependencies()
         mppSample.checkMppWasmWasiImplementationDependencies()
     }
