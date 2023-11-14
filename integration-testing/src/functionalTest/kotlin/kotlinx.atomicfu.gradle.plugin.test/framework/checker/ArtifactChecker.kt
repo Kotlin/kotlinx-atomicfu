@@ -93,16 +93,19 @@ private class KlibChecker(targetDir: File) : ArtifactChecker(targetDir) {
     }
 
     override fun checkReferences() {
-        val myKlib = buildDir.resolve("classes/kotlin/macosX64/main/klib/$projectName.klib")
-        require(myKlib.exists()) { "Native klib is not found: ${myKlib.path}" }
-        val klibIr = invokeKlibTool(
-            kotlinNativeClassLoader = classLoader,
-            klibFile = myKlib,
-            functionName = "ir",
-            hasOutput = true,
-            false
-        )
-        assertFalse(klibIr.toByteArray().findAtomicfuRef(), "Found kotlinx/atomicfu in klib ${myKlib.path}:\n $klibIr")
+        val classesDir = buildDir.resolve("classes/kotlin/")
+        if (classesDir.exists() && classesDir.isDirectory) {
+            classesDir.walkBottomUp().singleOrNull { it.isFile && it.name == "$projectName.klib" }?.let { klib ->
+                val klibIr = invokeKlibTool(
+                    kotlinNativeClassLoader = classLoader,
+                    klibFile = klib,
+                    functionName = "ir",
+                    hasOutput = true,
+                    false
+                )
+                assertFalse(klibIr.toByteArray().findAtomicfuRef(), "Found kotlinx/atomicfu in klib ${klib.path}:\n $klibIr")
+            } ?: error(" Native klib $projectName.klib is not found in $classesDir")
+        }
     }
 }
 
