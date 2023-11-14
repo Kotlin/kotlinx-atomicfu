@@ -11,16 +11,10 @@ import kotlin.concurrent.AtomicReference
 import kotlin.native.SharedImmutable
 import kotlin.native.concurrent.*
 
-// fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx-atomicfu/issues/333
-@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
 public actual open class SynchronizedObject {
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx-atomicfu/issues/333
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     protected val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx-atomicfu/issues/333
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     public fun lock() {
         val currentThreadId = pthread_self()!!
         while (true) {
@@ -72,8 +66,6 @@ public actual open class SynchronizedObject {
         }
     }
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx-atomicfu/issues/333
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     public fun tryLock(): Boolean {
         val currentThreadId = pthread_self()!!
         while (true) {
@@ -94,8 +86,6 @@ public actual open class SynchronizedObject {
         }
     }
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx-atomicfu/issues/333
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     public fun unlock() {
         val currentThreadId = pthread_self()!!
         while (true) {

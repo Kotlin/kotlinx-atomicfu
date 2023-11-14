@@ -171,12 +171,15 @@ private fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
     rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION) &&
             (target.platformType == KotlinPlatformType.jvm || target.platformType == KotlinPlatformType.androidJvm)
 
-private fun KotlinTarget.isJsIrTarget() = (this is KotlinJsTarget && this.irTarget != null) || this is KotlinJsIrTarget
+private fun KotlinTarget.isJsIrTarget() =
+    (this is KotlinJsTarget && this.irTarget != null) ||
+            (this is KotlinJsIrTarget && this.platformType != KotlinPlatformType.wasm)
 
 private fun Project.isTransformationDisabled(target: KotlinTarget): Boolean {
     val platformType = target.platformType
     return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
-            !config.transformJs && platformType == KotlinPlatformType.js
+            !config.transformJs && platformType == KotlinPlatformType.js ||
+            platformType == KotlinPlatformType.wasm
 }
 
 // Adds kotlinx-atomicfu-runtime as an implementation dependency to the JS IR target:
@@ -286,8 +289,11 @@ private fun Project.configureJsTransformation() =
 
 private fun Project.configureMultiplatformTransformation() =
     withKotlinTargets { target ->
-        if (target.platformType == KotlinPlatformType.common || target.platformType == KotlinPlatformType.native) {
-            return@withKotlinTargets // skip the common & native targets -- no transformation for them
+        if (target.platformType == KotlinPlatformType.common || 
+            target.platformType == KotlinPlatformType.native ||
+            target.platformType == KotlinPlatformType.wasm
+           ) {
+            return@withKotlinTargets // skip creation of transformation task for common, native and wasm targets
         }
         configureTransformationForTarget(target)
     }
