@@ -62,7 +62,7 @@ internal fun GradleBuild.checkMppWasmWasiImplementationDependencies() {
 // Checks Native target of an MPP project
 internal fun GradleBuild.checkMppNativeCompileOnlyDependencies() {
     // Here the name of the native target is hardcoded because the tested mpp-sample project declares this target and
-    // KGP generates the same set of depependencies for every declared native target ([mingwX64|linuxX64|macosX64...]CompileKlibraries)
+    // KGP generates the same set of dependencies for every declared native target ([mingwX64|linuxX64|macosX64...]CompileKlibraries)
     checkAtomicfuDependencyIsPresent(listOf("macosX64CompileKlibraries"), commonAtomicfuDependency)
     checkAtomicfuDependencyIsAbsent(listOf("macosX64MainImplementation"), commonAtomicfuDependency)
 }
