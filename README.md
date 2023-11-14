@@ -46,7 +46,8 @@ Starting from version `0.22.0` of the library your project is required to use:
 * Code it like a boxed value `atomic(0)`, but run it in production efficiently:
   * For **JVM**: an atomic value is represented as a plain value atomically updated with `java.util.concurrent.atomic.AtomicXxxFieldUpdater` from the Java standard library.
   * For **JS**: an atomic value is represented as a plain value.
-  * For **Native** and **Wasm**: an atomic value is not transformed, it remains boxed, and `kotlinx-atomicfu` library is used as a runtime dependency.
+  * For **Native**: atomic operations are delegated to Kotlin/Native atomic intrinsics.
+  * For **Wasm**: an atomic value is not transformed, it remains boxed, and `kotlinx-atomicfu` library is used as a runtime dependency.
 * Use Kotlin-specific extensions (e.g. inline `loop`, `update`, `updateAndGet` functions).
 * Use atomic arrays, user-defined extensions on atomics and locks (see [more features](#more-features)).
 * [Tracing operations](#tracing-operations) for debugging.
