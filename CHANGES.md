@@ -1,5 +1,15 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.23.0
+
+* Updated Kotlin to 1.9.20 (#361).
+* Updated Gradle version to 8.3.
+* Supported transformations for Native targets 🎉 (#363) .
+* Introduced WebAssembly target (`wasmJs` and `wasmWasi`) 🎉 (#334).
+* Improved integration testing for `atomicfu-gradle-plugin` (#345).
+* Updated implementation of native atomics (#336).
+* Got rid of `previous-compilation-data.bin` file in META-INF (#344).
+
 # Version 0.22.0
 
 * Updated Kotlin to 1.9.0 (#330).
