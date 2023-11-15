@@ -48,4 +48,22 @@ class MppProjectTest {
         mppSample.checkMppWasmJsImplementationDependencies()
         mppSample.checkMppWasmWasiImplementationDependencies()
     }
+
+    @Test
+    fun testMppNativeWithEnabledIrTransformation() {
+        mppSample.enableNativeIrTransformation = true
+        assertTrue(mppSample.cleanAndBuild().isSuccessful)
+        mppSample.checkMppNativeCompileOnlyDependencies()
+        // TODO: klib checks are skipped for now because of this problem KT-61143
+        //mppSample.buildAndCheckNativeKlib()
+    }
+
+    @Test
+    fun testMppNativeWithDisabledIrTransformation() {
+        mppSample.enableNativeIrTransformation = false
+        assertTrue(mppSample.cleanAndBuild().isSuccessful)
+        mppSample.checkMppNativeImplementationDependencies()
+        // TODO: klib checks are skipped for now because of this problem KT-61143
+        //mppSample.buildAndCheckNativeKlib()
+    }
 }
