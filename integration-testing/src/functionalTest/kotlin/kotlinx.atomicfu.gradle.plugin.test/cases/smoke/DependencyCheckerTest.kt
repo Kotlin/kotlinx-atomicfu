@@ -17,7 +17,7 @@ class DependencyParserSmokeTest {
             "Root project 'jvm-sample'\n" +
             "------------------------------------------------------------\n" +
             "compileClasspath - Compile classpath for null/main.\n" +
-            "+--- org.jetbrains.kotlinx:atomicfu-jvm:0.23.0-SNAPSHOT\n" +
+            "+--- org.jetbrains.kotlinx:atomicfu-jvm:0.23.1-SNAPSHOT\n" +
             "+--- org.jetbrains.kotlin:kotlin-stdlib:1.9.0\n" +
             "|    +--- org.jetbrains.kotlin:kotlin-stdlib-common:1.9.0\n" +
             "|    \\--- org.jetbrains:annotations:13.0\n" +
@@ -28,10 +28,10 @@ class DependencyParserSmokeTest {
             "          \\--- org.hamcrest:hamcrest-core:1.3\n" +
             "\n" +
             "compileOnly - Compile only dependencies for null/main. (n)\n" +
-            "\\--- org.jetbrains.kotlinx:atomicfu-jvm:0.23.0-SNAPSHOT (n)\n" +
+            "\\--- org.jetbrains.kotlinx:atomicfu-jvm:0.23.1-SNAPSHOT (n)\n" +
             "\n" +
             "compileOnlyDependenciesMetadata\n" +
-            "\\--- org.jetbrains.kotlinx:atomicfu-jvm:0.23.0-SNAPSHOT\n" +
+            "\\--- org.jetbrains.kotlinx:atomicfu-jvm:0.23.1-SNAPSHOT\n" +
             "\n" +
             "default - Configuration for default artifacts. (n)\n" +
             "No dependencies\n" +
@@ -73,7 +73,7 @@ class DependencyParserSmokeTest {
         )
         assertEquals(
             listOf(
-                "org.jetbrains.kotlinx:atomicfu-jvm:0.23.0-SNAPSHOT",
+                "org.jetbrains.kotlinx:atomicfu-jvm:0.23.1-SNAPSHOT",
                 "org.jetbrains.kotlin:kotlin-stdlib:1.9.0",
                 "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.0",
                 "org.jetbrains:annotations:13.0",

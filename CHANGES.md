@@ -1,5 +1,10 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.23.1
+
+* Updated Kotlin to 1.9.21 (#361).
+* Update to Kotlin 1.9.21 fixes regression with klib incompatibility (#365).
+
 # Version 0.23.0
 
 * Updated Kotlin to 1.9.20 (#361).
