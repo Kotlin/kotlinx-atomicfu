@@ -79,7 +79,10 @@ private fun Project.applyAtomicfuCompilerPlugin() {
         extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
             isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
             isJvmIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)
-            isNativeIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION)
+            if (kotlinVersion.atLeast(1, 9, 20)) {
+                // Native IR transformation is available since Kotlin 1.9.20
+                isNativeIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION)   
+            }
         }
     } else {
         // for KGP >= 1.6.20 && KGP <= 1.7.20:
