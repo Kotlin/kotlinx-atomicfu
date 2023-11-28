@@ -10,7 +10,7 @@ apply from: rootProject.file('gradle/compile-options.gradle')
 ext.configureKotlin()
 
 dependencies {
-    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api project(":atomicfu-transformer")
     api "org.apache.maven:maven-core:$maven_version"
     api "org.apache.maven:maven-plugin-api:$maven_version"

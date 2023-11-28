@@ -14,7 +14,6 @@ internal const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNat
 internal const val DUMMY_VERSION = "DUMMY_VERSION"
 
 internal val atomicfuVersion = System.getProperty("atomicfuVersion")
-internal val kotlinVersion = System.getProperty("kotlinVersion")
 
 internal val gradleWrapperDir = File("..")
 

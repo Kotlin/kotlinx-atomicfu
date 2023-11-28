@@ -45,10 +45,33 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
+        checkClasspathForAtomicfuCompilerPlugin(pluginVersion)
         applyAtomicfuCompilerPlugin()
         configureDependencies()
         configureTasks()
     }
+}
+
+private fun Project.checkClasspathForAtomicfuCompilerPlugin(pluginVersion: String?) {
+    val kotlinVersion = getKotlinPluginVersion()
+    rootProject.buildscript.configurations.findByName("classpath")
+        ?.allDependencies?.find { it.group == "org.jetbrains.kotlin" && it.name == "atomicfu" }
+        ?: error("Please add a dependency to the atomicfu compiler plugin in the buildscript classpath configuration, " + 
+            "in addition to the atomicfu-gradle-plugin dependency:\n" +
+            "```\n" +    
+            "buildscript {\n" +
+            "    repositories {\n" +
+            "        mavenCentral() \n" +
+            "    }\n" +
+            "\n" +
+            "    dependencies {\n" +
+            "        classpath(\"org.jetbrains.kotlinx:atomicfu-gradle-plugin:$pluginVersion\")\n" +
+            "        classpath(\"org.jetbrains.kotlin:atomicfu:$kotlinVersion\")\n" +
+            "    }\n" +
+            "}\n\n" + 
+            "apply(plugin = \"kotlinx-atomicfu\")\n" +
+            "```\n"
+        )
 }
 
 private fun Project.checkCompatibility() {
@@ -204,8 +227,6 @@ private fun Project.addJsCompilerPluginRuntimeDependency() {
                         if (getKotlinVersion().atLeast(1, 7, 10)) {
                             // since Kotlin 1.7.10 `kotlinx-atomicfu-runtime` is published and should be added directly
                             implementation("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:${getKotlinPluginVersion()}")
-                        } else {
-                            implementation("org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}")
                         }
                     }
                 }

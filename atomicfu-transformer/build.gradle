@@ -9,7 +9,7 @@ apply from: rootProject.file('gradle/compile-options.gradle')
 ext.configureKotlin()
 
 dependencies {
-    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api "org.ow2.asm:asm:$asm_version"
     api "org.ow2.asm:asm-commons:$asm_version"
     api "org.ow2.asm:asm-tree:$asm_version"

@@ -50,7 +50,8 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-stdlib-common'
+                compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
+                compileOnly 'org.jetbrains.kotlin:kotlin-stdlib-common'
             }
         }
         commonTest {
@@ -67,7 +68,8 @@ kotlin {
         jsMain {
             dependsOn(sourceSets.jsAndWasmSharedMain)
             dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-stdlib-js'
+                compileOnly 'org.jetbrains.kotlin:kotlin-stdlib-js'
+                compileOnly 'org.jetbrains.kotlin:kotlin-dom-api-compat'
             }
         }
         jsTest {
@@ -79,7 +81,7 @@ kotlin {
         wasmJsMain {
             dependsOn(sourceSets.jsAndWasmSharedMain)
             dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm-js'
+                compileOnly 'org.jetbrains.kotlin:kotlin-stdlib-wasm-js'
             }
         }
 
@@ -92,7 +94,7 @@ kotlin {
         wasmWasiMain {
             dependsOn(sourceSets.jsAndWasmSharedMain)
             dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-stdlib-wasm-wasi'
+                compileOnly 'org.jetbrains.kotlin:kotlin-stdlib-wasm-wasi'
             }
         }
         wasmWasiTest {
@@ -103,7 +105,7 @@ kotlin {
 
         jvmMain {
             dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+                compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
             }
         }
         jvmTest {
