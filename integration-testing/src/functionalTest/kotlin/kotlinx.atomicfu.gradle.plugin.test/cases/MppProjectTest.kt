@@ -53,7 +53,8 @@ class MppProjectTest {
     fun testMppNativeWithEnabledIrTransformation() {
         mppSample.enableNativeIrTransformation = true
         assertTrue(mppSample.cleanAndBuild().isSuccessful)
-        mppSample.checkMppNativeCompileOnlyDependencies()
+        // When Native IR transformations are applied, atomicfu-gradle-plugin still provides transitive atomicfu dependency
+        mppSample.checkMppNativeImplementationDependencies()
         // TODO: klib checks are skipped for now because of this problem KT-61143
         //mppSample.buildAndCheckNativeKlib()
     }
