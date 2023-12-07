@@ -51,7 +51,6 @@ kotlin {
         commonMain {
             dependencies {
                 compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
-                compileOnly 'org.jetbrains.kotlin:kotlin-stdlib-common'
             }
         }
         commonTest {
