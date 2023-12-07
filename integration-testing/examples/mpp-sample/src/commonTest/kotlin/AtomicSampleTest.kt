@@ -3,13 +3,15 @@
  */
 
 import kotlin.test.*
+import kotlinx.atomicfu.examples.mpp_sample.*
 
-class IntArithmeticTest {
+class AtomicSampleTest {
 
     @Test
     fun testInt() {
-        val a = IntArithmetic()
+        val a = AtomicSampleClass()
         a.doWork(1234)
         assertEquals(1234, a.x)
+        assertEquals(42, a.synchronizedFoo(42))
     }
 }
