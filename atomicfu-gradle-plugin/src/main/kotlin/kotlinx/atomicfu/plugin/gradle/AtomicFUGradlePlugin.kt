@@ -159,7 +159,7 @@ private fun Project.configureMultiplatformPluginDependencies(version: String) {
     }
     // Include atomicfu as a dependency for publication when transformation for the target is disabled
     multiplatformExtension.targets.all { target ->
-        if (isTransformationDisabled(target)) {
+        if (isTransitiveAtomicfuDependencyRequired(target)) {
             target.compilations.all { compilation ->
                 compilation
                     .defaultSourceSet
@@ -215,12 +215,13 @@ private fun KotlinTarget.isJsIrTarget() =
     (this is KotlinJsTarget && this.irTarget != null) ||
             (this is KotlinJsIrTarget && this.platformType != KotlinPlatformType.wasm)
 
-private fun Project.isTransformationDisabled(target: KotlinTarget): Boolean {
+private fun Project.isTransitiveAtomicfuDependencyRequired(target: KotlinTarget): Boolean {
     val platformType = target.platformType
     return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
             !config.transformJs && platformType == KotlinPlatformType.js ||
             platformType == KotlinPlatformType.wasm ||
-            !needsNativeIrTransformation(target) && platformType == KotlinPlatformType.native
+            // Always add the transitive atomicfu dependency for native targets, see #379
+            platformType == KotlinPlatformType.native
 }
 
 // Adds kotlinx-atomicfu-runtime as an implementation dependency to the JS IR target:
