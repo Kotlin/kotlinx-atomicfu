@@ -55,7 +55,13 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
 private fun Project.checkClasspathForAtomicfuCompilerPlugin(pluginVersion: String?) {
     val kotlinVersion = getKotlinPluginVersion()
     rootProject.buildscript.configurations.findByName("classpath")
-        ?.allDependencies?.find { it.group == "org.jetbrains.kotlin" && it.name == "atomicfu" }
+        ?.allDependencies?.find { it.group == "org.jetbrains.kotlin" && it.name == "atomicfu" }?.let { 
+            require(it.version == kotlinVersion) {
+                "Please ensure that the Kotlin version specified for the atomicfu compiler plugin matches the Kotlin version used in your project. \n" +
+                "You should use this dependency in your classpath: classpath(\"org.jetbrains.kotlin:atomicfu:$kotlinVersion\")\n\n" +
+                "For details about plugin application, please refer to the README section at: https://github.com/Kotlin/kotlinx-atomicfu/blob/master/README.md#apply-plugin"
+            }
+        }
         ?: error("Please add a dependency to the atomicfu compiler plugin in the buildscript classpath configuration, " + 
             "in addition to the atomicfu-gradle-plugin dependency:\n" +
             "```\n" +    
