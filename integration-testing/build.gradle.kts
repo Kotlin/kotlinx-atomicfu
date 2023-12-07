@@ -63,8 +63,7 @@ val mavenTest by tasks.registering(Test::class) {
 val functionalTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["functionalTest"].output.classesDirs
     classpath = sourceSets["functionalTest"].runtimeClasspath
-
-    systemProperties["kotlinVersion"] = kotlin_version
+    
     systemProperties["atomicfuVersion"] = atomicfu_snapshot_version
 
     dependsOn(":atomicfu-gradle-plugin:publishToMavenLocal")

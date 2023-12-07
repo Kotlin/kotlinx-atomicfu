@@ -1,7 +1,6 @@
 /*
  * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
 buildscript {
     repositories {
         mavenLocal()
@@ -9,7 +8,10 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${libs.versions.atomicfuVersion.get()}")
+        val atomicfuVersion = libs.versions.atomicfuVersion.get()
+        val kotlinVersion = libs.versions.kotlinVersion.get()
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfuVersion")
+        classpath("org.jetbrains.kotlin:atomicfu:$kotlinVersion")
     }
 }
 

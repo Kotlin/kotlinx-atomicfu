@@ -25,13 +25,16 @@ project.ext.publishPlatformArtifactsInRootModule = { MavenPublication platformPu
                 root.appendNode("packaging", "pom")
 
                 // Remove the original platform dependencies and add a single dependency on the platform module:
-                Node dependencies = (root.get("dependencies") as NodeList).get(0) as Node
-                dependencies.children().toList().each { dependencies.remove(it as Node) }
-                Node singleDependency = dependencies.appendNode("dependency")
-                singleDependency.appendNode("groupId", platformPublication.groupId)
-                singleDependency.appendNode("artifactId", platformPublication.artifactId)
-                singleDependency.appendNode("version", platformPublication.version)
-                singleDependency.appendNode("scope", "compile")
+                def allDependencies = (root.get("dependencies") as NodeList)
+                if (!allDependencies.isEmpty()) {
+                    Node dependencies = allDependencies.get(0) as Node
+                    dependencies.children().toList().each { dependencies.remove(it as Node) }
+                    Node singleDependency = dependencies.appendNode("dependency")
+                    singleDependency.appendNode("groupId", platformPublication.groupId)
+                    singleDependency.appendNode("artifactId", platformPublication.artifactId)
+                    singleDependency.appendNode("version", platformPublication.version)
+                    singleDependency.appendNode("scope", "compile")
+                }
             }
         }
 
