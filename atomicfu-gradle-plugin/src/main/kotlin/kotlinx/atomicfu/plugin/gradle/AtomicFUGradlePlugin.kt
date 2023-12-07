@@ -70,7 +70,8 @@ private fun Project.checkClasspathForAtomicfuCompilerPlugin(pluginVersion: Strin
             "    }\n" +
             "}\n\n" + 
             "apply(plugin = \"kotlinx-atomicfu\")\n" +
-            "```\n"
+            "```\n\n" +
+            "For details about plugin application, please refer to the README section at: https://github.com/Kotlin/kotlinx-atomicfu/blob/master/README.md#apply-plugin"            
         )
 }
 
