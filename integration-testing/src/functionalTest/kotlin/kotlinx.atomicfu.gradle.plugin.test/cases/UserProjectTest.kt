@@ -1,6 +1,8 @@
 package kotlinx.atomicfu.gradle.plugin.test.cases
 
+import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.GradleBuild
+import kotlinx.atomicfu.gradle.plugin.test.framework.runner.LOCAL_REPO_DIR_PREFIX
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.cleanAndBuild
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.createGradleBuildFromSources
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.publishToLocalRepository
@@ -23,7 +25,11 @@ class UserProjectTest {
     fun testUserProjectBuild() {
         mppSample.enableNativeIrTransformation = true
         mppSample.publishToLocalRepository()
-        error(mppSample.targetDir)
+        val mppSamplePublishDirectory = mppSample.targetDir.resolve(LOCAL_REPO_DIR_PREFIX)
+        require(mppSamplePublishDirectory.exists() && mppSamplePublishDirectory.isDirectory) {
+            "Failed to find the local repository for ${mppSample.projectName}, this directory does not exist: ${mppSamplePublishDirectory.path}"
+        }
+        userProject.localRepositoryUrl = mppSamplePublishDirectory.path
         val buildResult = userProject.cleanAndBuild()
         assertTrue(buildResult.isSuccessful, buildResult.output)
     }
