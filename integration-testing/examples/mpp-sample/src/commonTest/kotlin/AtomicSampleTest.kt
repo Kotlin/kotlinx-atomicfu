@@ -3,7 +3,7 @@
  */
 
 import kotlin.test.*
-import kotlinx.atomicfu.examples.mpp_sample.*
+import examples.mpp_sample.*
 
 class AtomicSampleTest {
 

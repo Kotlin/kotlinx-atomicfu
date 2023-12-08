@@ -2,7 +2,7 @@
  * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.atomicfu.examples.mpp_sample
+package examples.mpp_sample
 
 import kotlinx.atomicfu.*
 import kotlinx.atomicfu.locks.*
