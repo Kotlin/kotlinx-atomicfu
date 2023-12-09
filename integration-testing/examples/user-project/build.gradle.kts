@@ -40,3 +40,9 @@ kotlin {
         commonTest {}
     }
 }
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-Xskip-prerelease-check")
+    }
+}
