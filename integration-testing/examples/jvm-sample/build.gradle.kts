@@ -33,6 +33,12 @@ dependencies {
     implementation(kotlin("test-junit"))
 }
 
+tasks.compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-Xskip-prerelease-check")
+    }
+}
+
 publishing {
     repositories {
         /**
