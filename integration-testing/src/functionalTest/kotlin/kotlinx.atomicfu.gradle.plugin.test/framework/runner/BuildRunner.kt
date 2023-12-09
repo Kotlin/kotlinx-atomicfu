@@ -11,12 +11,16 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
     var enableJvmIrTransformation = false
     var enableJsIrTransformation = false
     var enableNativeIrTransformation = false
+    var localRepositoryUrl: String? = null
 
     private val properties
         get() = buildList {
             add("-P$ENABLE_JVM_IR_TRANSFORMATION=$enableJvmIrTransformation")
             add("-P$ENABLE_JS_IR_TRANSFORMATION=$enableJsIrTransformation")
             add("-P$ENABLE_NATIVE_IR_TRANSFORMATION=$enableNativeIrTransformation")
+            localRepositoryUrl?.let {
+                add("-P$LOCAL_REPOSITORY_URL_PROPERTY=$it")
+            }
         }
 
     private var runCount = 0

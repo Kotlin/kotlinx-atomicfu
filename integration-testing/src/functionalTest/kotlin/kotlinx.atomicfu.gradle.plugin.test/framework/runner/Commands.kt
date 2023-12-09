@@ -9,4 +9,4 @@ internal fun GradleBuild.cleanAndBuild(): BuildResult = runGradle(listOf("clean"
 internal fun GradleBuild.dependencies(): BuildResult = runGradle(listOf("dependencies"))
 
 internal fun GradleBuild.publishToLocalRepository(): BuildResult =
-    runGradle(listOf("clean", "publishMavenPublicationToLocalRepository"))
+    runGradle(listOf("clean", "publish"))
