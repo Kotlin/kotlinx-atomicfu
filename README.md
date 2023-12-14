@@ -107,6 +107,10 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 
 Gradle configuration is supported for all platforms, minimal version is Gradle 6.8.
 
+**PLEASE NOTE!**
+
+Application of the atomicfu-gradle-plugin now requires manual addition of the compiler plugin dependency, please follow the instructions below.
+
 To apply kotlinx-atomicfu plugin, you need to add 2 dependencies to the project classpath:
 1. `atomicfu-gradle-plugin`: it provides the necessary library dependencies and manages transformation modes.
 2. `atomicfu` compiler plugin: the compiler plugin is used to perform IR transformations (see [Atomicfu compiler plugin](#atomicfu-compiler-plugin) section).
@@ -154,6 +158,60 @@ buildscript {
 apply plugin: 'kotlinx-atomicfu'
 ```
 </details>
+
+----
+**WARNING:**
+In case you got a compilation error after plugin application: 
+```
+error: unresolved reference: kotlinx
+import kotlinx.atomicfu.*
+       ^
+```
+
+and you apply `kotlin-gradle-plugin` in an old manner via the `buildscript` like below:
+
+```groovy
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlinVersion.get()}")
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${libs.versions.atomicfuVersion.get()}")
+        classpath("org.jetbrains.kotlin:atomicfu:${libs.versions.kotlinVersion.get()}")
+    }
+}
+
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: 'kotlinx-atomicfu'
+```
+
+Then this is what you can do to fix the compilation error:
+1. Apply kotlin-gradle-plugin by it's id: 
+   - remove kotlin-gradle-plugin from the classpath 
+   - replace `apply plugin: 'org.jetbrains.kotlin.multiplatform'` with 
+   
+    `plugins { 
+        id  'org.jetbrains.kotlin.multiplatform' version '1.9.21' 
+    }`
+
+2. Or you can also swap the dependencies to `atomicfu-gradle-plugin` and `kotlin-gradle-plugin` in the classpath:
+```groovy
+buildscript {
+    ....
+  
+    dependencies {
+      // Swap dependencies to atomicfu-gradle-plugin and kotlin-gradle-plugin
+      // atomicfu-gradle-plugin should go first
+      classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${libs.versions.atomicfuVersion.get()}")
+      classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlinVersion.get()}")
+      classpath("org.jetbrains.kotlin:atomicfu:${libs.versions.kotlinVersion.get()}")
+    }
+}
+```
+----
 
 #### Maven configuration
 
