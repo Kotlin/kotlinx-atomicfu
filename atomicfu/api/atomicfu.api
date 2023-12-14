@@ -112,6 +112,10 @@ public final class kotlinx/atomicfu/AtomicRef {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface annotation class kotlinx/atomicfu/OptionalJsName : java/lang/annotation/Annotation {
+	public abstract fun name ()Ljava/lang/String;
+}
+
 public class kotlinx/atomicfu/TraceBase {
 	public fun append (Ljava/lang/Object;)V
 	public fun append (Ljava/lang/Object;Ljava/lang/Object;)V
