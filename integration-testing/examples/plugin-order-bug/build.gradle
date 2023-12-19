@@ -18,7 +18,7 @@ apply plugin: 'org.jetbrains.kotlin.multiplatform'
 //plugins {
 //    id 'org.jetbrains.kotlin.multiplatform' version '1.9.21'
 //}
-apply plugin: 'kotlinx-atomicfu-legacy'
+apply plugin: 'kotlinx-atomicfu'
 
 repositories {
     mavenCentral()
