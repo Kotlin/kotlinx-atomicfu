@@ -24,7 +24,7 @@ dependencies {
     // Atomicfu compiler plugin dependency will be loaded to kotlinCompilerPluginClasspath
     // Atomicfu plugin will only be applied if the flag is set kotlinx.atomicfu.enableJsIrTransformation=true
     compileOnly "org.jetbrains.kotlin:atomicfu:$kotlin_version"
-    runtimeOnly "org.jetbrains.kotlin:atomicfu:🚂"
+    runtimeOnly "org.jetbrains.kotlin:atomicfu:please-add-dependency-in-your-project"
 
     testImplementation gradleTestKit()
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
