@@ -9,7 +9,6 @@ buildscript {
         // then atomicfu dependency is not added to the classpath
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlinVersion.get()}")
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${libs.versions.atomicfuVersion.get()}")
-        classpath("org.jetbrains.kotlin:atomicfu:${libs.versions.kotlinVersion.get()}")
     }
 }
 
@@ -29,16 +28,16 @@ repositories {
 kotlin {
     jvm()
 
-    js()
+//    js(IR)
+//
+//    wasmJs {}
+//    wasmWasi {}
 
-    wasmJs {}
-    wasmWasi {}
-
-    macosArm64()
-    macosX64()
-    linuxArm64()
-    linuxX64()
-    mingwX64()
+//    macosArm64()
+//    macosX64()
+//    linuxArm64()
+//    linuxX64()
+//    mingwX64()
 
     sourceSets {
         commonMain {

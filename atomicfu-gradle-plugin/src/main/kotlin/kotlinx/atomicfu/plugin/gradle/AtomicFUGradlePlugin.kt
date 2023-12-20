@@ -45,40 +45,10 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
             ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
-        checkClasspathForAtomicfuCompilerPlugin(pluginVersion)
         applyAtomicfuCompilerPlugin()
         configureDependencies()
         configureTasks()
     }
-}
-
-private fun Project.checkClasspathForAtomicfuCompilerPlugin(pluginVersion: String?) {
-    val kotlinVersion = getKotlinPluginVersion()
-    rootProject.buildscript.configurations.findByName("classpath")
-        ?.allDependencies?.find { it.group == "org.jetbrains.kotlin" && it.name == "atomicfu" }?.let { 
-            require(it.version == kotlinVersion) {
-                "Please ensure that the Kotlin version specified for the atomicfu compiler plugin matches the Kotlin version used in your project. \n" +
-                "You should use this dependency in your classpath: classpath(\"org.jetbrains.kotlin:atomicfu:$kotlinVersion\")\n\n" +
-                "For details about plugin application, please refer to the README section at: https://github.com/Kotlin/kotlinx-atomicfu/blob/master/README.md#apply-plugin"
-            }
-        }
-        ?: error("Please add a dependency to the atomicfu compiler plugin in the buildscript classpath configuration, " + 
-            "in addition to the atomicfu-gradle-plugin dependency:\n" +
-            "```\n" +    
-            "buildscript {\n" +
-            "    repositories {\n" +
-            "        mavenCentral() \n" +
-            "    }\n" +
-            "\n" +
-            "    dependencies {\n" +
-            "        classpath(\"org.jetbrains.kotlinx:atomicfu-gradle-plugin:$pluginVersion\")\n" +
-            "        classpath(\"org.jetbrains.kotlin:atomicfu:$kotlinVersion\")\n" +
-            "    }\n" +
-            "}\n\n" + 
-            "apply(plugin = \"kotlinx-atomicfu\")\n" +
-            "```\n\n" +
-            "For details about plugin application, please refer to the README section at: https://github.com/Kotlin/kotlinx-atomicfu/blob/master/README.md#apply-plugin"            
-        )
 }
 
 private fun Project.checkCompatibility() {
