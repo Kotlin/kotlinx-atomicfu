@@ -16,6 +16,6 @@ class PluginOrderBugTest {
     fun testUserProjectBuild() {
         val buildResult = pluginOrderBugProject.cleanAndBuild()
         assertFalse(buildResult.isSuccessful)
-        assertTrue(buildResult.output.contains("unresolved reference: kotlinx"), buildResult.output)
+        assertTrue(buildResult.output.contains("Unresolved reference: kotlinx"), buildResult.output)
     }
 }
