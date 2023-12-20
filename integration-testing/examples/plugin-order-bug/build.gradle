@@ -1,0 +1,52 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        // If the order of adding atomicfu-gradle-plugin and kotlin-gradle-pluin to the classpath is changed, 
+        // then atomicfu dependency is not added to the classpath
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlinVersion.get()}")
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${libs.versions.atomicfuVersion.get()}")
+        classpath("org.jetbrains.kotlin:atomicfu:${libs.versions.kotlinVersion.get()}")
+    }
+}
+
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+// The issue is described in #384. Application of kotlin-gradle-plugin by id fixes the compilation error.
+//plugins {
+//    id 'org.jetbrains.kotlin.multiplatform' version '1.9.21'
+//}
+apply plugin: 'kotlinx-atomicfu'
+
+repositories {
+    mavenCentral()
+    maven{ url = "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+    mavenLocal()
+}
+
+kotlin {
+    jvm()
+
+    js()
+
+    wasmJs {}
+    wasmWasi {}
+
+    macosArm64()
+    macosX64()
+    linuxArm64()
+    linuxX64()
+    mingwX64()
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation(kotlin("stdlib"))
+                implementation(kotlin("test-junit"))
+            }
+        }
+        commonTest {}
+    }
+}
