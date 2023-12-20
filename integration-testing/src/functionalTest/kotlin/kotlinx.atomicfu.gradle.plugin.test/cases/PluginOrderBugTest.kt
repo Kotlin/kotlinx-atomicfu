@@ -14,9 +14,8 @@ class PluginOrderBugTest {
 
     @Test
     fun testUserProjectBuild() {
-        val e = assertFailsWith<IllegalArgumentException> {
-            pluginOrderBugProject.cleanAndBuild()
-        }
-        check(e.message?.contains("unresolved reference: kotlinx") == true)
+        val buildResult = pluginOrderBugProject.cleanAndBuild()
+        assertFalse(buildResult.isSuccessful)
+        assertTrue(buildResult.output.contains("unresolved reference: kotlinx"))
     }
 }

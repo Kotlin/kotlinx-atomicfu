@@ -25,10 +25,7 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
 
     private var runCount = 0
 
-    fun runGradle(commands: List<String>): BuildResult =
-        buildGradleByShell(runCount++, commands, properties).also {
-            require(it.isSuccessful) { "Running $commands on project $projectName FAILED with error:\n" + it.output }
-        }
+    fun runGradle(commands: List<String>): BuildResult = buildGradleByShell(runCount++, commands, properties)
 }
 
 internal class BuildResult(exitCode: Int, private val logFile: File) {
