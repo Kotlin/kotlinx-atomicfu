@@ -22,7 +22,7 @@ repositories {
 kotlin {
     jvm()
 
-    js(IR)
+    js()
 
     wasmJs {}
     wasmWasi {}
