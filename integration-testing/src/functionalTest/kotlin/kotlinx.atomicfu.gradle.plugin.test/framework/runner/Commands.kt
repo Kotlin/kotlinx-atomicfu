@@ -11,6 +11,11 @@ internal fun GradleBuild.dependencies(): BuildResult =
         require(it.isSuccessful) { "${this.projectName}:dependencies task FAILED: ${it.output} " }
     }
 
+internal fun GradleBuild.buildEnvironment(): BuildResult =
+    runGradle(listOf("buildEnvironment")).also {
+        require(it.isSuccessful) { "${this.projectName}:buildEnvironment task FAILED: ${it.output} " }
+    }
+
 internal fun GradleBuild.publishToLocalRepository(): BuildResult =
     runGradle(listOf("clean", "publish")).also {
         require(it.isSuccessful) { "${this.projectName}:publish task FAILED: ${it.output} " }

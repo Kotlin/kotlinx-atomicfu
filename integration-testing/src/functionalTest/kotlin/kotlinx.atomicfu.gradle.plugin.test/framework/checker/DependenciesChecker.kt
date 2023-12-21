@@ -92,3 +92,6 @@ internal fun GradleBuild.checkConsumableDependencies() {
         index++
     }
 }
+
+internal fun GradleBuild.getProjectClasspath(): List<String> =
+    buildEnvironment().getDependenciesForConfig("classpath")
