@@ -24,7 +24,10 @@ dependencies {
     // Atomicfu compiler plugin dependency will be loaded to kotlinCompilerPluginClasspath
     // Atomicfu plugin will only be applied if the flag is set kotlinx.atomicfu.enableJsIrTransformation=true
     compileOnly "org.jetbrains.kotlin:atomicfu:$kotlin_version"
-    runtimeOnly "org.jetbrains.kotlin:atomicfu:1.7.0"
+    // This runtimeOnly dependency is added as a temporary WA for the problem #384.
+    // The version 1.6.21 was chosen as the lowest valid version of this artifact, 
+    // and it's expected to be resolved to the highest existing version from the user's classpath.
+    runtimeOnly "org.jetbrains.kotlin:atomicfu:1.6.21"
 
     testImplementation gradleTestKit()
     testImplementation 'org.jetbrains.kotlin:kotlin-test'

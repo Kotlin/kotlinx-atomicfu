@@ -15,6 +15,6 @@ class PluginOrderBugTest {
     @Test
     fun testUserProjectBuild() {
         val buildResult = pluginOrderBugProject.cleanAndBuild()
-        assertTrue(buildResult.isSuccessful)
+        assertTrue(buildResult.isSuccessful, buildResult.output)
     }
 }
