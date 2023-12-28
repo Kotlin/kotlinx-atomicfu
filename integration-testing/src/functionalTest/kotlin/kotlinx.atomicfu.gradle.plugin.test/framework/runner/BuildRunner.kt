@@ -12,6 +12,7 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
     var enableJsIrTransformation = false
     var enableNativeIrTransformation = false
     var localRepositoryUrl: String? = null
+    val extraProperties = mutableListOf<String>()
 
     private val properties
         get() = buildList {
@@ -21,6 +22,7 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
             localRepositoryUrl?.let {
                 add("-P$LOCAL_REPOSITORY_URL_PROPERTY=$it")
             }
+            addAll(extraProperties)
         }
 
     private var runCount = 0
