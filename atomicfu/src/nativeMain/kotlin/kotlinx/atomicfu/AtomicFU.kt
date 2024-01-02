@@ -77,8 +77,10 @@ public actual class AtomicBoolean internal constructor(@PublishedApi internal va
         get() = a.value != 0
         set(value) { a.value = if (value) 1 else 0 }
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { this.value = value }
 
     public actual inline fun lazySet(value: Boolean) { this.value = value }
@@ -149,8 +151,10 @@ public actual class AtomicLong internal constructor(@PublishedApi internal val a
         get() = a.value
         set(value) { a.value = value }
 
+    @InlineOnly
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Long = value
 
+    @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) { this.value = value }
 
     public actual inline fun lazySet(value: Long) { a.value = value }
@@ -178,4 +182,3 @@ public actual class AtomicLong internal constructor(@PublishedApi internal val a
 
     override fun toString(): String = value.toString()
 }
-
