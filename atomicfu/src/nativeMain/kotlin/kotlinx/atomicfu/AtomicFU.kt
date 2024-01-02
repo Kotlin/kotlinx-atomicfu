@@ -37,7 +37,6 @@ public actual class AtomicRef<T> internal constructor(@PublishedApi internal val
     public actual inline var value: T
         get() = a.value
         set(value) {
-            if (a.isFrozen) value.freeze()
             a.value = value
         }
 
@@ -48,17 +47,14 @@ public actual class AtomicRef<T> internal constructor(@PublishedApi internal val
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) { this.value = value }
 
     public actual inline fun lazySet(value: T) {
-        if (a.isFrozen) value.freeze()
         a.value = value
     }
 
     public actual inline fun compareAndSet(expect: T, update: T): Boolean {
-        if (a.isFrozen) update.freeze()
         return a.compareAndSet(expect, update)
     }
 
     public actual fun getAndSet(value: T): T {
-        if (a.isFrozen) value.freeze()
         while (true) {
             val cur = a.value
             if (cur === value) return cur

@@ -147,9 +147,7 @@ public actual open class SynchronizedObject {
         val waiters: Int,
         val ownerThreadId: pthread_t? = null,
         val mutex: CPointer<mutex_node_t>? = null
-    ) {
-        init { freeze() }
-    }
+    )
 
     protected enum class Status { UNLOCKED, THIN, FAT }
 
