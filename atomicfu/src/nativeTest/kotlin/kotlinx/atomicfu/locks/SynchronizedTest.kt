@@ -1,3 +1,5 @@
+@file:OptIn(ObsoleteWorkersApi::class)
+
 package kotlinx.atomicfu.locks
 
 import kotlin.concurrent.AtomicInt
@@ -64,7 +66,7 @@ class SynchronizedTest {
             assertEquals(nWorkers * nLocks * increments, counters.sumBy { it.value })
         }
     }
-
+    
     @Test
     fun stressReentrantLockTest() {
         repeat(iterations) {
