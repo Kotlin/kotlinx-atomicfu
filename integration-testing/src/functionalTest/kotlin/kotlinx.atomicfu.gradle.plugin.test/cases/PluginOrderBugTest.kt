@@ -18,14 +18,29 @@ class PluginOrderBugTest {
         val buildResult = pluginOrderBugProject.cleanAndBuild()
         assertTrue(buildResult.isSuccessful, buildResult.output)
     }
-    
+
+    /**
+     * Ensures that the version of atomicfu compiler plugin in the project's classpath equals the version of KGP used in the project.
+     */
     @Test
     fun testResolvedCompilerPluginDependency() {
-        val buildDependencies = pluginOrderBugProject.buildEnvironment()
         val classpath = pluginOrderBugProject.getProjectClasspath()
-        val kpg = classpath.firstOrNull { it.startsWith("org.jetbrains.kotlin:kotlin-gradle-plugin") } 
-            ?: error("kotlin-gradle-plugin is not found in the classpath of the project ${pluginOrderBugProject.projectName}")
-        val kgpVersion = kpg.substringAfterLast(":")
-        assertTrue(classpath.contains("org.jetbrains.kotlin:atomicfu:$kgpVersion"))
+        assertTrue(classpath.contains("org.jetbrains.kotlin:atomicfu:${pluginOrderBugProject.getKotlinVersion()}"))
+    }
+
+    /**
+     * kotlin-stdlib is an implementation dependency of :atomicfu module, 
+     * because compileOnly dependencies are not applicable for Native targets (#376).
+     * 
+     * This test ensures that kotlin-stdlib of the Kotlin version used to build kotlinx-atomicfu library is not "required" in the user's project.
+     * The user project should use kotlin-stdlib version that is present in it's classpath.
+     */
+    @Test
+    fun testTransitiveKotlinStdlibDependency() {
+        val dependencies = pluginOrderBugProject.dependencies()
+        assertFalse(dependencies.output.contains("org.jetbrains.kotlin:kotlin-stdlib:{strictly $libraryKotlinVersion}"), 
+            "Strict requirement for 'org.jetbrains.kotlin:kotlin-stdlib:{strictly $libraryKotlinVersion}' was found in the project ${pluginOrderBugProject.projectName} dependencies, " +
+                    "while Kotlin version used in the project is ${pluginOrderBugProject.getKotlinVersion()}"
+        )
     }
 }
