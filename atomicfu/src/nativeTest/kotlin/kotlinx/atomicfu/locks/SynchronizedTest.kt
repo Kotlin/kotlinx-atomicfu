@@ -1,3 +1,5 @@
+@file:OptIn(ObsoleteWorkersApi::class)
+
 package kotlinx.atomicfu.locks
 
 import kotlin.concurrent.AtomicInt
@@ -15,8 +17,8 @@ class SynchronizedTest {
     fun stressCounterTest() {
         repeat(iterations) {
             val workers = Array(nWorkers) { Worker.start() }
-            val counter = AtomicInt(0).freeze()
-            val so = SynchronizedObject().freeze()
+            val counter = AtomicInt(0)
+            val so = SynchronizedObject()
             workers.forEach { worker ->
                 worker.execute(TransferMode.SAFE, {
                     counter to so
@@ -42,8 +44,8 @@ class SynchronizedTest {
     fun manyLocksTest() {
         repeat(iterations) {
             val workers = Array(nWorkers) { Worker.start() }
-            val counters = Array(nLocks) { AtomicInt(0) }.freeze()
-            val locks = Array(nLocks) { SynchronizedObject() }.freeze()
+            val counters = Array(nLocks) { AtomicInt(0) }
+            val locks = Array(nLocks) { SynchronizedObject() }
             workers.forEach { worker ->
                 worker.execute(TransferMode.SAFE, {
                     counters to locks
@@ -61,16 +63,16 @@ class SynchronizedTest {
             workers.forEach {
                 it.requestTermination().result
             }
-            assertEquals(nWorkers * nLocks * increments, counters.sumBy { it.value })
+            assertEquals(nWorkers * nLocks * increments, counters.sumOf { it.value })
         }
     }
-
+    
     @Test
     fun stressReentrantLockTest() {
         repeat(iterations) {
             val workers = Array(nWorkers) { Worker.start() }
-            val counter = AtomicInt(0).freeze()
-            val so = ReentrantLock().freeze()
+            val counter = AtomicInt(0)
+            val so = ReentrantLock()
             workers.forEach { worker ->
                 worker.execute(TransferMode.SAFE, {
                     counter to so
@@ -94,8 +96,8 @@ class SynchronizedTest {
     fun nestedReentrantLockTest() {
         repeat(iterations) {
             val workers = Array(nWorkers) { Worker.start() }
-            val counter = AtomicInt(0).freeze()
-            val so = ReentrantLock().freeze()
+            val counter = AtomicInt(0)
+            val so = ReentrantLock()
             workers.forEach { worker ->
                 worker.execute(TransferMode.SAFE, {
                     counter to so
