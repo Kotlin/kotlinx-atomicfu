@@ -25,6 +25,7 @@ buildscript {
         }
         repositories {
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+            mavenLocal()
         }
     }
 
@@ -32,6 +33,7 @@ buildscript {
         mavenCentral()
         gradlePluginPortal()
         KotlinConfiguration.addCustomKotlinRepositoryIfEnabled(delegate, project)
+        mavenLocal()
     }
 
     dependencies {
@@ -65,6 +67,7 @@ allprojects {
     repositories {
         mavenCentral()
         KotlinConfiguration.addCustomKotlinRepositoryIfEnabled(delegate, project)
+        mavenLocal()
     }
 
     def deployVersion = project.findProperty("DeployVersion")
