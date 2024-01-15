@@ -50,7 +50,11 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
+                implementation('org.jetbrains.kotlin:kotlin-stdlib') {
+                    version {
+                        prefer "$kotlin_version"
+                    }
+                }
             }
         }
         commonTest {

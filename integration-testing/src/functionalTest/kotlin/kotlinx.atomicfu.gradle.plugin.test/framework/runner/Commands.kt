@@ -4,9 +4,28 @@
 
 package kotlinx.atomicfu.gradle.plugin.test.framework.runner
 
+import kotlinx.atomicfu.gradle.plugin.test.framework.checker.getProjectClasspath
+
 internal fun GradleBuild.cleanAndBuild(): BuildResult = runGradle(listOf("clean", "build"))
 
-internal fun GradleBuild.dependencies(): BuildResult = runGradle(listOf("dependencies"))
+internal fun GradleBuild.dependencies(): BuildResult = 
+    runGradle(listOf("dependencies")).also { 
+        require(it.isSuccessful) { "${this.projectName}:dependencies task FAILED: ${it.output} " }
+    }
+
+internal fun GradleBuild.buildEnvironment(): BuildResult =
+    runGradle(listOf("buildEnvironment")).also {
+        require(it.isSuccessful) { "${this.projectName}:buildEnvironment task FAILED: ${it.output} " }
+    }
 
 internal fun GradleBuild.publishToLocalRepository(): BuildResult =
-    runGradle(listOf("clean", "publish"))
+    runGradle(listOf("clean", "publish")).also {
+        require(it.isSuccessful) { "${this.projectName}:publish task FAILED: ${it.output} " }
+    }
+
+internal fun GradleBuild.getKotlinVersion(): String {
+    val classpath = getProjectClasspath()
+    val kpg = classpath.firstOrNull { it.startsWith("org.jetbrains.kotlin:kotlin-gradle-plugin") }
+        ?: error("kotlin-gradle-plugin is not found in the classpath of the project $projectName")
+    return kpg.substringAfterLast(":")
+}

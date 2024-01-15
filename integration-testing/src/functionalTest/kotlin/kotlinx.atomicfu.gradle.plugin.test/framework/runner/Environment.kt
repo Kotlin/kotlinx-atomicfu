@@ -13,6 +13,7 @@ internal const val LOCAL_REPOSITORY_URL_PROPERTY = "localRepositoryUrl"
 internal const val DUMMY_VERSION = "DUMMY_VERSION"
 internal const val LOCAL_REPO_DIR_PREFIX = "build/.m2/"
 
+internal val libraryKotlinVersion = System.getProperty("kotlinVersion")
 internal val atomicfuVersion = System.getProperty("atomicfuVersion")
 
 internal val gradleWrapperDir = File("..")

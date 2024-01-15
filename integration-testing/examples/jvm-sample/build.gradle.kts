@@ -6,9 +6,7 @@ buildscript {
 
     dependencies {
         val atomicfuVersion = libs.versions.atomicfuVersion.get()
-        val kotlinVersion = libs.versions.kotlinVersion.get()
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfuVersion")
-        classpath("org.jetbrains.kotlin:atomicfu:$kotlinVersion")
     }
 }
 

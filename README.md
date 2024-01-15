@@ -107,12 +107,7 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 
 Gradle configuration is supported for all platforms, minimal version is Gradle 6.8.
 
-To apply kotlinx-atomicfu plugin, you need to add 2 dependencies to the project classpath:
-1. `atomicfu-gradle-plugin`: it provides the necessary library dependencies and manages transformation modes.
-2. `atomicfu` compiler plugin: the compiler plugin is used to perform IR transformations (see [Atomicfu compiler plugin](#atomicfu-compiler-plugin) section).
-
-> Note: kotlinx-atomicfu gradle plugin does not have an id and is not currently published to the Gradle Plugin Portal. 
-> Therefore, the only available method for application is through the buildscript specification.
+In top-level build file:
 
 <details open>
 <summary>Kotlin DSL</summary>
@@ -125,9 +120,6 @@ buildscript {
 
     dependencies {
       classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.1")
-      // Please note that the Kotlin version specified for the atomicfu compiler plugin 
-      // should match the Kotlin version used in your project.
-      classpath("org.jetbrains.kotlin:atomicfu:$kotlin_version")
     }
 }
 
@@ -145,9 +137,6 @@ buildscript {
     }
     dependencies {
         classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.1'
-        // Please note that the Kotlin version specified for the atomicfu compiler plugin 
-        // should match the Kotlin version used in your project.
-        classpath 'org.jetbrains.kotlin:atomicfu:$kotlin_version'
     }
 }
   
