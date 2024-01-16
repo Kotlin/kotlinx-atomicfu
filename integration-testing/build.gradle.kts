@@ -43,7 +43,7 @@ dependencies {
     implementation(kotlin("script-runtime"))
 
     // mavenTest dependencies
-    "mavenTestImplementation"("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfu_snapshot_version")
+    "mavenTestImplementation"(project(":atomicfu"))
 
     // functionalTest dependencies
     "functionalTestImplementation"(gradleTestKit())
