@@ -6,7 +6,7 @@ package kotlinx.atomicfu.gradle.plugin.test.cases
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
-import kotlin.test.Test
+import kotlin.test.*
 
 class JvmProjectTest {
 
@@ -26,5 +26,11 @@ class JvmProjectTest {
         jvmSample.checkJvmCompileOnlyDependencies()
         jvmSample.checkConsumableDependencies()
         jvmSample.buildAndCheckBytecode()
+    }
+    
+    // This test checks that jar is packed without duplicates, see #303
+    @Test
+    fun testJar() {
+        assertTrue(jvmSample.cleanAndJar().isSuccessful)
     }
 }

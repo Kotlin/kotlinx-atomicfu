@@ -8,6 +8,8 @@ import kotlinx.atomicfu.gradle.plugin.test.framework.checker.getProjectClasspath
 
 internal fun GradleBuild.cleanAndBuild(): BuildResult = runGradle(listOf("clean", "build"))
 
+internal fun GradleBuild.cleanAndJar(): BuildResult = runGradle(listOf("clean", "jar"))
+
 internal fun GradleBuild.dependencies(): BuildResult = 
     runGradle(listOf("dependencies")).also { 
         require(it.isSuccessful) { "${this.projectName}:dependencies task FAILED: ${it.output} " }
