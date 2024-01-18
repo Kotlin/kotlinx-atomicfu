@@ -14,6 +14,7 @@ group = "kotlinx.atomicfu.examples"
 version = "DUMMY_VERSION"
 
 plugins {
+    application
     kotlin("jvm") version libs.versions.kotlinVersion.get()
     `maven-publish`
 }
@@ -35,6 +36,10 @@ tasks.compileKotlin {
     kotlinOptions {
         freeCompilerArgs += listOf("-Xskip-prerelease-check")
     }
+}
+
+application {
+    mainClass.set("org.example.MainKt")
 }
 
 publishing {

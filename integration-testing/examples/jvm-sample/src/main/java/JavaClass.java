@@ -1,5 +1,3 @@
-package org.example;
-
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 public class JavaClass {

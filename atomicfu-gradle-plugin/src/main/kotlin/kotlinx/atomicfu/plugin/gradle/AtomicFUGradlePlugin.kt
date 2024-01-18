@@ -337,8 +337,9 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 it.destinationDirectory.value(originalDestinationDirectory)
             }
         }
-        val originalClassesDirs: FileCollection =
-            project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
+        val originalClassesDirs: FileCollection = 
+            project.objects.fileCollection().from(compilationTask.flatMap { it.destinationDirectory }) + 
+                project.files(classesDirs.from.toTypedArray()).filter { it.exists() }
         originalDirsByCompilation[compilation] = originalClassesDirs
         val transformedClassesDir = project.layout.buildDirectory
             .dir("classes/atomicfu/${target.name}/${compilation.name}")
