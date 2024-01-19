@@ -129,12 +129,24 @@ private fun Project.configureMultiplatformPluginDependencies(version: String) {
     }
     // Include atomicfu as a dependency for publication when transformation for the target is disabled
     multiplatformExtension.targets.all { target ->
+        // Add an implementation dependency for native/wasm targets or if transformation is disabled
         if (isTransitiveAtomicfuDependencyRequired(target)) {
             target.compilations.all { compilation ->
                 compilation
                     .defaultSourceSet
                     .dependencies {
                         implementation(atomicfuDependency)
+                    }
+            }
+        }
+        // atomicfu should also appear in apiElements config for native targets, 
+        // otherwise the warning is triggered, see: KT-64109
+        if (target.platformType == KotlinPlatformType.native) {
+            target.compilations.all { compilation ->
+                compilation
+                    .defaultSourceSet
+                    .dependencies {
+                        api(atomicfuDependency)
                     }
             }
         }
@@ -190,7 +202,6 @@ private fun Project.isTransitiveAtomicfuDependencyRequired(target: KotlinTarget)
     return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
             !config.transformJs && platformType == KotlinPlatformType.js ||
             platformType == KotlinPlatformType.wasm ||
-            // Always add the transitive atomicfu dependency for native targets, see #379
             platformType == KotlinPlatformType.native
 }
 
