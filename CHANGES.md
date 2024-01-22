@@ -1,5 +1,12 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.23.2
+
+* Always add a transitive dependency to the Native target (#380).
+* atomicfu-gradle-plugin adds atomicfu compiler plugin dependency transitively, and it's version is resolved on the user's side (#386).
+* Fixed the bug with Java sources being lost during bytecode transformation (#395). 
+* Updated ASM version to 9.6 (#390).
+
 # Version 0.23.1
 
 * Updated Kotlin to 1.9.21 (#361).
