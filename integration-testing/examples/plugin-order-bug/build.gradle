@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+
 buildscript {
     repositories {
         mavenLocal()
@@ -41,5 +43,11 @@ kotlin {
             }
         }
         commonTest {}
+    }
+}
+
+tasks.withType(KotlinCompile).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += ["-Xskip-prerelease-check"]
     }
 }
