@@ -72,17 +72,6 @@ class MetadataTransformer(
             PropertyFilter(KmProperty(flags, name, getterFlags, setterFlags), super.visitProperty(flags, name, getterFlags, setterFlags)!!)
         override fun visitFunction(flags: Flags, name: String): KmFunctionVisitor =
             FunctionFilter(KmFunction(flags, name), super.visitFunction(flags, name)!!)
-
-        override fun visitEnd() {
-            // Skip supertype if it is SynchronizedObject (it is an alias to Any)
-            supertypes.forEach { type ->
-                if (type.abbreviatedType?.classifier == SynchronizedObjectAlias) {
-                    transformed = true
-                } else
-                    type.accept(super.visitSupertype(type.flags)!!)
-            }
-            super.visitEnd()
-        }
     }
 
     private inner class PackageFilter(v: KmPackageVisitor?) : KmPackageVisitor(v) {
