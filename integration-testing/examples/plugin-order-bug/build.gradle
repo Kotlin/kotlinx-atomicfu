@@ -46,8 +46,6 @@ kotlin {
     }
 }
 
-tasks.withType(KotlinCompile).configureEach {
-    kotlinOptions {
-        freeCompilerArgs += ["-Xskip-prerelease-check"]
-    }
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
+    kotlinOptions.freeCompilerArgs += ["-Xskip-prerelease-check"]
 }
