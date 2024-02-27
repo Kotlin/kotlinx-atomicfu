@@ -32,12 +32,5 @@ kotlin {
                 languageVersion = "2.0"
             }
         }
-
-        // This is necessary for now, due to the problem with dependency configuration, see #403
-        val jvmMain by getting {
-            dependencies {
-                api("org.jetbrains.kotlinx:atomicfu:0.23.2")
-            }
-        }
     }
 }
