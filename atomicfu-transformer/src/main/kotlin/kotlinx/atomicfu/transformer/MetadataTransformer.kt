@@ -77,6 +77,9 @@ class MetadataTransformer(
             // Skip supertype if it is SynchronizedObject (it is an alias to Any)
             supertypes.forEach { type ->
                 if (type.abbreviatedType?.classifier == SynchronizedObjectAlias) {
+                    KmType().apply {
+                        visitClass("kotlin/Any")
+                    }.accept(super.visitSupertype(flagsOf(Flag.IS_PUBLIC, Flag.IS_OPEN))!!)
                     transformed = true
                 } else
                     type.accept(super.visitSupertype(type.flags)!!)

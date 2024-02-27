@@ -66,7 +66,7 @@ class ArtifactCheckerSmokeTest {
                 "      d2=[\"LIntArithmetic;\",\"\",\"()V\",\"_x\",\"Lkotlinx/atomicfu/AtomicInt;\",\"doWork\",\"\",\"finalValue\",\"\",\"jvm-sample\"]\n" +
                 "    )"
         
-        override fun checkReferences() {
+        override fun checkReferences(buildDir: File) {
             assertTrue(atomicfuString.toByteArray().findAtomicfuRef())
             assertFalse(noAtomicfuString.toByteArray().findAtomicfuRef())
             assertTrue(metadataString.toByteArray().findAtomicfuRef())
@@ -77,6 +77,6 @@ class ArtifactCheckerSmokeTest {
     
     @Test
     fun testAtomicfuReferenciesLookup() {
-        checker.checkReferences()
+        checker.checkClassesInBuildDirectories()
     }
 }
