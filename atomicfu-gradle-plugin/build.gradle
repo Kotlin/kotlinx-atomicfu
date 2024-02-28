@@ -36,3 +36,9 @@ dependencies {
 }
 
 evaluationDependsOn(':atomicfu')
+
+processResources {
+    filesMatching("atomicfu.properties") {
+        expand(["atomicfuVersion": project.version])
+    }
+}

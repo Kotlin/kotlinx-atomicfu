@@ -42,29 +42,9 @@ private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) = project.run {
         checkCompatibility()
-        val classpath = project.buildscript.configurations.getByName("classpath")
-        val pluginVersion = classpath.resolvedConfiguration.resolvedArtifacts
-            .map { artifact -> artifact.moduleVersion.id }
-            .firstOrNull { id -> "org.jetbrains.kotlinx" == id.group && "atomicfu-gradle-plugin" == id.name }?.version
-            ?: error(
-                "We were unable to find the version of `kotlinx-atomicfu` plugin applied to the project.\n" +
-                    "Please ensure that `kotlinx-atomicfu` plugin is correctly applied.\n" +
-                    "Below is an example of Kotlin DSL code that applies `kotlinx-atomicfu` plugin:\n" +
-                    "```\n" +
-                    "buildscript {\n" +
-                    "    repositories {\n" +
-                    "        mavenCentral()\n" +
-                    "    }\n" +
-                    "\n" +
-                    "    dependencies {\n" +
-                    "      classpath(\"org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.2\")\n" +
-                    "    }\n" +
-                    "}\n" +
-                    "\n" +
-                    "apply(plugin = \"kotlinx-atomicfu\")\n" +
-                    "```\n" +
-                    "For further information, refer to the project's README: https://github.com/Kotlin/kotlinx-atomicfu/blob/master/README.md#apply-plugin"
-            )
+        // atomicfu version is stored at build time in atomicfu.properties file
+        // located in atomicfu-gradle-plugin resources
+        val pluginVersion = loadPropertyFromResources("atomicfu.properties", "atomicfu.version")
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
         applyAtomicfuCompilerPlugin()
         configureDependencies()
@@ -72,9 +52,13 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
     }
 }
 
-private fun Project.getAFUVersion(): String? =
-    buildscript.configurations.findByName("classpath")
-        ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
+fun loadPropertyFromResources(propFileName: String, property: String): String {
+    val props = Properties()
+    val inputStream = AtomicFUGradlePlugin::class.java.classLoader!!.getResourceAsStream(propFileName)
+        ?: throw FileNotFoundException("'$propFileName' file was not found in the classpath")
+    inputStream.use { props.load(it) }
+    return props[property] as String
+}
 
 private fun Project.checkCompatibility() {
     val currentGradleVersion = GradleVersion.current()
