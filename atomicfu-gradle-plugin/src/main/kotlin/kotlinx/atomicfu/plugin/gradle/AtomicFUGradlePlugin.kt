@@ -45,7 +45,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         // Get the version of atomicfu-gradle-plugin applied to the project:
         // first try to find it in the root buildscript, then in the buildscript of the current project.
         // The error is thrown in case atomicfu-gradle-plugin is not applied.
-        val pluginVersion = rootProject.getAGPVersion() ?: this.getAGPVersion()
+        val pluginVersion = rootProject.getAFUVersion() ?: this.getAFUVersion()
         requireNotNull(pluginVersion) { "We were unable to find the version of `kotlinx-atomicfu` plugin applied to the project.\n" +
                 "Please ensure that `kotlinx-atomicfu` plugin is correctly applied.\n" +
                 "Below is an example of Kotlin DSL code that applies `kotlinx-atomicfu` plugin:\n" +
@@ -70,7 +70,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
     }
 }
 
-private fun Project.getAGPVersion(): String? =
+private fun Project.getAFUVersion(): String? =
     buildscript.configurations.findByName("classpath")
         ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
 
