@@ -37,19 +37,19 @@ internal abstract class ArtifactChecker(private val targetDir: File) {
     }
 }
 
-private class BytecodeChecker(targetDir: File) : ArtifactChecker(targetDir) {
+private class BytecodeChecker(private val gradleBuild: GradleBuild) : ArtifactChecker(gradleBuild.targetDir) {
 
     override fun checkReferences(buildDir: File) {
-        val atomicfuDir = buildDir.resolve("classes/atomicfu/")
-        val atomicfuDirExists = atomicfuDir.exists() && atomicfuDir.isDirectory
-        (if (atomicfuDirExists) atomicfuDir else buildDir).let {
-            it.walkBottomUp().filter { it.isFile && it.name.endsWith(".class") }.forEach { clazz ->
-                val atomicfuRefFound = clazz.readBytes().let {
-                    // Do not check metadata for kotlinx-atomicfu references only in case of the applied compiler plugin.
-                    if (atomicfuDirExists) it.findAtomicfuRef() else it.eraseMetadata().findAtomicfuRef() 
-                }
-                assertFalse(atomicfuRefFound, "Found kotlinx/atomicfu in class file ${clazz.path}")
+        // Do not check metadata for kotlinx-atomicfu references if the compiler plugin is applied.
+        buildDir.walkDirAndCheckBytecode(skipMetadata = gradleBuild.enableJvmIrTransformation)
+    }
+    
+    private fun File.walkDirAndCheckBytecode(skipMetadata: Boolean) {
+        walkBottomUp().filter { it.isFile && it.name.endsWith(".class") }.forEach { clazz ->
+            val atomicfuRefFound = clazz.readBytes().let {
+                if (skipMetadata) it.eraseMetadata().findAtomicfuRef() else it.findAtomicfuRef()
             }
+            assertFalse(atomicfuRefFound, "Found kotlinx/atomicfu in class file ${clazz.path}")
         }
     }
 
@@ -118,7 +118,7 @@ private class KlibChecker(targetDir: File) : ArtifactChecker(targetDir) {
 internal fun GradleBuild.buildAndCheckBytecode() {
     val buildResult = cleanAndBuild()
     require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
-    BytecodeChecker(this.targetDir).checkClassesInBuildDirectories()
+    BytecodeChecker(this).checkClassesInBuildDirectories()
 }
 
 // TODO: klib checks are skipped for now because of this problem KT-61143
