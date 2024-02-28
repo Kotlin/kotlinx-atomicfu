@@ -17,12 +17,12 @@ import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
-import java.io.*
-import java.util.*
 import org.jetbrains.kotlin.gradle.targets.js.*
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlinx.atomicfu.gradle.*
+import java.io.*
+import java.util.*
 import javax.inject.Inject
 
 private const val EXTENSION_NAME = "atomicfu"
@@ -42,27 +42,29 @@ private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) = project.run {
         checkCompatibility()
-        // Get the version of atomicfu-gradle-plugin applied to the project:
-        // first try to find it in the root buildscript, then in the buildscript of the current project.
-        // The error is thrown in case atomicfu-gradle-plugin is not applied.
-        val pluginVersion = rootProject.getAFUVersion() ?: this.getAFUVersion()
-        requireNotNull(pluginVersion) { "We were unable to find the version of `kotlinx-atomicfu` plugin applied to the project.\n" +
-                "Please ensure that `kotlinx-atomicfu` plugin is correctly applied.\n" +
-                "Below is an example of Kotlin DSL code that applies `kotlinx-atomicfu` plugin:\n" +
-                "```\n" +
-                "buildscript {\n" +
-                "    repositories {\n" +
-                "        mavenCentral()\n" +
-                "    }\n" +
-                "\n" +
-                "    dependencies {\n" +
-                "      classpath(\"org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.2\")\n" +
-                "    }\n" +
-                "}\n" +
-                "\n" +
-                "apply(plugin = \"kotlinx-atomicfu\")\n" +
-                "```\n" +
-                "For further information, refer to the project's README: https://github.com/Kotlin/kotlinx-atomicfu/blob/master/README.md#apply-plugin"}
+        val classpath = project.buildscript.configurations.getByName("classpath")
+        val pluginVersion = classpath.resolvedConfiguration.resolvedArtifacts
+            .map { artifact -> artifact.moduleVersion.id }
+            .firstOrNull { id -> "org.jetbrains.kotlinx" == id.group && "atomicfu-gradle-plugin" == id.name }?.version
+            ?: error(
+                "We were unable to find the version of `kotlinx-atomicfu` plugin applied to the project.\n" +
+                    "Please ensure that `kotlinx-atomicfu` plugin is correctly applied.\n" +
+                    "Below is an example of Kotlin DSL code that applies `kotlinx-atomicfu` plugin:\n" +
+                    "```\n" +
+                    "buildscript {\n" +
+                    "    repositories {\n" +
+                    "        mavenCentral()\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    dependencies {\n" +
+                    "      classpath(\"org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.23.2\")\n" +
+                    "    }\n" +
+                    "}\n" +
+                    "\n" +
+                    "apply(plugin = \"kotlinx-atomicfu\")\n" +
+                    "```\n" +
+                    "For further information, refer to the project's README: https://github.com/Kotlin/kotlinx-atomicfu/blob/master/README.md#apply-plugin"
+            )
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
         applyAtomicfuCompilerPlugin()
         configureDependencies()
