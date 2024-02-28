@@ -52,7 +52,7 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
     }
 }
 
-fun loadPropertyFromResources(propFileName: String, property: String): String {
+private fun loadPropertyFromResources(propFileName: String, property: String): String {
     val props = Properties()
     val inputStream = AtomicFUGradlePlugin::class.java.classLoader!!.getResourceAsStream(propFileName)
         ?: throw FileNotFoundException("'$propFileName' file was not found in the classpath")
