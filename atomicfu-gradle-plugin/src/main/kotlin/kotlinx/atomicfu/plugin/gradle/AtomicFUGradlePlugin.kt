@@ -55,7 +55,9 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
 private fun loadPropertyFromResources(propFileName: String, property: String): String {
     val props = Properties()
     val inputStream = AtomicFUGradlePlugin::class.java.classLoader!!.getResourceAsStream(propFileName)
-        ?: throw FileNotFoundException("'$propFileName' file was not found in the classpath")
+        ?: throw FileNotFoundException("You are applying `kotlinx-atomicfu` plugin of version 0.23.3 or newer, yet we were unable to determine the specific version of the plugin.\". \n" +
+                "Starting from version 0.23.3 of `kotlinx-atomicfu`, the plugin version is extracted from the `atomicfu.properties` file, which resides within the atomicfu-gradle-plugin-{version}.jar. \n" +
+                "However, this file couldn't be found. Please ensure that there are no atomicfu-gradle-plugin-{version}.jar with version older than 0.23.3 present on the classpath.\n" )
     inputStream.use { props.load(it) }
     return props[property] as String
 }
