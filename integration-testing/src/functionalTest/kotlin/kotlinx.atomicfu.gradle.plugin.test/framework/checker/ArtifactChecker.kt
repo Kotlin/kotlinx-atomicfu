@@ -18,12 +18,13 @@ internal abstract class ArtifactChecker(private val targetDir: File) {
 
     protected val projectName = targetDir.name.substringBeforeLast("-")
 
-    val buildDir
-        get() = targetDir.resolve("build").also {
-            require(it.exists() && it.isDirectory) { "Could not find `build/` directory in the target directory of the project $projectName: ${targetDir.path}" }
+    fun checkClassesInBuildDirectories() {
+        targetDir.walkTopDown().filter { it.isDirectory && it.name == "build" }.forEach {
+            checkReferences(it)
         }
+    }
 
-    abstract fun checkReferences()
+    protected abstract fun checkReferences(buildDir: File)
 
     protected fun ByteArray.findAtomicfuRef(): Boolean {
         loop@for (i in 0 .. this.size - ATOMIC_FU_REF.size) {
@@ -36,14 +37,27 @@ internal abstract class ArtifactChecker(private val targetDir: File) {
     }
 }
 
-private class BytecodeChecker(targetDir: File) : ArtifactChecker(targetDir) {
+private class BytecodeChecker(private val gradleBuild: GradleBuild) : ArtifactChecker(gradleBuild.targetDir) {
 
-    override fun checkReferences() {
-        val atomicfuDir = buildDir.resolve("classes/atomicfu/")
-        (if (atomicfuDir.exists() && atomicfuDir.isDirectory) atomicfuDir else buildDir).let {
-            it.walkBottomUp().filter { it.isFile && it.name.endsWith(".class") }.forEach { clazz ->
-                assertFalse(clazz.readBytes().eraseMetadata().findAtomicfuRef(), "Found kotlinx/atomicfu in class file ${clazz.path}")
+    override fun checkReferences(buildDir: File) {
+        // Do not check metadata for kotlinx-atomicfu references if the compiler plugin is applied.
+        if (gradleBuild.enableJvmIrTransformation) {
+            buildDir.walkDirAndCheckBytecode(skipMetadata = true)    
+        } else {
+            val atomicfuDir = buildDir.resolve("classes/atomicfu/")
+            if (atomicfuDir.exists() && atomicfuDir.isDirectory) {
+                atomicfuDir.walkDirAndCheckBytecode(skipMetadata = false)
             }
+        }
+        
+    }
+    
+    private fun File.walkDirAndCheckBytecode(skipMetadata: Boolean) {
+        walkBottomUp().filter { it.isFile && it.name.endsWith(".class") }.forEach { clazz ->
+            val atomicfuRefFound = clazz.readBytes().let {
+                if (skipMetadata) it.eraseMetadata().findAtomicfuRef() else it.findAtomicfuRef()
+            }
+            assertFalse(atomicfuRefFound, "Found kotlinx/atomicfu in class file ${clazz.path}")
         }
     }
 
@@ -51,7 +65,7 @@ private class BytecodeChecker(targetDir: File) : ArtifactChecker(targetDir) {
     // so for now we check that there are no ATOMIC_FU_REF left in the class bytecode excluding metadata.
     // This may be reverted after the fix in the compiler plugin transformer (See #254).
     private fun ByteArray.eraseMetadata(): ByteArray {
-        val cw = ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
+        val cw = ClassWriter(0)
         ClassReader(this).accept(object : ClassVisitor(Opcodes.ASM9, cw) {
             override fun visitAnnotation(descriptor: String?, visible: Boolean): AnnotationVisitor? {
                 return if (descriptor == KOTLIN_METADATA_DESC) null else super.visitAnnotation(descriptor, visible)
@@ -92,7 +106,7 @@ private class KlibChecker(targetDir: File) : ArtifactChecker(targetDir) {
         return output.toString()
     }
 
-    override fun checkReferences() {
+    override fun checkReferences(buildDir: File) {
         val classesDir = buildDir.resolve("classes/kotlin/")
         if (classesDir.exists() && classesDir.isDirectory) {
             classesDir.walkBottomUp().singleOrNull { it.isFile && it.name == "$projectName.klib" }?.let { klib ->
@@ -112,12 +126,12 @@ private class KlibChecker(targetDir: File) : ArtifactChecker(targetDir) {
 internal fun GradleBuild.buildAndCheckBytecode() {
     val buildResult = cleanAndBuild()
     require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
-    BytecodeChecker(this.targetDir).checkReferences()
+    BytecodeChecker(this).checkClassesInBuildDirectories()
 }
 
 // TODO: klib checks are skipped for now because of this problem KT-61143
 internal fun GradleBuild.buildAndCheckNativeKlib() {
     val buildResult = cleanAndBuild()
     require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
-    KlibChecker(this.targetDir).checkReferences()
+    KlibChecker(this.targetDir).checkClassesInBuildDirectories()
 }
