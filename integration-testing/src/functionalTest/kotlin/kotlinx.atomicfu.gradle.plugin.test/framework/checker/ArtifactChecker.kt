@@ -41,7 +41,15 @@ private class BytecodeChecker(private val gradleBuild: GradleBuild) : ArtifactCh
 
     override fun checkReferences(buildDir: File) {
         // Do not check metadata for kotlinx-atomicfu references if the compiler plugin is applied.
-        buildDir.walkDirAndCheckBytecode(skipMetadata = gradleBuild.enableJvmIrTransformation)
+        if (gradleBuild.enableJvmIrTransformation) {
+            buildDir.walkDirAndCheckBytecode(skipMetadata = true)    
+        } else {
+            val atomicfuDir = buildDir.resolve("classes/atomicfu/")
+            if (atomicfuDir.exists() && atomicfuDir.isDirectory) {
+                atomicfuDir.walkDirAndCheckBytecode(skipMetadata = false)
+            }
+        }
+        
     }
     
     private fun File.walkDirAndCheckBytecode(skipMetadata: Boolean) {
