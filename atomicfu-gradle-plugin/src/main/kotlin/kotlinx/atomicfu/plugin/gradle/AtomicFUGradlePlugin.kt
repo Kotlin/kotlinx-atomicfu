@@ -17,12 +17,12 @@ import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
-import java.io.*
-import java.util.*
 import org.jetbrains.kotlin.gradle.targets.js.*
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlinx.atomicfu.gradle.*
+import java.io.*
+import java.util.*
 import javax.inject.Inject
 
 private const val EXTENSION_NAME = "atomicfu"
@@ -42,13 +42,25 @@ private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) = project.run {
         checkCompatibility()
-        val pluginVersion = rootProject.buildscript.configurations.findByName("classpath")
-            ?.allDependencies?.find { it.name == "atomicfu-gradle-plugin" }?.version
+        // atomicfu version is stored at build time in atomicfu.properties file
+        // located in atomicfu-gradle-plugin resources
+        val pluginVersion = loadPropertyFromResources("atomicfu.properties", "atomicfu.version")
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
         applyAtomicfuCompilerPlugin()
         configureDependencies()
         configureTasks()
     }
+}
+
+private fun loadPropertyFromResources(propFileName: String, property: String): String {
+    val props = Properties()
+    val inputStream = AtomicFUGradlePlugin::class.java.classLoader!!.getResourceAsStream(propFileName)
+        ?: throw FileNotFoundException("You are applying `kotlinx-atomicfu` plugin of version 0.23.3 or newer, yet we were unable to determine the specific version of the plugin.\". \n" +
+                "Starting from version 0.23.3 of `kotlinx-atomicfu`, the plugin version is extracted from the `atomicfu.properties` file, which resides within the atomicfu-gradle-plugin-{version}.jar. \n" +
+                "However, this file couldn't be found. Please ensure that there are no atomicfu-gradle-plugin-{version}.jar with version older than 0.23.3 present on the classpath.\n" +
+                "If the problem is not resolved, please submit the issue: https://github.com/Kotlin/kotlinx-atomicfu/" )
+    inputStream.use { props.load(it) }
+    return props[property] as String
 }
 
 private fun Project.checkCompatibility() {
