@@ -21,8 +21,9 @@ class PluginOrderBugTest {
 
     /**
      * Ensures that the version of atomicfu compiler plugin in the project's classpath equals the version of KGP used in the project.
+     * TODO: we don't need this test now, as we apply the compiler plugin inside the library
      */
-    @Test
+    //@Test
     fun testResolvedCompilerPluginDependency() {
         val classpath = pluginOrderBugProject.getProjectClasspath()
         assertTrue(classpath.contains("org.jetbrains.kotlin:atomicfu:${pluginOrderBugProject.getKotlinVersion()}"))
