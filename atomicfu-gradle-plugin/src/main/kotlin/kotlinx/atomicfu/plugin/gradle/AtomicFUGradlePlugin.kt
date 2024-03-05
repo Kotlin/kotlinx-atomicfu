@@ -248,8 +248,7 @@ private fun KotlinTarget.isJsIrTarget() =
 private fun Project.isTransitiveAtomicfuDependencyRequired(target: KotlinTarget): Boolean {
     val platformType = target.platformType
     return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
-            // If JS IR transformation is disabled, then just add a compiler dependency.
-            (!config.transformJs && platformType == KotlinPlatformType.js) || needsJsIrTransformation(target) ||
+            (!config.transformJs && platformType == KotlinPlatformType.js) ||
             platformType == KotlinPlatformType.wasm ||
             // Always add the transitive atomicfu dependency for native targets, see #379
             platformType == KotlinPlatformType.native
@@ -375,7 +374,6 @@ private fun Project.configureMultiplatformTransformation() =
            ) {
             return@withKotlinTargets
         }
-        System.err.println("AAAAAAA: configureMultiplatformTransformation, rootProject = ${rootProject.name}, properties: ${rootProject.getBooleanProperty("kotlinx.atomicfu.enableJvmIrTransformation")}, platformType = ${target.platformType}, needsJvmTransformation = ${needsJvmIrTransformation(target)}")
         configureTransformationForTarget(target)
     }
 
