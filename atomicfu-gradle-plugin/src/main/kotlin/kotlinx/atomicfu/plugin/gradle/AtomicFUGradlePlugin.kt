@@ -33,9 +33,9 @@ private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
 // If the project uses KGP <= 1.6.20, only JS IR compiler plugin is available, and it is turned on via setting this property.
 // The property is supported for backwards compatibility.
 private const val ENABLE_JS_IR_TRANSFORMATION_LEGACY = "kotlinx.atomicfu.enableIrTransformation"
-private const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
-private const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
-private const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
+internal const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
+internal const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
+internal const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
 private const val MIN_SUPPORTED_GRADLE_VERSION = "7.0"
 private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 
@@ -83,29 +83,62 @@ private fun Project.checkCompatibility() {
 
 private fun Project.applyAtomicfuCompilerPlugin() {
     val kotlinVersion = getKotlinVersion()
-    // for KGP >= 1.7.20:
-    // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableJsIrTransformation`
-    // compiler plugin for JVM IR is applied via the property `kotlinx.atomicfu.enableJvmIrTransformation`
-    if (kotlinVersion.atLeast(1, 7, 20)) {
-        plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
-        extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
-            isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
-            isJvmIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)
-            if (kotlinVersion.atLeast(1, 9, 20)) {
-                // Native IR transformation is available since Kotlin 1.9.20
-                isNativeIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION)   
-            }
+    if (kotlinVersion.atLeast(1, 9, 0)) {
+        // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin) 
+        // may be moved to the Gradle plugin in the library, because compiler plugin sources 
+        // are published as `kotlin-atomicfu-compiler-plugin-embeddable` since Kotlin 1.9.0 and may be accessed out of the Kotlin repo.
+        // Apply JVM/JS IR transformations.
+        plugins.apply(AtomicfuKotlinCompilerPlugin::class.java)
+        if (kotlinVersion.atLeast(1, 9, 20)) {
+            // Native IR transformations are only available since Kotlin 1.9.20.
+            // Native IR transformations are applied separately from JVM and JS IR transformations,
+            // because kotlin.native.version may be overriden by the user and differ from the extracted KGP version.
+            // TODO: attach an issue with the API to extract the Kotlin compiler version.
+            plugins.apply(AtomicfuKotlinNativeCompilerPlugin::class.java)
         }
     } else {
-        // for KGP >= 1.6.20 && KGP <= 1.7.20:
-        // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableIrTransformation`
-        // compiler plugin for JVM IR is not supported yet
-        if (kotlinVersion.atLeast(1, 6, 20)) {
-            if (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY)) {
-                plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
+        // for KGP >= 1.7.20:
+        // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableJsIrTransformation`
+        // compiler plugin for JVM IR is applied via the property `kotlinx.atomicfu.enableJvmIrTransformation`
+        if (kotlinVersion.atLeast(1, 7, 20)) {
+            // Check that the project has `org.jetbrains.kotlin:atomicfu` in the classpath, otherwise throw an error.
+            val isAtomicfuCompilerPluginOnTheClasspath = project.buildscript.configurations.findByName("classpath")
+                ?.allDependencies?.any { it.group == "org.jetbrains.kotlin" && it.name == "atomicfu" } // TODO: check the version of the compiler plugin as well?
+            if (isAtomicfuCompilerPluginOnTheClasspath == false) {
+                error("You are applying `kotlinx-atomicfu` plugin of version 0.23.3 or newer.\n" +
+                        "If you wish to use this version of the plugin with Kotlin version lower than 1.9.0, you must manually include `org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}` in your buildscript. \n" +
+                        "Here's how you can do it: \n" +
+                        "```\n" +
+                        "buildscript {\n" +
+                        "    dependencies {\n" +
+                        "        classpath(\"org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}\")\n" +
+                        "    }\n" +
+                        "}\n" +
+                        "```\n" +
+                        "Alternatively, you can upgrade your Kotlin version to 1.9.0 or newer.\n"
+                )
+            }
+            plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
+            extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
+                isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
+                isJvmIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)
+                if (kotlinVersion.atLeast(1, 9, 20)) {
+                    // Native IR transformation is available since Kotlin 1.9.20
+                    isNativeIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION)
+                }
+            }
+        } else {
+            // for KGP >= 1.6.20 && KGP <= 1.7.20:
+            // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableIrTransformation`
+            // compiler plugin for JVM IR is not supported yet
+            if (kotlinVersion.atLeast(1, 6, 20)) {
+                if (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY)) {
+                    plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
+                }
             }
         }
     }
+    
 }
 
 private fun Project.configureDependencies() {
@@ -186,7 +219,7 @@ private fun KotlinVersion.atLeast(major: Int, minor: Int, patch: Int) =
 // kotlinx-atomicfu compiler plugin is available for KGP >= 1.6.20
 private fun Project.isCompilerPluginAvailable() = getKotlinVersion().atLeast(1, 6, 20)
 
-private fun Project.getBooleanProperty(name: String) =
+internal fun Project.getBooleanProperty(name: String) =
     rootProject.findProperty(name)?.toString()?.toBooleanStrict() ?: false
 
 private fun String.toBooleanStrict(): Boolean = when (this) {
@@ -195,15 +228,15 @@ private fun String.toBooleanStrict(): Boolean = when (this) {
     else -> throw IllegalArgumentException("The string doesn't represent a boolean value: $this")
 }
 
-private fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
+internal fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
     (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION) || rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY))
             && target.isJsIrTarget()
 
-private fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
+internal fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
     rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION) &&
             (target.platformType == KotlinPlatformType.jvm || target.platformType == KotlinPlatformType.androidJvm)
 
-private fun Project.needsNativeIrTransformation(target: KotlinTarget): Boolean =
+internal fun Project.needsNativeIrTransformation(target: KotlinTarget): Boolean =
     rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION) &&
             (target.platformType == KotlinPlatformType.native)
 
@@ -215,7 +248,8 @@ private fun KotlinTarget.isJsIrTarget() =
 private fun Project.isTransitiveAtomicfuDependencyRequired(target: KotlinTarget): Boolean {
     val platformType = target.platformType
     return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
-            !config.transformJs && platformType == KotlinPlatformType.js ||
+            // If JS IR transformation is disabled, then just add a compiler dependency.
+            (!config.transformJs && platformType == KotlinPlatformType.js) || needsJsIrTransformation(target) ||
             platformType == KotlinPlatformType.wasm ||
             // Always add the transitive atomicfu dependency for native targets, see #379
             platformType == KotlinPlatformType.native
@@ -341,6 +375,7 @@ private fun Project.configureMultiplatformTransformation() =
            ) {
             return@withKotlinTargets
         }
+        System.err.println("AAAAAAA: configureMultiplatformTransformation, rootProject = ${rootProject.name}, properties: ${rootProject.getBooleanProperty("kotlinx.atomicfu.enableJvmIrTransformation")}, platformType = ${target.platformType}, needsJvmTransformation = ${needsJvmIrTransformation(target)}")
         configureTransformationForTarget(target)
     }
 

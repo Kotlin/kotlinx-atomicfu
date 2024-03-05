@@ -1,4 +1,4 @@
-rootProject.name = "KotlinProject"
+rootProject.name = "mpp-version-catalog"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
