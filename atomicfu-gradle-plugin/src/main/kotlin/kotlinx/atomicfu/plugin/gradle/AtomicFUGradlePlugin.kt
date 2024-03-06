@@ -85,17 +85,9 @@ private fun Project.applyAtomicfuCompilerPlugin() {
     val kotlinVersion = getKotlinVersion()
     if (kotlinVersion.atLeast(1, 9, 0)) {
         // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin) 
-        // may be moved to the Gradle plugin in the library, because compiler plugin sources 
+        // may be moved to the Gradle plugin in the library. The sources of the compiler plugin 
         // are published as `kotlin-atomicfu-compiler-plugin-embeddable` since Kotlin 1.9.0 and may be accessed out of the Kotlin repo.
-        // Apply JVM/JS IR transformations.
-        plugins.apply(AtomicfuKotlinCompilerPlugin::class.java)
-        if (kotlinVersion.atLeast(1, 9, 20)) {
-            // Native IR transformations are only available since Kotlin 1.9.20.
-            // Native IR transformations are applied separately from JVM and JS IR transformations,
-            // because kotlin.native.version may be overriden by the user and differ from the extracted KGP version.
-            // TODO: attach an issue with the API to extract the Kotlin compiler version.
-            plugins.apply(AtomicfuKotlinNativeCompilerPlugin::class.java)
-        }
+        plugins.apply(AtomicfuKotlinCompilerPluginInternal::class.java)
     } else {
         // for KGP >= 1.7.20:
         // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableJsIrTransformation`
@@ -103,7 +95,7 @@ private fun Project.applyAtomicfuCompilerPlugin() {
         if (kotlinVersion.atLeast(1, 7, 20)) {
             // Check that the project has `org.jetbrains.kotlin:atomicfu` in the classpath, otherwise throw an error.
             val isAtomicfuCompilerPluginOnTheClasspath = project.buildscript.configurations.findByName("classpath")
-                ?.allDependencies?.any { it.group == "org.jetbrains.kotlin" && it.name == "atomicfu" } // TODO: check the version of the compiler plugin as well?
+                ?.allDependencies?.any { it.group == "org.jetbrains.kotlin" && it.name == "atomicfu" && it.version == getKotlinPluginVersion()}
             if (isAtomicfuCompilerPluginOnTheClasspath == false) {
                 error("You are applying `kotlinx-atomicfu` plugin of version 0.23.3 or newer.\n" +
                         "If you wish to use this version of the plugin with Kotlin version lower than 1.9.0, you must manually include `org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}` in your buildscript. \n" +

@@ -1,6 +1,5 @@
 package kotlinx.atomicfu.gradle.plugin.test.cases
 
-import kotlinx.atomicfu.gradle.plugin.test.framework.checker.getProjectClasspath
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.GradleBuild
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.cleanAndBuild
@@ -17,16 +16,6 @@ class PluginOrderBugTest {
     fun testUserProjectBuild() {
         val buildResult = pluginOrderBugProject.cleanAndBuild()
         assertTrue(buildResult.isSuccessful, buildResult.output)
-    }
-
-    /**
-     * Ensures that the version of atomicfu compiler plugin in the project's classpath equals the version of KGP used in the project.
-     * TODO: we don't need this test now, as we apply the compiler plugin inside the library
-     */
-    //@Test
-    fun testResolvedCompilerPluginDependency() {
-        val classpath = pluginOrderBugProject.getProjectClasspath()
-        assertTrue(classpath.contains("org.jetbrains.kotlin:atomicfu:${pluginOrderBugProject.getKotlinVersion()}"))
     }
 
     /**

@@ -11,7 +11,6 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
     var enableJvmIrTransformation = false
     var enableJsIrTransformation = false
     var enableNativeIrTransformation = false
-    var kotlinVersion: String? = null
     var localRepositoryUrl: String? = null
     val extraProperties = mutableListOf<String>()
 
@@ -20,9 +19,6 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
             add("-P$ENABLE_JVM_IR_TRANSFORMATION=$enableJvmIrTransformation")
             add("-P$ENABLE_JS_IR_TRANSFORMATION=$enableJsIrTransformation")
             add("-P$ENABLE_NATIVE_IR_TRANSFORMATION=$enableNativeIrTransformation")
-            kotlinVersion?.let { 
-                add("-P$KOTLIN_VERSION_PROPERTY=$kotlinVersion") 
-            }
             localRepositoryUrl?.let {
                 add("-P$LOCAL_REPOSITORY_URL_PROPERTY=$it")
             }
