@@ -26,9 +26,9 @@ internal fun GradleBuild.buildGradleByShell(
 
 private fun buildSystemCommand(projectDir: File, commands: List<String>, properties: List<String>): List<String> {
     return if (isWindows)
-        listOf("cmd", "/C", "gradlew.bat", "-p", projectDir.canonicalPath) + commands + properties
+        listOf("cmd", "/C", "gradlew.bat", "-p", projectDir.canonicalPath) + commands + properties + "--no-daemon"
     else
-        listOf("/bin/bash", "gradlew", "-p", projectDir.canonicalPath) + commands + properties
+        listOf("/bin/bash", "gradlew", "-p", projectDir.canonicalPath) + commands + properties + "--no-daemon"
 }
 
 private val isWindows: Boolean = System.getProperty("os.name")!!.contains("Windows")   
