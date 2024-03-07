@@ -3,3 +3,9 @@ plugins {
     // in each subproject's classloader
     alias(libs.plugins.kotlinMultiplatform) apply false
 }
+
+tasks.withType<KotlinCompile<*>>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-Xskip-prerelease-check")
+    }
+}
