@@ -89,48 +89,13 @@ private fun Project.applyAtomicfuCompilerPlugin() {
         // are published as `kotlin-atomicfu-compiler-plugin-embeddable` since Kotlin 1.9.0 and may be accessed out of the Kotlin repo.
         plugins.apply(AtomicfuKotlinCompilerPluginInternal::class.java)
     } else {
-        // for KGP >= 1.7.20:
-        // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableJsIrTransformation`
-        // compiler plugin for JVM IR is applied via the property `kotlinx.atomicfu.enableJvmIrTransformation`
-        if (kotlinVersion.atLeast(1, 7, 20)) {
-            // Check that the project has `org.jetbrains.kotlin:atomicfu` in the classpath, otherwise throw an error.
-            val isAtomicfuCompilerPluginOnTheClasspath = project.buildscript.configurations.findByName("classpath")
-                ?.allDependencies?.any { it.group == "org.jetbrains.kotlin" && it.name == "atomicfu" && it.version == getKotlinPluginVersion()}
-            if (isAtomicfuCompilerPluginOnTheClasspath == false) {
-                error("You are applying `kotlinx-atomicfu` plugin of version 0.23.3 or newer.\n" +
-                        "If you wish to use this version of the plugin with Kotlin version lower than 1.9.0, you must manually include `org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}` in your buildscript. \n" +
-                        "Here's how you can do it: \n" +
-                        "```\n" +
-                        "buildscript {\n" +
-                        "    dependencies {\n" +
-                        "        classpath(\"org.jetbrains.kotlin:atomicfu:${getKotlinPluginVersion()}\")\n" +
-                        "    }\n" +
-                        "}\n" +
-                        "```\n" +
-                        "Alternatively, you can upgrade your Kotlin version to 1.9.0 or newer.\n"
-                )
-            }
-            plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
-            extensions.getByType(AtomicfuKotlinGradleSubplugin.AtomicfuKotlinGradleExtension::class.java).apply {
-                isJsIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION)
-                isJvmIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)
-                if (kotlinVersion.atLeast(1, 9, 20)) {
-                    // Native IR transformation is available since Kotlin 1.9.20
-                    isNativeIrTransformationEnabled = rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION)
-                }
-            }
-        } else {
-            // for KGP >= 1.6.20 && KGP <= 1.7.20:
-            // compiler plugin for JS IR is applied via the property `kotlinx.atomicfu.enableIrTransformation`
-            // compiler plugin for JVM IR is not supported yet
-            if (kotlinVersion.atLeast(1, 6, 20)) {
-                if (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY)) {
-                    plugins.apply(AtomicfuKotlinGradleSubplugin::class.java)
-                }
-            }
-        }
+        error("You are applying `kotlinx-atomicfu` plugin of version 0.23.3 or newer. " +
+                "However, this version of the plugin is only compatible with Kotlin versions newer than 1.9.0.\n" +
+                "If you wish to use this version of the plugin, please upgrade your Kotlin version to 1.9.0 or newer.\n" +
+                "The alternative solution is to downgrade `kotlinx-atomicfu` plugin version to 0.22.0.\n" +
+                "Please note, that using the latest version of the plugin and upgrading the Kotlin version is a more preferable option.\n\n" +
+                "If you encounter any problems, please submit the issue: https://github.com/Kotlin/kotlinx-atomicfu/")
     }
-    
 }
 
 private fun Project.configureDependencies() {
