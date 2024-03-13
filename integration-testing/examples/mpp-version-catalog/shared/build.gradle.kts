@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+
 buildscript {
     dependencies {
         classpath(libs.atomicfuGradlePlugin)
@@ -34,5 +36,11 @@ kotlin {
                 implementation(kotlin("test-junit"))
             }
         }
+    }
+}
+
+tasks.withType<KotlinCompile<*>>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-Xskip-prerelease-check")
     }
 }
