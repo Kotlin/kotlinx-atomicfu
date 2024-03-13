@@ -20,13 +20,11 @@ import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.targets.js.*
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.tasks.*
-import org.jetbrains.kotlinx.atomicfu.gradle.*
 import java.io.*
 import java.util.*
 import javax.inject.Inject
 
 private const val EXTENSION_NAME = "atomicfu"
-private const val ORIGINAL_DIR_NAME = "originalClassesDir"
 private const val COMPILE_ONLY_CONFIGURATION = "compileOnly"
 private const val IMPLEMENTATION_CONFIGURATION = "implementation"
 private const val TEST_IMPLEMENTATION_CONFIGURATION = "testImplementation"
@@ -44,9 +42,9 @@ open class AtomicFUGradlePlugin : Plugin<Project> {
         checkCompatibility()
         // atomicfu version is stored at build time in atomicfu.properties file
         // located in atomicfu-gradle-plugin resources
-        val pluginVersion = loadPropertyFromResources("atomicfu.properties", "atomicfu.version")
-        extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(pluginVersion))
-        applyAtomicfuCompilerPlugin()
+        val afuPluginVersion = loadPropertyFromResources("atomicfu.properties", "atomicfu.version")
+        extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(afuPluginVersion))
+        applyAtomicfuCompilerPlugin(afuPluginVersion)
         configureDependencies()
         configureTasks()
     }
@@ -58,7 +56,7 @@ private fun loadPropertyFromResources(propFileName: String, property: String): S
         ?: throw FileNotFoundException("You are applying `kotlinx-atomicfu` plugin of version 0.23.3 or newer, yet we were unable to determine the specific version of the plugin.\". \n" +
                 "Starting from version 0.23.3 of `kotlinx-atomicfu`, the plugin version is extracted from the `atomicfu.properties` file, which resides within the atomicfu-gradle-plugin-{version}.jar. \n" +
                 "However, this file couldn't be found. Please ensure that there are no atomicfu-gradle-plugin-{version}.jar with version older than 0.23.3 present on the classpath.\n" +
-                "If the problem is not resolved, please submit the issue: https://github.com/Kotlin/kotlinx-atomicfu/" )
+                "If the problem is not resolved, please submit the issue: https://github.com/Kotlin/kotlinx-atomicfu/issues" )
     inputStream.use { props.load(it) }
     return props[property] as String
 }
@@ -81,7 +79,7 @@ private fun Project.checkCompatibility() {
     }
 }
 
-private fun Project.applyAtomicfuCompilerPlugin() {
+private fun Project.applyAtomicfuCompilerPlugin(afuPluginVersion: String) {
     val kotlinVersion = getKotlinVersion()
     if (kotlinVersion.atLeast(1, 9, 0)) {
         // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin) 
@@ -89,12 +87,11 @@ private fun Project.applyAtomicfuCompilerPlugin() {
         // are published as `kotlin-atomicfu-compiler-plugin-embeddable` since Kotlin 1.9.0 and may be accessed out of the Kotlin repo.
         plugins.apply(AtomicfuKotlinCompilerPluginInternal::class.java)
     } else {
-        error("You are applying `kotlinx-atomicfu` plugin of version 0.23.3 or newer. " +
+        error("You are applying `kotlinx-atomicfu` plugin of version $afuPluginVersion. " +
                 "However, this version of the plugin is only compatible with Kotlin versions newer than 1.9.0.\n" +
                 "If you wish to use this version of the plugin, please upgrade your Kotlin version to 1.9.0 or newer.\n" +
-                "The alternative solution is to downgrade `kotlinx-atomicfu` plugin version to 0.22.0.\n" +
-                "Please note, that using the latest version of the plugin and upgrading the Kotlin version is a more preferable option.\n\n" +
-                "If you encounter any problems, please submit the issue: https://github.com/Kotlin/kotlinx-atomicfu/")
+                "In case you can not upgrade the Kotlin version, please read further instructions in the README: https://github.com/Kotlin/kotlinx-atomicfu/blob/master/README.md#requirements \n" +
+                "If you encounter any problems, please submit the issue: https://github.com/Kotlin/kotlinx-atomicfu/issues")
     }
 }
 

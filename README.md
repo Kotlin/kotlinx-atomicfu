@@ -34,11 +34,15 @@
 
 ## Requirements
 
-Starting from version `0.23.2` of the library your project is required to use:
+Starting from version `0.23.3` of the library your project is required to use:
 
 * Gradle `7.0` or newer
 
-* Kotlin `1.7.0` or newer
+* Kotlin `1.9.0` or newer
+
+>In case, you cannot upgrade the Kotlin version to `1.9.0` or newer in your project,
+you can downgrade `kotlinx-atomicfu` plugin version to `0.22.0`. 
+> Please note, though, that using the latest version of the plugin and upgrading the Kotlin version is the more recommended approach.
 
 ## Features
 
