@@ -34,7 +34,7 @@
 
 ## Requirements
 
-Starting from version `0.23.3` of the library your project is required to use:
+Starting from version `0.24.0` of the library your project is required to use:
 
 * Gradle `7.0` or newer
 
