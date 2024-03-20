@@ -10,6 +10,7 @@ internal const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrT
 internal const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 internal const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
 internal const val LOCAL_REPOSITORY_URL_PROPERTY = "localRepositoryUrl"
+internal const val KOTLIN_VERSION_PROPERTY = "localRepositoryUrl"
 internal const val DUMMY_VERSION = "DUMMY_VERSION"
 internal const val LOCAL_REPO_DIR_PREFIX = "build/.m2/"
 
