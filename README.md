@@ -40,7 +40,10 @@ Starting from version `0.24.0` of the library your project is required to use:
 
 * Kotlin `1.9.0` or newer
 
->In case, you cannot upgrade the Kotlin version to `1.9.0` or newer in your project,
+> **Note on Kotlin version:** Currently, the `kotlinx-atomicfu` Gradle plugin only relies on the version of Kotlin Gradle Plugin (KGP) present in the user's project.
+> It's important to note this constraint if your project configures the custom Kotlin compiler version or modifies the Kotlin Native compiler version using `kotlin.native.version` property.
+
+>**In case, you cannot upgrade the Kotlin version to 1.9.0 or newer** in your project,
 you can downgrade `kotlinx-atomicfu` plugin version to `0.22.0`. 
 > Please note, though, that using the latest version of the plugin and upgrading the Kotlin version is the more recommended approach.
 
