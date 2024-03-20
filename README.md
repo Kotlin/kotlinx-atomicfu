@@ -112,8 +112,6 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 ### Apply plugin
 #### Gradle configuration
 
-Gradle configuration is supported for all platforms, minimal version is Gradle 6.8.
-
 In top-level build file:
 
 <details open>
