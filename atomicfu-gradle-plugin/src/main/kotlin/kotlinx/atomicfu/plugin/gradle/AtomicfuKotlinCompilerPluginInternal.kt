@@ -18,7 +18,6 @@ internal class AtomicfuKotlinCompilerPluginInternal : KotlinCompilerPluginSuppor
     companion object {
         const val ATOMICFU_ARTIFACT_NAME = "kotlin-atomicfu-compiler-plugin-embeddable"
     }
-    
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
         val target = kotlinCompilation.target
