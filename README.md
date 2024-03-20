@@ -261,10 +261,10 @@ IR for all the target backends:
 * **Native**: atomics are implemented via atomic intrinsics on Kotlin/Native.
 * **JS**: atomics are unboxed and represented as plain values.
 
-To turn on IR transformation set these properties in your `gradle.properties` file:
+To turn on IR transformations set the following properties in your `gradle.properties` file:
 
-<details open>
-<summary>For Kotlin >= 1.7.20</summary>
+> Please note, that starting from version `0.24.0` of the library your project is required to use `Kotlin version >= 1.9.0`. 
+> See the [requirements section](#Requirements).
 
 ```groovy
 kotlinx.atomicfu.enableJvmIrTransformation=true // for JVM IR transformation
@@ -272,24 +272,30 @@ kotlinx.atomicfu.enableNativeIrTransformation=true // for Native IR transformati
 kotlinx.atomicfu.enableJsIrTransformation=true // for JS IR transformation
 ```
 
-</details>
+<details open>
+<summary> Here are the configuration properties in case you use older versions of the library lower than 0.24.0. </summary>
 
-<details>
+For `Kotlin >= 1.7.20`
 
+```groovy
+kotlinx.atomicfu.enableJvmIrTransformation=true // for JVM IR transformation
+kotlinx.atomicfu.enableNativeIrTransformation=true // for Native IR transformation
+kotlinx.atomicfu.enableJsIrTransformation=true // for JS IR transformation
+```
 
-<summary> For Kotlin >= 1.6.20 and Kotlin < 1.7.20</summary>
+For `Kotlin >= 1.6.20` and `Kotlin < 1.7.20`
 
 ```groovy
 kotlinx.atomicfu.enableIrTransformation=true // only JS IR transformation is supported
 ```
-
-</details>
 
 Also for JS backend make sure that `ir` or `both` compiler mode is set:
 
 ```groovy
 kotlin.js.compiler=ir // or both
 ```
+
+</details>
 
 
 ## Options for post-compilation transformation
