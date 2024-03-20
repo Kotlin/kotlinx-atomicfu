@@ -40,12 +40,13 @@ private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) = project.run {
-        checkCompatibility()
-        // atomicfu version is stored at build time in atomicfu.properties file
+        // Atomicfu version is stored at build time in atomicfu.properties file
         // located in atomicfu-gradle-plugin resources
         val afuPluginVersion = loadPropertyFromResources("atomicfu.properties", "atomicfu.version")
+        checkCompatibility(afuPluginVersion)
         extensions.add(EXTENSION_NAME, AtomicFUPluginExtension(afuPluginVersion))
-        applyAtomicfuCompilerPlugin(afuPluginVersion)
+        // Apply Atomicfu compiler plugin
+        plugins.apply(AtomicfuKotlinCompilerPluginInternal::class.java)
         configureDependencies()
         configureTasks()
     }
@@ -64,7 +65,7 @@ private fun loadPropertyFromResources(propFileName: String, property: String): S
     return props[property] as String
 }
 
-private fun Project.checkCompatibility() {
+private fun Project.checkCompatibility(afuPluginVersion: String) {
     val currentGradleVersion = GradleVersion.current()
     val kotlinVersion = getKotlinVersion()
     val minSupportedVersion = GradleVersion.version(MIN_SUPPORTED_GRADLE_VERSION)
@@ -74,22 +75,10 @@ private fun Project.checkCompatibility() {
                 "Please use Gradle $MIN_SUPPORTED_GRADLE_VERSION or newer, or the previous version of Atomicfu gradle plugin."
         )
     }
-    if (!kotlinVersion.atLeast(1, 7, 0)) {
-        throw GradleException(
-            "The current Kotlin gradle plugin version is not compatible with Atomicfu gradle plugin. " +
-                "Please use Kotlin $MIN_SUPPORTED_KGP_VERSION or newer, or the previous version of Atomicfu gradle plugin."
-        )
-    }
-}
-
-private fun Project.applyAtomicfuCompilerPlugin(afuPluginVersion: String) {
-    val kotlinVersion = getKotlinVersion()
-    if (kotlinVersion.atLeast(1, 9, 0)) {
+    if (!kotlinVersion.atLeast(1, 9, 0)) {
         // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin) 
         // may be moved to the Gradle plugin in the library. The sources of the compiler plugin 
         // are published as `kotlin-atomicfu-compiler-plugin-embeddable` since Kotlin 1.9.0 and may be accessed out of the Kotlin repo.
-        plugins.apply(AtomicfuKotlinCompilerPluginInternal::class.java)
-    } else {
         error(
             "You are applying `kotlinx-atomicfu` plugin of version $afuPluginVersion. " +
                 "However, this version of the plugin is only compatible with Kotlin versions newer than 1.9.0.\n" +
