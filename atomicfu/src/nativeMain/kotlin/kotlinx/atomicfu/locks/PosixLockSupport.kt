@@ -1,22 +1,21 @@
 package kotlinx.atomicfu.locks
 
+import interop.*
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.concurrent.*
 
 public class NativeMutexNode {
-    private val mutex: interop.mutex_node_t = nativeHeap.alloc<interop.mutex_node_t>().also {
-        interop.mutex_node_init(it.ptr)
-    }
+    private val mutex: CPointer<lock_support_t> = lock_support_init()!!
 
     internal var next: NativeMutexNode? = null
 
     fun lock() {
-        interop.lock(mutex.mutex)
+        interop.lock(mutex)
     }
 
     fun unlock() {
-        interop.unlock(mutex.mutex)
+        interop.unlock(mutex)
     }
 }
 
