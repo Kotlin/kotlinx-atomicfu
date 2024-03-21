@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2017-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package examples.mpp_sample
@@ -19,9 +19,17 @@ public class AtomicSampleClass {
         assertTrue(_x.compareAndSet(3, finalValue))
     }
     
-    private val lock = reentrantLock()
+    private val lock_factory = reentrantLock()
     
-    public fun synchronizedFoo(value: Int): Int {
-        return lock.withLock { value }
+    private val lock_cons = ReentrantLock()
+    
+    private var state: Int = 0
+    
+    public fun synchronizedSetState(value: Int): Int {
+        lock_cons.withLock { state = 0 }
+        assertEquals(0, state)
+        lock_factory.withLock { state = value }
+        assertEquals(value, state)
+        return state
     }
 }
