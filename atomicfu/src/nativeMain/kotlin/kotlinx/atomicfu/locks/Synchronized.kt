@@ -1,13 +1,8 @@
 package kotlinx.atomicfu.locks
 
 import platform.posix.*
-import interop.*
-import kotlinx.cinterop.*
-import kotlin.native.internal.NativePtr
 import kotlinx.atomicfu.locks.SynchronizedObject.Status.*
-import kotlin.concurrent.AtomicNativePtr
 import kotlin.concurrent.AtomicReference
-import kotlin.native.concurrent.*
 
 public actual open class SynchronizedObject {
 
@@ -23,6 +18,7 @@ public actual open class SynchronizedObject {
                     if (lock.compareAndSet(state, thinLock))
                         return
                 }
+
                 THIN -> {
                     if (currentThreadId == state.ownerThreadId) {
                         // reentrant lock
@@ -46,13 +42,16 @@ public actual open class SynchronizedObject {
                         }
                     }
                 }
+
                 FAT -> {
                     if (currentThreadId == state.ownerThreadId) {
                         // reentrant lock
-                        val nestedFatLock = LockState(FAT, state.nestedLocks + 1, state.waiters, state.ownerThreadId, state.mutex)
+                        val nestedFatLock =
+                            LockState(FAT, state.nestedLocks + 1, state.waiters, state.ownerThreadId, state.mutex)
                         if (lock.compareAndSet(state, nestedFatLock)) return
                     } else if (state.ownerThreadId != null) {
-                        val fatLock = LockState(FAT, state.nestedLocks, state.waiters + 1, state.ownerThreadId, state.mutex)
+                        val fatLock =
+                            LockState(FAT, state.nestedLocks, state.waiters + 1, state.ownerThreadId, state.mutex)
                         if (lock.compareAndSet(state, fatLock)) {
                             fatLock.mutex!!.lock()
                             tryLockAfterResume(currentThreadId)
@@ -74,7 +73,8 @@ public actual open class SynchronizedObject {
                     return true
             } else {
                 if (currentThreadId == state.ownerThreadId) {
-                    val nestedLock = LockState(state.status, state.nestedLocks + 1, state.waiters, currentThreadId, state.mutex)
+                    val nestedLock =
+                        LockState(state.status, state.nestedLocks + 1, state.waiters, currentThreadId, state.mutex)
                     if (lock.compareAndSet(state, nestedLock))
                         return true
                 } else {
@@ -103,6 +103,7 @@ public actual open class SynchronizedObject {
                             return
                     }
                 }
+
                 FAT -> {
                     if (state.nestedLocks == 1) {
                         // last nested unlock -> release completely, resume some waiter
@@ -119,6 +120,7 @@ public actual open class SynchronizedObject {
                             return
                     }
                 }
+
                 else -> error("It is not possible to unlock the mutex that is not obtained")
             }
         }
@@ -146,14 +148,10 @@ public actual open class SynchronizedObject {
         val nestedLocks: Int,
         val waiters: Int,
         val ownerThreadId: pthread_t? = null,
-        val mutex: CPointer<mutex_node_t>? = null
+        val mutex: NativeMutexNode? = null
     )
 
     protected enum class Status { UNLOCKED, THIN, FAT }
-
-    private fun CPointer<mutex_node_t>.lock() = lock(this.pointed.mutex)
-
-    private fun CPointer<mutex_node_t>.unlock() = unlock(this.pointed.mutex)
 }
 
 public actual fun reentrantLock() = ReentrantLock()
@@ -183,37 +181,40 @@ private const val INITIAL_POOL_CAPACITY = 64
 private val mutexPool by lazy { MutexPool(INITIAL_POOL_CAPACITY) }
 
 class MutexPool(capacity: Int) {
-    private val top = AtomicNativePtr(NativePtr.NULL)
+    private val top = AtomicReference<NativeMutexNode?>(null)
 
-    private val mutexes = nativeHeap.allocArray<mutex_node_t>(capacity) { mutex_node_init(ptr) }
+    private val mutexes = Array<NativeMutexNode>(capacity) { NativeMutexNode() }
 
     init {
-        for (i in 0 until capacity) {
-            release(interpretCPointer<mutex_node_t>(mutexes.rawValue.plus(i * sizeOf<mutex_node_t>()))!!)
+        // Immediately form a stack
+        for (mutex in mutexes) {
+            release(mutex)
         }
     }
 
-    private fun allocMutexNode() = nativeHeap.alloc<mutex_node_t> { mutex_node_init(ptr) }.ptr
+    private fun allocMutexNode() = NativeMutexNode()
 
-    fun allocate(): CPointer<mutex_node_t> = pop() ?: allocMutexNode()
+    fun allocate(): NativeMutexNode = pop() ?: allocMutexNode()
 
-    fun release(mutexNode: CPointer<mutex_node_t>) {
+    fun release(mutexNode: NativeMutexNode) {
         while (true) {
-            val oldTop = interpretCPointer<mutex_node_t>(top.value)
-            mutexNode.pointed.next = oldTop
-            if (top.compareAndSet(oldTop.rawValue, mutexNode.rawValue))
+            val oldTop = top.value
+            mutexNode.next = oldTop
+            if (top.compareAndSet(oldTop, mutexNode)) {
                 return
+            }
         }
     }
 
-    private fun pop(): CPointer<mutex_node_t>? {
+    private fun pop(): NativeMutexNode? {
         while (true) {
-            val oldTop = interpretCPointer<mutex_node_t>(top.value)
-            if (oldTop.rawValue === NativePtr.NULL)
+            val oldTop = top.value
+            if (oldTop == null)
                 return null
-            val newHead = oldTop!!.pointed.next
-            if (top.compareAndSet(oldTop.rawValue, newHead.rawValue))
+            val newHead = oldTop.next
+            if (top.compareAndSet(oldTop, newHead)) {
                 return oldTop
+            }
         }
     }
 }
