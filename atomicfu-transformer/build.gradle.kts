@@ -3,7 +3,7 @@
  */
 
 plugins {
-    kotlin("jvm")
+    id("java-library-conventions")
     id("compile-options-conventions")
 }
 
