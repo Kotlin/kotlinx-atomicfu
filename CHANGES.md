@@ -1,5 +1,12 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.24.0
+
+* Move the logic from koltin repository atomicfu gradle plugin to the gradle plugin in the library (#406).
+* Store the version of `atomicfu-gradle-plugin` in `atomicfu.properties` file and read it from this file during application (#405).
+* Fixed KT-63413, SynchronizedObject does not appear in the project Metadata (#404).
+* ReentrantLock expect class declares a default constructor (#411).
+
 # Version 0.23.2
 
 * Always add a transitive dependency to the Native target (#380).
