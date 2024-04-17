@@ -6,8 +6,6 @@ import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.konan.target.HostManager
 
 buildscript {
-    def overridingKotlinVersion = KotlinConfiguration.getOverridingKotlinVersion(project)
-    if (overridingKotlinVersion != null) { project.kotlin_version = overridingKotlinVersion }
 
     /*
      * This property group is used to build kotlinx.atomicfu against Kotlin compiler snapshots.
@@ -19,10 +17,6 @@ buildscript {
     def buildSnapshotTrainGradleProperty = project.findProperty("build_snapshot_train")
     ext.build_snapshot_train = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
     if (build_snapshot_train) {
-        project.kotlin_version = project.findProperty("kotlin_snapshot_version")
-        if (project.kotlin_version == null) {
-            throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with a snapshot compiler")
-        }
         repositories {
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
             mavenLocal()
@@ -37,8 +31,8 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.github.node-gradle:gradle-node-plugin:$gradle_node_version"
+        classpath libs.kotlin.gradlePlugin
+        classpath libs.gradle.nodePlubing
     }
 
     ext.native_targets_enabled = !project.hasProperty("disable_native_targets")
@@ -52,17 +46,13 @@ allprojects {
     // the only place where HostManager could be instantiated
     project.ext.hostManager = new HostManager()
 
-    def overridingKotlinVersion = KotlinConfiguration.getOverridingKotlinVersion(project)
-    if (overridingKotlinVersion != null) { project.kotlin_version = overridingKotlinVersion }
-
     if (build_snapshot_train) {
-        project.kotlin_version = project.findProperty("kotlin_snapshot_version")
         repositories {
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
 
-    logger.info("Using Kotlin compiler ${project.kotlin_version} for project ${project.name}")
+    logger.info("Using Kotlin compiler ${libs.versions.kotlin} for project ${project.name}")
 
     repositories {
         mavenCentral()

@@ -6,8 +6,8 @@ apply plugin: 'com.github.node-gradle.node'
 
 
 node {
-    version = "$node_version"
-    npmVersion = "$npm_version"
+    version = libs.versions.node
+    npmVersion = libs.versions.npm
     download = true
     nodeModulesDir = file(buildDir)
 }

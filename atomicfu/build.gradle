@@ -5,6 +5,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 apply plugin: 'kotlin-multiplatform'
+
 apply from: rootProject.file("gradle/targets.gradle")
 
 ext {
@@ -52,7 +53,7 @@ kotlin {
             dependencies {
                 implementation('org.jetbrains.kotlin:kotlin-stdlib') {
                     version {
-                        prefer "$kotlin_version"
+                        prefer libs.versions.kotlin.get()
                     }
                 }
             }
@@ -116,7 +117,7 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-reflect'
                 implementation 'org.jetbrains.kotlin:kotlin-test'
                 implementation 'org.jetbrains.kotlin:kotlin-test-junit'
-                implementation "junit:junit:$junit_version"
+                implementation libs.junit.junit
             }
         }
     }

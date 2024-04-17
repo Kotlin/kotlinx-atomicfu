@@ -27,7 +27,7 @@ def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
 
 task preparePublishNpm(type: Copy, dependsOn: [compileJsLegacy]) {
     from(npmTemplateDir) {
-        expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
+        expand (project.properties + [kotlinDependency: "\"kotlin\": \"${libs.versions.kotlin.get()}"])
     }
     from(compileJsLegacy.destinationDirectory)
     into npmDeployDir
