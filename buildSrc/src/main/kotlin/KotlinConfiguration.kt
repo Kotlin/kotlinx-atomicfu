@@ -52,24 +52,6 @@ fun addCustomKotlinRepositoryIfEnabled(repositoryHandler: RepositoryHandler, pro
 /**
  * Should be used for running against a non-released Kotlin compiler on a system test level.
  *
- * @return a Kotlin version taken from the Kotlin community project Gradle plugin,
- *         or null otherwise
- */
-fun getOverridingKotlinVersion(project: Project): String? {
-    val communityPluginKotlinVersion = project.findProperty("community.project.kotlin.version") as? String
-    // add any other ways of overriding the Kotlin version here
-    val kotlinVersion = when {
-        communityPluginKotlinVersion != null -> communityPluginKotlinVersion
-        // add any other ways of overriding the Kotlin version here
-        else -> return null
-    }
-    LOGGER.info("An overriding Kotlin version of $kotlinVersion was found for project ${project.name}")
-    return kotlinVersion
-}
-
-/**
- * Should be used for running against a non-released Kotlin compiler on a system test level.
- *
  * @return a Kotlin language version taken from:
  *
  * 1. the Kotlin community project Gradle plugin,

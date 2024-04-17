@@ -1,0 +1,50 @@
+[versions]
+kotlin = "1.9.21"
+kotlinx-metadata = "0.7.0"
+asm = "9.6"
+slf4j = "1.8.0-alpha2"
+junit = "4.12"
+maven = "3.5.3"
+maven-pluginTools = "3.5"
+node-gradle = "3.1.1"
+node = "8.11.1"
+npm = "5.7.1"
+rhino = "1.7.10"
+
+[libraries]
+
+# Kotlin dependencies
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-atomicfu = { group = "org.jetbrains.kotlin", name = "atomicfu", version.ref = "kotlin" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
+kotlin-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+kotlin-testJunit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
+kotlin-scriptRuntime = { group = "org.jetbrains.kotlin", name = "kotlin-script-runtime", version.ref = "kotlin" }
+kotlinx-metadataJvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version.ref = "kotlinx-metadata" }
+
+# ASM dependencies
+asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+asm-commons = { group = "org.ow2.asm", name = "asm-commons", version.ref = "asm" }
+asm-tree = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
+asm-util = { group = "org.ow2.asm", name = "asm-util", version.ref = "asm" }
+
+# Logging dependencies
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version.ref = "slf4j" }
+
+# Testing depedencies
+junit-junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+# Maven dependencies
+maven-core = { group = "org.apache.maven", name = "maven-core", version.ref = "maven" }
+maven-pluginApi = { group = "org.apache.maven", name = "maven-plugin-api", version.ref = "maven" }
+maven-pluginAnnotations = { group = "org.apache.maven.plugin-tools", name = "maven-plugin-annotations", version.ref = "maven-pluginTools" }
+
+# Other dependencies
+gradle-nodePlubing = { group = "com.github.node-gradle", name = "gradle-node-plugin", version.ref = "node-gradle" }
+mozilla-rhino = { group = "org.mozilla", name = "rhino", version.ref = "rhino" }
+
+[bundles]
+asm = ["asm", "asm-commons", "asm-tree", "asm-util"]
+maven = ["maven-core", "maven-pluginApi", "maven-pluginAnnotations"]

@@ -19,16 +19,16 @@ dependencies {
     }
 
     compileOnly gradleApi()
-    compileOnly 'org.jetbrains.kotlin:kotlin-stdlib'
-    compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    compileOnly libs.kotlin.stdlib
+    compileOnly libs.kotlin.gradlePlugin
     // Atomicfu compiler plugin dependency will be loaded to kotlinCompilerPluginClasspath
     // Atomicfu plugin will only be applied if the flag is set kotlinx.atomicfu.enableJsIrTransformation=true
-    compileOnly "org.jetbrains.kotlin:atomicfu:$kotlin_version"
+    compileOnly libs.kotlin.atomicfu
 
     testImplementation gradleTestKit()
-    testImplementation 'org.jetbrains.kotlin:kotlin-test'
-    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
-    testImplementation 'junit:junit:4.12'
+    testImplementation libs.kotlin.test
+    testImplementation libs.kotlin.testJunit
+    testImplementation libs.junit.junit
 }
 
 evaluationDependsOn(':atomicfu')
