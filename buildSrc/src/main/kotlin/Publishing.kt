@@ -13,37 +13,6 @@ import java.net.*
 
 // Pom configuration
 
-infix fun <T> Property<T>.by(value: T) {
-    set(value)
-}
-
-fun MavenPom.configureMavenCentralMetadata(project: Project) {
-    name by project.name
-    description by "AtomicFU utilities"
-    url by "https://github.com/Kotlin/kotlinx.atomicfu"
-
-    licenses {
-        license {
-            name by "The Apache Software License, Version 2.0"
-            url by "https://www.apache.org/licenses/LICENSE-2.0.txt"
-            distribution by "repo"
-        }
-    }
-
-    developers {
-        developer {
-            id by "JetBrains"
-            name by "JetBrains Team"
-            organization by "JetBrains"
-            organizationUrl by "https://www.jetbrains.com"
-        }
-    }
-
-    scm {
-        url by "https://github.com/Kotlin/kotlinx.atomicfu"
-    }
-}
-
 fun mavenRepositoryUri(): URI {
     val repositoryId: String? = System.getenv("libs.repository.id")
     return if (repositoryId == null) {
@@ -52,16 +21,6 @@ fun mavenRepositoryUri(): URI {
         URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
     } else {
         URI("https://oss.sonatype.org/service/local/staging/deployByRepositoryId/$repositoryId")
-    }
-}
-
-fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
-    rh.maven {
-        url = mavenRepositoryUri()
-        credentials {
-            username = project.getSensitiveProperty("libs.sonatype.user")
-            password = project.getSensitiveProperty("libs.sonatype.password")
-        }
     }
 }
 
@@ -77,6 +36,6 @@ fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication)
     }
 }
 
-private fun Project.getSensitiveProperty(name: String): String? {
+internal fun Project.getSensitiveProperty(name: String): String? {
     return project.findProperty(name) as? String ?: System.getenv(name)
 }
