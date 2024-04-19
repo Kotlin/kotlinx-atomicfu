@@ -124,14 +124,12 @@ private class KlibChecker(targetDir: File) : ArtifactChecker(targetDir) {
 }
 
 internal fun GradleBuild.buildAndCheckBytecode() {
-    val buildResult = cleanAndBuild()
-    require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
+    cleanAndBuild()
     BytecodeChecker(this).checkClassesInBuildDirectories()
 }
 
 // TODO: klib checks are skipped for now because of this problem KT-61143
 internal fun GradleBuild.buildAndCheckNativeKlib() {
-    val buildResult = cleanAndBuild()
-    require(buildResult.isSuccessful) { "Build of the project $projectName failed:\n ${buildResult.output}" }
+    cleanAndBuild()
     KlibChecker(this.targetDir).checkClassesInBuildDirectories()
 }

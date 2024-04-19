@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2017-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.atomicfu.gradle.plugin.test.framework.runner
@@ -10,12 +10,15 @@ internal const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrT
 internal const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 internal const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
 internal const val LOCAL_REPOSITORY_URL_PROPERTY = "localRepositoryUrl"
-internal const val KOTLIN_VERSION_PROPERTY = "localRepositoryUrl"
+internal const val KOTLIN_VERSION_PARAMETER = "kotlin_version"
+internal const val KOTLIN_NATIVE_VERSION_PARAMETER = "kotlin.native.version"
 internal const val DUMMY_VERSION = "DUMMY_VERSION"
 internal const val LOCAL_REPO_DIR_PREFIX = "build/.m2/"
 
-internal val libraryKotlinVersion = System.getProperty("kotlinVersion")
-internal val atomicfuVersion = System.getProperty("atomicfuVersion")
+internal val kotlinVersion = System.getProperty("kotlin.version.integration")
+internal val kotlinNativeVersion = System.getProperty("kotlin.native.version.integration")
+internal val atomicfuVersion = System.getProperty("atomicfu.version.integration")
+internal val kotlinArtifactsRepo = System.getProperty("kotlin.artifacts.repository.integration")
 
 internal val gradleWrapperDir = File("..")
 

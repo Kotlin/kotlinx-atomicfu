@@ -30,7 +30,6 @@ class UserProjectTest {
             "Failed to find the local repository for ${mppSample.projectName}, this directory does not exist: ${mppSamplePublishDirectory.path}"
         }
         userProject.localRepositoryUrl = mppSamplePublishDirectory.path
-        val buildResult = userProject.cleanAndBuild()
-        assertTrue(buildResult.isSuccessful, buildResult.output)
+        userProject.cleanAndBuild()
     }
 }

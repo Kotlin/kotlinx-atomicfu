@@ -15,16 +15,14 @@ class MultiModuleTest {
     @Test
     fun testMppWithDisabledJvmIrTransformation() {
         multiModuleTest.enableJvmIrTransformation = false
-        val buildResult = multiModuleTest.cleanAndBuild()
-        assertTrue(buildResult.isSuccessful, buildResult.output)
+        multiModuleTest.cleanAndBuild()
         multiModuleTest.buildAndCheckBytecode()
     }
 
     @Test
     fun testMppWithEnabledJvmIrTransformation() {
         multiModuleTest.enableJvmIrTransformation = true
-        val buildResult = multiModuleTest.cleanAndBuild()
-        assertTrue(buildResult.isSuccessful, buildResult.output)
+        multiModuleTest.cleanAndBuild()
         multiModuleTest.buildAndCheckBytecode()
     }
 }
