@@ -4,6 +4,7 @@ import platform.posix.*
 import kotlinx.atomicfu.locks.SynchronizedObject.Status.*
 import kotlin.concurrent.AtomicReference
 
+@OptIn(UnsafeNumber::class) // required for KT-60572
 public actual open class SynchronizedObject {
 
     protected val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
