@@ -9,6 +9,7 @@ import kotlin.concurrent.AtomicNativePtr
 import kotlin.concurrent.AtomicReference
 import kotlin.native.concurrent.*
 
+@OptIn(UnsafeNumber::class) // required for KT-60572
 public actual open class SynchronizedObject {
 
     protected val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
