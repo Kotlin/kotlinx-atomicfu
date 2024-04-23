@@ -2,6 +2,7 @@ package kotlinx.atomicfu.locks
 
 import platform.posix.*
 import kotlinx.atomicfu.locks.SynchronizedObject.Status.*
+import kotlinx.cinterop.UnsafeNumber
 import kotlin.concurrent.AtomicReference
 
 @OptIn(UnsafeNumber::class) // required for KT-60572
