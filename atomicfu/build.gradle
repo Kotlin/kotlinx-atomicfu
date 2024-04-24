@@ -6,8 +6,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 apply plugin: 'kotlin-multiplatform'
 
-apply from: rootProject.file("gradle/targets.gradle")
-
 ext {
     nativeMainSets = []
     nativeTestSets = []
@@ -127,38 +125,34 @@ kotlin {
 if (rootProject.ext.native_targets_enabled) {
     kotlin {
         targets {
-            if (project.ext.ideaActive) {
-                addNative(fromPreset(project.ext.ideaPreset, 'native'))
-            } else {
-                // Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
+            // Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
 
-                // Tier #1
-                addTarget(presets.linuxX64)
-                addTarget(presets.macosX64)
-                addTarget(presets.macosArm64)
-                addTarget(presets.iosSimulatorArm64)
-                addTarget(presets.iosX64)
+            // Tier #1
+            addTarget(presets.linuxX64)
+            addTarget(presets.macosX64)
+            addTarget(presets.macosArm64)
+            addTarget(presets.iosSimulatorArm64)
+            addTarget(presets.iosX64)
 
-                // Tier #2
-                addTarget(presets.linuxArm64)
-                addTarget(presets.watchosSimulatorArm64)
-                addTarget(presets.watchosX64)
-                addTarget(presets.watchosArm32)
-                addTarget(presets.watchosArm64)
-                addTarget(presets.tvosSimulatorArm64)
-                addTarget(presets.tvosX64)
-                addTarget(presets.tvosArm64)
-                addTarget(presets.iosArm64)
+            // Tier #2
+            addTarget(presets.linuxArm64)
+            addTarget(presets.watchosSimulatorArm64)
+            addTarget(presets.watchosX64)
+            addTarget(presets.watchosArm32)
+            addTarget(presets.watchosArm64)
+            addTarget(presets.tvosSimulatorArm64)
+            addTarget(presets.tvosX64)
+            addTarget(presets.tvosArm64)
+            addTarget(presets.iosArm64)
 
 
-                // Tier #3
-                addTarget(presets.androidNativeArm32)
-                addTarget(presets.androidNativeArm64)
-                addTarget(presets.androidNativeX86)
-                addTarget(presets.androidNativeX64)
-                addTarget(presets.mingwX64)
-                addTarget(presets.watchosDeviceArm64)
-            }
+            // Tier #3
+            addTarget(presets.androidNativeArm32)
+            addTarget(presets.androidNativeArm64)
+            addTarget(presets.androidNativeX86)
+            addTarget(presets.androidNativeX64)
+            addTarget(presets.mingwX64)
+            addTarget(presets.watchosDeviceArm64)
         }
 
         sourceSets {
@@ -166,14 +160,12 @@ if (rootProject.ext.native_targets_enabled) {
 
             nativeTest {}
 
-            if (!project.ext.ideaActive) {
-                configure(nativeMainSets) {
-                    dependsOn nativeMain
-                }
+            configure(nativeMainSets) {
+                dependsOn nativeMain
+            }
 
-                configure(nativeTestSets) {
-                    dependsOn nativeTest
-                }
+            configure(nativeTestSets) {
+                dependsOn nativeTest
             }
         }
 
@@ -263,9 +255,9 @@ transformedTestVH.onlyIf {
 }
 
 task jvmTestAll(dependsOn: [
-    transformedTestFU_current,
-    transformedTestBOTH_current,
-    transformedTestVH
+        transformedTestFU_current,
+        transformedTestBOTH_current,
+        transformedTestVH
 ])
 
 tasks.withType(Test) {
@@ -343,7 +335,8 @@ tasks.named("jvmJar") {
 }
 
 jvmTest {
-    exclude "**/AtomicfuBytecodeTest*", "**/AtomicfuReferenceJsTest*", '**/TopLevelGeneratedDeclarationsReflectionTest.*', '**/SyntheticFUFieldsTest.*' // run them only for transformed code
+    exclude "**/AtomicfuBytecodeTest*", "**/AtomicfuReferenceJsTest*", '**/TopLevelGeneratedDeclarationsReflectionTest.*', '**/SyntheticFUFieldsTest.*'
+    // run them only for transformed code
 }
 
 jvmTest.dependsOn jvmTestAll
