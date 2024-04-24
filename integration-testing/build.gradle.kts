@@ -72,7 +72,7 @@ val functionalTest by tasks.registering(Test::class) {
     // the kotlin version used to build the library, which is set in root gradle.properties or overriden by the TC config
     systemProperties["kotlin.native.version.integration"] = providers.gradleProperty("kotlin.native.version").orNull
     // the current atomicfu version set in the root gradle.properties
-    systemProperties["atomicfu.version.integration"] = providers.gradleProperty("version").orNull
+    systemProperties["atomicfu.snapshot.version.integration"] = providers.gradleProperty("version").orNull
     // the directory (on TC agent) where Kotlin artifacts were published during the Aggregate build
     systemProperties["kotlin.artifacts.repository.integration"] = providers.gradleProperty("kotlin_repo_url").orNull
 

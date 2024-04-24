@@ -21,8 +21,8 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
             add("-P$ENABLE_NATIVE_IR_TRANSFORMATION=$enableNativeIrTransformation")
             // Pass kotlin_version and kotlin.native.version parameters used for the library build to the builds of integration tests.
             // These versions may be overriden by the TC build config.
-            kotlinVersion?.let { add("-P$KOTLIN_VERSION_PARAMETER=$it") }
-            kotlinNativeVersion?.let { add("-P$KOTLIN_NATIVE_VERSION_PARAMETER=$it") }
+            if (kotlinVersion.isNotEmpty()) add("-P$KOTLIN_VERSION_PARAMETER=$kotlinVersion")
+            if (kotlinNativeVersion.isNotEmpty()) add("-P$KOTLIN_NATIVE_VERSION_PARAMETER=$kotlinNativeVersion")
             localRepositoryUrl?.let { add("-P$LOCAL_REPOSITORY_URL_PROPERTY=$it") }
             addAll(extraProperties)
         }
