@@ -34,7 +34,7 @@ internal fun File.addKotlinArtifactRepositoryToProjectBuild(
             // in build.gradle exclude publishing { repositories {...} } block
             val isInPublishingBlock = previousLine.trimStart().startsWith("publishing")
             // in settings.gradle add repository only in pluginManagement {...} block
-            val isInPluginManagementBlock = line.trimStart().startsWith("pluginManagement")
+            val isInPluginManagementBlock = previousLine.trimStart().startsWith("pluginManagement")
             val isRepositoryBlock = line.trimStart().startsWith("repositories")
             if (line.isNotBlank() && ((isInPluginManagementBlock && isRepositoryBlock) || (!isInPublishingBlock && isRepositoryBlock))) {
                 if (isKts) {

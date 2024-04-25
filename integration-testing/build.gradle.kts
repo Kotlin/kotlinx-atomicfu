@@ -24,9 +24,6 @@ kotlin {
     jvmToolchain(11)
 }
 
-val kotlin_version = providers.gradleProperty(libs.versions.kotlin).orNull
-val atomicfu_snapshot_version = providers.gradleProperty("version").orNull
-
 sourceSets {
     create("mavenTest") {
         compileClasspath += files(sourceSets.main.get().output, configurations.testRuntimeClasspath)
@@ -68,7 +65,7 @@ val functionalTest by tasks.registering(Test::class) {
     classpath = sourceSets["functionalTest"].runtimeClasspath
 
     // the kotlin version used to build the library, which is set in root gradle.properties or overriden by the TC config
-    systemProperties["kotlin.version.integration"] = providers.gradleProperty("kotlin_version").orNull
+    systemProperties["kotlin.version.integration"] = libs.versions.kotlin
     // the kotlin version used to build the library, which is set in root gradle.properties or overriden by the TC config
     systemProperties["kotlin.native.version.integration"] = providers.gradleProperty("kotlin.native.version").orNull
     // the current atomicfu version set in the root gradle.properties
