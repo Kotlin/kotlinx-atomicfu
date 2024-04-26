@@ -1,6 +1,7 @@
 [versions]
 kotlin = "1.9.21"
 kotlinx-metadata = "0.7.0"
+kotlinx-binaryCompatibilityValidator = "0.13.2"
 asm = "9.6"
 slf4j = "1.8.0-alpha2"
 junit = "4.12"
@@ -40,9 +41,14 @@ maven-pluginApi = { group = "org.apache.maven", name = "maven-plugin-api", versi
 maven-pluginAnnotations = { group = "org.apache.maven.plugin-tools", name = "maven-plugin-annotations", version.ref = "maven-pluginTools" }
 
 # Other dependencies
-gradle-nodePlubing = { group = "com.github.node-gradle", name = "gradle-node-plugin", version.ref = "node-gradle" }
 mozilla-rhino = { group = "org.mozilla", name = "rhino", version.ref = "rhino" }
 
 [bundles]
 asm = ["asm", "asm-commons", "asm-tree", "asm-util"]
 maven = ["maven-core", "maven-pluginApi", "maven-pluginAnnotations"]
+
+[plugins]
+gradle-nodePlugin = { id = "com.github.node-gradle.node", version.ref = "node-gradle" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinx-binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-binaryCompatibilityValidator"}
+
