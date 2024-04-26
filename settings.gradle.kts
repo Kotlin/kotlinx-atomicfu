@@ -29,6 +29,56 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
+    val buildSnapshotTrainGradleProperty = providers.gradleProperty("build_snapshot_train")
+
+    @Suppress("UnstableApiUsage")
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+
+    @Suppress("UnstableApiUsage")
+    repositories {
+
+        // TODO(Dmitrii Krasnov): maybe could be passed via additionalRepositoryProperty
+        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+
+        if (buildSnapshotTrainGradleProperty.isPresent) {
+            maven(url = uri("https://oss.sonatype.org/content/repositories/snapshots"))
+        }
+
+        val additionalRepositoryProperty = providers.gradleProperty("community.project.kotlin.repo")
+            .orElse(providers.gradleProperty("kotlin_repo_url"))
+        if (additionalRepositoryProperty.isPresent) {
+            maven(url = uri(additionalRepositoryProperty.get()))
+            logger.info("A custom Kotlin repository ${additionalRepositoryProperty.get()} was added")
+        }
+
+        mavenCentral()
+
+        exclusiveContent {
+            forRepository {
+                ivy("https://nodejs.org/download/v8-canary") {
+                    patternLayout { artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]") }
+                    metadataSources { artifact() }
+                    content { includeModule("org.nodejs", "node") }
+                }
+            }
+            filter { includeGroup("org.nodejs") }
+        }
+
+        exclusiveContent {
+            forRepository {
+                ivy("https://github.com/yarnpkg/yarn/releases/download") {
+                    patternLayout { artifact("v[revision]/[artifact](-v[revision]).[ext]") }
+                    metadataSources { artifact() }
+                    content { includeModule("com.yarnpkg", "yarn") }
+                }
+            }
+            filter { includeGroup("com.yarnpkg") }
+        }
+
+        // TODO(Dmitrii Krasnov): I'm not sure that we really need it
+        mavenLocal()
+    }
+
     versionCatalogs {
         create("libs") {
 
@@ -50,11 +100,10 @@ dependencyResolutionManagement {
             * (the former is required for AFU and public, the latter is required for compiler snapshots).
             * DO NOT change the name of these properties without adapting kotlinx.train build chain.
             */
-            val buildSnapshotTrainGradleProperty = providers.gradleProperty("build_snapshot_train").orNull
-            if (buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != "") {
-                val kotlinVersion = providers.gradleProperty("kotlin_snapshot_version").orNull
+            if (buildSnapshotTrainGradleProperty.isPresent && buildSnapshotTrainGradleProperty.get() != "") {
+                val kotlinSnapshotVersion = providers.gradleProperty("kotlin_snapshot_version").orNull
                     ?: throw IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with a snapshot compiler")
-                version("kotlin", kotlinVersion)
+                version("kotlin", kotlinSnapshotVersion)
             }
         }
     }

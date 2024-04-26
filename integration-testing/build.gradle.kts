@@ -4,12 +4,6 @@ plugins {
     kotlin("jvm")
 }
 
-repositories {
-    mavenLocal()
-    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-    mavenCentral()
-}
-
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
