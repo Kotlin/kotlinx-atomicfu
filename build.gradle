@@ -1,46 +1,23 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-import org.jetbrains.kotlin.gradle.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
+import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.konan.target.HostManager
 
-buildscript {
-
-    /*
-     * This property group is used to build kotlinx.atomicfu against Kotlin compiler snapshots.
-     * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version.
-     * Additionally, mavenLocal and Sonatype snapshots are added to repository list
-     * (the former is required for AFU and public, the latter is required for compiler snapshots).
-     * DO NOT change the name of these properties without adapting kotlinx.train build chain.
-     */
-    def buildSnapshotTrainGradleProperty = project.findProperty("build_snapshot_train")
-    ext.build_snapshot_train = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
-    if (build_snapshot_train) {
-        repositories {
-            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-            mavenLocal()
-        }
-    }
-
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-        KotlinConfiguration.addCustomKotlinRepositoryIfEnabled(delegate, project)
-        mavenLocal()
-    }
-
-    dependencies {
-        classpath libs.kotlin.gradlePlugin
-        classpath libs.gradle.nodePlubing
-    }
-
-    ext.native_targets_enabled = !project.hasProperty("disable_native_targets")
-}
-
 plugins {
-    id 'org.jetbrains.kotlinx.binary-compatibility-validator' version '0.13.2'
+    alias(libs.plugins.kotlinx.binaryCompatibilityValidator)
+    alias(libs.plugins.gradle.nodePlugin)
+    alias(libs.plugins.kotlin.multiplatform)
 }
+
+ext.native_targets_enabled = !project.hasProperty("disable_native_targets")
+
+def buildSnapshotTrainGradleProperty = project.findProperty("build_snapshot_train")
+ext.build_snapshot_train = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
 
 allprojects {
     // the only place where HostManager could be instantiated
@@ -84,7 +61,7 @@ allprojects {
         compilerOptions { freeCompilerArgs.add("-Xpartial-linkage-loglevel=ERROR") }
     }
 
-    tasks.withType(org.jetbrains.kotlin.gradle.dsl.KotlinCompile).configureEach {
+    tasks.withType(KotlinCompile).configureEach {
         // Suppress the warning: 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta.
         // See: https://youtrack.jetbrains.com/issue/KT-61573
         compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
@@ -114,13 +91,13 @@ if (build_snapshot_train) {
 task deploy(dependsOn: getTasksByName("publish", true) + getTasksByName("publishNpm", true))
 
 // Right now it is used for switching nodejs version which is supports generated wasm bytecode
-extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension.class).with {
+extensions.findByType(NodeJsRootExtension.class).with {
     // canary nodejs that supports recent Wasm GC changes
     it.nodeVersion = '21.0.0-v8-canary202309167e82ab1fa2'
     it.nodeDownloadBaseUrl = 'https://nodejs.org/download/v8-canary'
 }
 
 // We need to ignore unsupported engines (i.e. canary) for npm
-tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask).configureEach {
+tasks.withType(KotlinNpmInstallTask).configureEach {
     args.add("--ignore-engines")
 }
