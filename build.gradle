@@ -11,31 +11,17 @@ import org.jetbrains.kotlin.konan.target.HostManager
 plugins {
     alias(libs.plugins.kotlinx.binaryCompatibilityValidator)
     alias(libs.plugins.gradle.nodePlugin)
-    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.jvm) apply(false)
 }
 
 ext.native_targets_enabled = !project.hasProperty("disable_native_targets")
-
-def buildSnapshotTrainGradleProperty = project.findProperty("build_snapshot_train")
-ext.build_snapshot_train = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
 
 allprojects {
     // the only place where HostManager could be instantiated
     project.ext.hostManager = new HostManager()
 
-    if (build_snapshot_train) {
-        repositories {
-            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-        }
-    }
-
     logger.info("Using Kotlin compiler ${libs.versions.kotlin} for project ${project.name}")
 
-    repositories {
-        mavenCentral()
-        KotlinConfiguration.addCustomKotlinRepositoryIfEnabled(delegate, project)
-        mavenLocal()
-    }
 
     def deployVersion = project.findProperty("DeployVersion")
     if (deployVersion != null) project.version = deployVersion
@@ -68,6 +54,8 @@ allprojects {
     }
 }
 
+def buildSnapshotTrainGradleProperty = project.findProperty("build_snapshot_train")
+ext.build_snapshot_train = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
 if (build_snapshot_train) {
     afterEvaluate {
         println "Manifest of kotlin-compiler-embeddable.jar for atomicfu"

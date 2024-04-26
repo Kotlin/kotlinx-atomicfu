@@ -40,18 +40,6 @@ fun getCustomKotlinRepositoryURL(project: Project): String? {
 /**
  * Should be used for running against a non-released Kotlin compiler on a system test level.
  *
- * Adds a custom repository with development builds of the Kotlin compiler to [repositoryHandler]
- * if the URL is provided (see [getCustomKotlinRepositoryURL]).
- */
-fun addCustomKotlinRepositoryIfEnabled(repositoryHandler: RepositoryHandler, project: Project) {
-    val kotlinRepoURL = getCustomKotlinRepositoryURL(project) ?: return
-    repositoryHandler.maven { url = URI.create(kotlinRepoURL) }
-
-}
-
-/**
- * Should be used for running against a non-released Kotlin compiler on a system test level.
- *
  * @return a Kotlin language version taken from:
  *
  * 1. the Kotlin community project Gradle plugin,
