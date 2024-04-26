@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2017-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
@@ -13,7 +13,7 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
     val localRepositoryUrl = findProperty("localRepositoryUrl")
     if (localRepositoryUrl != null) {
-        maven(localRepositoryUrl)   
+        maven(localRepositoryUrl)
     }
     mavenLocal()
 }
@@ -36,7 +36,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib"))
-                implementation(kotlin("test-junit"))
+                implementation(kotlin("test"))
                 implementation("kotlinx.atomicfu.examples:mpp-sample:DUMMY_VERSION")
             }
         }

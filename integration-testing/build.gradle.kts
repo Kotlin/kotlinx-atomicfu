@@ -1,3 +1,7 @@
+/*
+ * Copyright 2017-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
 
 plugins {
@@ -19,9 +23,6 @@ java {
 kotlin {
     jvmToolchain(11)
 }
-
-val kotlin_version = providers.gradleProperty(libs.versions.kotlin).orNull
-val atomicfu_snapshot_version = providers.gradleProperty("version").orNull
 
 sourceSets {
     create("mavenTest") {
@@ -63,8 +64,14 @@ val functionalTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["functionalTest"].output.classesDirs
     classpath = sourceSets["functionalTest"].runtimeClasspath
 
-    systemProperties["kotlinVersion"] = kotlin_version
-    systemProperties["atomicfuVersion"] = atomicfu_snapshot_version
+    // the kotlin version used to build the library, which is set in root gradle.properties or overriden by the TC config
+    systemProperties["kotlin.version.integration"] = providers.gradleProperty("kotlin_version").orNull
+    // the kotlin version used to build the library, which is set in root gradle.properties or overriden by the TC config
+    systemProperties["kotlin.native.version.integration"] = providers.gradleProperty("kotlin.native.version").orNull
+    // the current atomicfu version set in the root gradle.properties
+    systemProperties["atomicfu.snapshot.version.integration"] = providers.gradleProperty("version").orNull
+    // the directory (on TC agent) where Kotlin artifacts were published during the Aggregate build
+    systemProperties["kotlin.artifacts.repository.integration"] = providers.gradleProperty("kotlin_repo_url").orNull
 
     dependsOn(":atomicfu-gradle-plugin:publishToMavenLocal")
     // atomicfu-transformer and atomicfu artifacts should also be published as it's required by atomicfu-gradle-plugin.

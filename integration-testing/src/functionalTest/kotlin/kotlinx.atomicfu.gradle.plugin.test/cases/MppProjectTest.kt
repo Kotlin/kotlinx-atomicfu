@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2017-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package test
@@ -31,20 +31,20 @@ class MppProjectTest {
     @Test
     fun testMppWithEnabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = true
-        assertTrue(mppSample.cleanAndBuild().isSuccessful)
+        mppSample.cleanAndBuild()
         mppSample.checkConsumableDependencies()
     }
 
     @Test
     fun testMppWithDisabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = false
-        assertTrue(mppSample.cleanAndBuild().isSuccessful)
+        mppSample.cleanAndBuild()
         mppSample.checkConsumableDependencies()
     }
-    
+
     @Test
     fun testMppWasmBuild() {
-        assertTrue(mppSample.cleanAndBuild().isSuccessful)
+        mppSample.cleanAndBuild()
         mppSample.checkMppWasmJsImplementationDependencies()
         mppSample.checkMppWasmWasiImplementationDependencies()
     }
@@ -52,7 +52,7 @@ class MppProjectTest {
     @Test
     fun testMppNativeWithEnabledIrTransformation() {
         mppSample.enableNativeIrTransformation = true
-        assertTrue(mppSample.cleanAndBuild().isSuccessful)
+        mppSample.cleanAndBuild()
         // When Native IR transformations are applied, atomicfu-gradle-plugin still provides transitive atomicfu dependency
         mppSample.checkMppNativeImplementationDependencies()
         // TODO: klib checks are skipped for now because of this problem KT-61143
@@ -62,7 +62,7 @@ class MppProjectTest {
     @Test
     fun testMppNativeWithDisabledIrTransformation() {
         mppSample.enableNativeIrTransformation = false
-        assertTrue(mppSample.cleanAndBuild().isSuccessful)
+        mppSample.cleanAndBuild()
         mppSample.checkMppNativeImplementationDependencies()
         // TODO: klib checks are skipped for now because of this problem KT-61143
         //mppSample.buildAndCheckNativeKlib()

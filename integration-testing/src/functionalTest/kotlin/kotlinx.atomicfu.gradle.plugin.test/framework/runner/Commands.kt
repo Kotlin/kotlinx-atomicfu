@@ -6,7 +6,10 @@ package kotlinx.atomicfu.gradle.plugin.test.framework.runner
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.getProjectClasspath
 
-internal fun GradleBuild.cleanAndBuild(): BuildResult = runGradle(listOf("clean", "build"))
+internal fun GradleBuild.cleanAndBuild(): BuildResult =
+    runGradle(listOf("clean", "build")).also {
+        require(it.isSuccessful) { "${this.projectName}:build task FAILED: ${it.output} " }
+    }
 
 internal fun GradleBuild.cleanAndJar(): BuildResult = runGradle(listOf("clean", "jar"))
 

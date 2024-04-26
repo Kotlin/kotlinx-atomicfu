@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2017-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.atomicfu.gradle.plugin.test.framework.runner
@@ -19,9 +19,11 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
             add("-P$ENABLE_JVM_IR_TRANSFORMATION=$enableJvmIrTransformation")
             add("-P$ENABLE_JS_IR_TRANSFORMATION=$enableJsIrTransformation")
             add("-P$ENABLE_NATIVE_IR_TRANSFORMATION=$enableNativeIrTransformation")
-            localRepositoryUrl?.let {
-                add("-P$LOCAL_REPOSITORY_URL_PROPERTY=$it")
-            }
+            // Pass kotlin_version and kotlin.native.version parameters used for the library build to the builds of integration tests.
+            // These versions may be overriden by the TC build config.
+            if (kotlinVersion.isNotEmpty()) add("-P$KOTLIN_VERSION_PARAMETER=$kotlinVersion")
+            if (kotlinNativeVersion.isNotEmpty()) add("-P$KOTLIN_NATIVE_VERSION_PARAMETER=$kotlinNativeVersion")
+            localRepositoryUrl?.let { add("-P$LOCAL_REPOSITORY_URL_PROPERTY=$it") }
             addAll(extraProperties)
         }
 
@@ -59,6 +61,15 @@ internal fun createGradleBuildFromSources(projectName: String): GradleBuild {
     val projectDir = projectExamplesDir.resolve(projectName)
     val targetDir = Files.createTempDirectory("${projectName.substringAfterLast('/')}-").toFile().apply {
         projectDir.copyRecursively(this)
+    }
+    kotlinArtifactsRepo?.let {
+        // kotlinArtifactsRepo contains the directory on the TC agent, where Kotlin artifacts were published
+        // (this directory was passed as kotlin_repo_url parameter to the library build).
+
+        // Add maven(url =  file:///mnt/agent/work/...) repository in build.gradle and settings.gradle files of all integration tests.
+        targetDir.walkTopDown().filter { it.isFile && (it.name.startsWith("build.gradle") || it.name.startsWith("settings.gradle")) }.forEach { buildGradleFile ->
+            buildGradleFile.addKotlinArtifactRepositoryToProjectBuild(kotlinArtifactsRepo)
+        }
     }
     return GradleBuild(projectName, targetDir)
 }
