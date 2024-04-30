@@ -36,9 +36,6 @@ dependencyResolutionManagement {
     @Suppress("UnstableApiUsage")
     repositories {
 
-        // TODO(Dmitrii Krasnov): maybe could be passed via additionalRepositoryProperty
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-
         if (buildSnapshotTrainGradleProperty.isPresent) {
             maven(url = uri("https://oss.sonatype.org/content/repositories/snapshots"))
         }
