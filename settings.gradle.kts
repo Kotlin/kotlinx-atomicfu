@@ -49,6 +49,8 @@ dependencyResolutionManagement {
 
         mavenCentral()
 
+        // we have such a task https://youtrack.jetbrains.com/issue/KT-34732 to move these artifacts to the Maven repository,
+        // but before that we need to have ivy for yarn and node dependencies
         exclusiveContent {
             forRepository {
                 ivy("https://nodejs.org/download/v8-canary") {
