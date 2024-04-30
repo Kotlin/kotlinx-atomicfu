@@ -26,13 +26,29 @@ kotlin {
 
 sourceSets {
     create("mavenTest") {
-        compileClasspath += files(sourceSets.main.get().output, configurations.testRuntimeClasspath)
-        runtimeClasspath += output + compileClasspath
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+
+        configurations.getByName(implementationConfigurationName) {
+            extendsFrom(configurations.getByName(sourceSets.main.get().implementationConfigurationName))
+            extendsFrom(configurations.getByName(sourceSets.test.get().implementationConfigurationName))
+        }
     }
 
     create("functionalTest") {
-        compileClasspath += files(sourceSets.main.get().output, configurations.testRuntimeClasspath)
-        runtimeClasspath += output + compileClasspath
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+
+        configurations.getByName(implementationConfigurationName) {
+            extendsFrom(configurations.getByName(sourceSets.main.get().implementationConfigurationName))
+            extendsFrom(configurations.getByName(sourceSets.test.get().implementationConfigurationName))
+        }
+
+        configurations.getByName(runtimeOnlyConfigurationName) {
+            extendsFrom(configurations.getByName(sourceSets.main.get().runtimeOnlyConfigurationName))
+            extendsFrom(configurations.getByName(sourceSets.test.get().runtimeOnlyConfigurationName))
+        }
+
     }
 }
 
