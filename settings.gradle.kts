@@ -3,7 +3,6 @@ pluginManagement {
         repositories {
             mavenCentral()
             gradlePluginPortal()
-            mavenLocal()
 
             val additionalRepositoryProperty = providers.gradleProperty("community.project.kotlin.repo")
                 .orElse(providers.gradleProperty("kotlin_repo_url"))
@@ -75,8 +74,6 @@ dependencyResolutionManagement {
             filter { includeGroup("com.yarnpkg") }
         }
 
-        // TODO(Dmitrii Krasnov): I'm not sure that we really need it
-        mavenLocal()
     }
 
     versionCatalogs {
