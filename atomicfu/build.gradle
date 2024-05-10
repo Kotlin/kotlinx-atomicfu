@@ -5,7 +5,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
-    id("multiplatform-conventions")
+    id("kotlin-multiplatform-conventions")
     id("compile-options-conventions")
     id("publish-conventions")
 }

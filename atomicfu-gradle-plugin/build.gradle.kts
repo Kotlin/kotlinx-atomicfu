@@ -5,7 +5,6 @@
 plugins {
     id("java-library-conventions")
     id("java-gradle-plugin")
-    id("common-conventions")
 }
 
 // Gradle plugin must be compiled targeting the same Kotlin version as used by Gradle
