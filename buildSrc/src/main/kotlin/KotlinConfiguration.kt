@@ -48,13 +48,10 @@ fun getCustomKotlinRepositoryURL(project: Project): String? {
  * or null otherwise
  */
 fun getOverridingKotlinLanguageVersion(project: Project): String? {
-    val communityPluginLanguageVersion = project.findProperty("community.project.kotlin.languageVersion") as? String
-    val gradlePropertyLanguageVersion = project.findProperty("kotlin_language_version") as? String
-    val languageVersion = when {
-        communityPluginLanguageVersion != null -> communityPluginLanguageVersion
-        gradlePropertyLanguageVersion != null -> gradlePropertyLanguageVersion
-        else -> return null
-    }
+    val providers = project.providers
+    val languageVersion = providers.gradleProperty("community.project.kotlin.languageVersion")
+        .orElse(providers.gradleProperty("kotlin_language_version"))
+        .orNull
     LOGGER.info("An overriding Kotlin language version of $languageVersion was found for project ${project.name}")
     return languageVersion
 }
@@ -70,13 +67,10 @@ fun getOverridingKotlinLanguageVersion(project: Project): String? {
  * or null otherwise
  */
 fun getOverridingKotlinApiVersion(project: Project): String? {
-    val communityPluginApiVersion = project.findProperty("community.project.kotlin.apiVersion") as? String
-    val gradlePropertyApiVersion = project.findProperty("kotlin_api_version") as? String
-    val apiVersion = when {
-        communityPluginApiVersion != null -> communityPluginApiVersion
-        gradlePropertyApiVersion != null -> gradlePropertyApiVersion
-        else -> return null
-    }
+    val providers = project.providers
+    val apiVersion = providers.gradleProperty("community.project.kotlin.apiVersion")
+        .orElse(providers.gradleProperty("kotlin_api_version"))
+        .orNull
     LOGGER.info("An overriding Kotlin api version of $apiVersion was found for project ${project.name}")
     return apiVersion
 }
