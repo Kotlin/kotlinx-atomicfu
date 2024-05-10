@@ -125,59 +125,56 @@ kotlin {
     }
 }
 
-// configure native targets only if they're not disabled
-if (rootProject.ext.native_targets_enabled) {
-    kotlin {
-        targets {
-            // Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
+kotlin {
+    targets {
+        // Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
 
-            // Tier #1
-            addTarget(presets.linuxX64)
-            addTarget(presets.macosX64)
-            addTarget(presets.macosArm64)
-            addTarget(presets.iosSimulatorArm64)
-            addTarget(presets.iosX64)
+        // Tier #1
+        addTarget(presets.linuxX64)
+        addTarget(presets.macosX64)
+        addTarget(presets.macosArm64)
+        addTarget(presets.iosSimulatorArm64)
+        addTarget(presets.iosX64)
 
-            // Tier #2
-            addTarget(presets.linuxArm64)
-            addTarget(presets.watchosSimulatorArm64)
-            addTarget(presets.watchosX64)
-            addTarget(presets.watchosArm32)
-            addTarget(presets.watchosArm64)
-            addTarget(presets.tvosSimulatorArm64)
-            addTarget(presets.tvosX64)
-            addTarget(presets.tvosArm64)
-            addTarget(presets.iosArm64)
+        // Tier #2
+        addTarget(presets.linuxArm64)
+        addTarget(presets.watchosSimulatorArm64)
+        addTarget(presets.watchosX64)
+        addTarget(presets.watchosArm32)
+        addTarget(presets.watchosArm64)
+        addTarget(presets.tvosSimulatorArm64)
+        addTarget(presets.tvosX64)
+        addTarget(presets.tvosArm64)
+        addTarget(presets.iosArm64)
 
 
-            // Tier #3
-            addTarget(presets.androidNativeArm32)
-            addTarget(presets.androidNativeArm64)
-            addTarget(presets.androidNativeX86)
-            addTarget(presets.androidNativeX64)
-            addTarget(presets.mingwX64)
-            addTarget(presets.watchosDeviceArm64)
+        // Tier #3
+        addTarget(presets.androidNativeArm32)
+        addTarget(presets.androidNativeArm64)
+        addTarget(presets.androidNativeX86)
+        addTarget(presets.androidNativeX64)
+        addTarget(presets.mingwX64)
+        addTarget(presets.watchosDeviceArm64)
+    }
+
+    sourceSets {
+        nativeMain { dependsOn commonMain }
+
+        nativeTest {}
+
+        configure(nativeMainSets) {
+            dependsOn nativeMain
         }
 
-        sourceSets {
-            nativeMain { dependsOn commonMain }
-
-            nativeTest {}
-
-            configure(nativeMainSets) {
-                dependsOn nativeMain
-            }
-
-            configure(nativeTestSets) {
-                dependsOn nativeTest
-            }
+        configure(nativeTestSets) {
+            dependsOn nativeTest
         }
+    }
 
-        configure(nativeCompilations) {
-            cinterops {
-                interop {
-                    defFile 'src/nativeInterop/cinterop/interop.def'
-                }
+    configure(nativeCompilations) {
+        cinterops {
+            interop {
+                defFile 'src/nativeInterop/cinterop/interop.def'
             }
         }
     }

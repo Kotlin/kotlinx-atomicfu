@@ -9,8 +9,6 @@ plugins {
     alias(libs.plugins.gradle.nodePlugin)
 }
 
-ext.native_targets_enabled = !project.hasProperty("disable_native_targets")
-
 def buildSnapshotTrainGradleProperty = project.findProperty("build_snapshot_train")
 ext.build_snapshot_train = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
 if (build_snapshot_train) {
