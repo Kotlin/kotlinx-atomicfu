@@ -3,6 +3,7 @@ plugins {
     `java-library`
     kotlin("jvm")
     id("publish-conventions")
+    id("common-conventions")
 }
 
 // MPP projects pack their sources automatically, java libraries need to explicitly pack them
@@ -19,4 +20,8 @@ publishing {
             artifact(sourcesJar)
         }
     }
+}
+
+kotlin {
+    jvmToolchain(8)
 }

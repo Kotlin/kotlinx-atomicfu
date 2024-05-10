@@ -1,12 +1,8 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
-import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
-import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
-import org.jetbrains.kotlin.konan.target.HostManager
 
 plugins {
     alias(libs.plugins.kotlinx.binaryCompatibilityValidator)
@@ -14,32 +10,6 @@ plugins {
 }
 
 ext.native_targets_enabled = !project.hasProperty("disable_native_targets")
-
-allprojects {
-    // the only place where HostManager could be instantiated
-    project.ext.hostManager = new HostManager()
-
-    logger.info("Using Kotlin compiler ${libs.versions.kotlin} for project ${project.name}")
-
-
-    def deployVersion = project.findProperty("DeployVersion")
-    if (deployVersion != null) project.version = deployVersion
-
-    // this fixes "org.gradle.jvm.version" in Gradle metadata
-    plugins.withType(JavaPlugin).configureEach {
-        java {
-            toolchain {
-                languageVersion.set(JavaLanguageVersion.of(8))
-            }
-        }
-    }
-
-    tasks.withType(KotlinCompile).configureEach {
-        // Suppress the warning: 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta.
-        // See: https://youtrack.jetbrains.com/issue/KT-61573
-        compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
-    }
-}
 
 def buildSnapshotTrainGradleProperty = project.findProperty("build_snapshot_train")
 ext.build_snapshot_train = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
