@@ -110,5 +110,4 @@ include("atomicfu-transformer")
 include("atomicfu-gradle-plugin")
 include("atomicfu-maven-plugin")
 
-include("atomicfu-native") // this is a kludge so that existing YouTrack config works, todo: remove
 include("integration-testing")
