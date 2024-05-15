@@ -22,6 +22,7 @@ internal class GradleBuild(val projectName: String, val targetDir: File) {
             // Pass kotlin_version and kotlin.native.version parameters used for the library build to the builds of integration tests.
             // These versions may be overriden by the TC build config.
             if (kotlinVersion.isNotEmpty()) add("-P$KOTLIN_VERSION_PARAMETER=$kotlinVersion")
+            if (atomicfuVersion.isNotEmpty()) add("-P$ATOMICFU_VERSION=$atomicfuVersion")
             if (kotlinNativeVersion.isNotEmpty()) add("-P$KOTLIN_NATIVE_VERSION_PARAMETER=$kotlinNativeVersion")
             localRepositoryUrl?.let { add("-P$LOCAL_REPOSITORY_URL_PROPERTY=$it") }
             addAll(extraProperties)
