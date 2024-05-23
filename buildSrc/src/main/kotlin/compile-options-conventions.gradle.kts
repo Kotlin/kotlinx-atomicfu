@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
-
+// TODO https://github.com/Kotlin/kotlinx-atomicfu/issues/421
+//      convert this script to a kotlin-jvm convention
 val kotlin = extensions.getByType<KotlinProjectExtension>()
 
 kotlin.sourceSets.configureEach {
