@@ -4,6 +4,7 @@ plugins {
 }
 
 publishing {
+    val publicationPath = project.findProperty("publication_path") ?: project.layout.buildDirectory.dir("repo")
     repositories {
         maven {
             // TODO(Dmitrii Krasnov): add repository name, but before check
@@ -13,6 +14,10 @@ publishing {
                 username = project.getSensitiveProperty("libs.sonatype.user")
                 password = project.getSensitiveProperty("libs.sonatype.password")
             }
+        }
+        maven {
+            name = "local"
+            url = uri(publicationPath)
         }
     }
 
@@ -64,5 +69,45 @@ publishing {
         tasks.findByName("compileTestKotlin$pubName")?.let { compileTask ->
             compileTask.mustRunAfter(this@sign)
         }
+    }
+
+
+
+    tasks.withType<PublishToMavenRepository>().all {
+        doLast {
+
+            delete(
+                fileTree(publicationPath) {
+                    include("**/*.sha1")
+                    include("**/*.md5")
+                }
+            )
+        }
+    }
+
+
+    tasks.withType<AbstractArchiveTask>().configureEach {
+        setPreserveFileTimestamps(false)
+        setReproducibleFileOrder(true)
+    }
+
+    val removeLastUpdatedTag = tasks.register<Task>("removeLastUpdatedTag") {
+        doLast {
+            val tree = fileTree(publicationPath)
+
+            tree.include("**/maven-metadata.xml")
+
+            tree.forEach {  file ->
+                file.writeText(
+                    file.readLines()
+                        .filter { line -> !line.contains("<lastUpdated>")  }
+                        .joinToString("\n")
+                )
+            }
+        }
+    }
+
+    tasks.getByName("publishAllPublicationsToLocalRepository") {
+        finalizedBy(removeLastUpdatedTag)
     }
 }
