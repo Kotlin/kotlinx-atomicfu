@@ -1,4 +1,22 @@
 dependencyResolutionManagement {
+
+    @Suppress("UnstableApiUsage")
+    repositories {
+        val buildSnapshotTrainGradleProperty = providers.gradleProperty("build_snapshot_train")
+        if (buildSnapshotTrainGradleProperty.isPresent) {
+            maven(url = uri("https://oss.sonatype.org/content/repositories/snapshots"))
+        }
+
+        val additionalRepositoryProperty = providers.gradleProperty("community.project.kotlin.repo")
+            .orElse(providers.gradleProperty("kotlin_repo_url"))
+        if (additionalRepositoryProperty.isPresent) {
+            maven(url = uri(additionalRepositoryProperty.get()))
+            logger.info("A custom Kotlin repository ${additionalRepositoryProperty.get()} was added")
+        }
+
+        mavenCentral()
+    }
+
     versionCatalogs {
         create("libs") {
             from(files("../gradle/libs.versions.toml"))
