@@ -4,7 +4,7 @@
 
 plugins {
     `maven-publish`
-    id("java-library-conventions")
+    id("kotlin-jvm-conventions")
     id("compile-options-conventions")
 }
 
