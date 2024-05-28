@@ -3,7 +3,7 @@
  */
 
 plugins {
-    id("java-library-conventions")
+    id("kotlin-jvm-conventions")
     id("java-gradle-plugin")
 }
 
