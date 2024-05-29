@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm")
     id("publish-conventions")
     id("common-conventions")
+    id("kotlin-base-conventions")
 }
 
 // MPP projects pack their sources automatically, java libraries need to explicitly pack them

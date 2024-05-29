@@ -5,7 +5,6 @@
 plugins {
     `maven-publish`
     id("kotlin-jvm-conventions")
-    id("compile-options-conventions")
 }
 
 dependencies {
