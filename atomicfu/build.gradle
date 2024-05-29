@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     id("kotlin-multiplatform-conventions")
-    id("publish-conventions")
+    id("kotlin-multiplatform-publish-conventions")
 }
 
 ext {
@@ -336,15 +336,6 @@ jvmTest {
 }
 
 jvmTest.dependsOn jvmTestAll
-
-afterEvaluate {
-    publishing.publications {
-        kotlinMultiplatform {
-            apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
-            publishPlatformArtifactsInRootModule(jvm)
-        }
-    }
-}
 
 tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
     dependsOn(tasks["generatePomFileForJvmPublication"])
