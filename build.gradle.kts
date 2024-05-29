@@ -5,9 +5,6 @@ plugins {
     alias(libs.plugins.kotlinx.binaryCompatibilityValidator)
 }
 
-val deploy by tasks.creating {
-val buildSnapshotTrainGradleProperty = findProperty("build_snapshot_train")
-extra["build_snapshot_train"] = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
 val deploy by tasks.creating() {
     dependsOn(getTasksByName("publish", true))
     dependsOn(getTasksByName("publishNpm", true))
