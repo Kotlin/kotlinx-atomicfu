@@ -8,30 +8,6 @@ plugins {
 val deploy by tasks.creating {
 val buildSnapshotTrainGradleProperty = findProperty("build_snapshot_train")
 extra["build_snapshot_train"] = buildSnapshotTrainGradleProperty != null && buildSnapshotTrainGradleProperty != ""
-
-if (extra.has("build_snapshot_train") && extra["build_snapshot_train"] == true) {
-    afterEvaluate {
-        println("Manifest of kotlin-compiler-embeddable.jar for atomicfu")
-        subprojects
-            .filter { it.name == "atomicfu" }
-            .forEach { project ->
-                project.configurations.findByName("kotlinCompilerClasspath")?.let {
-                    it.resolve()
-                        .filter { it.name.contains("kotlin-compiler-embeddable") }
-                        .forEach { file ->
-                            val manifest = zipTree(file).matching {
-                                include("META-INF/MANIFEST.MF")
-                            }.first()
-
-                            manifest.readText().lines().forEach { line ->
-                                println(line)
-                            }
-                        }
-                }
-            }
-    }
-}
-
 val deploy by tasks.creating() {
     dependsOn(getTasksByName("publish", true))
     dependsOn(getTasksByName("publishNpm", true))
