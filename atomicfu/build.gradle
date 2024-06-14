@@ -2,6 +2,7 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
@@ -124,56 +125,97 @@ kotlin {
     }
 }
 
-kotlin {
-    targets {
+// configure native targets only if they're not disabled
+if (rootProject.ext.native_targets_enabled) {
+    kotlin {
         // Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
+        // Tier 1
+        macosX64()
+        macosArm64()
+        iosSimulatorArm64()
+        iosX64()
 
-        // Tier #1
-        addTarget(presets.linuxX64)
-        addTarget(presets.macosX64)
-        addTarget(presets.macosArm64)
-        addTarget(presets.iosSimulatorArm64)
-        addTarget(presets.iosX64)
+        // Tier 2
+        linuxX64()
+        linuxArm64()
+        watchosSimulatorArm64()
+        watchosX64()
+        watchosArm32()
+        watchosArm64()
+        tvosSimulatorArm64()
+        tvosX64()
+        tvosArm64()
+        iosArm64()
 
-        // Tier #2
-        addTarget(presets.linuxArm64)
-        addTarget(presets.watchosSimulatorArm64)
-        addTarget(presets.watchosX64)
-        addTarget(presets.watchosArm32)
-        addTarget(presets.watchosArm64)
-        addTarget(presets.tvosSimulatorArm64)
-        addTarget(presets.tvosX64)
-        addTarget(presets.tvosArm64)
-        addTarget(presets.iosArm64)
+        // Tier 3
+        androidNativeArm32()
+        androidNativeArm64()
+        androidNativeX86()
+        androidNativeX64()
+        mingwX64()
+        watchosDeviceArm64()
 
-
-        // Tier #3
-        addTarget(presets.androidNativeArm32)
-        addTarget(presets.androidNativeArm64)
-        addTarget(presets.androidNativeX86)
-        addTarget(presets.androidNativeX64)
-        addTarget(presets.mingwX64)
-        addTarget(presets.watchosDeviceArm64)
-    }
-
-    sourceSets {
-        nativeMain { dependsOn commonMain }
-
-        nativeTest {}
-
-        configure(nativeMainSets) {
-            dependsOn nativeMain
+        applyDefaultHierarchyTemplate { target ->
+            target.group("native") { nativeTargets ->
+                nativeTargets.group("nativeUnixLike") {
+                    it.withLinux()
+                    it.withIos()
+                    it.withMacos()
+                    it.withTvos()
+                    it.withWatchos()
+                }
+                nativeTargets.group("androidNative32Bit") {
+                    it.withAndroidNativeX86()
+                    // This is a WA: in KotlinHierarchyBuilderImpl.withAndroidNativeArm32 the KonanTarget equals ANDROID_X86 instead of ANDROID_ARM32
+                    it.withCompilations { compilation ->
+                        compilation.target instanceof KotlinNativeTarget && (compilation.target as KotlinNativeTarget).konanTarget.name == "android_arm32"
+                    }
+                }
+                nativeTargets.group("androidNative64Bit") {
+                    it.withAndroidNativeArm64()
+                    it.withAndroidNativeX64()
+                }
+            }
         }
 
-        configure(nativeTestSets) {
-            dependsOn nativeTest
-        }
-    }
+        sourceSets {
+            nativeMain { dependsOn commonMain }
 
-    configure(nativeCompilations) {
-        cinterops {
-            interop {
-                defFile 'src/nativeInterop/cinterop/interop.def'
+            nativeTest {}
+
+            nativeUnixLikeMain {
+                kotlin.srcDir("src/nativeUnixLike/kotlin")
+                dependsOn nativeMain
+            }
+
+            androidNative32BitMain {
+                kotlin.srcDir("src/androidNative32Bit/kotlin")
+                dependsOn nativeMain
+            }
+
+            androidNative64BitMain {
+                kotlin.srcDir("src/androidNative64Bit/kotlin")
+                dependsOn nativeMain
+            }
+
+            mingwX64Main { dependsOn nativeMain }
+
+            configure(nativeMainSets) {
+                dependsOn nativeMain
+            }
+
+            configure(nativeTestSets) {
+                dependsOn nativeTest
+            }
+        }
+
+        targets.withType(KotlinNativeTarget).configureEach { nativeTarget ->
+            nativeTarget.compilations.configureEach { nativeCompilation ->
+                nativeCompilation.cinterops {
+                    interop {
+                        defFile file('src/nativeInterop/cinterop/interop.def')
+                    }
+                }
             }
         }
     }
