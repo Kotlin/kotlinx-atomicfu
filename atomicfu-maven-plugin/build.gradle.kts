@@ -22,14 +22,18 @@ publishing.publications {
     }
 }
 
-val mavenUserHome = System.getProperty("maven.user.home")
-val mavenRepoLocal = System.getProperty("maven.repo.local")
+val mavenUserHome: String? = System.getProperty("maven.user.home")
+val mavenRepoLocal: String? = System.getProperty("maven.repo.local")
 
 val generatePomFileForMavenPublication by tasks.getting(GenerateMavenPom::class)
 
 // runs the plugin description generator
 val generatePluginDescriptor by tasks.registering(Exec::class) {
-    dependsOn(generatePomFileForMavenPublication, project(":atomicfu-transformer").tasks.named("publishToMavenLocal"))
+
+    dependsOn(generatePomFileForMavenPublication)
+
+    dependsOn(project(":atomicfu-transformer").tasks.named("publishToMavenLocal"))
+
     val pluginDescriptorFile = outputDir.file("META-INF/maven/plugin.xml")
 
     workingDir = projectDir
@@ -49,7 +53,7 @@ val generatePluginDescriptor by tasks.registering(Exec::class) {
     commandLine = args
     doLast {
         val descriptorFile = pluginDescriptorFile.get().asFile
-        assert(descriptorFile.exists()) { "$descriptorFile: was not generated" }
+        require(descriptorFile.exists()) { "$descriptorFile: was not generated" }
         logger.info("Plugin descriptor is generated in $descriptorFile")
     }
 }
