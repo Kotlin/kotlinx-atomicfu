@@ -184,17 +184,17 @@ if (rootProject.ext.native_targets_enabled) {
             nativeTest {}
 
             nativeUnixLikeMain {
-                kotlin.srcDir("src/nativeUnixLike/kotlin")
+                kotlin.srcDir("src/nativeUnixLikeMain/kotlin")
                 dependsOn nativeMain
             }
 
             androidNative32BitMain {
-                kotlin.srcDir("src/androidNative32Bit/kotlin")
+                kotlin.srcDir("src/androidNative32BitMain/kotlin")
                 dependsOn nativeMain
             }
 
             androidNative64BitMain {
-                kotlin.srcDir("src/androidNative64Bit/kotlin")
+                kotlin.srcDir("src/androidNative64BitMain/kotlin")
                 dependsOn nativeMain
             }
 
