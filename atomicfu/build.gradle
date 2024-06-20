@@ -157,10 +157,7 @@ if (rootProject.ext.native_targets_enabled) {
             target.group("native") { nativeTargets ->
                 nativeTargets.group("nativeUnixLike") {
                     it.withLinux()
-                    it.withIos()
-                    it.withMacos()
-                    it.withTvos()
-                    it.withWatchos()
+                    it.withApple()
                 }
                 nativeTargets.group("androidNative32Bit") {
                     it.withAndroidNativeX86()
