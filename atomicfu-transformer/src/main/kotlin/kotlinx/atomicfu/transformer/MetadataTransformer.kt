@@ -4,8 +4,8 @@
 
 package kotlinx.atomicfu.transformer
 
-import kotlinx.metadata.*
-import kotlinx.metadata.jvm.*
+import kotlin.metadata.*
+import kotlin.metadata.jvm.*
 import org.objectweb.asm.tree.*
 
 const val KOTLIN_METADATA_DESC = "Lkotlin/Metadata;"
@@ -18,7 +18,6 @@ class MetadataTransformer(
         removeFields.map { JvmFieldSignature(it.name, it.desc) }
     private val removeMethodSignatures: List<JvmMethodSignature> =
         removeMethods.map { JvmMethodSignature(it.name, it.desc) }
-    private var transformed = false
 
     @Suppress("UNCHECKED_CAST")
     fun transformMetadata(metadataAnnotation: AnnotationNode): Boolean {
@@ -32,178 +31,60 @@ class MetadataTransformer(
             packageName = map["pn"] as String?,
             extraInt = map["xi"] as Int?
         )
-        val transformedMetadata = when (val kotlinClassMetadata = KotlinClassMetadata.read(metadata)) {
+        val metadataVersion = JvmMetadataVersion(metadata.metadataVersion[0], metadata.metadataVersion[1], metadata.metadataVersion[2])
+        val transformedMetadata = when (val kotlinClassMetadata = KotlinClassMetadata.readStrict(metadata)) {
             is KotlinClassMetadata.Class -> {
-                val w = KotlinClassMetadata.Class.Writer()
-                kotlinClassMetadata.accept(ClassFilter(w))
-                val transformedKotlinClassMetadata = w.write(metadata.metadataVersion, metadata.extraInt)
-                KotlinClassMetadata.writeClass(transformedKotlinClassMetadata.kmClass)
+                val kmClass = kotlinClassMetadata.kmClass
+                KotlinClassMetadata.Class(kmClass.transformKmClass(), metadataVersion, metadata.extraInt).write()
             }
             is KotlinClassMetadata.FileFacade -> {
-                val w = KotlinClassMetadata.FileFacade.Writer()
-                kotlinClassMetadata.accept(PackageFilter(w))
-                val transformedKotlinClassMetadata = w.write(metadata.metadataVersion, metadata.extraInt)
-                KotlinClassMetadata.writeFileFacade(transformedKotlinClassMetadata.kmPackage)
+                val kmPackage = kotlinClassMetadata.kmPackage
+                KotlinClassMetadata.FileFacade(kmPackage.removeAtomicfuDeclarations() as KmPackage, metadataVersion, metadata.extraInt).write()
             }
             is KotlinClassMetadata.MultiFileClassPart -> {
-                val w = KotlinClassMetadata.MultiFileClassPart.Writer()
-                kotlinClassMetadata.accept(PackageFilter(w))
-                val transformedKotlinClassMetadata = w.write(kotlinClassMetadata.facadeClassName, metadata.metadataVersion, metadata.extraInt)
-                KotlinClassMetadata.writeMultiFileClassPart(transformedKotlinClassMetadata.kmPackage, transformedKotlinClassMetadata.facadeClassName)
+                val kmPackage = kotlinClassMetadata.kmPackage
+                KotlinClassMetadata.MultiFileClassPart(kmPackage.removeAtomicfuDeclarations() as KmPackage, metadata.extraString, metadataVersion, metadata.extraInt).write()
             }
             else -> return false // not transformed
         }
-        if (!transformed) return false
         with (metadataAnnotation) {
-            // read resulting header & update annotation data
+            // read the resulting header & update annotation data
             setKey("d1", transformedMetadata.data1.toList())
             setKey("d2", transformedMetadata.data2.toList())
         }
         return true // transformed
     }
 
-    private inner class ClassFilter(v: KmClassVisitor?) : KmClassVisitor(v) {
-        private val supertypes = mutableListOf<KmType>()
-
-        override fun visitSupertype(flags: Flags): KmTypeVisitor? =
-            KmType(flags).also { supertypes += it }
-
-        override fun visitProperty(flags: Flags, name: String, getterFlags: Flags, setterFlags: Flags): KmPropertyVisitor? =
-            PropertyFilter(KmProperty(flags, name, getterFlags, setterFlags), super.visitProperty(flags, name, getterFlags, setterFlags)!!)
-        override fun visitFunction(flags: Flags, name: String): KmFunctionVisitor =
-            FunctionFilter(KmFunction(flags, name), super.visitFunction(flags, name)!!)
-
-        override fun visitEnd() {
-            // Skip supertype if it is SynchronizedObject (it is an alias to Any)
-            supertypes.forEach { type ->
+    private fun KmClass.transformKmClass() =
+        apply {
+            supertypes.replaceAll {
+                    type ->
                 if (type.abbreviatedType?.classifier == SynchronizedObjectAlias) {
                     KmType().apply {
-                        visitClass("kotlin/Any")
-                    }.accept(super.visitSupertype(flagsOf(Flag.IS_PUBLIC, Flag.IS_OPEN))!!)
-                    transformed = true
-                } else
-                    type.accept(super.visitSupertype(type.flags)!!)
+                        classifier = KmClassifier.Class("kotlin/Any")
+                    }
+                } else {
+                    type
+                }
             }
-            super.visitEnd()
-        }
-    }
-
-    private inner class PackageFilter(v: KmPackageVisitor?) : KmPackageVisitor(v) {
-        override fun visitProperty(flags: Flags, name: String, getterFlags: Flags, setterFlags: Flags): KmPropertyVisitor? =
-            PropertyFilter(KmProperty(flags, name, getterFlags, setterFlags), super.visitProperty(flags, name, getterFlags, setterFlags)!!)
-        override fun visitFunction(flags: Flags, name: String): KmFunctionVisitor =
-            FunctionFilter(KmFunction(flags, name), super.visitFunction(flags, name)!!)
-    }
-
-    private class PropertyExtensionNode : JvmPropertyExtensionVisitor() {
-        private var jvmFlags: Flags? = null
-        var fieldSignature: JvmFieldSignature? = null
-        private var getterSignature: JvmMethodSignature? = null
-        private var setterSignature: JvmMethodSignature? = null
-        private var syntheticMethodForAnnotationsDesc: JvmMethodSignature? = null
-
-        override fun visit(
-            jvmFlags: Flags,
-            fieldSignature: JvmFieldSignature?,
-            getterSignature: JvmMethodSignature?,
-            setterSignature: JvmMethodSignature?
-        ) {
-            check(this.jvmFlags == null)
-            this.jvmFlags = jvmFlags
-            this.fieldSignature = fieldSignature
-            this.getterSignature = getterSignature
-            this.setterSignature = setterSignature
+            removeAtomicfuDeclarations()
         }
 
-        override fun visitSyntheticMethodForAnnotations(signature: JvmMethodSignature?) {
-            check(syntheticMethodForAnnotationsDesc == null)
-            this.syntheticMethodForAnnotationsDesc = signature
-        }
-
-        fun accept(v : JvmPropertyExtensionVisitor) {
-            if (jvmFlags != null) {
-                v.visit(jvmFlags!!, fieldSignature, getterSignature, setterSignature)
+    private fun KmDeclarationContainer.removeAtomicfuDeclarations() =
+        apply {
+            functions.removeIf { it.signature in removeMethodSignatures }
+            properties.removeIf { it.fieldSignature in removeFieldSignatures }
+            properties.forEach { property ->
+                property.apply {
+                    receiverParameterType?.fixType { property.receiverParameterType = it }
+                    returnType.fixType { property.returnType = it }
+                }
             }
-            syntheticMethodForAnnotationsDesc?.let { v.visitSyntheticMethodForAnnotations(it) }
-            v.visitEnd()
         }
-    }
-
-    private inner class PropertyFilter(
-        private val delegate: KmProperty,
-        private val v: KmPropertyVisitor
-    ) : KmPropertyVisitor(delegate) {
-        private var extension: PropertyExtensionNode? = null
-
-        override fun visitExtensions(type: KmExtensionType): KmPropertyExtensionVisitor? {
-            check(type == JvmPropertyExtensionVisitor.TYPE)
-            check(extension == null)
-            return PropertyExtensionNode().also { extension = it }
-        }
-
-        override fun visitEnd() {
-            if (extension?.fieldSignature in removeFieldSignatures) {
-                // remove this function
-                transformed = true
-                return
-            }
-            delegate.receiverParameterType?.fixType { delegate.receiverParameterType = it }
-            delegate.returnType.fixType { delegate.returnType = it }
-            // keeping this property
-            extension?.accept(delegate.visitExtensions(JvmPropertyExtensionVisitor.TYPE) as JvmPropertyExtensionVisitor)
-            delegate.accept(v)
-        }
-    }
-
-    private class FunctionExtensionNode : JvmFunctionExtensionVisitor() {
-        var signature: JvmMethodSignature? = null
-        private var originalInternalName: String? = null
-
-        override fun visit(signature: JvmMethodSignature?) {
-            check(this.signature == null)
-            this.signature = signature
-        }
-
-        override fun visitLambdaClassOriginName(internalName: String) {
-            check(originalInternalName == null)
-            originalInternalName = internalName
-        }
-
-        fun accept(v : JvmFunctionExtensionVisitor) {
-            signature?.let { v.visit(it) }
-            originalInternalName?.let { v.visitLambdaClassOriginName(it) }
-            v.visitEnd()
-        }
-    }
-
-    private inner class FunctionFilter(
-        private val delegate: KmFunction,
-        private val v: KmFunctionVisitor
-    ) : KmFunctionVisitor(delegate) {
-        private var extension: FunctionExtensionNode? = null
-
-        override fun visitExtensions(type: KmExtensionType): KmFunctionExtensionVisitor? {
-            check(type == JvmFunctionExtensionVisitor.TYPE)
-            check(extension == null)
-            return FunctionExtensionNode().also { extension = it }
-        }
-
-        override fun visitEnd() {
-            if (extension?.signature in removeMethodSignatures) {
-                // remove this function
-                transformed = true
-                return
-            }
-            // keeping this function
-            extension?.accept(delegate.visitExtensions(JvmFunctionExtensionVisitor.TYPE) as JvmFunctionExtensionVisitor)
-            delegate.accept(v)
-        }
-    }
 
     private fun KmType.fixType(update: (KmType) -> Unit) {
         if (this.abbreviatedType?.classifier == ReentrantLockAlias) {
             update(ReentrantLockType)
-            transformed = true
         }
     }
 }
@@ -211,7 +92,7 @@ class MetadataTransformer(
 private val SynchronizedObjectAlias = KmClassifier.TypeAlias("kotlinx/atomicfu/locks/SynchronizedObject")
 
 private val ReentrantLockAlias = KmClassifier.TypeAlias("kotlinx/atomicfu/locks/ReentrantLock")
-private val ReentrantLockType = KmType(0).apply {
+private val ReentrantLockType = KmType().apply {
     classifier = KmClassifier.Class("java/util/concurrent/locks/ReentrantLock")
 }
 
