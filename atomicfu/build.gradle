@@ -123,95 +123,92 @@ kotlin {
     }
 }
 
-// configure native targets only if they're not disabled
-if (rootProject.ext.native_targets_enabled) {
-    kotlin {
-        // Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
-        // Tier 1
-        macosX64()
-        macosArm64()
-        iosSimulatorArm64()
-        iosX64()
+// Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
+kotlin {
+    // Tier 1
+    macosX64()
+    macosArm64()
+    iosSimulatorArm64()
+    iosX64()
 
-        // Tier 2
-        linuxX64()
-        linuxArm64()
-        watchosSimulatorArm64()
-        watchosX64()
-        watchosArm32()
-        watchosArm64()
-        tvosSimulatorArm64()
-        tvosX64()
-        tvosArm64()
-        iosArm64()
+    // Tier 2
+    linuxX64()
+    linuxArm64()
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
 
-        // Tier 3
-        androidNativeArm32()
-        androidNativeArm64()
-        androidNativeX86()
-        androidNativeX64()
-        mingwX64()
-        watchosDeviceArm64()
+    // Tier 3
+    androidNativeArm32()
+    androidNativeArm64()
+    androidNativeX86()
+    androidNativeX64()
+    mingwX64()
+    watchosDeviceArm64()
 
-        applyDefaultHierarchyTemplate { target ->
-            target.group("native") { nativeTargets ->
-                nativeTargets.group("nativeUnixLike") {
-                    it.withLinux()
-                    it.withApple()
+    applyDefaultHierarchyTemplate { target ->
+        target.group("native") { nativeTargets ->
+            nativeTargets.group("nativeUnixLike") {
+                it.withLinux()
+                it.withApple()
+            }
+            nativeTargets.group("androidNative32Bit") {
+                it.withAndroidNativeX86()
+                // This is a WA: in KotlinHierarchyBuilderImpl.withAndroidNativeArm32 the KonanTarget equals ANDROID_X86 instead of ANDROID_ARM32
+                it.withCompilations { compilation ->
+                    compilation.target instanceof KotlinNativeTarget && (compilation.target as KotlinNativeTarget).konanTarget.name == "android_arm32"
                 }
-                nativeTargets.group("androidNative32Bit") {
-                    it.withAndroidNativeX86()
-                    // This is a WA: in KotlinHierarchyBuilderImpl.withAndroidNativeArm32 the KonanTarget equals ANDROID_X86 instead of ANDROID_ARM32
-                    it.withCompilations { compilation ->
-                        compilation.target instanceof KotlinNativeTarget && (compilation.target as KotlinNativeTarget).konanTarget.name == "android_arm32"
-                    }
-                }
-                nativeTargets.group("androidNative64Bit") {
-                    it.withAndroidNativeArm64()
-                    it.withAndroidNativeX64()
-                }
+            }
+            nativeTargets.group("androidNative64Bit") {
+                it.withAndroidNativeArm64()
+                it.withAndroidNativeX64()
             }
         }
+    }
 
-        sourceSets {
-            nativeMain { dependsOn commonMain }
+    sourceSets {
+        nativeMain { dependsOn commonMain }
 
-            nativeTest {}
+        nativeTest {}
 
-            nativeUnixLikeMain {
-                kotlin.srcDir("src/nativeUnixLikeMain/kotlin")
-                dependsOn nativeMain
-            }
-
-            androidNative32BitMain {
-                kotlin.srcDir("src/androidNative32BitMain/kotlin")
-                dependsOn nativeMain
-            }
-
-            androidNative64BitMain {
-                kotlin.srcDir("src/androidNative64BitMain/kotlin")
-                dependsOn nativeMain
-            }
-
-            mingwX64Main { dependsOn nativeMain }
-
-            configure(nativeMainSets) {
-                dependsOn nativeMain
-            }
-
-            configure(nativeTestSets) {
-                dependsOn nativeTest
-            }
+        nativeUnixLikeMain {
+            kotlin.srcDir("src/nativeUnixLikeMain/kotlin")
+            dependsOn nativeMain
         }
 
-        // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)
-        // This block can be removed when this issue in K/N compiler is resolved: KT-60874
-        targets.withType(KotlinNativeTarget).configureEach { nativeTarget ->
-            nativeTarget.compilations.configureEach { nativeCompilation ->
-                nativeCompilation.cinterops {
-                    interop {
-                        defFile file('src/nativeInterop/cinterop/interop.def')
-                    }
+        androidNative32BitMain {
+            kotlin.srcDir("src/androidNative32BitMain/kotlin")
+            dependsOn nativeMain
+        }
+
+        androidNative64BitMain {
+            kotlin.srcDir("src/androidNative64BitMain/kotlin")
+            dependsOn nativeMain
+        }
+
+        mingwX64Main { dependsOn nativeMain }
+
+        configure(nativeMainSets) {
+            dependsOn nativeMain
+        }
+
+        configure(nativeTestSets) {
+            dependsOn nativeTest
+        }
+    }
+
+    // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)
+    // This block can be removed when this issue in K/N compiler is resolved: KT-60874
+    targets.withType(KotlinNativeTarget).configureEach { nativeTarget ->
+        nativeTarget.compilations.configureEach { nativeCompilation ->
+            nativeCompilation.cinterops {
+                interop {
+                    defFile file('src/nativeInterop/cinterop/interop.def')
                 }
             }
         }
