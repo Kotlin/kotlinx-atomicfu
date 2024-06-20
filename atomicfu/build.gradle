@@ -207,7 +207,7 @@ if (rootProject.ext.native_targets_enabled) {
             }
         }
 
-        // atomicfu-cinterop-interop.klib will an empty interop.def file will still be published for compatibility reasons (see KT-68411)
+        // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)
         // This block can be removed when this issue in K/N compiler is resolved: KT-60874
         targets.withType(KotlinNativeTarget).configureEach { nativeTarget ->
             nativeTarget.compilations.configureEach { nativeCompilation ->
