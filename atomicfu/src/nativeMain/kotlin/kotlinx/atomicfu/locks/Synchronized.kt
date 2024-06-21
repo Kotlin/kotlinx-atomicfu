@@ -185,7 +185,7 @@ private val mutexPool by lazy { MutexPool(INITIAL_POOL_CAPACITY) }
 class MutexPool(capacity: Int) {
     private val top = AtomicReference<NativeMutexNode?>(null)
 
-    private val mutexes = Array<NativeMutexNode>(capacity) { NativeMutexNode() }
+    private val mutexes = Array(capacity) { NativeMutexNode() }
 
     init {
         // Immediately form a stack
