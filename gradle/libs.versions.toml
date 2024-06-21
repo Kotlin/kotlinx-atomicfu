@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.21"
+kotlin = "2.0.0"
 kotlinx-metadata = "0.7.0"
 kotlinx-binaryCompatibilityValidator = "0.13.2"
 asm = "9.6"
