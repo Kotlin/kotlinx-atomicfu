@@ -70,7 +70,7 @@ class MetadataTransformer(
             removeAtomicfuDeclarations()
         }
 
-    private fun KmDeclarationContainer.removeAtomicfuDeclarations() =
+    private fun <T: KmDeclarationContainer> T.removeAtomicfuDeclarations(): T 
         apply {
             functions.removeIf { it.signature in removeMethodSignatures }
             properties.removeIf { it.fieldSignature in removeFieldSignatures }
