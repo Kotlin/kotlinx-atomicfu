@@ -4,27 +4,14 @@
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-
-    dependencies {
-        val atomicfuVersion = libs.versions.atomicfuVersion.get()
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfuVersion")
-    }
-}
-
 group = "kotlinx.atomicfu.examples"
 version = "DUMMY_VERSION"
 
 plugins {
     kotlin("multiplatform") version libs.versions.kotlinVersion.get()
     `maven-publish`
+    id("kotlinx-atomicfu") version libs.versions.atomicfuVersion.get()
 }
-
-apply(plugin = "kotlinx-atomicfu")
 
 repositories {
     mavenCentral()

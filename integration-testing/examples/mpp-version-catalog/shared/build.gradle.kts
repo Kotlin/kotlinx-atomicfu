@@ -4,12 +4,6 @@
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
-buildscript {
-    dependencies {
-        classpath(libs.atomicfuGradlePlugin)
-    }
-}
-
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
@@ -18,9 +12,8 @@ repositories {
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    id("kotlinx-atomicfu") version libs.versions.atomicfu.get()
 }
-
-apply (plugin = "kotlinx-atomicfu")
 
 kotlin {
 

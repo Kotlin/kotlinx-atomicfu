@@ -1,20 +1,7 @@
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-    
-    dependencies {
-        val atomicfuVersion = libs.versions.atomicfuVersion.get()
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfuVersion")
-    }
-}
-
 plugins {
     kotlin("multiplatform") version libs.versions.kotlinVersion.get()
+    id("kotlinx-atomicfu") version libs.versions.atomicfuVersion.get()
 }
-
-apply(plugin = "kotlinx-atomicfu")
 
 repositories {
     mavenLocal()

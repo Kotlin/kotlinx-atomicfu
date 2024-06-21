@@ -50,4 +50,5 @@ maven = ["maven-core", "maven-pluginApi", "maven-pluginAnnotations"]
 gradle-nodePlugin = { id = "com.github.node-gradle.node", version.ref = "node-gradle" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinx-binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-binaryCompatibilityValidator"}
+gradle-pluginPublish =  { id = "com.gradle.plugin-publish", version.ref = "gradle-plugin-publish" }
 

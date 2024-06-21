@@ -40,3 +40,29 @@ tasks.processResources {
         expand("atomicfuVersion" to project.version)
     }
 }
+
+signing {
+    // disable signing if private key isn't passed
+    isRequired = findProperty("libs.sign.key.private") != null
+}
+
+gradlePlugin {
+    website.set("https://github.com/Kotlin/kotlinx-atomicfu")
+    vcsUrl.set("https://github.com/Kotlin/kotlinx-atomicfu.git")
+
+    plugins {
+        create("Atomicfu") {
+            id = "kotlinx-atomicfu"
+            implementationClass = "kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin"
+            displayName = "Gradle plugin for kotlinx-atomicfu library"
+            description = "Enables efficient use of atomic operations in Kotlin multiplatform projects."
+        }
+    }
+}
+
+// NOTE: `kotlinx-atomicfu.properties` file appears in the artifact twice, when publishing kotlin-atomicfu plugin using gradlePlugin{} block above
+tasks.withType<Copy>().named("processResources") {
+    filesMatching("META-INF/gradle-plugins/kotlinx-atomicfu.properties") {
+        exclude()
+    }
+}
