@@ -31,23 +31,36 @@ class MetadataTransformer(
             packageName = map["pn"] as String?,
             extraInt = map["xi"] as Int?
         )
-        val metadataVersion = JvmMetadataVersion(metadata.metadataVersion[0], metadata.metadataVersion[1], metadata.metadataVersion[2])
+        val metadataVersion =
+            JvmMetadataVersion(metadata.metadataVersion[0], metadata.metadataVersion[1], metadata.metadataVersion[2])
         val transformedMetadata = when (val kotlinClassMetadata = KotlinClassMetadata.readStrict(metadata)) {
             is KotlinClassMetadata.Class -> {
                 val kmClass = kotlinClassMetadata.kmClass
                 KotlinClassMetadata.Class(kmClass.transformKmClass(), metadataVersion, metadata.extraInt).write()
             }
+
             is KotlinClassMetadata.FileFacade -> {
                 val kmPackage = kotlinClassMetadata.kmPackage
-                KotlinClassMetadata.FileFacade(kmPackage.removeAtomicfuDeclarations() as KmPackage, metadataVersion, metadata.extraInt).write()
+                KotlinClassMetadata.FileFacade(
+                    kmPackage.removeAtomicfuDeclarations() as KmPackage,
+                    metadataVersion,
+                    metadata.extraInt
+                ).write()
             }
+
             is KotlinClassMetadata.MultiFileClassPart -> {
                 val kmPackage = kotlinClassMetadata.kmPackage
-                KotlinClassMetadata.MultiFileClassPart(kmPackage.removeAtomicfuDeclarations() as KmPackage, metadata.extraString, metadataVersion, metadata.extraInt).write()
+                KotlinClassMetadata.MultiFileClassPart(
+                    kmPackage.removeAtomicfuDeclarations() as KmPackage,
+                    metadata.extraString,
+                    metadataVersion,
+                    metadata.extraInt
+                ).write()
             }
+
             else -> return false // not transformed
         }
-        with (metadataAnnotation) {
+        with(metadataAnnotation) {
             // read the resulting header & update annotation data
             setKey("d1", transformedMetadata.data1.toList())
             setKey("d2", transformedMetadata.data2.toList())
@@ -57,8 +70,7 @@ class MetadataTransformer(
 
     private fun KmClass.transformKmClass() =
         apply {
-            supertypes.replaceAll {
-                    type ->
+            supertypes.replaceAll { type ->
                 if (type.abbreviatedType?.classifier == SynchronizedObjectAlias) {
                     KmType().apply {
                         classifier = KmClassifier.Class("kotlin/Any")
@@ -70,7 +82,7 @@ class MetadataTransformer(
             removeAtomicfuDeclarations()
         }
 
-    private fun <T: KmDeclarationContainer> T.removeAtomicfuDeclarations(): T 
+    private fun <T : KmDeclarationContainer> T.removeAtomicfuDeclarations(): T =
         apply {
             functions.removeIf { it.signature in removeMethodSignatures }
             properties.removeIf { it.fieldSignature in removeFieldSignatures }

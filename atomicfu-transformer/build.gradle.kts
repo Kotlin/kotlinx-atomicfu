@@ -10,7 +10,7 @@ dependencies {
     api(libs.bundles.asm)
     api(libs.slf4j.api)
     api(libs.mozilla.rhino)
-    api(libs.kotlinx.metadataJvm)
+    api(libs.kotlin.metadataJvm)
 
     compileOnly(libs.kotlin.stdlib)
 
