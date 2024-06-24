@@ -59,10 +59,3 @@ gradlePlugin {
         }
     }
 }
-
-// NOTE: `kotlinx-atomicfu.properties` file appears in the artifact twice, when publishing kotlin-atomicfu plugin using gradlePlugin{} block above
-tasks.withType<Copy>().named("processResources") {
-    filesMatching("META-INF/gradle-plugins/kotlinx-atomicfu.properties") {
-        exclude()
-    }
-}
