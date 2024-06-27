@@ -3,6 +3,7 @@
  */
 
 plugins {
+    alias(libs.plugins.gradle.pluginPublish)
     id("kotlin-jvm-conventions")
     id("java-gradle-plugin")
 }

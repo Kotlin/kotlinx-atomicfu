@@ -8,6 +8,7 @@ maven = "3.5.3"
 maven-pluginTools = "3.5"
 node-gradle = "3.1.1"
 rhino = "1.7.10"
+gradle-plugin-publish = "1.2.1"
 
 [libraries]
 
@@ -50,4 +51,5 @@ maven = ["maven-core", "maven-pluginApi", "maven-pluginAnnotations"]
 gradle-nodePlugin = { id = "com.github.node-gradle.node", version.ref = "node-gradle" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinx-binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-binaryCompatibilityValidator"}
+gradle-pluginPublish =  { id = "com.gradle.plugin-publish", version.ref = "gradle-plugin-publish" }
 

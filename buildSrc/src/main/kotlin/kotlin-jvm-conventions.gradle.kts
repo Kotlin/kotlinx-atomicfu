@@ -14,11 +14,13 @@ val sourcesJar by tasks.registering(Jar::class) {
 }
 
 publishing {
-    // Configure java publications for non-MPP projects
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            artifact(sourcesJar)
+    if (!pluginManager.hasPlugin("com.gradle.plugin-publish")) {
+        // Configure java publications for non-MPP projects
+        publications {
+            create<MavenPublication>("maven") {
+                from(components["java"])
+                artifact(sourcesJar)
+            }
         }
     }
 }
