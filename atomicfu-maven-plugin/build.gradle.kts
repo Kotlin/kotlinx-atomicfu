@@ -4,7 +4,7 @@
 
 plugins {
     `maven-publish`
-    id("kotlin-jvm-conventions")
+    id("kotlin-jvm-publish-conventions")
 }
 
 dependencies {

@@ -2,7 +2,7 @@ import groovy.util.Node
 import groovy.util.NodeList
 
 plugins {
-    id("publish-conventions")
+    id("publish-with-javadoc-conventions")
 }
 
 afterEvaluate {

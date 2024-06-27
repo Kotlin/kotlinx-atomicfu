@@ -3,6 +3,7 @@
  */
 
 plugins {
+    alias(libs.plugins.gradle.pluginPublish)
     id("kotlin-jvm-conventions")
     id("java-gradle-plugin")
 }
@@ -38,5 +39,24 @@ evaluationDependsOn(":atomicfu")
 tasks.processResources {
     filesMatching("atomicfu.properties") {
         expand("atomicfuVersion" to project.version)
+    }
+}
+
+signing {
+    // disable signing if private key isn't passed
+    isRequired = findProperty("libs.sign.key.private") != null
+}
+
+gradlePlugin {
+    website.set("https://github.com/Kotlin/kotlinx-atomicfu")
+    vcsUrl.set("https://github.com/Kotlin/kotlinx-atomicfu.git")
+
+    plugins {
+        create("Atomicfu") {
+            id = "kotlinx-atomicfu"
+            implementationClass = "kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin"
+            displayName = "Gradle plugin for kotlinx-atomicfu library"
+            description = "Enables efficient use of atomic operations in Kotlin multiplatform projects."
+        }
     }
 }
