@@ -3,12 +3,6 @@ plugins {
     signing
 }
 
-val javadocJar by tasks.register<Jar>("javadocJar") {
-    description = "Create a Javadoc JAR. Empty by default."
-    // Create an empty Javadoc JAR to satisfy Maven Central requirements.
-    archiveClassifier.set("javadoc")
-}
-
 publishing {
     repositories {
         maven {
@@ -52,15 +46,6 @@ publishing {
 
 
         signPublicationIfKeyPresent(project, this)
-        // TODO(Dmitrii Krasnov): https://github.com/Kotlin/kotlinx-atomicfu/issues/421
-        //      Figure out if there's an alternative to string-based config
-        //      (if the name changes this config will silently stop working).
-        //      Maybe the Javadoc JAR can always be added?
-        // add empty javadocs
-        
-        if (name != "kotlinMultiplatform") { // The root module gets the JVM's javadoc JAR
-            artifact(javadocJar)
-        }
     }
 
     tasks.withType<AbstractPublishToMaven>().configureEach {

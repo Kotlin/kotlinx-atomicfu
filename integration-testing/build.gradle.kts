@@ -5,7 +5,7 @@
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
 
 plugins {
-    id("kotlin-jvm-conventions")
+    id("kotlin-jvm-publish-conventions")
 }
 
 java {

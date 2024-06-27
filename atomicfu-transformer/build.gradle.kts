@@ -3,7 +3,7 @@
  */
 
 plugins {
-    id("kotlin-jvm-conventions")
+    id("kotlin-jvm-publish-conventions")
 }
 
 dependencies {
