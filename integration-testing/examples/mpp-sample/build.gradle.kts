@@ -10,7 +10,7 @@ version = "DUMMY_VERSION"
 plugins {
     kotlin("multiplatform") version libs.versions.kotlinVersion.get()
     `maven-publish`
-    id("kotlinx-atomicfu") version libs.versions.atomicfuVersion.get()
+    id("org.jetbrains.kotlinx.atomicfu") version libs.versions.atomicfuVersion.get()
 }
 
 repositories {

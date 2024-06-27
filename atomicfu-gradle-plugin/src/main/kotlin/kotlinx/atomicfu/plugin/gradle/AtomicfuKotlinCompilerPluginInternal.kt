@@ -33,7 +33,7 @@ internal class AtomicfuKotlinCompilerPluginInternal : KotlinCompilerPluginSuppor
         kotlinCompilation: KotlinCompilation<*>
     ): Provider<List<SubpluginOption>> = kotlinCompilation.target.project.provider { emptyList() }
 
-    override fun getCompilerPluginId() = "org.jetbrains.kotlinx.atomicfu"
+    override fun getCompilerPluginId() = "org.jetbrains.kotlin.atomicfu"
 
     // Gets "org.jetbrains.kotlin:kotlin-atomicfu-compiler-plugin-embeddable:{KGP version}"
     override fun getPluginArtifact(): SubpluginArtifact {
