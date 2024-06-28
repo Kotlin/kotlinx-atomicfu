@@ -112,28 +112,53 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 ### Apply plugin
 #### Gradle configuration
 
-In top-level build file:
+> **New plugin id:** Please pay attention, that starting from version `0.25.0` the plugin id is `org.jetbrains.kotlinx.atomicfu`
+
+Add the following to your top-level build file:
 
 <details open>
-<summary>Kotlin DSL</summary>
+<summary>Kotlin</summary>
+
+```kotlin
+plugins {
+     id("org.jetbrains.kotlinx.atomicfu") version "0.25.0"
+}
+```
+</details>
+
+<details open>
+<summary>Groovy</summary>
+
+```groovy
+plugins {
+    id 'org.jetbrains.kotlinx.atomicfu' version '0.25.0'
+}
+```
+</details>
+
+
+#### Legacy plugin application
+
+<details open>
+<summary>Kotlin</summary>
 
 ```kotlin
 buildscript {
-    repositories {
-        mavenCentral()
-    }
+  repositories {
+    mavenCentral()
+  }
 
-    dependencies {
-      classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.24.0")
-    }
+  dependencies {
+    classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.24.0")
+  }
 }
 
-apply(plugin = "kotlinx-atomicfu")
+apply(plugin = "org.jetbrains.kotlinx.atomicfu")
 ```
 </details>
 
 <details>
-<summary>Groovy DSL</summary>
+<summary>Groovy</summary>
 
 ```groovy
 buildscript {
@@ -145,7 +170,7 @@ buildscript {
     }
 }
   
-apply plugin: 'kotlinx-atomicfu'
+apply plugin: 'org.jetbrains.kotlinx.atomicfu'
 ```
 </details>
 
