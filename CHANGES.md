@@ -1,5 +1,14 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.25.0
+
+* Got rid of posix interop (#440).
+* Apply `atomicfu-gradle-plugin` by id `org.jetbrains.kotlinx.atomicfu` without buildscript configuration (#443)(#445).
+* Lots of cleanups and improvements in the build scripts. Thanks, @dkrasnoff!
+* Updated Kotlin to `2.0.0` (#442).
+* Updated kotlinx-metadata to `2.0.0` (#441).
+* Updated Gradle to `8.7`.
+
 # Version 0.24.0
 
 * Move the logic from koltin repository atomicfu gradle plugin to the gradle plugin in the library (#406).
