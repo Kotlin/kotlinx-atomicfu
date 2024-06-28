@@ -4,11 +4,9 @@ version = "DUMMY_VERSION"
 plugins {
     application
     kotlin("jvm") version libs.versions.kotlinVersion.get()
-    id("kotlinx-atomicfu") version libs.versions.atomicfuVersion.get()
+    id("org.jetbrains.kotlinx.atomicfu") version libs.versions.atomicfuVersion.get()
     `maven-publish`
 }
-
-apply(plugin = "kotlinx-atomicfu")
 
 repositories {
     mavenCentral()

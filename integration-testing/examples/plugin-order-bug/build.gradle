@@ -17,7 +17,7 @@ buildscript {
 }
 // Apply KGP via buildscript to check this issue: #384
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
-apply plugin: 'kotlinx-atomicfu'
+apply plugin: 'org.jetbrains.kotlinx.atomicfu'
 
 repositories {
     mavenCentral()

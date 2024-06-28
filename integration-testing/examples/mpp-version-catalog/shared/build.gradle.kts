@@ -12,7 +12,7 @@ repositories {
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    id("kotlinx-atomicfu") version libs.versions.atomicfu.get()
+    id("org.jetbrains.kotlinx.atomicfu") version libs.versions.atomicfu.get()
 }
 
 kotlin {

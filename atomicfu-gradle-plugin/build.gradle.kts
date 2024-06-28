@@ -53,10 +53,11 @@ gradlePlugin {
 
     plugins {
         create("Atomicfu") {
-            id = "kotlinx-atomicfu"
+            id = "org.jetbrains.kotlinx.atomicfu"
             implementationClass = "kotlinx.atomicfu.plugin.gradle.AtomicFUGradlePlugin"
             displayName = "Gradle plugin for kotlinx-atomicfu library"
             description = "Enables efficient use of atomic operations in Kotlin multiplatform projects."
+            tags = setOf("kotlinx-atomicfu", "atomics", "kotlin")
         }
     }
 }
