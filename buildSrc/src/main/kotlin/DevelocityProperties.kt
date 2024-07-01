@@ -10,7 +10,6 @@ import org.gradle.kotlin.dsl.findByType
 import javax.inject.Inject
 
 
-const val BUILD_SCAN_USERNAME_DEFAULT = "<default>"
 
 val buildingOnTeamCity: Boolean = System.getenv("TEAMCITY_VERSION") != null
 val buildingOnGitHub: Boolean = System.getenv("GITHUB_ACTION") != null
@@ -26,7 +25,6 @@ fun buildScanEnabled(project: Project): Provider<Boolean> =
  */
 fun buildScanUsername(project: Project): Provider<String> =
     atomicfuProperty("build.scan.username", project)
-        .orElse(BUILD_SCAN_USERNAME_DEFAULT)
         .map(String::trim)
 
 private fun atomicfuProperty(name: String, project: Project): Provider<String> =

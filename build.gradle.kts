@@ -25,7 +25,6 @@ develocity {
                         buildingOnTeamCity -> "TeamCity"
                         buildingOnGitHub -> "GitHub"
                         buildingOnCi -> "CI"
-                        overriddenName == BUILD_SCAN_USERNAME_DEFAULT -> originalUsername
                         !overriddenName.isNullOrBlank() -> overriddenName
                         else -> "unknown"
                     }
