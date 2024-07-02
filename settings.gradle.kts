@@ -23,9 +23,6 @@ pluginManagement {
         }
 
     }
-    plugins {
-        id("com.gradle.develocity") version("3.17.5")
-    }
 }
 
 dependencyResolutionManagement {
@@ -104,6 +101,12 @@ dependencyResolutionManagement {
             }
         }
     }
+}
+
+rootProject.name = "kotlinx-atomicfu"
+
+plugins {
+    id("com.gradle.develocity") version ("3.17.5")
 }
 
 include("atomicfu")

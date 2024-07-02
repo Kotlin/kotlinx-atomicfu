@@ -26,6 +26,7 @@ develocity {
                         buildingOnGitHub -> "GitHub"
                         buildingOnCi -> "CI"
                         !overriddenName.isNullOrBlank() -> overriddenName
+                        overriddenName == "<default>" -> originalUsername
                         else -> "unknown"
                     }
                 }
