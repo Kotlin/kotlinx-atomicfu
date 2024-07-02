@@ -9,6 +9,7 @@ maven-pluginTools = "3.5"
 node-gradle = "3.1.1"
 rhino = "1.7.10"
 gradle-plugin-publish = "1.2.1"
+gradle-develocity = "3.17.5"
 
 [libraries]
 
@@ -21,6 +22,9 @@ kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.re
 kotlin-testJunit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
 kotlin-scriptRuntime = { group = "org.jetbrains.kotlin", name = "kotlin-script-runtime", version.ref = "kotlin" }
 kotlin-metadataJvm = { group = "org.jetbrains.kotlin", name = "kotlin-metadata-jvm", version.ref = "kotlin" }
+
+#gradle
+gradle-develocity = {group = "com.gradle", name= "develocity-gradle-plugin", version.ref = "gradle-develocity"}
 
 # ASM dependencies
 asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }

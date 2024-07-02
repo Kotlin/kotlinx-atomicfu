@@ -3,36 +3,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
 
 plugins {
     alias(libs.plugins.kotlinx.binaryCompatibilityValidator)
-    id("com.gradle.develocity") apply false
-}
-
-develocity {
-    if (buildScanEnabled(project).get()) {
-        val overriddenName = buildScanUsername(project).orNull
-        buildScan {
-            server = "https://ge.jetbrains.com/"
-            publishing.onlyIf { true }
-            capture {
-                fileFingerprints = true
-                buildLogging = true
-                uploadInBackground = true
-            }
-            obfuscation {
-                ipAddresses { _ -> listOf("0.0.0.0") }
-                hostname { _ -> "concealed" }
-                username { originalUsername ->
-                    when {
-                        buildingOnTeamCity -> "TeamCity"
-                        buildingOnGitHub -> "GitHub"
-                        buildingOnCi -> "CI"
-                        !overriddenName.isNullOrBlank() -> overriddenName
-                        overriddenName == "<default>" -> originalUsername
-                        else -> "unknown"
-                    }
-                }
-            }
-        }
-    }
 }
 
 val deploy: Task? by tasks.creating {

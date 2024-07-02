@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-settings-logic")
     repositories {
         mavenCentral()
         gradlePluginPortal()
@@ -106,7 +107,8 @@ dependencyResolutionManagement {
 rootProject.name = "kotlinx-atomicfu"
 
 plugins {
-    id("com.gradle.develocity") version ("3.17.5")
+    id("gradle-devol")
+    id("gradle-build-cache")
 }
 
 include("atomicfu")

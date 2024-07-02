@@ -1,5 +1,11 @@
-rootProject.name = "buildSrc"
+rootProject.name = "build-settings-logic"
 
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
 dependencyResolutionManagement {
 
     @Suppress("UnstableApiUsage")
