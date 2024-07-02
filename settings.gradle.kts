@@ -108,6 +108,7 @@ rootProject.name = "kotlinx-atomicfu"
 
 plugins {
     id("gradle-build-scan")
+    id("gradle-build-cache")
 }
 
 include("atomicfu")
