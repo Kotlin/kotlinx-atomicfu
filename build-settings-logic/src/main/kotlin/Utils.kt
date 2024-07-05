@@ -15,13 +15,15 @@ val Settings.buildScanEnabled: Provider<Boolean>
         atomicfuProperty("build.scan.enabled", String::toBoolean)
             .orElse(buildingOnCi)
 
+internal const val DEFAULT_ATOMICFU_USER_NAME = "<default>"
+
 /**
  * Optionaly override the default name attached to a Build Scan.
  */
 val Settings.buildScanUsername: Provider<String>
     get() =
         atomicfuProperty("build.scan.username")
-            .orElse("<default>")
+            .orElse(DEFAULT_ATOMICFU_USER_NAME)
             .map(String::trim)
 
 internal fun Settings.atomicfuProperty(name: String): Provider<String> =

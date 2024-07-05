@@ -23,8 +23,8 @@ develocity {
                         buildingOnTeamCity -> "TeamCity"
                         buildingOnGitHub -> "GitHub"
                         buildingOnCi -> "CI"
-                        !overriddenName.isNullOrBlank() -> overriddenName
-                        overriddenName == "<default>" -> originalUsername
+                        !overriddenName.isNullOrBlank() && overriddenName != DEFAULT_ATOMICFU_USER_NAME -> overriddenName
+                        overriddenName == DEFAULT_ATOMICFU_USER_NAME -> originalUsername
                         else -> "unknown"
                     }
                 }
