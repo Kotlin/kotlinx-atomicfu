@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 
-apply(from = "src/main/kotlin/gradle-build-cache.settings.gradle.kts")
+apply(from = "src/main/kotlin/atomicfu-gradle-build-cache.settings.gradle.kts")

@@ -107,8 +107,8 @@ dependencyResolutionManagement {
 rootProject.name = "kotlinx-atomicfu"
 
 plugins {
-    id("gradle-build-scan")
-    id("gradle-build-cache")
+    id("atomicfu-gradle-build-scan")
+    id("atomicfu-gradle-build-cache")
 }
 
 include("atomicfu")
