@@ -21,6 +21,7 @@ val Settings.buildScanEnabled: Provider<Boolean>
 val Settings.buildScanUsername: Provider<String>
     get() =
         atomicfuProperty("build.scan.username")
+            .orElse("<default>")
             .map(String::trim)
 
 internal fun Settings.atomicfuProperty(name: String): Provider<String> =
