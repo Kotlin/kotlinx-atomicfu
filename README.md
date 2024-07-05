@@ -478,7 +478,7 @@ Available Kotlin/Native targets are based on non-deprecated official targets [Ti
 
 ### Gradle Build Scans
 
-[Gradle Build Scans](https://scans.gradle.com/) can provide insights into a Atomicfu Build.
+[Gradle Build Scans](https://scans.gradle.com/) can provide insights into an Atomicfu Build.
 JetBrains runs a [Gradle Develocity server](https://ge.jetbrains.com/scans?search.rootProjectNames=kotlinx-atomicfu).
 that can be used to automatically upload reports.
 
