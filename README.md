@@ -475,3 +475,19 @@ See [gradle.properties](gradle.properties) in AtomicFU project for its `kotlin_v
 
 Available Kotlin/Native targets are based on non-deprecated official targets [Tier list](https://kotlinlang.org/docs/native-target-support.html)
  with the corresponding compatibility guarantees.
+
+### Gradle Build Scans
+
+[Gradle Build Scans](https://scans.gradle.com/) can provide insights into an Atomicfu Build.
+JetBrains runs a [Gradle Develocity server](https://ge.jetbrains.com/scans?search.rootProjectNames=kotlinx-atomicfu).
+that can be used to automatically upload reports.
+
+To automatically opt in add the following to `$GRADLE_USER_HOME/gradle.properties`.
+
+```properties
+org.jetbrains.atomicfu.build.scan.enabled=true
+# optionally provide a username that will be attached to each report
+org.jetbrains.atomicfu.build.scan.username=John Wick
+```
+
+A Build Scan may contain identifiable information. See the Terms of Use https://gradle.com/legal/terms-of-use/.

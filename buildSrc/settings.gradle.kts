@@ -1,3 +1,5 @@
+rootProject.name = "buildSrc"
+
 dependencyResolutionManagement {
 
     @Suppress("UnstableApiUsage")

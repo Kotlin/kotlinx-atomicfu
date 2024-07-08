@@ -1,29 +1,28 @@
 pluginManagement {
+    includeBuild("build-settings-logic")
     repositories {
-        repositories {
-            mavenCentral()
-            gradlePluginPortal()
+        mavenCentral()
+        gradlePluginPortal()
 
-            val additionalRepositoryProperty = providers.gradleProperty("community.project.kotlin.repo")
-                .orElse(providers.gradleProperty("kotlin_repo_url"))
-            if (additionalRepositoryProperty.isPresent) {
-                maven(url = uri(additionalRepositoryProperty.get()))
-                logger.info("A custom Kotlin repository ${additionalRepositoryProperty.get()} was added")
-            }
-
-            /*
-             * This property group is used to build kotlinx.atomicfu against Kotlin compiler snapshots.
-             * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version.
-             * Additionally, mavenLocal and Sonatype snapshots are added to repository list
-             * (the former is required for AFU and public, the latter is required for compiler snapshots).
-             * DO NOT change the name of these properties without adapting kotlinx.train build chain.
-             */
-            val buildSnapshotTrainGradleProperty = providers.gradleProperty("build_snapshot_train")
-            if (buildSnapshotTrainGradleProperty.isPresent) {
-                maven(url = uri("https://oss.sonatype.org/content/repositories/snapshots"))
-            }
-
+        val additionalRepositoryProperty = providers.gradleProperty("community.project.kotlin.repo")
+            .orElse(providers.gradleProperty("kotlin_repo_url"))
+        if (additionalRepositoryProperty.isPresent) {
+            maven(url = uri(additionalRepositoryProperty.get()))
+            logger.info("A custom Kotlin repository ${additionalRepositoryProperty.get()} was added")
         }
+
+        /*
+         * This property group is used to build kotlinx.atomicfu against Kotlin compiler snapshots.
+         * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version.
+         * Additionally, mavenLocal and Sonatype snapshots are added to repository list
+         * (the former is required for AFU and public, the latter is required for compiler snapshots).
+         * DO NOT change the name of these properties without adapting kotlinx.train build chain.
+         */
+        val buildSnapshotTrainGradleProperty = providers.gradleProperty("build_snapshot_train")
+        if (buildSnapshotTrainGradleProperty.isPresent) {
+            maven(url = uri("https://oss.sonatype.org/content/repositories/snapshots"))
+        }
+
     }
 }
 
@@ -103,6 +102,13 @@ dependencyResolutionManagement {
             }
         }
     }
+}
+
+rootProject.name = "kotlinx-atomicfu"
+
+plugins {
+    id("atomicfu-gradle-build-scan")
+    id("atomicfu-gradle-build-cache")
 }
 
 include("atomicfu")
