@@ -1,6 +1,7 @@
 rootProject.name = "build-settings-logic"
 
 dependencyResolutionManagement {
+
     @Suppress("UnstableApiUsage")
     repositories {
         mavenCentral()
@@ -15,3 +16,4 @@ dependencyResolutionManagement {
 }
 
 apply(from = "src/main/kotlin/atomicfu-gradle-build-cache.settings.gradle.kts")
+apply(from = "src/main/kotlin/atomicfu-cache-redirector.settings.gradle.kts")

@@ -1,5 +1,9 @@
 rootProject.name = "buildSrc"
 
+pluginManagement {
+    includeBuild("../build-settings-logic")
+}
+
 dependencyResolutionManagement {
 
     @Suppress("UnstableApiUsage")
@@ -34,4 +38,8 @@ dependencyResolutionManagement {
             }
         }
     }
+}
+
+plugins {
+    id("atomicfu-cache-redirector")
 }
