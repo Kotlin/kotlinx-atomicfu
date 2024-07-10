@@ -1,3 +1,5 @@
+rootProject.name = "kotlinx-atomicfu"
+
 pluginManagement {
     includeBuild("build-settings-logic")
     repositories {
@@ -20,7 +22,6 @@ pluginManagement {
         if (buildSnapshotTrainGradleProperty.isPresent) {
             maven(url = uri("https://oss.sonatype.org/content/repositories/snapshots"))
         }
-
     }
 }
 
@@ -88,12 +89,11 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "kotlinx-atomicfu"
-
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
     id("atomicfu-gradle-build-scan")
     id("atomicfu-gradle-build-cache")
+    id("atomicfu-cache-redirector")
 }
 
 include("atomicfu")
