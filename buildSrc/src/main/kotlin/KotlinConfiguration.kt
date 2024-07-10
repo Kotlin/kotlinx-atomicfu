@@ -26,10 +26,8 @@ private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
  * or null otherwise
  */
 fun getCustomKotlinRepositoryURL(project: Project): String? {
-    val communityPluginKotlinRepoURL = project.findProperty("community.project.kotlin.repo") as? String
     val gradlePropertyKotlinRepoURL = project.findProperty("kotlin_repo_url") as? String
     val kotlinRepoURL = when {
-        communityPluginKotlinRepoURL != null -> communityPluginKotlinRepoURL
         gradlePropertyKotlinRepoURL != null -> gradlePropertyKotlinRepoURL
         else -> return null
     }
