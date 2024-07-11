@@ -107,6 +107,7 @@ dependencyResolutionManagement {
 rootProject.name = "kotlinx-atomicfu"
 
 plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
     id("atomicfu-gradle-build-scan")
     id("atomicfu-gradle-build-cache")
 }
