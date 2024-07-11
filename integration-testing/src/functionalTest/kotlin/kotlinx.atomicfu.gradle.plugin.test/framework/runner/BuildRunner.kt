@@ -47,7 +47,7 @@ internal class BuildResult(exitCode: Int, private val logFile: File) {
             val line = lines[index++]
             if (line.substringBefore(" ") == configuration) break
         }
-        while(index < lines.size) {
+        while (index < lines.size) {
             val line = lines[index++]
             if (line.isBlank() || line == "No dependencies") break
             // trim leading indentations (\---) and symbols in the end (*):
@@ -63,14 +63,19 @@ internal fun createGradleBuildFromSources(projectName: String): GradleBuild {
     val targetDir = Files.createTempDirectory("${projectName.substringAfterLast('/')}-").toFile().apply {
         projectDir.copyRecursively(this)
     }
+
+    targetDir.toPath().enableCacheRedirector()
+
     kotlinArtifactsRepo?.let {
         // kotlinArtifactsRepo contains the directory on the TC agent, where Kotlin artifacts were published
         // (this directory was passed as kotlin_repo_url parameter to the library build).
 
         // Add maven(url =  file:///mnt/agent/work/...) repository in build.gradle and settings.gradle files of all integration tests.
-        targetDir.walkTopDown().filter { it.isFile && (it.name.startsWith("build.gradle") || it.name.startsWith("settings.gradle")) }.forEach { buildGradleFile ->
-            buildGradleFile.addKotlinArtifactRepositoryToProjectBuild(kotlinArtifactsRepo)
-        }
+        targetDir.walkTopDown()
+            .filter { it.isFile && (it.name.startsWith("build.gradle") || it.name.startsWith("settings.gradle")) }
+            .forEach { buildGradleFile ->
+                buildGradleFile.addKotlinArtifactRepositoryToProjectBuild(kotlinArtifactsRepo)
+            }
     }
     return GradleBuild(projectName, targetDir)
 }
