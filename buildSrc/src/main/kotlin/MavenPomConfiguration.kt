@@ -16,7 +16,7 @@ fun MavenPom.configureMavenPluginPomAttributes(
     withXml {
         with(asNode()) {
             with(appendNode("build")) {
-                appendNode("directory", project.buildDir)
+                appendNode("directory", project.layout.buildDirectory.get())
                 appendNode("outputDirectory", outputDir)
             }
             appendNode("properties")

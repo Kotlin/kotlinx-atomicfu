@@ -57,12 +57,8 @@ publishing {
         val pubName = name.substringAfter("sign").substringBefore("Publication")
 
         // Task ':linkDebugTest<platform>' uses this output of task ':sign<platform>Publication' without declaring an explicit or implicit dependency
-        tasks.findByName("linkDebugTest$pubName")?.let { linkTask ->
-            linkTask.mustRunAfter(this@sign)
-        }
+        tasks.findByName("linkDebugTest$pubName")?.mustRunAfter(this@sign)
         // Task ':compileTestKotlin<platform>' uses this output of task ':sign<platform>Publication' without declaring an explicit or implicit dependency
-        tasks.findByName("compileTestKotlin$pubName")?.let { compileTask ->
-            compileTask.mustRunAfter(this@sign)
-        }
+        tasks.findByName("compileTestKotlin$pubName")?.mustRunAfter(this@sign)
     }
 }
