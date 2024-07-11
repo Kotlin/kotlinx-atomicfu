@@ -99,9 +99,12 @@ val Project.konanHome: String
     get() = rootProject.properties["kotlin.native.home"]?.toString()
         ?: NativeCompilerDownloader(project).compilerDirectory.absolutePath
 
-val embeddableJar = File(project.konanHome).resolve("konan/lib/kotlin-native-compiler-embeddable.jar")
-
 tasks.withType<Test> {
+    val embeddableJar = File(project.konanHome).resolve("konan/lib/kotlin-native-compiler-embeddable.jar")
     // Pass the path to native jars
     systemProperty("kotlin.native.jar", embeddableJar)
+
+    // Pass the path to the cache redirector
+    val cacheRedirectorPath = project.file("../build-settings-logic/src/main/kotlin/atomicfu-cache-redirector.settings.gradle.kts")
+    systemProperty("cache.redirector.path", cacheRedirectorPath.absolutePath)
 }
