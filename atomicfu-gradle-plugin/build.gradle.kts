@@ -37,6 +37,7 @@ dependencies {
 evaluationDependsOn(":atomicfu")
 
 tasks.processResources {
+    inputs.property("atomicfuVersion", project.version)
     filesMatching("atomicfu.properties") {
         expand("atomicfuVersion" to project.version)
     }
