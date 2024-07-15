@@ -124,6 +124,9 @@ kotlin {
     mingwX64()
     watchosDeviceArm64()
 
+    @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
+    linuxArm32Hfp()
+
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate {
         group("native") {
