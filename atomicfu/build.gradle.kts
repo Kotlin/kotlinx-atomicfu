@@ -376,6 +376,3 @@ val jvmTest by tasks.getting(Test::class) {
     // run them only for transformed code
 }
 
-tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
-    dependsOn(tasks["generatePomFileForJvmPublication"])
-}
