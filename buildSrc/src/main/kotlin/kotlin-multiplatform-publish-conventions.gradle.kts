@@ -1,44 +1,58 @@
-import groovy.util.Node
-import groovy.util.NodeList
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
 
 plugins {
     id("publish-with-javadoc-conventions")
 }
-
 afterEvaluate {
-    publishing.publications {
-        val jvm = getByName<MavenPublication>("jvm")
-        getByName<MavenPublication>("kotlinMultiplatform") {
-            val platformPublication = jvm
-            var platformXml: XmlProvider? = null
-            platformPublication.pom.withXml { platformXml = this }
-            pom.withXml {
-                val root = asNode()
-                // Remove the original content and add the content from the platform POM:
-                root.children().toList().forEach { node -> root.remove(node as Node?) }
-                platformXml?.asNode()?.children()?.forEach { node -> root.append(node as Node) }
 
-                // Adjust the self artifact id, as it should match the root module's coordinates:
-                ((root.get("artifactId") as NodeList).get(0) as Node).setValue(artifactId)
+    val generatePomFileForJvmPublication by tasks.getting(GenerateMavenPom::class)
 
-                // Set packaging to POM to indicate that there's no artifact:
-                root.appendNode("packaging", "pom")
+    tasks.named<GenerateMavenPom>("generatePomFileForKotlinMultiplatformPublication").configure {
 
-                // Remove the original platform dependencies and add a single dependency on the platform module:
-                val allDependencies = root.get("dependencies") as NodeList
-                if (allDependencies.isNotEmpty()) {
-                    val dependencies = allDependencies.get(0) as Node
-                    dependencies.children().toList().forEach { node -> dependencies.remove(node as Node) }
-                    val singleDependency = dependencies.appendNode("dependency")
-                    singleDependency.appendNode("groupId", platformPublication.groupId)
-                    singleDependency.appendNode("artifactId", platformPublication.artifactId)
-                    singleDependency.appendNode("version", platformPublication.version)
-                    singleDependency.appendNode("scope", "compile")
-                }
+        dependsOn(generatePomFileForJvmPublication)
+
+        val jvmPomFile = generatePomFileForJvmPublication.destination
+        doLast {
+            val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(jvmPomFile).apply {
+                // strip whitespace, otherwise pretty-printing output has blank lines
+                removeWhitespaceNodes()
+                // set standalone=true to prevent `standalone="no"` in the output
+                xmlStandalone = true
             }
-            tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
-                dependsOn(tasks["generatePomFileFor${platformPublication.name.capitalize()}Publication"])
-            }
+
+            val jvmDoc = builder.documentElement
+            val jvmArtifactId = jvmDoc.getElement("artifactId").textContent
+            // Adjust the self artifact id, as it should match the root module's coordinates:
+            val kmpPomDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(destination).documentElement
+            jvmDoc.getElement("artifactId").textContent =
+                kmpPomDoc.getElement("artifactId").textContent
+
+            // Remove the original platform dependencies and add a single dependency on the platform module:
+            val dependencies = jvmDoc.getElement("dependencies")
+            jvmDoc.removeChild(dependencies)
+            jvmDoc.appendChild(builder.createElement("dependencies") {
+                appendChild(
+                    builder.createElement("dependency") {
+                        appendChild(builder.createElement("groupId", jvmDoc.getElement("groupId").textContent))
+                        appendChild(builder.createElement("artifactId", jvmArtifactId))
+                        appendChild(builder.createElement("version", jvmDoc.getElement("version").textContent))
+                        appendChild(builder.createElement("scope", "compile"))
+                    }
+                )
+            })
+
+            // Set packaging to POM to indicate that there's no artifact:
+            jvmDoc.appendChild(builder.createElement("packaging", "pom"))
+
+
+            TransformerFactory.newInstance().newTransformer().apply {
+                setOutputProperty(OutputKeys.INDENT, "yes")
+                setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
+            }.transform(DOMSource(jvmDoc), StreamResult(destination))
         }
     }
 }
