@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
 plugins {
     kotlin("multiplatform")
-    id("common-conventions")
     id("kotlin-base-conventions")
 }
 
