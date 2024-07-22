@@ -2,6 +2,9 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 
 val kotlin = extensions.getByType<KotlinProjectExtension>()
 
+val deployVersion: String? = project.findProperty("DeployVersion")?.toString()?.ifBlank { null }
+if (deployVersion != null) project.version = deployVersion
+
 kotlin.sourceSets.configureEach {
     languageSettings {
         val overridingKotlinLanguageVersion = getOverridingKotlinLanguageVersion(project)

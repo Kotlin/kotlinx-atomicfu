@@ -3,7 +3,6 @@ plugins {
     `java-library`
     kotlin("jvm")
     id("base-publish-conventions")
-    id("common-conventions")
     id("kotlin-base-conventions")
 }
 
