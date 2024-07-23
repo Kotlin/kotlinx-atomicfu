@@ -4,42 +4,19 @@ pluginManagement {
     includeBuild("../build-settings-logic")
 }
 
+// For buildSrc we need to declare a custom path to toml file with versions' catalog.
+// But for a root project we can't set `from` inside `versionCatalogs` catalog block for the default `libs` catalog.
+// (see https://github.com/gradle/gradle/issues/21328)
+// That is why it is not fully moved to the dependencyResolutionManagement block in the settings convention plugin.
 dependencyResolutionManagement {
-
-    @Suppress("UnstableApiUsage")
-    repositories {
-        /*
-        * This property group is used to build kotlinx.atomicfu against Kotlin compiler snapshots.
-        * When build_snapshot_train is set to true, mavenLocal and Sonatype snapshots are added to repository list
-        * (the former is required for AFU and public, the latter is required for compiler snapshots).
-        * DO NOT change the name of these properties without adapting kotlinx.train build chain.
-        */
-        val buildSnapshotTrainGradleProperty = providers.gradleProperty("build_snapshot_train")
-        if (buildSnapshotTrainGradleProperty.isPresent) {
-            maven(url = uri("https://oss.sonatype.org/content/repositories/snapshots"))
-        }
-
-        val additionalRepositoryProperty = providers.gradleProperty("kotlin_repo_url")
-        if (additionalRepositoryProperty.isPresent) {
-            maven(url = uri(additionalRepositoryProperty.get()))
-            logger.info("A custom Kotlin repository ${additionalRepositoryProperty.get()} was added")
-        }
-
-        mavenCentral()
-    }
-
     versionCatalogs {
-        create("libs") {
+        getByName("libs") {
             from(files("../gradle/libs.versions.toml"))
-
-            val kotlinVersion = providers.gradleProperty("kotlin_version").orNull
-            if (kotlinVersion != null) {
-                version("kotlin", kotlinVersion)
-            }
         }
     }
 }
 
 plugins {
+    id("atomicfu-dependency-resolution-management")
     id("atomicfu-cache-redirector")
 }
