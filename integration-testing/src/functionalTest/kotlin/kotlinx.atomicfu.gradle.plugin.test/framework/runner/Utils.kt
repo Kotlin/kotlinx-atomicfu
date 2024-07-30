@@ -40,7 +40,7 @@ internal fun Path.enableCacheRedirector() {
             .normalize()
             .toFile()
 
-    val gradleDir = resolve("gradle").also { it.createDirectories() }
+    val gradleDir = resolve("gradle").createDirectories()
     redirectorScript.copyTo(gradleDir.resolve("cache-redirector.settings.gradle.kts").toFile())
 
     val settingsGradle = resolve("settings.gradle")
