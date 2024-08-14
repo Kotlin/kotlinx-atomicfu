@@ -7,8 +7,8 @@ plugins {
 develocity {
     if (buildScanEnabled.get()) {
         val overriddenName = buildScanUsername.orNull
+        server = "https://ge.jetbrains.com/"
         buildScan {
-            server = "https://ge.jetbrains.com/"
             publishing.onlyIf { true }
             capture {
                 fileFingerprints = true

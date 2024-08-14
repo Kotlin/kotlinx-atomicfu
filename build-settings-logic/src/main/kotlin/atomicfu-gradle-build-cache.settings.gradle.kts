@@ -39,12 +39,6 @@ val buildCachePushEnabled: Provider<Boolean> =
     atomicfuProperty("build.cache.push", String::toBoolean)
         .orElse(buildingOnTeamCity)
 
-val buildCacheUser: Provider<String> =
-    providers.gradleProperty("build.cache.user")
-
-val buildCachePassword: Provider<String> =
-    providers.gradleProperty("build.cache.password")
-
 buildCache {
     local {
         isEnabled = buildCacheLocalEnabled.get()
@@ -52,15 +46,7 @@ buildCache {
             directory = buildCacheLocalDirectory.get()
         }
     }
-    remote<HttpBuildCache> {
-        url = uri("https://ge.jetbrains.com/cache/")
+    remote(develocity.buildCache) {
         isPush = buildCachePushEnabled.get()
-
-        if (buildCacheUser.isPresent &&
-            buildCachePassword.isPresent
-        ) {
-            credentials.username = buildCacheUser.get()
-            credentials.password = buildCachePassword.get()
-        }
     }
 }
