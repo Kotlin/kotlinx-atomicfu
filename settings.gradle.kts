@@ -111,3 +111,7 @@ include("atomicfu-gradle-plugin")
 include("atomicfu-maven-plugin")
 
 include("integration-testing")
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
