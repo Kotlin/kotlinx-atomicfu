@@ -28,6 +28,26 @@ kotlin {
         }
     }
 
+    // Apple targets
+    // Tier 1
+    macosX64()
+    macosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
+    // Tier 2
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
+
+    // Tier 3
+    watchosDeviceArm64()
+
     // JS -- always
     js(IR) {
         moduleName = "kotlinx-atomicfu"
@@ -63,6 +83,10 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test-common'
                 implementation 'org.jetbrains.kotlin:kotlin-test-annotations-common'
             }
+        }
+
+        appleMain {
+            dependsOn(sourceSets.commonMain)
         }
 
         jsAndWasmSharedMain {
@@ -125,23 +149,9 @@ kotlin {
 
 // Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
 kotlin {
-    // Tier 1
-    macosX64()
-    macosArm64()
-    iosSimulatorArm64()
-    iosX64()
-
     // Tier 2
     linuxX64()
     linuxArm64()
-    watchosSimulatorArm64()
-    watchosX64()
-    watchosArm32()
-    watchosArm64()
-    tvosSimulatorArm64()
-    tvosX64()
-    tvosArm64()
-    iosArm64()
 
     // Tier 3
     androidNativeArm32()
@@ -149,15 +159,11 @@ kotlin {
     androidNativeX86()
     androidNativeX64()
     mingwX64()
-    watchosDeviceArm64()
 
     applyDefaultHierarchyTemplate { target ->
         target.group("native") { nativeTargets ->
             nativeTargets.group("nativeUnixLike") {
                 it.withLinux()
-            }
-            nativeTargets.group("apple") {
-                it.withApple()
             }
             nativeTargets.group("androidNative32Bit") {
                 it.withAndroidNativeX86()

@@ -14,7 +14,7 @@ import platform.posix.pthread_mutex_unlock
 import platform.posix.pthread_mutexattr_init
 import platform.posix.pthread_mutexattr_settype
 import platform.posix.pthread_mutexattr_t
-
+                  
 actual open class SynchronizedObject {
 
     private val mutex: pthread_mutex_t = nativeHeap.alloc()
