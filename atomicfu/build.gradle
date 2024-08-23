@@ -200,6 +200,8 @@ kotlin {
         configure(nativeTestSets) {
             dependsOn nativeTest
         }
+
+        appleMain { dependsOn commonMain }
     }
 
     // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)
