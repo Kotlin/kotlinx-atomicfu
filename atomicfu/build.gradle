@@ -28,26 +28,6 @@ kotlin {
         }
     }
 
-    // Apple targets
-    // Tier 1
-    macosX64()
-    macosArm64()
-    iosSimulatorArm64()
-    iosX64()
-
-    // Tier 2
-    watchosSimulatorArm64()
-    watchosX64()
-    watchosArm32()
-    watchosArm64()
-    tvosSimulatorArm64()
-    tvosX64()
-    tvosArm64()
-    iosArm64()
-
-    // Tier 3
-    watchosDeviceArm64()
-
     // JS -- always
     js(IR) {
         moduleName = "kotlinx-atomicfu"
@@ -83,10 +63,6 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test-common'
                 implementation 'org.jetbrains.kotlin:kotlin-test-annotations-common'
             }
-        }
-
-        appleMain {
-            dependsOn(sourceSets.commonMain)
         }
 
         jsAndWasmSharedMain {
@@ -149,6 +125,26 @@ kotlin {
 
 // Support of all non-deprecated targets from official tier list: https://kotlinlang.org/docs/native-target-support.html
 kotlin {
+    // Apple targets
+    // Tier 1
+    macosX64()
+    macosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
+    // Tier 2
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
+
+    // Tier 3
+    watchosDeviceArm64()
+
     // Tier 2
     linuxX64()
     linuxArm64()
@@ -161,7 +157,7 @@ kotlin {
     mingwX64()
 
     applyDefaultHierarchyTemplate { target ->
-        target.group("native") { nativeTargets ->
+        target.group("nativeNonApple") { nativeTargets ->
             nativeTargets.group("nativeUnixLike") {
                 it.withLinux()
             }
@@ -177,29 +173,44 @@ kotlin {
                 it.withAndroidNativeX64()
             }
         }
+        target.group("apple") {
+            it.withApple()
+        }
     }
 
     sourceSets {
-        nativeMain { dependsOn commonMain }
+        nativeMain {
+            dependsOn commonMain
+        }
 
         nativeTest {}
 
+        nativeNonAppleMain {
+            kotlin.srcDir("src/nativeNonAppleMain/kotlin")
+            dependsOn commonMain
+        }
+
+        appleMain {
+            kotlin.srcDir("src/appleMain/kotlin")
+            dependsOn commonMain
+        }
+
         nativeUnixLikeMain {
             kotlin.srcDir("src/nativeUnixLikeMain/kotlin")
-            dependsOn nativeMain
+            dependsOn nativeNonAppleMain
         }
 
         androidNative32BitMain {
             kotlin.srcDir("src/androidNative32BitMain/kotlin")
-            dependsOn nativeMain
+            dependsOn nativeNonAppleMain
         }
 
         androidNative64BitMain {
             kotlin.srcDir("src/androidNative64BitMain/kotlin")
-            dependsOn nativeMain
+            dependsOn nativeNonAppleMain
         }
 
-        mingwX64Main { dependsOn nativeMain }
+        mingwX64Main { dependsOn nativeNonAppleMain }
 
         configure(nativeMainSets) {
             dependsOn nativeMain
@@ -208,7 +219,6 @@ kotlin {
         configure(nativeTestSets) {
             dependsOn nativeTest
         }
-
     }
 
     // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)

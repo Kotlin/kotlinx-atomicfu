@@ -14,8 +14,8 @@ import platform.posix.pthread_mutex_unlock
 import platform.posix.pthread_mutexattr_init
 import platform.posix.pthread_mutexattr_settype
 import platform.posix.pthread_mutexattr_t
-                  
-actual open class SynchronizedObject {
+
+public actual open class SynchronizedObject {
 
     private val mutex: pthread_mutex_t = nativeHeap.alloc()
 
@@ -52,6 +52,8 @@ actual open class SynchronizedObject {
 }
 
 public actual typealias ReentrantLock = SynchronizedObject
+
+public actual fun reentrantLock() = ReentrantLock()
 
 public actual inline fun <T> ReentrantLock.withLock(block: () -> T): T {
     lock()
