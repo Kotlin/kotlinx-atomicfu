@@ -190,6 +190,7 @@ public final class kotlinx/atomicfu/transformer/JvmVariant : java/lang/Enum {
 	public static final field BOTH Lkotlinx/atomicfu/transformer/JvmVariant;
 	public static final field FU Lkotlinx/atomicfu/transformer/JvmVariant;
 	public static final field VH Lkotlinx/atomicfu/transformer/JvmVariant;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/atomicfu/transformer/JvmVariant;
 	public static fun values ()[Lkotlinx/atomicfu/transformer/JvmVariant;
 }
