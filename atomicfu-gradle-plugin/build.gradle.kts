@@ -9,6 +9,14 @@ plugins {
     id("gradle-compatibility")
 }
 
+// Gradle plugin must be compiled targeting the same Kotlin version as used by Gradle
+kotlin.sourceSets.configureEach {
+    languageSettings {
+        languageVersion = "2.0"
+        apiVersion = "2.0"
+    }
+}
+
 dependencies {
     implementation(project(":atomicfu-transformer")) {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
