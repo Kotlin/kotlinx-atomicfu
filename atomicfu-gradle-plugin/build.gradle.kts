@@ -11,8 +11,8 @@ plugins {
 // Gradle plugin must be compiled targeting the same Kotlin version as used by Gradle
 kotlin.sourceSets.configureEach {
     languageSettings {
-        languageVersion = getOverridingKotlinLanguageVersion(project) ?: "1.4"
-        apiVersion = getOverridingKotlinApiVersion(project) ?: "1.4"
+        languageVersion = "2.0"
+        apiVersion = "2.0"
     }
 }
 
