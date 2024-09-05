@@ -5,7 +5,7 @@
  */
 
 plugins {
-    kotlin("multiplatform") version libs.versions.kotlinVersion.get()
+    kotlin("multiplatform")
     application
 }
 
