@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version libs.versions.kotlinVersion.get()
+    kotlin("multiplatform")
     id("org.jetbrains.kotlinx.atomicfu") version libs.versions.atomicfuVersion.get()
 }
 
