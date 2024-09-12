@@ -4,6 +4,7 @@
 
 plugins {
     id("kotlin-jvm-publish-conventions")
+    id("gradle-compatibility")
 }
 
 dependencies {

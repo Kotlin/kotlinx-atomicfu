@@ -6,14 +6,7 @@ plugins {
     alias(libs.plugins.gradle.pluginPublish)
     id("kotlin-jvm-conventions")
     id("java-gradle-plugin")
-}
-
-// Gradle plugin must be compiled targeting the same Kotlin version as used by Gradle
-kotlin.sourceSets.configureEach {
-    languageSettings {
-        languageVersion = getOverridingKotlinLanguageVersion(project) ?: "1.4"
-        apiVersion = getOverridingKotlinApiVersion(project) ?: "1.4"
-    }
+    id("gradle-compatibility")
 }
 
 dependencies {

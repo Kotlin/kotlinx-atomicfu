@@ -1,5 +1,6 @@
 [versions]
 kotlin = "2.0.0"
+kotlin-for-gradle-plugin = "2.0.0" # Kotlin 2.1 removes support for the used language version / api version: KT-60521
 kotlinx-binaryCompatibilityValidator = "0.16.0"
 asm = "9.7"
 slf4j = "1.8.0-alpha2"
@@ -15,6 +16,7 @@ gradle-develocity = "3.17.5"
 
 # Kotlin dependencies
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-build-tools-api = { group = "org.jetbrains.kotlin", name = "kotlin-build-tools-api", version.ref = "kotlin" }
 kotlin-atomicfu = { group = "org.jetbrains.kotlin", name = "atomicfu", version.ref = "kotlin" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlin-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
