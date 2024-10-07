@@ -463,12 +463,6 @@ private val trace = Trace(size = 64) {
 
 ## Kotlin Native support
 
-Atomic references for Kotlin/Native are based on
-[FreezableAtomicReference](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.concurrent/-freezable-atomic-reference/-init-.html)
-and every reference that is stored to the previously
-[frozen](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.concurrent/freeze.html)
-(shared with another thread) atomic is automatically frozen, too.
-
 Since Kotlin/Native does not generally provide binary compatibility between versions,
 you should use the same version of Kotlin compiler as was used to build AtomicFU.
 See [gradle.properties](gradle.properties) in AtomicFU project for its `kotlin_version`.
