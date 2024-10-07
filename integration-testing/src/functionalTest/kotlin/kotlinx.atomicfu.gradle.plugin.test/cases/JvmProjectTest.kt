@@ -15,7 +15,8 @@ class JvmProjectTest {
     @Test
     fun testJvmWithEnabledIrTransformation() {
         jvmSample.enableJvmIrTransformation = true
-        jvmSample.checkJvmCompileOnlyDependencies()
+        jvmSample.jvmCheckAtomicfuInCompileClasspath()
+        jvmSample.jvmCheckNoAtomicfuInRuntimeConfigs()
         jvmSample.checkConsumableDependencies()
         jvmSample.buildAndCheckBytecode()
     }
@@ -23,7 +24,8 @@ class JvmProjectTest {
     @Test
     fun testJvmWithDisabledIrTransformation() {
         jvmSample.enableJvmIrTransformation = false
-        jvmSample.checkJvmCompileOnlyDependencies()
+        jvmSample.jvmCheckAtomicfuInCompileClasspath()
+        jvmSample.jvmCheckNoAtomicfuInRuntimeConfigs()
         jvmSample.checkConsumableDependencies()
         jvmSample.buildAndCheckBytecode()
     }

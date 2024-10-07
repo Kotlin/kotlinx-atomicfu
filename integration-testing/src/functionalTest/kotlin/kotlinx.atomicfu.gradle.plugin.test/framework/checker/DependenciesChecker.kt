@@ -24,52 +24,47 @@ private fun GradleBuild.checkAtomicfuDependencyIsAbsent(configurations: List<Str
     val dependencies = dependencies()
     for (config in configurations) {
         val configDependencies = dependencies.getDependenciesForConfig(config)
-        check(!configDependencies.contains(atomicfuDependency)) { "Dependency $atomicfuDependency should be compileOnly, but it was found in the configuration: $config" }
+        check(!configDependencies.contains(atomicfuDependency)) { "Dependency $atomicfuDependency should not be present in the configuration: $config" }
     }
 }
 
+internal fun GradleBuild.jvmCheckAtomicfuInCompileClasspath() {
+    checkAtomicfuDependencyIsPresent(listOf("compileClasspath"), jvmAtomicfuDependency)
+}
+
+internal fun GradleBuild.mppCheckAtomicfuInCompileClasspath(targetName: String) {
+    checkAtomicfuDependencyIsPresent(listOf("${targetName}CompileClasspath"), commonAtomicfuDependency)
+}
+
+internal fun GradleBuild.mppCheckAtomicfuInRuntimeClasspath(targetName: String) {
+    checkAtomicfuDependencyIsPresent(listOf("${targetName}CompileClasspath"), commonAtomicfuDependency)
+}
+
 /**
- * For JVM there are 4 final configurations:
+ * There are 4 final configurations:
  * compileClasspath — compile dependencies
  * runtimeClasspath — runtime dependencies
  * apiElements — compile dependencies that will be included in publication
  * runtimeElements — runtime dependencies that will be included in publication
  *
- * The functions below check that `org.jetbrains.kotlinx:atomicfu` dependency is only included in compile configurations.
+ * The functions below check that `org.jetbrains.kotlinx:atomicfu` dependency is not present in the runtime configurations.
  */
 
-// Checks a simple JVM project with a single target
-internal fun GradleBuild.checkJvmCompileOnlyDependencies() {
-    checkAtomicfuDependencyIsPresent(listOf("compileClasspath"), jvmAtomicfuDependency)
+internal fun GradleBuild.jvmCheckNoAtomicfuInRuntimeConfigs() {
     checkAtomicfuDependencyIsAbsent(listOf("runtimeClasspath", "apiElements", "runtimeElements"), jvmAtomicfuDependency)
 }
 
-// Checks JVM target of an MPP project
-internal fun GradleBuild.checkMppJvmCompileOnlyDependencies() {
-    checkAtomicfuDependencyIsPresent(listOf("jvmCompileClasspath"), commonAtomicfuDependency)
-    checkAtomicfuDependencyIsAbsent(listOf("jvmRuntimeClasspath", "jvmApiElements", "jvmRuntimeElements"), commonAtomicfuDependency)
+internal fun GradleBuild.mppCheckNoAtomicfuInRuntimeConfigs(targetName: String) {
+    checkAtomicfuDependencyIsAbsent(listOf("${targetName}RuntimeClasspath", "${targetName}ApiElements", "${targetName}RuntimeElements"), commonAtomicfuDependency)
 }
 
-// Checks wasmJs target of an MPP project
-internal fun GradleBuild.checkMppWasmJsImplementationDependencies() {
-    checkAtomicfuDependencyIsPresent(listOf("wasmJsCompileClasspath", "wasmJsRuntimeClasspath"), commonAtomicfuDependency)
-}
-
-internal fun GradleBuild.checkMppWasmWasiImplementationDependencies() {
-    checkAtomicfuDependencyIsPresent(listOf("wasmWasiCompileClasspath", "wasmWasiRuntimeClasspath"), commonAtomicfuDependency)
+internal fun GradleBuild.mppCheckAtomicfuInApi(targetName: String) {
+    checkAtomicfuDependencyIsPresent(listOf("${targetName}MainApi"), commonAtomicfuDependency)
 }
 
 // Checks Native target of an MPP project
-internal fun GradleBuild.checkMppNativeCompileOnlyDependencies() {
-    // Here the name of the native target is hardcoded because the tested mpp-sample project declares this target and
-    // KGP generates the same set of dependencies for every declared native target ([mingwX64|linuxX64|macosX64...]CompileKlibraries)
-    checkAtomicfuDependencyIsPresent(listOf("macosX64CompileKlibraries"), commonAtomicfuDependency)
-    checkAtomicfuDependencyIsAbsent(listOf("macosX64MainImplementation"), commonAtomicfuDependency)
-}
-
-// Checks Native target of an MPP project
-internal fun GradleBuild.checkMppNativeImplementationDependencies() {
-    checkAtomicfuDependencyIsPresent(listOf("macosX64CompileKlibraries", "macosX64MainImplementation"), commonAtomicfuDependency)
+internal fun GradleBuild.mppNativeCheckAtomicfuInImplementation() {
+    checkAtomicfuDependencyIsPresent(listOf("macosX64MainImplementation"), commonAtomicfuDependency)
 }
 
 // Some dependencies may be not resolvable but consumable and will not be present in the output of :dependencies task,
