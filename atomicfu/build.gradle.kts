@@ -38,7 +38,7 @@ kotlin {
         commonMain.dependencies {
             implementation("org.jetbrains.kotlin:kotlin-stdlib") {
                 version {
-                    prefer(libs.versions.kotlin.get())
+                    prefer(libs.versions.kotlin.asProvider().get())
                 }
             }
         }
