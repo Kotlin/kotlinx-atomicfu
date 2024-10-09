@@ -17,13 +17,21 @@ kotlin.sourceSets.configureEach {
     }
 }
 
+val buildSnapshotTrain = project.hasProperty("build_snapshot_train")
+
 dependencies {
     implementation(project(":atomicfu-transformer")) {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
 
     compileOnly(gradleApi())
-    compileOnly(libs.kotlin.stdlib)
+
+    if (buildSnapshotTrain) {
+        compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.1.0-dev-8424") // This is WA for Train.
+    } else {
+        compileOnly(libs.kotlin.stdlib)
+    }
+
     compileOnly(libs.kotlin.gradlePlugin)
     // Atomicfu compiler plugin dependency will be loaded to kotlinCompilerPluginClasspath
     // Atomicfu plugin will only be applied if the flag is set kotlinx.atomicfu.enableJsIrTransformation=true
