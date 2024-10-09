@@ -68,7 +68,7 @@ class MppProjectTest {
         mppSample.enableNativeIrTransformation = true
         mppSample.cleanAndBuild()
         // When Native IR transformations are applied, atomicfu-gradle-plugin still provides transitive atomicfu dependency
-        mppSample.mppNativeCheckAtomicfuInImplementation()
+        mppSample.mppNativeCheckAtomicfuInImplementation("macosX64")
         mppSample.checkConsumableDependencies()
         mppSample.mppCheckAtomicfuInApi("macosX64")
         // TODO: klib checks are skipped for now because of this problem KT-61143
@@ -79,7 +79,7 @@ class MppProjectTest {
     fun testMppNativeWithDisabledIrTransformation() {
         mppSample.enableNativeIrTransformation = false
         mppSample.cleanAndBuild()
-        mppSample.mppNativeCheckAtomicfuInImplementation()
+        mppSample.mppNativeCheckAtomicfuInImplementation("macosX64")
         mppSample.checkConsumableDependencies()
         mppSample.mppCheckAtomicfuInApi("macosX64")
         // TODO: klib checks are skipped for now because of this problem KT-61143

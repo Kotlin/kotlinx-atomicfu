@@ -63,8 +63,8 @@ internal fun GradleBuild.mppCheckAtomicfuInApi(targetName: String) {
 }
 
 // Checks Native target of an MPP project
-internal fun GradleBuild.mppNativeCheckAtomicfuInImplementation() {
-    checkAtomicfuDependencyIsPresent(listOf("macosX64MainImplementation"), commonAtomicfuDependency)
+internal fun GradleBuild.mppNativeCheckAtomicfuInImplementation(targetName: String) {
+    checkAtomicfuDependencyIsPresent(listOf("${targetName}MainImplementation"), commonAtomicfuDependency)
 }
 
 // Some dependencies may be not resolvable but consumable and will not be present in the output of :dependencies task,
