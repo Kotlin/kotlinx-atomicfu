@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
@@ -19,4 +20,12 @@ tasks.withType<KotlinCompile>().configureEach {
     // Suppress the warning: 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta.
     // See: https://youtrack.jetbrains.com/issue/KT-61573
     compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
+}
+
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        irValidationMode(project)?.let {
+            freeCompilerArgs.addAll("-Xverify-ir=$it", "-Xverify-ir-visibility")
+        }
+    }
 }
