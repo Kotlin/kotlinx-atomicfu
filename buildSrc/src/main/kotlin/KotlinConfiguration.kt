@@ -72,3 +72,14 @@ fun getOverridingKotlinApiVersion(project: Project): String? {
     LOGGER.info("An overriding Kotlin api version of $apiVersion was found for project ${project.name}")
     return apiVersion
 }
+
+/**
+ * Should be used for testing that the Kotlin compiler produces the correct IR.
+ *
+ * Can be enabled via passing the `kotlin_ir_validation_mode` Gradle property
+ * (from command line or from `gradle.properties`).
+ *
+ * The mode is a string passed to the `-Xverify-ir=...` compiler CLI option.
+ */
+fun irValidationMode(project: Project): String? =
+    project.providers.gradleProperty("kotlin_ir_validation_mode").orNull
