@@ -348,7 +348,8 @@ Here are the valid options:
 
 ### JS options
 
-To turn off transformation for Kotlin/JS set option `transformJs` to `false`.
+> Starting with version `0.25.1` `transformJs` flag does not take any effect and is disabled by default. 
+> Please ensure that this flag is not used in the atomicfu configuration of your project, you can safely remove it.
 
 Here are all available configuration options (with their defaults):
 ```groovy
@@ -356,7 +357,6 @@ atomicfu {
   dependenciesVersion = '0.25.0' // set to null to turn-off auto dependencies
   transformJvm = true // set to false to turn off JVM transformation
   jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH
-  transformJs = true // set to false to turn off JVM transformation
 }
 ```
 
