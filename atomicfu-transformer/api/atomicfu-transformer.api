@@ -84,57 +84,6 @@ public final class kotlinx/atomicfu/transformer/AtomicFUTransformerBase$SourceIn
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS : kotlinx/atomicfu/transformer/AtomicFUTransformerBase {
-	public fun <init> (Ljava/io/File;Ljava/io/File;)V
-	public fun transform ()V
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$AtomicConstructorDetector : org/mozilla/javascript/ast/NodeVisitor {
-	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
-	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$AtomicOperationsInliner : org/mozilla/javascript/ast/NodeVisitor {
-	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
-	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$DelegatedPropertyAccessorsVisitor : org/mozilla/javascript/ast/NodeVisitor {
-	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
-	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$DependencyEraser : org/mozilla/javascript/ast/NodeVisitor {
-	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
-	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$FieldDelegatesVisitor : org/mozilla/javascript/ast/NodeVisitor {
-	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
-	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$ReceiverResolver : org/mozilla/javascript/ast/NodeVisitor {
-	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;Ljava/lang/String;)V
-	public final fun getReceiver ()Lorg/mozilla/javascript/ast/AstNode;
-	public final fun setReceiver (Lorg/mozilla/javascript/ast/AstNode;)V
-	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$TopLevelDelegatedFieldsAccessorVisitor : org/mozilla/javascript/ast/NodeVisitor {
-	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
-	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJS$TransformVisitor : org/mozilla/javascript/ast/NodeVisitor {
-	public fun <init> (Lkotlinx/atomicfu/transformer/AtomicFUTransformerJS;)V
-	public fun visit (Lorg/mozilla/javascript/ast/AstNode;)Z
-}
-
-public final class kotlinx/atomicfu/transformer/AtomicFUTransformerJSKt {
-	public static final fun main ([Ljava/lang/String;)V
-}
-
 public final class kotlinx/atomicfu/transformer/AtomicFUTransformerKt {
 	public static final fun main ([Ljava/lang/String;)V
 }
