@@ -25,8 +25,9 @@ internal class AtomicfuKotlinCompilerPluginInternal : KotlinCompilerPluginSuppor
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
         val target = kotlinCompilation.target
+        val targetPlatformType = target.platformType
         val project = target.project
-        return project.needsJvmIrTransformation(target) || project.needsJsIrTransformation(target) || project.needsNativeIrTransformation(target)
+        return project.needsJvmIrTransformation(targetPlatformType) || project.needsJsIrTransformation(targetPlatformType) || project.needsNativeIrTransformation(targetPlatformType)
     }
 
     override fun applyToCompilation(

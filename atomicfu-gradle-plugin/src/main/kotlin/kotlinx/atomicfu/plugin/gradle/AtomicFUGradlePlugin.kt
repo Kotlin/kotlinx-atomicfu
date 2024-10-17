@@ -17,8 +17,6 @@ import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
-import org.jetbrains.kotlin.gradle.targets.js.*
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.tasks.*
 import java.io.*
 import java.util.*
@@ -99,7 +97,7 @@ private fun Project.configureDependencies() {
     }
     withPluginWhenEvaluatedDependencies("org.jetbrains.kotlin.js") { version ->
         dependencies.add(
-            if (config.transformJs) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
+            if (needsJsIrTransformation(KotlinPlatformType.js)) COMPILE_ONLY_CONFIGURATION else IMPLEMENTATION_CONFIGURATION,
             getAtomicfuDependencyNotation(Platform.JS, version)
         )
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JS, version))
@@ -176,26 +174,22 @@ private fun String.toBooleanStrict(): Boolean = when (this) {
     else -> throw IllegalArgumentException("The string doesn't represent a boolean value: $this")
 }
 
-internal fun Project.needsJsIrTransformation(target: KotlinTarget): Boolean =
+internal fun Project.needsJsIrTransformation(targetPlatformType: KotlinPlatformType): Boolean =
     (rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION) || rootProject.getBooleanProperty(ENABLE_JS_IR_TRANSFORMATION_LEGACY))
-            && target.isJsIrTarget()
+            && targetPlatformType == KotlinPlatformType.js
 
-internal fun Project.needsJvmIrTransformation(target: KotlinTarget): Boolean =
+internal fun Project.needsJvmIrTransformation(targetPlatformType: KotlinPlatformType): Boolean =
     rootProject.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION) &&
-        (target.platformType == KotlinPlatformType.jvm || target.platformType == KotlinPlatformType.androidJvm)
+        (targetPlatformType == KotlinPlatformType.jvm || targetPlatformType == KotlinPlatformType.androidJvm)
 
-internal fun Project.needsNativeIrTransformation(target: KotlinTarget): Boolean =
+internal fun Project.needsNativeIrTransformation(targetPlatformType: KotlinPlatformType): Boolean =
     rootProject.getBooleanProperty(ENABLE_NATIVE_IR_TRANSFORMATION) &&
-        (target.platformType == KotlinPlatformType.native)
-
-private fun KotlinTarget.isJsIrTarget() =
-    (this is KotlinJsTarget && this.irTarget != null) ||
-        (this is KotlinJsIrTarget && this.platformType != KotlinPlatformType.wasm)
+        (targetPlatformType == KotlinPlatformType.native)
 
 private fun Project.isTransitiveAtomicfuDependencyRequired(target: KotlinTarget): Boolean {
     val platformType = target.platformType
     return !config.transformJvm && (platformType == KotlinPlatformType.jvm || platformType == KotlinPlatformType.androidJvm) ||
-        (!config.transformJs && platformType == KotlinPlatformType.js) ||
+        (!needsJsIrTransformation(platformType) && platformType == KotlinPlatformType.js) ||
         platformType == KotlinPlatformType.wasm ||
         // Always add the transitive atomicfu dependency for native targets, see #379
         platformType == KotlinPlatformType.native
@@ -206,7 +200,7 @@ private fun Project.isTransitiveAtomicfuDependencyRequired(target: KotlinTarget)
 private fun Project.addJsCompilerPluginRuntimeDependency() {
     if (isCompilerPluginAvailable()) {
         withKotlinTargets { target ->
-            if (target.isJsIrTarget()) {
+            if (needsJsIrTransformation(target.platformType)) {
                 target.compilations.forEach { kotlinCompilation ->
                     kotlinCompilation.dependencies {
                         if (getKotlinVersion().atLeast(1, 7, 10)) {
@@ -287,9 +281,6 @@ private fun Project.configureTasks() {
     withPluginWhenEvaluated("kotlin") {
         if (config.transformJvm) configureJvmTransformation()
     }
-    withPluginWhenEvaluated("org.jetbrains.kotlin.js") {
-        if (config.transformJs) configureJsTransformation()
-    }
     withPluginWhenEvaluated("kotlin-multiplatform") {
         configureMultiplatformTransformation()
     }
@@ -298,26 +289,20 @@ private fun Project.configureTasks() {
 private fun Project.configureJvmTransformation() {
     if (kotlinExtension is KotlinJvmProjectExtension || kotlinExtension is KotlinAndroidProjectExtension) {
         val target = (kotlinExtension as KotlinSingleTargetExtension<*>).target
-        if (!needsJvmIrTransformation(target)) {
+        if (!needsJvmIrTransformation(target.platformType)) {
             configureTransformationForTarget(target)
         }
     }
 }
 
-private fun Project.configureJsTransformation() {
-    val target = (kotlinExtension as KotlinJsProjectExtension).js()
-    if (!needsJsIrTransformation(target)) {
-        configureTransformationForTarget(target)
-    }
-}
-
 private fun Project.configureMultiplatformTransformation() =
     withKotlinTargets { target ->
-        // Skip transformation for common, native and wasm targets or in case IR transformation by the compiler plugin is enabled (for JVM or JS targets)
+        // Skip transformation for common, native and wasm and js targets or in case IR transformation by the compiler plugin is enabled (for JVM or JS targets)
         if (target.platformType == KotlinPlatformType.common ||
             target.platformType == KotlinPlatformType.native ||
             target.platformType == KotlinPlatformType.wasm ||
-            needsJvmIrTransformation(target) || needsJsIrTransformation(target)
+            target.platformType == KotlinPlatformType.js ||
+            needsJvmIrTransformation(target.platformType) || needsJsIrTransformation(target.platformType)
         ) {
             return@withKotlinTargets
         }
@@ -367,21 +352,6 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                         }
                 } else null
             }
-            KotlinPlatformType.js -> {
-                // create transformation task only if transformation is required and JS IR compiler transformation is not enabled
-                if (config.transformJs && !needsJsIrTransformation(target)) {
-                    project.registerJsTransformTask(compilation)
-                        .configureJsTask(
-                            compilation.compileAllTaskName,
-                            transformedClassesDir,
-                            originalClassesDirs,
-                            config
-                        )
-                        .also {
-                            compilation.defaultSourceSet.kotlin.compiledBy(it, AtomicFUTransformJsTask::destinationDirectory)
-                        }
-                } else null
-            }
             else -> error("Unsupported transformation platform '${target.platformType}'")
         }
         if (transformTask != null) {
@@ -427,12 +397,6 @@ private fun Project.registerJvmTransformTask(compilation: KotlinCompilation<*>):
         AtomicFUTransformTask::class.java
     )
 
-private fun Project.registerJsTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformJsTask> =
-    tasks.register(
-        "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
-        AtomicFUTransformJsTask::class.java
-    )
-
 private fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
     classpath: FileCollection,
     classesTaskName: String,
@@ -451,21 +415,6 @@ private fun TaskProvider<AtomicFUTransformTask>.configureJvmTask(
         }
     }
 
-private fun TaskProvider<AtomicFUTransformJsTask>.configureJsTask(
-    classesTaskName: String,
-    transformedClassesDir: Provider<Directory>,
-    originalClassesDir: FileCollection,
-    config: AtomicFUPluginExtension
-): TaskProvider<AtomicFUTransformJsTask> =
-    apply {
-        configure {
-            it.dependsOn(classesTaskName)
-            it.inputFiles = originalClassesDir
-            it.destinationDirectory.value(transformedClassesDir)
-            it.verbose = config.verbose
-        }
-    }
-
 private fun Jar.setupJarManifest(multiRelease: Boolean) {
     if (multiRelease) {
         manifest.attributes.apply {
@@ -477,7 +426,11 @@ private fun Jar.setupJarManifest(multiRelease: Boolean) {
 class AtomicFUPluginExtension(pluginVersion: String?) {
     var dependenciesVersion = pluginVersion
     var transformJvm = true
-    var transformJs = true
+
+    @Deprecated("This flag was previously used to enable or disable kotlinx-atomicfu transformations of the final *.js files produced by the JS Legacy backend. " +
+            "Starting from version 0.26.0 of `kotlinx-atomicfu`, it does not take any effect, is disabled by default and will be removed in the next release. " +
+            "Please ensure that this flag is not used in the atomicfu configuration of your project, you can safely remove it.")
+    var transformJs = false
     var jvmVariant: String = "FU"
     var verbose: Boolean = false
 }
@@ -523,46 +476,6 @@ abstract class AtomicFUTransformTask : ConventionTask() {
         inputFiles.files.forEach { inputDir ->
             AtomicFUTransformer(cp, inputDir, destinationDirectory.get().asFile).let { t ->
                 t.jvmVariant = jvmVariant.toJvmVariant()
-                t.verbose = verbose
-                t.transform()
-            }
-        }
-    }
-}
-
-@CacheableTask
-abstract class AtomicFUTransformJsTask : ConventionTask() {
-
-    @get:Inject
-    internal abstract val providerFactory: ProviderFactory
-
-    @get:Inject
-    internal abstract val projectLayout: ProjectLayout
-
-    @PathSensitive(PathSensitivity.RELATIVE)
-    @InputFiles
-    lateinit var inputFiles: FileCollection
-
-    @Suppress("unused")
-    @Deprecated(
-        message = "Replaced with 'destinationDirectory'",
-        replaceWith = ReplaceWith("destinationDirectory")
-    )
-    @get:Internal
-    var outputDir: File
-        get() = destinationDirectory.get().asFile
-        set(value) { destinationDirectory.value(projectLayout.dir(providerFactory.provider { value })) }
-
-    @get:OutputDirectory
-    abstract val destinationDirectory: DirectoryProperty
-
-    @Input
-    var verbose = false
-
-    @TaskAction
-    fun transform() {
-        inputFiles.files.forEach { inputDir ->
-            AtomicFUTransformerJS(inputDir, destinationDirectory.get().asFile).let { t ->
                 t.verbose = verbose
                 t.transform()
             }
