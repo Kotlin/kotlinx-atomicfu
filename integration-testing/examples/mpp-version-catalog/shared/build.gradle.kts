@@ -37,11 +37,6 @@ kotlin {
     }
 }
 
-// Workaround for KT-71203. Can be removed after https://github.com/Kotlin/kotlinx-atomicfu/issues/431
-atomicfu {
-    transformJs = false
-}
-
 tasks.withType<KotlinCompile<*>>().configureEach {
     kotlinOptions {
         freeCompilerArgs += listOf("-Xskip-prerelease-check")
