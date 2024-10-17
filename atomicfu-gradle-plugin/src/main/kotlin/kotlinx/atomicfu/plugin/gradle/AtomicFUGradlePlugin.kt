@@ -428,7 +428,7 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
     var transformJvm = true
 
     @Deprecated("This flag was previously used to enable or disable kotlinx-atomicfu transformations of the final *.js files produced by the JS Legacy backend. " +
-            "Starting from version 0.25.1 of `kotlinx-atomicfu`, it does not take any effect, is disabled by default and will be removed in the next release. " +
+            "Starting from version 0.26.0 of `kotlinx-atomicfu`, it does not take any effect, is disabled by default and will be removed in the next release. " +
             "Please ensure that this flag is not used in the atomicfu configuration of your project, you can safely remove it.")
     var transformJs = false
     var jvmVariant: String = "FU"

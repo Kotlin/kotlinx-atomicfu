@@ -348,7 +348,7 @@ Here are the valid options:
 
 ### JS options
 
-> Starting with version `0.25.1` `transformJs` flag does not take any effect and is disabled by default. 
+> Starting with version `0.26.0` `transformJs` flag does not take any effect and is disabled by default. 
 > Please ensure that this flag is not used in the atomicfu configuration of your project, you can safely remove it.
 
 Here are all available configuration options (with their defaults):
