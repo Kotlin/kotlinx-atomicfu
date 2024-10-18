@@ -1,5 +1,16 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.26.0
+
+* Updated Kotlin to `2.0.21` (#479).
+* Removed JS Legacy Transformer and disabled `transformJs` flag by default (#478).
+* Added `api` kotlinx-atomicfu dependency for JS and WASM targets (#475).
+* Supported deprecated `linuxArm32Hfp` target (#455).
+* Run Gradle plugin compilation via the fixed Kotlin compiler version (#472).
+* Updated ASM to 9.7 (#473).
+* Completed refactoring the library build scripts (#421). Kudos to @dkrasnoff! 🎉
+* Added build/configuration caches and scans (#451).
+
 # Version 0.25.0
 
 * Got rid of posix interop (#440).

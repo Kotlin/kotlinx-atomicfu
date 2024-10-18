@@ -3,7 +3,7 @@
 [![Kotlin Beta](https://kotl.in/badges/beta.svg)](https://kotlinlang.org/docs/components-stability.html)
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.25.0/pom)
+[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.26.0/pom)
 
 >Note on Beta status: the plugin is in its active development phase and changes from release to release.
 >We do provide a compatibility of atomicfu-transformed artifacts between releases, but we do not provide 
@@ -112,7 +112,7 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 ### Apply plugin
 #### Gradle configuration
 
-> **New plugin id:** Please pay attention, that starting from version `0.25.0` the plugin id is `org.jetbrains.kotlinx.atomicfu`
+> **New plugin id:** Please pay attention, that starting from version `0.26.0` the plugin id is `org.jetbrains.kotlinx.atomicfu`
 
 Add the following to your top-level build file:
 
@@ -121,7 +121,7 @@ Add the following to your top-level build file:
 
 ```kotlin
 plugins {
-     id("org.jetbrains.kotlinx.atomicfu") version "0.25.0"
+     id("org.jetbrains.kotlinx.atomicfu") version "0.26.0"
 }
 ```
 </details>
@@ -131,7 +131,7 @@ plugins {
 
 ```groovy
 plugins {
-    id 'org.jetbrains.kotlinx.atomicfu' version '0.25.0'
+    id 'org.jetbrains.kotlinx.atomicfu' version '0.26.0'
 }
 ```
 </details>
@@ -149,7 +149,7 @@ buildscript {
   }
 
   dependencies {
-    classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.25.0")
+    classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.26.0")
   }
 }
 
@@ -166,7 +166,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.25.0'
+        classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.26.0'
     }
 }
   
@@ -184,7 +184,7 @@ Maven configuration is supported for JVM projects.
 
 ```xml
 <properties>
-     <atomicfu.version>0.25.0</atomicfu.version>
+     <atomicfu.version>0.26.0</atomicfu.version>
 </properties> 
 ```
 
@@ -288,7 +288,7 @@ IR for all the target backends:
 
 To turn on IR transformations set the following properties in your `gradle.properties` file:
 
-> Please note, that starting from version `0.25.0` of the library your project is required to use `Kotlin version >= 1.9.0`. 
+> Please note, that starting from version `0.26.0` of the library your project is required to use `Kotlin version >= 1.9.0`. 
 > See the [requirements section](#Requirements).
 
 ```groovy
@@ -331,7 +331,7 @@ To set configuration options you should create `atomicfu` section in a `build.gr
 like this:
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.25.0'
+  dependenciesVersion = '0.26.0'
 }
 ```
 
@@ -354,7 +354,7 @@ Here are the valid options:
 Here are all available configuration options (with their defaults):
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.25.0' // set to null to turn-off auto dependencies
+  dependenciesVersion = '0.26.0' // set to null to turn-off auto dependencies
   transformJvm = true // set to false to turn off JVM transformation
   jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH
 }
