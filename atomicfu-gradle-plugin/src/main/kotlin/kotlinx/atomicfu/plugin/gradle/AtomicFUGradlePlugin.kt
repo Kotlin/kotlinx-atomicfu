@@ -132,10 +132,14 @@ private fun Project.configureMultiplatformPluginDependencies(version: String) {
                     }
             }
         }
-    // atomicfu should also appear in apiElements config for native targets, 
+    // atomicfu should also appear in apiElements config for Kotlin/Native, JS and WASM targets,
     // otherwise the warning is triggered, see: KT-64109
     multiplatformExtension.targets
-        .matching { target -> target.platformType == KotlinPlatformType.native }
+        .matching { target ->
+            target.platformType == KotlinPlatformType.native ||
+            target.platformType == KotlinPlatformType.wasm ||
+            target.platformType == KotlinPlatformType.js
+        }
         .all { target ->
             target.compilations.all { compilation ->
                 compilation

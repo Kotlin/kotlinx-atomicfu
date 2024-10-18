@@ -22,10 +22,16 @@ repositories {
 kotlin {
     jvm()
 
-    js()
+    js {
+        nodejs()
+    }
 
-    wasmJs {}
-    wasmWasi {}
+    wasmJs {
+        nodejs()
+    }
+    wasmWasi {
+        nodejs()
+    }
 
     macosArm64()
     macosX64()
