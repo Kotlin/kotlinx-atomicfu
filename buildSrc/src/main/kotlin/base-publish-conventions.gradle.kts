@@ -6,16 +6,16 @@ plugins {
 publishing {
     repositories {
         maven {
-            // TODO(Dmitrii Krasnov): add repository name, but before check
-            //  that TC build configuration does not set task names explicitly
+            // if you change the name, you should change the name of the credential properties on CI as well
+            name = "MavenRepositoryForPublishing"
+
             url = mavenRepositoryUri()
-            credentials {
-                username = project.getSensitiveProperty("libs.sonatype.user")
-                password = project.getSensitiveProperty("libs.sonatype.password")
-            }
+
+            // we use such type of credential because of the configuration cache problems with other types:
+            // https://github.com/gradle/gradle/issues/24040
+            credentials(PasswordCredentials::class)
         }
     }
-
     publications.withType<MavenPublication>().configureEach {
         pom {
             name = project.name
