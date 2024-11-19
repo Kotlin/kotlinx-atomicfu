@@ -7,8 +7,7 @@ pluginManagement {
 plugins {
     id("atomicfu-dependency-resolution-management")
     id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
-    id("atomicfu-gradle-build-scan")
-    id("atomicfu-gradle-build-cache")
+    id("atomicfu-develocity")
     id("atomicfu-cache-redirector")
 }
 

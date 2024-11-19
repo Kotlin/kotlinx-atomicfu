@@ -15,16 +15,31 @@ val Settings.buildScanEnabled: Provider<Boolean>
         atomicfuProperty("build.scan.enabled", String::toBoolean)
             .orElse(buildingOnCi)
 
-internal const val DEFAULT_ATOMICFU_USER_NAME = "<default>"
+const val DEFAULT_ATOMICFU_USER_NAME = "<default>"
 
 /**
- * Optionaly override the default name attached to a Build Scan.
+ * Optionally override the default name attached to a Build Scan.
  */
 val Settings.buildScanUsername: Provider<String>
     get() =
         atomicfuProperty("build.scan.username")
             .orElse(DEFAULT_ATOMICFU_USER_NAME)
             .map(String::trim)
+
+/**
+ * Disable Local Cache on CI, because CI machines are short-lived, so local caching doesn't help a lot.
+ * Also, to force CI machines to update the remote cache.
+ */
+val Settings.buildCacheLocalEnabled: Provider<Boolean>
+    get() = atomicfuProperty("build.cache.local.enabled", String::toBoolean)
+        .orElse(!buildingOnCi)
+
+val Settings.buildCacheLocalDirectory: Provider<String>
+    get() = atomicfuProperty("build.cache.local.directory")
+
+val Settings.buildCachePushEnabled: Provider<Boolean>
+    get() = atomicfuProperty("build.cache.push", String::toBoolean)
+        .orElse(buildingOnTeamCity)
 
 internal fun Settings.atomicfuProperty(name: String): Provider<String> =
     providers.gradleProperty("org.jetbrains.atomicfu.$name")
