@@ -14,15 +14,16 @@ plugins {
 }
 
 develocity {
-    if (buildScanEnabled.get()) {
+    val buildScanEnabled = buildScanEnabled.get()
+    if (buildScanEnabled) {
         val overriddenName = buildScanUsername.orNull
         server = "https://ge.jetbrains.com/"
         buildScan {
-            publishing.onlyIf { true }
+            publishing.onlyIf { buildScanEnabled }
             capture {
-                fileFingerprints = true
-                buildLogging = true
-                uploadInBackground = true
+                fileFingerprints = buildScanEnabled
+                buildLogging = buildScanEnabled
+                uploadInBackground = buildScanEnabled
             }
             obfuscation {
                 ipAddresses { _ -> listOf("0.0.0.0") }
