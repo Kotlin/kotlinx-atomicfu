@@ -27,6 +27,8 @@ publishing.publications {
 }
 
 tasks.generatePomFileForMavenPublication {
+    inputs.property("atomicfu-version", version)
+
     val customKotlinRepoURL = getCustomKotlinRepositoryURL(project)
     inputs.property("customKotlinRepoURL", customKotlinRepoURL).optional(true)
 
@@ -91,6 +93,7 @@ tasks.generatePomFileForMavenPublication {
 
 // runs the plugin description generator
 val generatePluginDescriptor by tasks.registering {
+    inputs.property("atomicfu-version", version)
 
     val exec = serviceOf<ExecOperations>()
 
