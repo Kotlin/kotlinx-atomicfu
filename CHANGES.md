@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.26.1
+* Fixed configuration cache problem during publication and enabled `org.gradle.configuration-cache` (#486). Kudos to @dkrasnoff! 🎉
+* Fixed publication of `atomicfu-maven-plugin` artifacts (#490).
+* Updated build cache authorisation (#487).
+* Update Gradle to 8.10.2.
+
 # Version 0.26.0
 
 * Updated Kotlin to `2.0.21` (#479).
