@@ -112,7 +112,7 @@ operations. They can be also atomically modified via `+=` and `-=` operators.
 ### Apply plugin
 #### Gradle configuration
 
-> **New plugin id:** Please pay attention, that starting from version `0.26.1` the plugin id is `org.jetbrains.kotlinx.atomicfu`
+> **New plugin id:** Please pay attention, that starting from version `0.25.0` the plugin id is `org.jetbrains.kotlinx.atomicfu`
 
 Add the following to your top-level build file:
 
@@ -288,7 +288,7 @@ IR for all the target backends:
 
 To turn on IR transformations set the following properties in your `gradle.properties` file:
 
-> Please note, that starting from version `0.26.1` of the library your project is required to use `Kotlin version >= 1.9.0`. 
+> Please note, that starting from version `0.24.0` of the library your project is required to use `Kotlin version >= 1.9.0`. 
 > See the [requirements section](#Requirements).
 
 ```groovy
@@ -348,7 +348,7 @@ Here are the valid options:
 
 ### JS options
 
-> Starting with version `0.26.1` `transformJs` flag does not take any effect and is disabled by default. 
+> Starting from version `0.26.0` `transformJs` flag does not take any effect and is disabled by default. 
 > Please ensure that this flag is not used in the atomicfu configuration of your project, you can safely remove it.
 
 Here are all available configuration options (with their defaults):
