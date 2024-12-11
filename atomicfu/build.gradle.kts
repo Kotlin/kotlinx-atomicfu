@@ -90,6 +90,7 @@ kotlin {
                 implementation("org.jetbrains.kotlin:kotlin-reflect")
                 implementation("org.jetbrains.kotlin:kotlin-test")
                 implementation("org.jetbrains.kotlin:kotlin-test-junit")
+                implementation("org.jetbrains.kotlinx:lincheck:2.34")
                 implementation(libs.junit.junit)
             }
         }
@@ -98,82 +99,113 @@ kotlin {
 
 // Support of all non-deprecated targets from the official tier list: https://kotlinlang.org/docs/native-target-support.html
 kotlin {
-    // Tier 1
-    macosX64()
-    macosArm64()
-    iosSimulatorArm64()
-    iosX64()
+    val appleTargets = listOf(
+        // Tier 1
+        macosX64(),
+        macosArm64(),
+        iosSimulatorArm64(),
+        iosX64(),
 
-    // Tier 2
-    linuxX64()
-    linuxArm64()
-    watchosSimulatorArm64()
-    watchosX64()
-    watchosArm32()
-    watchosArm64()
-    tvosSimulatorArm64()
-    tvosX64()
-    tvosArm64()
-    iosArm64()
+        // Tier 2,
+        watchosSimulatorArm64(),
+        watchosX64(),
+        watchosArm32(),
+        watchosArm64(),
+        tvosSimulatorArm64(),
+        tvosX64(),
+        tvosArm64(),
+        iosArm64(),
 
-    // Tier 3
-    androidNativeArm32()
-    androidNativeArm64()
-    androidNativeX86()
-    androidNativeX64()
-    mingwX64()
-    watchosDeviceArm64()
+        // Tier 3
+        watchosDeviceArm64(),
+    )
 
-    @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
-    linuxArm32Hfp()
+    val linuxTargets = listOf(
+        // Tier 2,
+        linuxX64(),
+        linuxArm64(),
+    )
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    applyDefaultHierarchyTemplate {
-        group("native") {
-            group("nativeUnixLike") {
-                withLinux()
-                withApple()
+    val androidNativeTargets = listOf(
+        // Tier 3
+        androidNativeArm32(),
+        androidNativeArm64(),
+        androidNativeX86(),
+        androidNativeX64(),
+    )
+    
+    val windowsTargets = listOf(
+        mingwX64(),
+    )
+
+    (linuxTargets + androidNativeTargets).forEach { 
+        it.compilations.getByName("main").cinterops {
+            // This is a hack to fix commonization bug: KT-73136
+            val ulock by creating {
+                defFile(project.file("src/nativeInterop/cinterop/stub.def"))
+                packageName = "stub"
+            }
+            val posixparking by creating {
+                defFile(project.file("src/nativeInterop/cinterop/posixparking.def"))
+                packageName = "platform.posix"
             }
         }
-        group("androidNative32Bit") {
-            withAndroidNativeX86()
-            withCompilations { compilation ->
-                (compilation.target as? KotlinNativeTarget)?.konanTarget?.name == "android_arm32"
+    }
+    
+    appleTargets.forEach {
+        it.compilations.getByName("main").cinterops {
+            val ulock by creating {
+                defFile(project.file("src/nativeInterop/cinterop/ulock.def"))
+                packageName = "platform.darwin.ulock"
+                includeDirs("${project.rootDir}/atomicfu/src/nativeInterop/cinterop")
+            }
+            val posixparking by creating {
+                defFile(project.file("src/nativeInterop/cinterop/posixparking.def"))
+                packageName = "platform.posix"
             }
         }
-        group("androidNative64Bit") {
-            withAndroidNativeArm64()
-            withAndroidNativeX64()
+    }
+    
+    windowsTargets.forEach { 
+        it.binaries.all {
+            linkerOpts += "-lSynchronization"
         }
-
+        it.compilations.getByName("main").cinterops {
+            // This is a hack to fix commonization bug: KT-73136
+            val ulock by creating {
+                defFile(project.file("src/nativeInterop/cinterop/stub.def"))
+                packageName = "stub"
+            }
+            val posixparking by creating {
+                defFile(project.file("src/nativeInterop/cinterop/posixparking.def"))
+                packageName = "platform.posix"
+            }
+        }
     }
 
+    @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
+    linuxArm32Hfp {
+        compilations.getByName("main").cinterops {
+            // This is a hack to fix commonization bug: KT-73136
+            val ulock by creating {
+                defFile(project.file("src/nativeInterop/cinterop/stub.def"))
+                packageName = "stub"
+            }
+            val posixparking by creating {
+                defFile(project.file("src/nativeInterop/cinterop/posixparking.def"))
+                packageName = "platform.posix"
+            }
+        }
+    }
+
+    applyDefaultHierarchyTemplate()
     sourceSets {
-        val nativeUnixLikeMain by getting {
-            kotlin.srcDir("src/nativeUnixLikeMain/kotlin")
-            dependsOn(nativeMain.get())
-        }
+        val linux64Main by creating { dependsOn(nativeMain.get()) }
+        linuxX64Main.get().dependsOn(linux64Main)
+        linuxArm64Main.get().dependsOn(linux64Main)
 
-        val androidNative32BitMain by getting {
-            kotlin.srcDir("src/androidNative32BitMain/kotlin")
-            dependsOn(nativeMain.get())
-        }
-
-        val androidNative64BitMain by getting {
-            kotlin.srcDir("src/androidNative64BitMain/kotlin")
-            dependsOn(nativeMain.get())
-        }
-
-        val androidNative32BitTest by getting {
-            kotlin.srcDir("src/androidNative32BitTest/kotlin")
-            dependsOn(nativeTest.get())
-        }
-
-        val androidNative64BitTest by getting {
-            kotlin.srcDir("src/androidNative64BitTest/kotlin")
-            dependsOn(nativeTest.get())
-        }
-
+        val linux32Main by creating { dependsOn(nativeMain.get()) }
+        linuxArm32HfpMain.get().dependsOn(linux32Main)
     }
 
     // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)
@@ -378,4 +410,3 @@ val jvmTest by tasks.getting(Test::class) {
     )
     // run them only for transformed code
 }
-
