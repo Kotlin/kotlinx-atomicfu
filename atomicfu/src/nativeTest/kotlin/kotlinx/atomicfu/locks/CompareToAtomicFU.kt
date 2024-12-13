@@ -76,7 +76,7 @@ class CompareToAtomicFU {
     }
 
     fun singleTNew() {
-        val nativeMutex = NativeMutex { FutexParkingDelegator }
+        val nativeMutex = NativeMutex { PosixParkingDelegator }
         repeat(1000000) {
             nativeMutex.lock()
             nativeMutex.unlock()
@@ -131,7 +131,7 @@ class CompareToAtomicFU {
     )
 
     class NewLockInt: LockInt{
-        private val lock = NativeMutex { FutexParkingDelegator }
+        private val lock = NativeMutex { PosixParkingDelegator }
         override var n = 0
         override var rand = 0
         override fun lock() = lock.lock()
