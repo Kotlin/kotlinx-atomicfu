@@ -135,3 +135,22 @@ public final class kotlinx/atomicfu/TraceKt {
 	public static final fun named (Lkotlinx/atomicfu/TraceBase;Ljava/lang/String;)Lkotlinx/atomicfu/TraceBase;
 }
 
+public final class kotlinx/atomicfu/locks/Mutex {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/concurrent/locks/ReentrantLock;)V
+	public synthetic fun <init> (Ljava/util/concurrent/locks/ReentrantLock;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getReentrantLock ()Ljava/util/concurrent/locks/ReentrantLock;
+	public final fun isLocked ()Z
+	public final fun lock ()V
+	public final fun tryLock ()Z
+	public final fun unlock ()V
+}
+
+public final class kotlinx/atomicfu/locks/MutexKt {
+	public static final fun withLock (Lkotlinx/atomicfu/locks/Mutex;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public final class kotlinx/atomicfu/locks/ThreadIdentifier_jvmKt {
+	public static final fun currentThreadId ()J
+}
+
