@@ -135,3 +135,25 @@ public final class kotlinx/atomicfu/TraceKt {
 	public static final fun named (Lkotlinx/atomicfu/TraceBase;Ljava/lang/String;)Lkotlinx/atomicfu/TraceBase;
 }
 
+public final class kotlinx/atomicfu/parking/KThread {
+	public static final field Companion Lkotlinx/atomicfu/parking/KThread$Companion;
+}
+
+public final class kotlinx/atomicfu/parking/KThread$Companion {
+	public final fun currentThread ()Lkotlinx/atomicfu/parking/KThread;
+}
+
+public final class kotlinx/atomicfu/parking/KThreadKt {
+	public static final fun currentThreadId ()J
+}
+
+public final class kotlinx/atomicfu/parking/Parker {
+	public static final field Companion Lkotlinx/atomicfu/parking/Parker$Companion;
+}
+
+public final class kotlinx/atomicfu/parking/Parker$Companion {
+	public final fun park ()V
+	public final fun parkNanos (J)V
+	public final fun unpark (Lkotlinx/atomicfu/parking/KThread;)V
+}
+
