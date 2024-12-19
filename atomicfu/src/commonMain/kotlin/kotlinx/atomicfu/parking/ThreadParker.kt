@@ -16,9 +16,10 @@ internal class ThreadParker(private val delegator: ParkingDelegator) {
         delegator.timedWait(atomicRef.value!!, nanos) 
         
         // If this fails it means the unpark call was before timout was reached
-        // Than we need to make sure it the wake call has happened before we return and destroy the ptr
-        // Therefore we call delegator.wait (which should return immidiately when wake call was already made,
-        // If not it should still return fast (this should be a rare race condition)
+        // Than we need to make sure if the wake call has happened before we return and destroy the ptr
+        // Therefore we call delegator.wait which should return immediately when wake call was already made.
+        // If not it should still return fast (this should be a rare race condition).
+        // This ensures the wake call has happened before cleanup.
         if (!state.compareAndSet(STATE_PARKED, STATE_FREE)) {
             delegator.wait(atomicRef.value!!)
         }
@@ -30,6 +31,7 @@ internal class ThreadParker(private val delegator: ParkingDelegator) {
 
                 STATE_FREE -> {
                     atomicRef.value = delegator.createRef()
+                    // If state changed, cleanup and reiterate.
                     if (!state.compareAndSet(currentState, STATE_PARKED)) {
                         delegator.destroyRef(atomicRef.value!!)
                         atomicRef.value = null 
