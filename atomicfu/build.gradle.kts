@@ -128,50 +128,54 @@ kotlin {
     linuxArm32Hfp()
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    applyDefaultHierarchyTemplate {
-        group("native") {
-            group("nativeUnixLike") {
-                withLinux()
-                withApple()
-            }
-        }
-        group("androidNative32Bit") {
-            withAndroidNativeX86()
-            withCompilations { compilation ->
-                (compilation.target as? KotlinNativeTarget)?.konanTarget?.name == "android_arm32"
-            }
-        }
-        group("androidNative64Bit") {
-            withAndroidNativeArm64()
-            withAndroidNativeX64()
-        }
-
-    }
+    applyDefaultHierarchyTemplate() 
 
     sourceSets {
-        val nativeUnixLikeMain by getting {
-            kotlin.srcDir("src/nativeUnixLikeMain/kotlin")
-            dependsOn(nativeMain.get())
+        val nativeUnixLikeMain by creating { dependsOn(nativeMain.get()) }
+        
+        
+        val androidNative64BitMain by creating { dependsOn(nativeMain.get()) }
+        androidNative64BitMain.also {
+            androidNativeArm64Main.get().dependsOn(it)
+            androidNativeX64Main.get().dependsOn(it)
         }
 
-        val androidNative32BitMain by getting {
-            kotlin.srcDir("src/androidNative32BitMain/kotlin")
-            dependsOn(nativeMain.get())
+        val androidNative32BitMain by creating { dependsOn(nativeMain.get()) }
+        androidNative32BitMain.let {
+            androidNativeArm32Main.get().dependsOn(it)
+            androidNativeX86Main.get().dependsOn(it)
         }
 
-        val androidNative64BitMain by getting {
-            kotlin.srcDir("src/androidNative64BitMain/kotlin")
-            dependsOn(nativeMain.get())
+        val linux64Main by creating { dependsOn(nativeUnixLikeMain) }
+        linux64Main.let {
+            linuxX64Main.get().dependsOn(it)
+            linuxArm64Main.get().dependsOn(it)
         }
 
-        val androidNative32BitTest by getting {
-            kotlin.srcDir("src/androidNative32BitTest/kotlin")
-            dependsOn(nativeTest.get())
+        val linux32Main by creating { dependsOn(nativeUnixLikeMain) }
+        linux32Main.let {
+            linuxArm32HfpMain.get().dependsOn(it)
         }
 
-        val androidNative64BitTest by getting {
-            kotlin.srcDir("src/androidNative64BitTest/kotlin")
-            dependsOn(nativeTest.get())
+        val apple64Main by creating { dependsOn(nativeUnixLikeMain) }
+        apple64Main.let {
+            watchosDeviceArm64Main.get().dependsOn(it)
+            iosArm64Main.get().dependsOn(it)
+            tvosArm64Main.get().dependsOn(it)
+            tvosX64Main.get().dependsOn(it)
+            tvosSimulatorArm64Main.get().dependsOn(it)
+            watchosX64Main.get().dependsOn(it)
+            watchosSimulatorArm64Main.get().dependsOn(it)
+            iosX64Main.get().dependsOn(it)
+            iosSimulatorArm64Main.get().dependsOn(it)
+            macosX64Main.get().dependsOn(it)
+            macosArm64Main.get().dependsOn(it)
+        }
+
+        val apple32Main by creating { dependsOn(nativeUnixLikeMain) }
+        apple32Main.let {
+            watchosArm32Main.get().dependsOn(it)
+            watchosArm64Main.get().dependsOn(it) // Uses Int for timespec
         }
 
     }
