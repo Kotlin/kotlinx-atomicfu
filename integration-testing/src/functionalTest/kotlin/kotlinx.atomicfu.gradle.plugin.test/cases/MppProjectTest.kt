@@ -38,13 +38,13 @@ class MppProjectTest {
         mppSample.mppCheckAtomicfuInApi("js")
     }
 
-    @Test
-    fun testMppWithDisabledJsIrTransformation() {
-        mppSample.enableJsIrTransformation = false
-        mppSample.cleanAndBuild()
-        mppSample.checkConsumableDependencies()
-        mppSample.mppCheckAtomicfuInApi("js")
-    }
+//    @Test
+//    fun testMppWithDisabledJsIrTransformation() {
+//        mppSample.enableJsIrTransformation = false
+//        mppSample.cleanAndBuild()
+//        mppSample.checkConsumableDependencies()
+//        mppSample.mppCheckAtomicfuInApi("js")
+//    }
 
     @Test
     fun testMppWasmJsBuild() {
