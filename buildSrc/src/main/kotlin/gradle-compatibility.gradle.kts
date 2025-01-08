@@ -22,8 +22,8 @@ kotlin {
     @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     compilerOptions {
         languageVersion = getOverridingKotlinLanguageVersion(project)?.let { KotlinVersion.fromVersion(it) }
-            ?: KotlinVersion.KOTLIN_1_4
+            ?: KotlinVersion.KOTLIN_1_6
         apiVersion = getOverridingKotlinApiVersion(project)?.let { KotlinVersion.fromVersion(it) }
-            ?: KotlinVersion.KOTLIN_1_4
+            ?: KotlinVersion.KOTLIN_1_6
     }
 }
