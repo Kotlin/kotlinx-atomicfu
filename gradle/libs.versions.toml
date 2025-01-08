@@ -1,6 +1,6 @@
 [versions]
-kotlin = "2.0.21"
-kotlin-for-gradle-plugin = "2.0.21" # Kotlin 2.1 removes support for the used language version / api version: KT-60521
+kotlin = "2.1.0"
+kotlin-for-gradle-plugin = "2.1.0" # Kotlin 2.1 removes support for the used language version / api version: KT-60521
 kotlinx-binaryCompatibilityValidator = "0.16.0"
 asm = "9.7"
 slf4j = "1.8.0-alpha2"
