@@ -17,9 +17,14 @@ tasks.withType<KotlinNativeCompile>().configureEach {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
-    // Suppress the warning: 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta.
-    // See: https://youtrack.jetbrains.com/issue/KT-61573
-    compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
+    compilerOptions {
+        // Suppress the warning: 'expect'/'actual' classes (including interfaces, objects, annotations, enums, and 'actual' typealiases) are in Beta.
+        // See: https://youtrack.jetbrains.com/issue/KT-61573
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+        // Suppress "Pre-release classes were found in dependencies" error
+        // to be able to use develop branch of the library in Aggregate builds with Kotlin master.
+        freeCompilerArgs.add("-Xskip-prerelease-check")
+    }
 }
 
 tasks.withType<KotlinCompilationTask<*>>().configureEach {
