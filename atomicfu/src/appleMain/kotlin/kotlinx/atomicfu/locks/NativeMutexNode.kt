@@ -1,8 +1,10 @@
 package kotlinx.atomicfu.locks
 
+import kotlinx.cinterop.ptr
+
 import kotlinx.cinterop.*
 import platform.posix.*
-import kotlin.concurrent.Volatile
+import kotlin.concurrent.*
 
 public actual class NativeMutexNode {
 
@@ -22,7 +24,7 @@ public actual class NativeMutexNode {
         pthread_mutex_unlock(pMutex.ptr)
     }
 
-   actual fun unlock() {
+    actual fun unlock() {
         pthread_mutex_lock(pMutex.ptr)
         isLocked = false
         pthread_cond_broadcast(pCond.ptr)
