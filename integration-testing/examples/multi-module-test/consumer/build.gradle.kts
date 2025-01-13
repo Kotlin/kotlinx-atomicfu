@@ -6,7 +6,6 @@
 
 plugins {
     kotlin("multiplatform")
-    application
 }
 
 repositories {
@@ -16,9 +15,7 @@ repositories {
 kotlin {
     jvmToolchain(11)
 
-    jvm {
-        withJava()
-    }
+    jvm()
 
     sourceSets {
         all {
@@ -35,6 +32,3 @@ kotlin {
     }
 }
 
-application {
-    mainClass.set("MainKt")
-}
