@@ -11,8 +11,7 @@ import kotlin.time.measureTime
 class ThreadParkingStressTest {
     
     @Test
-    fun lotsOfParking() {
-        println("Starting test")
+    fun parkingStressNative() {
         val duration = measureTime {
             val parker = ThreadParker(PosixParkingDelegator)
             val pt = ParkTest(parker)
@@ -64,7 +63,7 @@ class ThreadParkingStressTest {
     }
 
     @Test
-    fun testPublicAPI() {
+    fun testPublicApiNative() {
         val duration = measureTime {
             val ppt = PublicParkerTest()
 

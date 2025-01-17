@@ -1,33 +1,31 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.test.parking
 
-import platform.posix.sleep
-import kotlin.native.concurrent.ObsoleteWorkersApi
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
+import junit.framework.TestCase.assertTrue
+import kotlinx.atomicfu.parking.KThread
+import kotlinx.atomicfu.parking.Parker
+import kotlinx.atomicfu.parking.currentThreadId
+import java.lang.Thread.sleep
+import kotlin.concurrent.thread
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
-@OptIn(ObsoleteWorkersApi::class)
 class ThreadParkerTest {
 
     @Test
     fun parkUnpark() {
         println("Started Main: ${currentThreadId()}")
+        val mainThread = KThread.currentThread()
 
-        val p = ThreadParker(PosixParkingDelegator)
-
-        val worker = Worker.start()
-        worker.execute(TransferMode.UNSAFE, { p }) { p ->
-            currentThreadId()
+        thread {
             println("Started Worker going to sleep: ${currentThreadId()}")
-            sleep(1u)
+            sleep(1000)
             println("Unparking from: ${currentThreadId()}")
-            p.unpark()
+            Parker.unpark(mainThread)
             println("Unparked from: ${currentThreadId()}")
         }
 
+
         println("Parking from: ${currentThreadId()}")
-        p.park()
+        Parker.park()
         println("Unparked at: ${currentThreadId()}")
 
 
@@ -36,28 +34,24 @@ class ThreadParkerTest {
 
     @Test
     fun unparkPark() {
-        currentThreadId()
         println("Started Main: ${currentThreadId()}")
+        val mainThread = KThread.currentThread()
 
-        val p = ThreadParker(PosixParkingDelegator)
-
-        val worker = Worker.start()
-        worker.execute(TransferMode.UNSAFE, { p }) { p ->
+        thread {
             currentThreadId()
             println("Unparking from: ${currentThreadId()}")
-            p.unpark()
+            Parker.unpark(mainThread)
             println("Unparked from: ${currentThreadId()}")
         }
-        
+
         println("Main going to sleep before park: ${currentThreadId()}")
-        sleep(5u)
+        sleep(1000)
 
         println("Parking thread: ${currentThreadId()}")
-        p.park()
+        Parker.park() 
         println("Continued thread: ${currentThreadId()}")
 
 
         assertTrue(true)
     }
 }
-
