@@ -25,7 +25,7 @@ internal class JvmParkingDelegator: ParkingDelegator {
         val mark = Monotonic.markNow()
         while (atomicLong.get() == 0L) {
             LockSupport.parkNanos(nanos)
-            if (mark.elapsedNow().toLong(DurationUnit.MILLISECONDS) > nanos) break
+            if (mark.elapsedNow().toLong(DurationUnit.NANOSECONDS) > nanos) break
         }
     }
 
