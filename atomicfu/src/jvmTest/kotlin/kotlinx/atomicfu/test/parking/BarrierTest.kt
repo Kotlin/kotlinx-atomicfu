@@ -15,28 +15,33 @@ class BarrierTest {
                 val numberOfThreads = it + 2
                 println("Barrier test iteration $iteration with $numberOfThreads threads")
                 val barrier = PureJavaBarrier(numberOfThreads)
-                val exitStatus = AtomicIntegerArray(numberOfThreads)
+                val before = AtomicIntegerArray(numberOfThreads)
+                val after = AtomicIntegerArray(numberOfThreads)
                 val threads = List(numberOfThreads) { myThread ->
                     thread(name = "MyThread-$myThread") {
                         println("Thread $myThread started")
                         repeat(numberOfThreads) { otherThread ->
-                            if (otherThread != myThread && exitStatus.get(otherThread) != 0) {
+                            if (otherThread != myThread && after.get(otherThread) != 0) {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
                         Thread.sleep(Random.nextLong(100))
                         println("Thread $myThread ready to wait")
+                        before.set(myThread, 1)
+                        
                         barrier.await()
-                        exitStatus.set(myThread, 1)
+                        
+                        after.set(myThread, 1)
                         println("Thread $myThread finished")
+                        
+                        repeat(numberOfThreads) { otherThread ->
+                            if (before.get(otherThread) == 0) {
+                                fail("Thread $myThread continued too early: $otherThread had value ${before.get(otherThread)}")
+                            }
+                        }
                     }
                 }
-                threads.forEach {
-                    it.join(1000)
-                    if (it.isAlive) {
-                        throw AssertionError("Thread ${it.name} did not finish")
-                    }
-                }
+                threads.forEach { it.join() }
             }
         }
     }

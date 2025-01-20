@@ -46,7 +46,7 @@ class BarrierTest {
                         println("Thread $myt finished")
                         
                         repeat(bef.size) { otherThread ->
-                            if (otherThread != myt && bef[otherThread].value == 0) {
+                            if (bef[otherThread].value == 0) {
                                 fail("Thread $myt continued too early: $otherThread had value ${aft[otherThread].value}")
                             }
                         }
