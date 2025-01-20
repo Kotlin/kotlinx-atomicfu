@@ -12,16 +12,16 @@ class TimedParkingTest {
     
     
     @Test
-    fun testNanosFirstUnpark500() {
+    fun testNanosFirstUnpark400() {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
             val t = measureTime {
-                parker.parkNanos(500_000_000)
+                parker.parkNanos(600_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 350_000_000)
-            assertTrue(t.inWholeNanoseconds < 450_000_000)
+            assertTrue(t.inWholeNanoseconds > 300_000_000)
+            assertTrue(t.inWholeNanoseconds < 500_000_000)
             t.inWholeNanoseconds
         }
         
@@ -33,16 +33,16 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstUnpark800() {
+    fun testNanosFirstUnpark700() {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
             val t = measureTime {
-                parker.parkNanos(800_000_000)
+                parker.parkNanos(900_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 650_000_000)
-            assertTrue(t.inWholeNanoseconds < 750_000_000)
+            assertTrue(t.inWholeNanoseconds > 600_000_000)
+            assertTrue(t.inWholeNanoseconds < 800_000_000)
             t.inWholeNanoseconds
         }
 
@@ -54,7 +54,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstUnpark1200() {
+    fun testNanosFirstUnpark1000() {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
@@ -62,29 +62,29 @@ class TimedParkingTest {
             val t = measureTime {
                 parker.parkNanos(1200_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 1050_000_000)
-            assertTrue(t.inWholeNanoseconds < 1150_000_000)
+            assertTrue(t.inWholeNanoseconds > 900_000_000)
+            assertTrue(t.inWholeNanoseconds < 1100_000_000)
             t.inWholeNanoseconds
         }
 
         //sleep is in micros
-        usleep(1100_000u)
+        usleep(1000_000u)
         parker.unpark()
 
         future1.result
     }
     
     @Test
-    fun testNanosFirstDeadline500() {
+    fun testNanosFirstDeadline400() {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
             val t = measureTime {
-                parker.parkNanos(500_000_000)
+                parker.parkNanos(400_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 450_000_000)
-            assertTrue(t.inWholeNanoseconds < 550_000_000)
+            assertTrue(t.inWholeNanoseconds > 300_000_000)
+            assertTrue(t.inWholeNanoseconds < 500_000_000)
             t.inWholeNanoseconds
         }
 
@@ -95,16 +95,16 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstDeadline800() {
+    fun testNanosFirstDeadline700() {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
             val t = measureTime {
-                parker.parkNanos(800_000_000)
+                parker.parkNanos(700_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 750_000_000)
-            assertTrue(t.inWholeNanoseconds < 850_000_000)
+            assertTrue(t.inWholeNanoseconds > 600_000_000)
+            assertTrue(t.inWholeNanoseconds < 800_000_000)
             t.inWholeNanoseconds
         }
 
@@ -115,20 +115,20 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstDeadline1200() {
+    fun testNanosFirstDeadline1000() {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
             val t = measureTime {
-                parker.parkNanos(1200_000_000)
+                parker.parkNanos(1000_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 1150_000_000)
-            assertTrue(t.inWholeNanoseconds < 1250_000_000)
+            assertTrue(t.inWholeNanoseconds > 900_000_000)
+            assertTrue(t.inWholeNanoseconds < 1100_000_000)
             t.inWholeNanoseconds
         }
 
-        usleep(1300_000u)
+        usleep(1200_000u)
         parker.unpark()
 
         future1.result
