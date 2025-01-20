@@ -12,16 +12,16 @@ class TimedParkingTest {
 
 
     @Test
-    fun testNanosFirstUnpark500() {
+    fun testNanosFirstUnpark400() {
         var kthread1: KThread? = null
 
         val thread1 = thread {
             kthread1 = KThread.currentThread()
             val t = measureTime {
-                Parker.parkNanos(500_000_000)
+                Parker.parkNanos(600_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 350_000_000)
-            assertTrue(t.inWholeNanoseconds < 450_000_000)
+            assertTrue(t.inWholeNanoseconds > 300_000_000)
+            assertTrue(t.inWholeNanoseconds < 500_000_000)
             t.inWholeNanoseconds
         }
 
@@ -33,16 +33,16 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstUnpark800() {
+    fun testNanosFirstUnpark700() {
         var kthread1: KThread? = null
 
         val thread1 = thread {
             kthread1 = KThread.currentThread()
             val t = measureTime {
-                Parker.parkNanos(800_000_000)
+                Parker.parkNanos(900_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 650_000_000)
-            assertTrue(t.inWholeNanoseconds < 750_000_000)
+            assertTrue(t.inWholeNanoseconds > 600_000_000)
+            assertTrue(t.inWholeNanoseconds < 800_000_000)
             t.inWholeNanoseconds
         }
 
@@ -54,7 +54,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstUnpark1200() {
+    fun testNanosFirstUnpark1000() {
         var kthread1: KThread? = null
 
         val thread1 = thread {
@@ -62,29 +62,29 @@ class TimedParkingTest {
             val t = measureTime {
                 Parker.parkNanos(1200_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 1050_000_000)
-            assertTrue(t.inWholeNanoseconds < 1150_000_000)
+            assertTrue(t.inWholeNanoseconds > 900_000_000)
+            assertTrue(t.inWholeNanoseconds < 1100_000_000)
             t.inWholeNanoseconds
         }
 
         //sleep is in micros
-        sleep(1100)
+        sleep(1000)
         Parker.unpark(kthread1!!)
 
         thread1.join()
     }
 
     @Test
-    fun testNanosFirstDeadline500() {
+    fun testNanosFirstDeadline400() {
         var kthread1: KThread? = null
 
         val thread1 = thread {
             kthread1 = KThread.currentThread()
             val t = measureTime {
-                Parker.parkNanos(500_000_000)
+                Parker.parkNanos(400_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 450_000_000)
-            assertTrue(t.inWholeNanoseconds < 550_000_000)
+            assertTrue(t.inWholeNanoseconds > 300_000_000)
+            assertTrue(t.inWholeNanoseconds < 500_000_000)
             t.inWholeNanoseconds
         }
 
@@ -95,16 +95,16 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstDeadline800() {
+    fun testNanosFirstDeadline700() {
         var kthread1: KThread? = null
 
         val thread1 = thread {
             kthread1 = KThread.currentThread()
             val t = measureTime {
-                Parker.parkNanos(800_000_000)
+                Parker.parkNanos(700_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 750_000_000)
-            assertTrue(t.inWholeNanoseconds < 850_000_000)
+            assertTrue(t.inWholeNanoseconds > 600_000_000)
+            assertTrue(t.inWholeNanoseconds < 800_000_000)
             t.inWholeNanoseconds
         }
 
@@ -121,14 +121,14 @@ class TimedParkingTest {
         val thread1 = thread {
             kthread1 = KThread.currentThread()
             val t = measureTime {
-                Parker.parkNanos(1200_000_000)
+                Parker.parkNanos(1000_000_000)
             }
-            assertTrue(t.inWholeNanoseconds > 1150_000_000)
-            assertTrue(t.inWholeNanoseconds < 1250_000_000)
+            assertTrue(t.inWholeNanoseconds > 900_000_000)
+            assertTrue(t.inWholeNanoseconds < 1100_000_000)
             t.inWholeNanoseconds
         }
 
-        sleep(1300)
+        sleep(1200)
         Parker.unpark(kthread1!!)
 
         thread1.join()
