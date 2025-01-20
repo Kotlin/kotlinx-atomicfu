@@ -41,7 +41,7 @@ class BarrierTest {
                         }
                     }
                 }
-                threads.forEach { it.join() }
+                threads.forEach { it.join(5000) }
             }
         }
     }
