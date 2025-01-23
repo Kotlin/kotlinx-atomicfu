@@ -11,6 +11,7 @@ plugins {
 }
 
 kotlin {
+    jvmToolchain(8)
 
     // JS -- always
     js(IR) {
@@ -201,12 +202,6 @@ val classesPreAtomicFuDir = file("${layout.buildDirectory.get()}/classes/kotlin/
 val classesPostTransformFU = file("${layout.buildDirectory.get()}/classes/kotlin/jvm/postTransformedFU")
 val classesPostTransformVH = file("${layout.buildDirectory.get()}/classes/kotlin/jvm/postTransformedVH")
 val classesPostTransformBOTH = file("${layout.buildDirectory.get()}/classes/kotlin/jvm/postTransformedBOTH")
-
-tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_1_8)
-    }
-}
 
 val transformFU by tasks.registering(JavaExec::class) {
     dependsOn(tasks.get("compileTestKotlinJvm"))
