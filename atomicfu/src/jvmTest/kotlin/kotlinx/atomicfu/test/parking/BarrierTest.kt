@@ -63,7 +63,12 @@ class PureJavaBarrier(private val parties: Int) {
             wakeUpEveryone()
             return
         }
-        val currentThread = KThread.currentThread()
+        val currentThread = try { 
+            KThread.currentThread() 
+        } catch (e: Exception) { 
+            println("Oops")
+            throw e
+        }
         while (true) {
             val waiter = waiters[myIndex]
             when {
