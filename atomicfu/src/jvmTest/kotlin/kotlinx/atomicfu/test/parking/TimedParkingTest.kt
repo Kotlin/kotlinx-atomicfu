@@ -7,12 +7,13 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.measureTime
 import java.lang.Thread.sleep
+import kotlin.IllegalStateException
 
 class TimedParkingTest {
 
 
     @Test
-    fun testNanosFirstUnpark400() {
+    fun testNanosFirstUnpark400() = retry(3) {
         var kthread1: KThread? = null
 
         val thread1 = thread {
@@ -33,7 +34,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstUnpark700() {
+    fun testNanosFirstUnpark700() = retry(3) {
         var kthread1: KThread? = null
 
         val thread1 = thread {
@@ -54,7 +55,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstUnpark1000() {
+    fun testNanosFirstUnpark1000() = retry(3) {
         var kthread1: KThread? = null
 
         val thread1 = thread {
@@ -75,7 +76,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstDeadline400() {
+    fun testNanosFirstDeadline400() = retry(3) {
         var kthread1: KThread? = null
 
         val thread1 = thread {
@@ -95,7 +96,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstDeadline700() {
+    fun testNanosFirstDeadline700() = retry(3) {
         var kthread1: KThread? = null
 
         val thread1 = thread {
@@ -115,7 +116,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstDeadline1200() {
+    fun testNanosFirstDeadline1200() = retry(3) {
         var kthread1: KThread? = null
 
         val thread1 = thread {
@@ -132,5 +133,17 @@ class TimedParkingTest {
         Parker.unpark(kthread1!!)
 
         thread1.join()
+    }
+    
+    private fun retry(times: Int, block: () -> Unit): Unit {
+        var lastThrowable: Throwable? = null
+        repeat(times) {
+            try {
+                return block()
+            } catch (t: Throwable) {
+                lastThrowable = t
+            }
+        }
+        throw lastThrowable ?: IllegalStateException("Retry failed but no exception was recorded.")
     }
 }

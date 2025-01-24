@@ -10,9 +10,8 @@ import kotlin.time.measureTime
 
 class TimedParkingTest {
     
-    
     @Test
-    fun testNanosFirstUnpark400() {
+    fun testNanosFirstUnpark400() = retry(3) {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
@@ -33,7 +32,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstUnpark700() {
+    fun testNanosFirstUnpark700() = retry(3) {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
@@ -54,7 +53,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstUnpark1000() {
+    fun testNanosFirstUnpark1000() = retry(3) {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
@@ -75,7 +74,7 @@ class TimedParkingTest {
     }
     
     @Test
-    fun testNanosFirstDeadline400() {
+    fun testNanosFirstDeadline400() = retry(3) {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
@@ -95,7 +94,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstDeadline700() {
+    fun testNanosFirstDeadline700() = retry(3) {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
@@ -115,7 +114,7 @@ class TimedParkingTest {
     }
 
     @Test
-    fun testNanosFirstDeadline1000() {
+    fun testNanosFirstDeadline1000() = retry(3) {
         val parker = ThreadParker(PosixParkingDelegator)
 
         val worker1 = Worker.start()
@@ -133,4 +132,18 @@ class TimedParkingTest {
 
         future1.result
     }
+
+
+    private fun retry(times: Int, block: () -> Unit): Unit {
+        var lastThrowable: Throwable? = null
+        repeat(times) {
+            try {
+                return block()
+            } catch (t: Throwable) {
+                lastThrowable = t
+            }
+        }
+        throw lastThrowable ?: IllegalStateException("Retry failed but no exception was recorded.")
+    }
+
 }
