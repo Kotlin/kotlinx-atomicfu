@@ -210,6 +210,7 @@ val transformFU by tasks.registering(JavaExec::class) {
     classpath(transformer)
     inputs.dir(classesPreAtomicFuDir)
     outputs.dir(classesPostTransformFU)
+    launcherForJdk(9)
 }
 
 val transformBOTH by tasks.registering(JavaExec::class) {
@@ -219,6 +220,7 @@ val transformBOTH by tasks.registering(JavaExec::class) {
     classpath = transformer
     inputs.dir(classesPreAtomicFuDir)
     outputs.dir(classesPostTransformBOTH)
+    launcherForJdk(9)
 }
 
 
@@ -229,6 +231,7 @@ val transformVH by tasks.registering(JavaExec::class) {
     classpath(transformer)
     inputs.dir(classesPreAtomicFuDir)
     outputs.dir(classesPostTransformVH)
+    launcherForJdk(9)
 }
 
 
@@ -238,6 +241,7 @@ val transformedTestFU_current by tasks.registering(Test::class) {
     testClassesDirs = project.files(classesPostTransformFU)
     exclude("**/*LFTest.*", "**/TraceToStringTest.*", "**/AtomicfuReferenceJsTest.*")
     filter { isFailOnNoMatchingTests = false }
+    launcherForJdk(9)
 }
 
 val transformedTestBOTH_current by tasks.registering(Test::class) {
@@ -252,6 +256,7 @@ val transformedTestBOTH_current by tasks.registering(Test::class) {
         "**/AtomicfuReferenceJsTest.*"
     )
     filter { isFailOnNoMatchingTests = false }
+    launcherForJdk(9)
 }
 
 val transformedTestVH by tasks.registering(Test::class) {
@@ -271,6 +276,7 @@ val transformedTestVH by tasks.registering(Test::class) {
         logger.info("Current java version for task ${currentTask.name} is : ${JavaVersion.current()}")
         JavaVersion.current().ordinal >= JavaVersion.VERSION_1_9.ordinal
     }
+    launcherForJdk(9)
 }
 val jvmTestAll by tasks.registering {
     dependsOn(
