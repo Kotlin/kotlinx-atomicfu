@@ -49,7 +49,7 @@ class LatchTest {
 
 class CustomCountDownLatch(count: Int) {
     private val c = atomic(count)
-    private val waiters = MSQueue<KThread>()
+    private val waiters = MSQueueLatch<KThread>()
 
     fun await() {
         val thread = KThread.currentThread()
@@ -69,7 +69,7 @@ class CustomCountDownLatch(count: Int) {
     }
 }
 
-private class MSQueue<E> {
+private class MSQueueLatch<E> {
     private val head = atomic(Node<E>(null))
     private val tail = atomic(head.value)
 
