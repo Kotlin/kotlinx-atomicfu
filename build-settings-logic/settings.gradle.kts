@@ -76,9 +76,9 @@ internal fun <T : Any> Settings.atomicfuProperty(name: String, convert: (String)
 
 develocity {
     val buildScanEnabled = buildScanEnabled.get()
+    server = "https://ge.jetbrains.com/"
     if (buildScanEnabled) {
         val overriddenName = buildScanUsername.orNull
-        server = "https://ge.jetbrains.com/"
         buildScan {
             publishing.onlyIf { buildScanEnabled }
             capture {
