@@ -21,20 +21,17 @@ class CyclicBarrierTest {
                 val after = AtomicIntegerArray(numberOfThreads)
                 val threads = List(numberOfThreads) { myThread ->
                     Fut {
-                        println("Thread $myThread started")
                         repeat(numberOfThreads) { otherThread ->
                             if (otherThread != myThread && after.get(otherThread) != 0) {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
                         Thread.sleep(Random.nextLong(100))
-                        println("Thread $myThread ready to wait")
                         before.set(myThread, 1)
 
                         barrier.await()
 
                         after.set(myThread, 1)
-                        println("Thread $myThread finished")
 
                         repeat(numberOfThreads) { otherThread ->
                             if (before.get(otherThread) == 0) {
@@ -67,15 +64,14 @@ class CyclicBarrierTest {
                         before.set(tId, newN)
                         syncBar.await()
                         repeat(before.length()) { otherThread ->
-                            if (before.get(otherThread) < internalIteration) {
+                            if (before.get(otherThread) < newN) {
                                 fail("Thread $tId continued too early: $otherThread had value ${before.get(otherThread)}")
                             }
-                            if (before.get(otherThread) > internalIteration + 1) {
+                            if (before.get(otherThread) > newN + 1) {
                                 fail("Thread $tId too far behind: $otherThread had value ${before.get(otherThread)}")
                             }
                         }
                     }
-                    println("Thread finished")
                 }
                 threads.add(t)
             }
@@ -95,11 +91,11 @@ private class JavaCyclicBarrier(private val parties: Int) {
                 val deq = queue.dequeue()
                 if (deq == null) fail("Not enough parties enqueued")
                 if (deq.first % parties == 0L) continue
-                Parker.Companion.unpark(deq.second)
+                Parker.unpark(deq.second)
                 wokenUp++
             }
         } else {
-            Parker.Companion.park()
+            Parker.park()
         }
     }
 }

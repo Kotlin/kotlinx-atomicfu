@@ -71,7 +71,7 @@ class CyclicBarrierTest {
             repeat(before.size) { before[it].value = 0 }
             repeat(threadSetSize * 5) { tId ->
                 val t = Worker.start().execute(TransferMode.UNSAFE, { Triple(Pair(bar, syncBar), before, tId) }) { (bars, before, tId) ->
-                    repeat(50) { internalIteration ->
+                    repeat(50) {
                         usleep(Random.nextUInt(100_000u))
                         bars.first.await()
                         usleep(Random.nextUInt(100_000u))
@@ -79,15 +79,14 @@ class CyclicBarrierTest {
                         bars.second.await()
 
                         repeat(before.size) { otherThread ->
-                            if (before[otherThread].value!! < internalIteration) {
+                            if (before[otherThread].value!! < before[tId].value!!) {
                                 fail("Thread $tId continued too early: $otherThread had value ${before[otherThread].value}")
                             }
-                            if (before[otherThread].value!! > internalIteration + 1) {
+                            if (before[otherThread].value!! > before[tId].value!! + 1) {
                                 fail("Thread $tId too far behind: $otherThread had value ${before[otherThread].value}")
                             }
                         }
                     }
-                    println("Thread finished")
                 }
                 threads.add(t)
             }

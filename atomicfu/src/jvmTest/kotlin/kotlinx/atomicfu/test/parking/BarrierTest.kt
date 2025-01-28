@@ -19,20 +19,20 @@ class BarrierTest {
                 val after = AtomicIntegerArray(numberOfThreads)
                 val threads = List(numberOfThreads) { myThread ->
                     Fut {
-                        println("Thread $myThread started")
+//                        println("Thread $myThread started")
                         repeat(numberOfThreads) { otherThread ->
                             if (otherThread != myThread && after.get(otherThread) != 0) {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
                         Thread.sleep(Random.nextLong(100))
-                        println("Thread $myThread ready to wait")
+//                        println("Thread $myThread ready to wait")
                         before.set(myThread, 1)
                         
                         barrier.await()
                         
                         after.set(myThread, 1)
-                        println("Thread $myThread finished")
+//                        println("Thread $myThread finished")
                         
                         repeat(numberOfThreads) { otherThread ->
                             if (before.get(otherThread) == 0) {
