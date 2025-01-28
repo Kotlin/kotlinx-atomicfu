@@ -5,6 +5,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.atomicArrayOfNulls
 import kotlinx.atomicfu.parking.KThread
 import kotlinx.atomicfu.parking.Parker
+import kotlinx.atomicfu.parking.waitAll
 import kotlin.random.Random
 import kotlin.test.*
 import platform.posix.usleep
@@ -53,7 +54,7 @@ class BarrierTest {
                     }
                 }
                 
-                threads.forEach { it.result }
+                waitAll(threads)
             }
         }
     }

@@ -43,7 +43,7 @@ class CyclicBarrierTest {
                         }
                     }
                 }
-                threads.forEach { it.waitThrowing() }
+                Fut.waitAllAndThrow(threads)
             }
         }
     }
@@ -79,7 +79,7 @@ class CyclicBarrierTest {
                 }
                 threads.add(t)
             }
-            threads.forEach { it.waitThrowing() }
+            Fut.waitAllAndThrow(threads)
         }
     }
 }

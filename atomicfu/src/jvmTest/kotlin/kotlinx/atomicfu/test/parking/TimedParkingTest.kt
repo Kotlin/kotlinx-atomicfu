@@ -7,6 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.measureTime
 import java.lang.Thread.sleep
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.IllegalStateException
 
@@ -142,7 +143,9 @@ class TimedParkingTest {
                 lastThrowable = t
             }
         }
-        throw lastThrowable ?: IllegalStateException("Retry failed but no exception was recorded.")
+        val err = IllegalStateException("Failed after $times retries")
+        err.addSuppressed(lastThrowable?: IllegalStateException("Retry failed but no error"))
+        throw err
     }
 }
 
@@ -150,18 +153,32 @@ class TimedParkingTest {
 internal class Fut(private val block: () -> Unit) {
     private var thread: Thread? = null
     private val atomicError = AtomicReference<Throwable?>(null)
+    val done = AtomicBoolean(false)
     init {
         val th = thread {
-            try {
-                block()
-            } catch (t: Throwable) {
+            try { block() } 
+            catch (t: Throwable) {
                 atomicError.set(t)
+                throw t
             }
+            finally { done.set(true) }
         }
         thread = th
     }
     fun waitThrowing() {
         thread!!.join()
-        atomicError.get()?.let { throw it }
+        throwIfError()
     }
+    
+    fun throwIfError() = atomicError.get()?.let { throw it }
+    
+    companion object {
+        fun waitAllAndThrow(futs: List<Fut>) {
+            while(futs.any { !it.done.get() }) {
+                sleep(1000)
+                futs.forEach { it.throwIfError() }
+            }
+        }
+    }
+    
 }

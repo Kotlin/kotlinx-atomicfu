@@ -41,7 +41,7 @@ class LatchTest {
                 }}
 
                 countingThread.result
-                waiters.forEach { it.result }
+                waitAll(waiters)
             }
         }
     }

@@ -21,7 +21,6 @@ class ThreadParkingStressTest {
             val thread1 = thread {
                 kthread.set(KThread.currentThread())
                 repeat(10000) { i ->
-//                    println("Iteration $i")
                     if (Random.nextBoolean()) {
                         sleep(Random.nextLong(0, 5))
                         Parker.park()
@@ -65,7 +64,6 @@ class ThreadParkingStressTest {
             val thread0 = thread {
                 kthread0.set(KThread.currentThread())
                 repeat(10000) { i ->
-                    println("Iteration A $i")
                     if (Random.nextBoolean()) {
                         sleep(Random.nextLong(0, 5))
                         Parker.park()
@@ -79,7 +77,6 @@ class ThreadParkingStressTest {
             val thread1 = thread {
                 kthread1.set(KThread.currentThread())
                 repeat(10000) { i ->
-                    println("Iteration B $i")
                     if (Random.nextBoolean()) {
                         sleep(Random.nextLong(0, 5))
                         Parker.park()

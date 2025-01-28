@@ -7,6 +7,7 @@ import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
 import platform.posix.usleep
 import kotlin.native.concurrent.Future
+import kotlin.native.concurrent.FutureState
 import kotlin.native.concurrent.ObsoleteWorkersApi
 import kotlin.random.Random
 import kotlin.random.nextUInt
@@ -53,7 +54,7 @@ class CyclicBarrierTest {
                         }
                     }
                 }
-                threads.forEach { it.result }
+                waitAll(threads)
             }
         }
     }
@@ -90,7 +91,7 @@ class CyclicBarrierTest {
                 }
                 threads.add(t)
             }
-        threads.forEach { it.result }
+        waitAll(threads)
         }
     }
     
@@ -148,4 +149,11 @@ private class MSQueueCyclicBarrier<E> {
     private class Node<E>(var element: E?, val id: Long) {
         val next = atomic<Node<E>?>(null)
     }
+}
+
+internal fun waitAll(futures: Iterable<Future<*>>) {
+    while (futures.all{ it.state == FutureState.SCHEDULED }) {
+        usleep(100_000u)
+    }
+    futures.forEach { if (it.state != FutureState.SCHEDULED) it.result }
 }

@@ -143,7 +143,9 @@ class TimedParkingTest {
                 lastThrowable = t
             }
         }
-        throw lastThrowable ?: IllegalStateException("Retry failed but no exception was recorded.")
+        val err = IllegalStateException("Failed after $times retries")
+        err.addSuppressed(lastThrowable?: IllegalStateException("Retry failed but no error"))
+        throw err
     }
 
 }

@@ -41,7 +41,7 @@ class BarrierTest {
                         }
                     }
                 }
-                threads.forEach { it.waitThrowing() }
+                Fut.waitAllAndThrow(threads)
             }
         }
     }

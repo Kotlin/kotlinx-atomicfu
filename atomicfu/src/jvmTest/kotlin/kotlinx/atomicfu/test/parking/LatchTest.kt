@@ -20,7 +20,7 @@ class LatchTest {
                 val after = AtomicIntegerArray(numberOfThreads)
                 println("Latch test iteration $iteration with $numberOfThreads threads")
                 val latch = CustomCountDownLatch(countingDownTo)
-                val countingThread = thread {
+                val countingThread = Fut {
                     repeat(countingDownTo) { 
                         Thread.sleep(Random.nextLong(100))
                         
@@ -32,14 +32,13 @@ class LatchTest {
                     }
                 }
                 
-                val waiters = List(numberOfThreads) { i -> thread(name = "MyThread-$i") {
+                val waiters = List(numberOfThreads) { i -> Fut {
                     Thread.sleep(Random.nextLong(100))
                     latch.await()
                     after.set(i, 1)
                 }}
                 
-                countingThread.join(10000)
-                waiters.forEach { it.join(10000) }
+                Fut.waitAllAndThrow(waiters + countingThread)
 
                 repeat(after.length()) { threadToCheck ->
                     if (after.get(threadToCheck) != 1) fail("Thread $threadToCheck stuck")
