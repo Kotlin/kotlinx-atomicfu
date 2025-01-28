@@ -1,8 +1,9 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.test.parking
 
 import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.parking.KThread
+import kotlinx.atomicfu.parking.Parker
 import java.util.concurrent.atomic.AtomicIntegerArray
-import kotlin.concurrent.thread
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.fail
@@ -19,7 +20,7 @@ class CyclicBarrierTest {
                 val before = AtomicIntegerArray(numberOfThreads)
                 val after = AtomicIntegerArray(numberOfThreads)
                 val threads = List(numberOfThreads) { myThread ->
-                    thread(name = "MyThread-$myThread") {
+                    Fut {
                         println("Thread $myThread started")
                         repeat(numberOfThreads) { otherThread ->
                             if (otherThread != myThread && after.get(otherThread) != 0) {
@@ -42,7 +43,7 @@ class CyclicBarrierTest {
                         }
                     }
                 }
-                threads.forEach { it.join(5000) }
+                threads.forEach { it.waitThrowing() }
             }
         }
     }
@@ -51,13 +52,13 @@ class CyclicBarrierTest {
     fun stressCyclicBarrier() {
         repeat(5) { iteration ->
             println("Iteration $iteration")
-            val threads = mutableListOf<Thread>()
+            val threads = mutableListOf<Fut>()
             val threadSetSize = (iteration + 1) * 5
             val bar = JavaCyclicBarrier(threadSetSize)
             val syncBar = JavaCyclicBarrier(threadSetSize * 5)
             val before = AtomicIntegerArray(threadSetSize * 5)
             repeat(threadSetSize * 5) { tId ->
-                val t = thread { 
+                val t = Fut { 
                     repeat(50) { internalIteration ->
                         Thread.sleep(Random.nextLong(100))
                         bar.await()
@@ -78,7 +79,7 @@ class CyclicBarrierTest {
                 }
                 threads.add(t)
             }
-            threads.forEach { it.join() }
+            threads.forEach { it.waitThrowing() }
         }
     }
 }
@@ -87,18 +88,18 @@ private class JavaCyclicBarrier(private val parties: Int) {
     private val queue = MSQueueCyclicBarrier<KThread>()
 
     fun await() {
-        val n = queue.enqueue(KThread.currentThread())
+        val n = queue.enqueue(KThread.Companion.currentThread())
         if (n % parties == 0L) {
             var wokenUp = 0
             while (wokenUp < parties - 1) {
                 val deq = queue.dequeue()
                 if (deq == null) fail("Not enough parties enqueued")
                 if (deq.first % parties == 0L) continue
-                Parker.unpark(deq.second)
+                Parker.Companion.unpark(deq.second)
                 wokenUp++
             }
         } else {
-            Parker.park()
+            Parker.Companion.park()
         }
     }
 }

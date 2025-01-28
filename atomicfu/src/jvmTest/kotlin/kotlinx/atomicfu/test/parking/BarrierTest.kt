@@ -1,9 +1,9 @@
 import kotlinx.atomicfu.parking.KThread
 import kotlinx.atomicfu.parking.Parker
+import kotlinx.atomicfu.test.parking.Fut
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicIntegerArray
 import java.util.concurrent.atomic.AtomicReferenceArray
-import kotlin.concurrent.thread
 import kotlin.random.Random
 import kotlin.test.*
 
@@ -18,7 +18,7 @@ class BarrierTest {
                 val before = AtomicIntegerArray(numberOfThreads)
                 val after = AtomicIntegerArray(numberOfThreads)
                 val threads = List(numberOfThreads) { myThread ->
-                    thread(name = "MyThread-$myThread") {
+                    Fut {
                         println("Thread $myThread started")
                         repeat(numberOfThreads) { otherThread ->
                             if (otherThread != myThread && after.get(otherThread) != 0) {
@@ -41,7 +41,7 @@ class BarrierTest {
                         }
                     }
                 }
-                threads.forEach { it.join(5000) }
+                threads.forEach { it.waitThrowing() }
             }
         }
     }

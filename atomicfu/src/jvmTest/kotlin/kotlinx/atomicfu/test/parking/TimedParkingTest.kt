@@ -7,6 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.measureTime
 import java.lang.Thread.sleep
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.IllegalStateException
 
 class TimedParkingTest {
@@ -16,7 +17,7 @@ class TimedParkingTest {
     fun testNanosFirstUnpark400() = retry(3) {
         var kthread1: KThread? = null
 
-        val thread1 = thread {
+        val thread1 = Fut {
             kthread1 = KThread.currentThread()
             val t = measureTime {
                 Parker.parkNanos(600_000_000)
@@ -26,18 +27,17 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        //sleep is in micros
         sleep(400)
         Parker.unpark(kthread1!!)
 
-        thread1.join()
+        thread1.waitThrowing()
     }
 
     @Test
     fun testNanosFirstUnpark700() = retry(3) {
         var kthread1: KThread? = null
 
-        val thread1 = thread {
+        val thread1 = Fut {
             kthread1 = KThread.currentThread()
             val t = measureTime {
                 Parker.parkNanos(900_000_000)
@@ -47,18 +47,17 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        //sleep is in micros
         sleep(700)
         Parker.unpark(kthread1!!)
 
-        thread1.join()
+        thread1.waitThrowing()
     }
 
     @Test
     fun testNanosFirstUnpark1000() = retry(3) {
         var kthread1: KThread? = null
 
-        val thread1 = thread {
+        val thread1 = Fut {
             kthread1 = KThread.currentThread()
             val t = measureTime {
                 Parker.parkNanos(1200_000_000)
@@ -68,18 +67,17 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        //sleep is in micros
         sleep(1000)
         Parker.unpark(kthread1!!)
 
-        thread1.join()
+        thread1.waitThrowing()
     }
 
     @Test
     fun testNanosFirstDeadline400() = retry(3) {
         var kthread1: KThread? = null
 
-        val thread1 = thread {
+        val thread1 = Fut {
             kthread1 = KThread.currentThread()
             val t = measureTime {
                 Parker.parkNanos(400_000_000)
@@ -92,14 +90,14 @@ class TimedParkingTest {
         sleep(600)
         Parker.unpark(kthread1!!)
 
-        thread1.join()
+        thread1.waitThrowing()
     }
 
     @Test
     fun testNanosFirstDeadline700() = retry(3) {
         var kthread1: KThread? = null
 
-        val thread1 = thread {
+        val thread1 = Fut {
             kthread1 = KThread.currentThread()
             val t = measureTime {
                 Parker.parkNanos(700_000_000)
@@ -112,14 +110,14 @@ class TimedParkingTest {
         sleep(900)
         Parker.unpark(kthread1!!)
 
-        thread1.join()
+        thread1.waitThrowing()
     }
 
     @Test
     fun testNanosFirstDeadline1200() = retry(3) {
         var kthread1: KThread? = null
 
-        val thread1 = thread {
+        val thread1 = Fut {
             kthread1 = KThread.currentThread()
             val t = measureTime {
                 Parker.parkNanos(1000_000_000)
@@ -132,7 +130,7 @@ class TimedParkingTest {
         sleep(1200)
         Parker.unpark(kthread1!!)
 
-        thread1.join()
+        thread1.waitThrowing()
     }
     
     private fun retry(times: Int, block: () -> Unit): Unit {
@@ -145,5 +143,25 @@ class TimedParkingTest {
             }
         }
         throw lastThrowable ?: IllegalStateException("Retry failed but no exception was recorded.")
+    }
+}
+
+
+internal class Fut(private val block: () -> Unit) {
+    private var thread: Thread? = null
+    private val atomicError = AtomicReference<Throwable?>(null)
+    init {
+        val th = thread {
+            try {
+                block()
+            } catch (t: Throwable) {
+                atomicError.set(t)
+            }
+        }
+        thread = th
+    }
+    fun waitThrowing() {
+        thread!!.join()
+        atomicError.get()?.let { throw it }
     }
 }
