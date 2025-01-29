@@ -30,8 +30,17 @@ internal actual object PosixParkingDelegator : ParkingDelegator {
     actual override fun timedWait(ref: Any, nanos: Long) {
         if (ref !is ParkingData) throw IllegalArgumentException("ParkingDelegator got incompatible parking object")
         val ts = nativeHeap.alloc<timespec>().ptr
-        ts.pointed.tv_sec = (nanos / 1_000_000).toInt()
-        ts.pointed.tv_nsec = (nanos % 1_000_000).toInt()
+
+        // Add nanos to current time
+        clock_gettime(CLOCK_REALTIME.toUInt(), ts)
+        ts.pointed.tv_sec += nanos.toInt() / 1_000_000_000
+        ts.pointed.tv_nsec += nanos.toInt() % 1_000_000_000
+
+        //Fix overflow
+        if (ts.pointed.tv_nsec >= 1_000_000_000) {
+            ts.pointed.tv_sec += 1
+            ts.pointed.tv_nsec -= 1_000_000_000
+        }
         var rc = 0
         pthread_mutex_lock(ref.mut)
         while (!ref.wake.value && rc == 0) {
