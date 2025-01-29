@@ -14,8 +14,8 @@ class CyclicBarrierTest {
     @Test
     fun simpleBarriertest() {
         repeat(5) { iteration ->
+            println("Barrier test iteration $iteration")
             (5..50 step 5).forEach { numberOfThreads ->
-                println("Barrier test iteration $iteration with $numberOfThreads threads")
                 val barrier = JavaCyclicBarrier(numberOfThreads)
                 val before = AtomicIntegerArray(numberOfThreads)
                 val after = AtomicIntegerArray(numberOfThreads)
@@ -48,7 +48,7 @@ class CyclicBarrierTest {
     @Test
     fun stressCyclicBarrier() {
         repeat(5) { iteration ->
-            println("Iteration $iteration")
+            println("Stress test $iteration")
             val threads = mutableListOf<Fut>()
             val threadSetSize = (iteration + 1) * 5
             val bar = JavaCyclicBarrier(threadSetSize)

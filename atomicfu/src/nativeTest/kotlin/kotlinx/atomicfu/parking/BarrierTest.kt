@@ -19,9 +19,9 @@ class BarrierTest {
     @Test
     fun testBarrier() {
         repeat(5) { iteration ->
+            println("Barrier test iteration $iteration")
             repeat(5) {
                 val numberOfThreads = it + 2
-                println("Barrier test iteration $iteration with $numberOfThreads threads")
                 val barrier = NativeBarrier(numberOfThreads)
                 val after = atomicArrayOfNulls<Int>(numberOfThreads)
                 val before = atomicArrayOfNulls<Int>(numberOfThreads)
@@ -38,14 +38,11 @@ class BarrierTest {
                             }
                         }
                         usleep(Random.nextUInt(100_000u))
-                        println("Thread $myt ready to wait")
                         bef[myt].value = 1
                         
                         bar.await()
                         
                         aft[myt].value = 1
-                        println("Thread $myt finished")
-                        
                         repeat(bef.size) { otherThread ->
                             if (bef[otherThread].value == 0) {
                                 fail("Thread $myt continued too early: $otherThread had value ${aft[otherThread].value}")

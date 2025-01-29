@@ -14,11 +14,11 @@ class LatchTest {
     @Test
     fun latchTest() {
         repeat(5) { iteration ->
+            println("Latch test iteration $iteration")
             repeat(5) {
                 val numberOfThreads = it + 2
                 val countingDownTo = iteration + 2
                 val after = AtomicIntegerArray(numberOfThreads)
-                println("Latch test iteration $iteration with $numberOfThreads threads")
                 val latch = CustomCountDownLatch(countingDownTo)
                 val countingThread = Fut {
                     repeat(countingDownTo) { 

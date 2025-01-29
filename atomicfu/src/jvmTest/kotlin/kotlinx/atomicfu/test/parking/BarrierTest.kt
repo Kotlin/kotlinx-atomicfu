@@ -11,28 +11,25 @@ class BarrierTest {
     @Test
     fun testBarrier() {
         repeat(5) { iteration ->
+            println("Barrier test iteration $iteration")
             repeat(5) {
                 val numberOfThreads = it + 2
-                println("Barrier test iteration $iteration with $numberOfThreads threads")
                 val barrier = PureJavaBarrier(numberOfThreads)
                 val before = AtomicIntegerArray(numberOfThreads)
                 val after = AtomicIntegerArray(numberOfThreads)
                 val threads = List(numberOfThreads) { myThread ->
                     Fut {
-//                        println("Thread $myThread started")
                         repeat(numberOfThreads) { otherThread ->
                             if (otherThread != myThread && after.get(otherThread) != 0) {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
                         Thread.sleep(Random.nextLong(100))
-//                        println("Thread $myThread ready to wait")
                         before.set(myThread, 1)
                         
                         barrier.await()
                         
                         after.set(myThread, 1)
-//                        println("Thread $myThread finished")
                         
                         repeat(numberOfThreads) { otherThread ->
                             if (before.get(otherThread) == 0) {

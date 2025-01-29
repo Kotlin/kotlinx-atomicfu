@@ -19,7 +19,6 @@ class ThreadParkingStressTest {
             val worker1 = Worker.start()
             val future1 = worker1.execute(TransferMode.UNSAFE, { pt }) { pt ->
                 repeat(10000) { i ->
-//                    println("Iteration $i")
                     if (Random.nextBoolean()) {
                         usleep(Random.nextUInt(0u, 500u))
                         pt.parker.park()
@@ -72,7 +71,6 @@ class ThreadParkingStressTest {
                 val thread = KThread.currentThread()
                 ppt.thread0.value = thread
                 repeat(10000) { i ->
-                    println("Iteration A $i")
                     if (Random.nextBoolean()) {
                         usleep(Random.nextUInt(0u, 500u))
                         Parker.park()
@@ -87,7 +85,6 @@ class ThreadParkingStressTest {
                 val thread = KThread.currentThread()
                 ppt.thread1.value = thread
                 repeat(10000) { i ->
-                    println("Iteration B $i")
                     if (Random.nextBoolean()) {
                         usleep(Random.nextUInt(0u, 500u))
                         Parker.park()
