@@ -49,38 +49,36 @@ import platform.posix.pthread_self
 import platform.posix.qos_class_self
 
 import platform.posix.PTHREAD_MUTEX_ERRORCHECK
+import kotlin.native.concurrent.ThreadLocal
 
+private const val NO_OWNER = 0L
+private const val UNSET = 0L
 
 @ThreadLocal
-var currentThreadId = 0L
+internal var currentThreadId = UNSET
 
 // Based on the compose-multiplatform-core implementation with added qos and the pool back-ported
 // from the atomicfu implementation.
 public actual open class SynchronizedObject {
-
-    companion object {
-        private const val NO_OWNER = 0L
-    }
-
-    private val owner: AtomicLong = atomic(NO_OWNER)
+    private val ownerThreadId: AtomicLong = atomic(NO_OWNER)
     private var reEnterCount: Int = 0
-    private val waiters: AtomicInt = atomic(0)
+    private val threadsOnLock: AtomicInt = atomic(0)
 
     private val monitor: DonatingMonitor by lazy { DonatingMonitor() }
 
 
     public fun lock() {
         var self = currentThreadId
-        if (self == 0L) {
+        if (self == UNSET) {
             currentThreadId = pthread_self().toLong()
             self = currentThreadId
         }
-        if (owner.value == self) {
+        if (ownerThreadId.value == self) {
             reEnterCount += 1
-        } else if (waiters.incrementAndGet() > 1) {
+        } else if (threadsOnLock.incrementAndGet() > 1) {
             waitForUnlockAndLock(self)
         } else {
-            if (!owner.compareAndSet(NO_OWNER, self)) {
+            if (!ownerThreadId.compareAndSet(NO_OWNER, self)) {
                 waitForUnlockAndLock(self)
             }
         }
@@ -92,13 +90,13 @@ public actual open class SynchronizedObject {
             currentThreadId = pthread_self().toLong()
             self = currentThreadId
         }
-        return if (owner.value == self) {
+        return if (ownerThreadId.value == self) {
             reEnterCount += 1
             true
-        } else if (waiters.incrementAndGet() == 1 && owner.compareAndSet(NO_OWNER, self)) {
+        } else if (threadsOnLock.incrementAndGet() == 1 && ownerThreadId.compareAndSet(NO_OWNER, self)) {
             true
         } else {
-            waiters.decrementAndGet()
+            threadsOnLock.decrementAndGet()
             false
         }
     }
@@ -106,19 +104,19 @@ public actual open class SynchronizedObject {
 
     private fun waitForUnlockAndLock(self: Long) {
         withMonitor(monitor) {
-            while (!owner.compareAndSet(NO_OWNER, self)) {
-                monitor.waitWithDonation(owner.value)
+            while (!ownerThreadId.compareAndSet(NO_OWNER, self)) {
+                monitor.waitWithDonation(ownerThreadId.value)
             }
         }
     }
 
     public fun unlock() {
-        require (owner.value == currentThreadId)
+        require (ownerThreadId.value == currentThreadId)
         if (reEnterCount > 0) {
             reEnterCount -= 1
         } else {
-            owner.value = NO_OWNER
-            if (waiters.decrementAndGet() > 0) {
+            ownerThreadId.value = NO_OWNER
+            if (threadsOnLock.decrementAndGet() > 0) {
                 withMonitor(monitor) {
                     // We expect the highest priority thread to be woken up, but this should work
                     // in any case.
@@ -154,7 +152,7 @@ public actual open class SynchronizedObject {
             if (lockOwner == NO_OWNER) {
                 return
             }
-            val ourQosClass = qos_class_self() as UInt
+            val ourQosClass = qos_class_self()
             // Set up a new override if required:
             if (qosOverride != null) {
                 // There is an existing override, but we need to go higher.
@@ -170,7 +168,7 @@ public actual open class SynchronizedObject {
                     val lockOwnerRelPrio = alloc<IntVar>()
                     pthread_get_qos_class_np(lockOwner.toCPointer(), lockOwnerQosClass.ptr, lockOwnerRelPrio.ptr)
                     if (ourQosClass > lockOwnerQosClass.value) {
-                        qosOverride = pthread_override_qos_class_start_np(lockOwner.toCPointer(), qos_class_self(), 0)
+                        qosOverride = pthread_override_qos_class_start_np(lockOwner.toCPointer(), ourQosClass, 0)
                         qosOverrideQosClass = ourQosClass
                     }
                 }
@@ -197,9 +195,9 @@ private class NativeMutexNode {
     private val attr: pthread_mutexattr_t = arena.alloc()
 
     init {
-        require (pthread_cond_init(cond.ptr, null) == 0)
+        require(pthread_cond_init(cond.ptr, null) == 0)
         require(pthread_mutexattr_init(attr.ptr) == 0)
-        require (pthread_mutexattr_settype(attr.ptr, PTHREAD_MUTEX_ERRORCHECK) == 0)
+        require(pthread_mutexattr_settype(attr.ptr, PTHREAD_MUTEX_ERRORCHECK) == 0)
         require(pthread_mutex_init(mutex.ptr, attr.ptr) == 0)
     }
 
