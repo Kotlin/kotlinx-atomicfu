@@ -14,3 +14,7 @@ val deploy: Task? by tasks.creating {
 tasks.named("model") {
     notCompatibleWithConfigurationCache("uses Task.project")
 }
+
+buildScan {
+    server = "https://you-shall-not-scan"
+}

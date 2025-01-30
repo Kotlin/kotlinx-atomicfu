@@ -90,6 +90,7 @@ kotlin {
                 implementation("org.jetbrains.kotlin:kotlin-reflect")
                 implementation("org.jetbrains.kotlin:kotlin-test")
                 implementation("org.jetbrains.kotlin:kotlin-test-junit")
+                implementation("org.jetbrains.kotlinx:lincheck:2.34")
                 implementation(libs.junit.junit)
             }
         }
