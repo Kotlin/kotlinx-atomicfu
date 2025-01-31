@@ -12,10 +12,11 @@ import platform.posix.*
 @OptIn(ExperimentalForeignApi::class)
 internal actual object PosixParkingDelegator : ParkingDelegator {
     actual override fun createRef(): Any {
-        val combo = ParkingData(nativeHeap.alloc<pthread_mutex_tVar>().ptr, nativeHeap.alloc<pthread_cond_tVar>().ptr)
-        callAndVerifyNative(0)  { pthread_mutex_init(combo.mut, null) }
-        callAndVerifyNative(0)  { pthread_cond_init(combo.cond, null) }
-        return combo
+        val mut = nativeHeap.alloc<pthread_mutex_tVar>().ptr
+        val cond = nativeHeap.alloc<pthread_cond_tVar>().ptr
+        callAndVerifyNative(0)  { pthread_mutex_init(mut, null) }
+        callAndVerifyNative(0)  { pthread_cond_init(cond, null) }
+        return ParkingData(mut, cond)
     }
 
     actual override fun wait(ref: Any) {
@@ -27,9 +28,9 @@ internal actual object PosixParkingDelegator : ParkingDelegator {
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
 
-    actual override fun timedWait(ref: Any, nanos: Long) {
+    actual override fun timedWait(ref: Any, nanos: Long): Unit = memScoped {
         if (ref !is ParkingData) throw IllegalArgumentException("ParkingDelegator got incompatible parking object")
-        val ts = nativeHeap.alloc<timespec>().ptr
+        val ts = alloc<timespec>().ptr
 
         // Add nanos to current time
         clock_gettime(CLOCK_REALTIME.toInt(), ts)
@@ -47,7 +48,6 @@ internal actual object PosixParkingDelegator : ParkingDelegator {
             rc = pthread_cond_timedwait(ref.cond, ref.mut, ts)
         }
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
-        nativeHeap.free(ts)
     }
 
     actual override fun wake(ref: Any) {

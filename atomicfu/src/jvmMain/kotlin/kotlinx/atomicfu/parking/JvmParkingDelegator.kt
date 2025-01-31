@@ -4,7 +4,6 @@ import java.util.concurrent.locks.LockSupport
 import kotlin.time.DurationUnit
 import kotlin.time.TimeSource.Monotonic
 
-// Only for testing purposes
 internal class JvmParkingDelegator: ParkingDelegator {
     private var thread: Thread? = null
     private val atomicLong: AtomicLong = AtomicLong(0L)
