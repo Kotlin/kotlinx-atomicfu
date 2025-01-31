@@ -10,8 +10,8 @@ import kotlinx.cinterop.ptr
 import platform.posix.*
 
 @OptIn(ExperimentalForeignApi::class)
-internal actual object PosixParkingDelegator : ParkingDelegator {
-    actual override fun createRef(): Any {
+internal actual object ParkingDelegator {
+    actual fun createRef(): ParkingData {
         val mut = nativeHeap.alloc<pthread_mutex_t>().ptr
         val cond = nativeHeap.alloc<pthread_cond_t>().ptr
         callAndVerifyNative(0)  { pthread_mutex_init(mut, null) }
@@ -19,8 +19,7 @@ internal actual object PosixParkingDelegator : ParkingDelegator {
         return ParkingData(mut, cond)
     }
 
-    actual override fun wait(ref: Any){
-        if (ref !is ParkingData) throw IllegalArgumentException("ParkingDelegator got incompatible parking object")
+    actual fun wait(ref: ParkingData){
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
         while (!ref.wake.value) {
             callAndVerifyNative(0)  { pthread_cond_wait(ref.cond, ref.mut) }
@@ -28,8 +27,7 @@ internal actual object PosixParkingDelegator : ParkingDelegator {
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
     
-    actual override fun timedWait(ref: Any, nanos: Long): Unit = memScoped {
-        if (ref !is ParkingData) throw IllegalArgumentException("ParkingDelegator got incompatible parking object")
+    actual fun timedWait(ref: ParkingData, nanos: Long): Unit = memScoped {
         val ts = alloc<timespec>().ptr
 
         // Add nanos to current time
@@ -50,8 +48,7 @@ internal actual object PosixParkingDelegator : ParkingDelegator {
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
 
-    actual override fun wake(ref: Any) {
-        if (ref !is ParkingData) throw IllegalArgumentException("ParkingDelegator got incompatible parking object")
+    actual fun wake(ref: ParkingData) {
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
         ref.wake.value = true
         callAndVerifyNative(0)  { pthread_cond_signal(ref.cond) }
@@ -59,15 +56,14 @@ internal actual object PosixParkingDelegator : ParkingDelegator {
     }
 
 
-    actual override fun destroyRef(ref: Any) {
-        if (ref !is ParkingData) throw IllegalArgumentException("ParkingDelegator got incompatible parking object")
+    actual fun destroyRef(ref: ParkingData) {
         callAndVerifyNative(0)  { pthread_mutex_destroy(ref.mut) }
         callAndVerifyNative(0)  { pthread_cond_destroy(ref.cond) }
         nativeHeap.free(ref.mut)
         nativeHeap.free(ref.cond)
     }
 
-    internal data class ParkingData(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>) {
-        val wake: AtomicBoolean = atomic(false)
-    }
+}
+internal actual class ParkingData(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>) {
+    val wake: AtomicBoolean = atomic(false)
 }

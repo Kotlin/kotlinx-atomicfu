@@ -13,7 +13,7 @@ class ThreadParkingStressTest {
     @Test
     fun parkingStressNative() {
         val duration = measureTime {
-            val parker = ThreadParker(PosixParkingDelegator)
+            val parker = ThreadParker()
             val pt = ParkTest(parker)
 
             val worker1 = Worker.start()

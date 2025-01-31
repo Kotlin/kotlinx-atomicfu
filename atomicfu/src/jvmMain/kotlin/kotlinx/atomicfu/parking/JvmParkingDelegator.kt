@@ -1,42 +1,37 @@
 package kotlinx.atomicfu.parking
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport
 import kotlin.time.DurationUnit
 import kotlin.time.TimeSource.Monotonic
 
-internal class JvmParkingDelegator: ParkingDelegator {
-    private var thread: Thread? = null
-    private val atomicLong: AtomicLong = AtomicLong(0L)
+internal actual object ParkingDelegator {
     
-    override fun createRef(): Long {
-        thread = Thread.currentThread()
-        atomicLong.set(0L)
-        return 0L
+    actual fun createRef(): ParkingData {
+        return ParkingData(Thread.currentThread())
     }
 
-    override fun wait(ref: Any) {
-        while (atomicLong.get() == 0L) {
-            LockSupport.park()
-        }
+    actual fun wait(ref: ParkingData) {
+        while (!ref.wake.get()) LockSupport.park()
     }
     
-    override fun timedWait(ref: Any, nanos: Long) {
+    actual fun timedWait(ref: ParkingData, nanos: Long) {
         val mark = Monotonic.markNow()
-        while (atomicLong.get() == 0L) {
-            LockSupport.parkNanos(nanos)
-            if (mark.elapsedNow().toLong(DurationUnit.NANOSECONDS) > nanos) break
+        while (!ref.wake.get()) {
+            val remainingTime = nanos - mark.elapsedNow().toLong(DurationUnit.NANOSECONDS)
+            if (remainingTime <= 0) break
+            LockSupport.parkNanos(remainingTime)
+        }
+    }
+
+    actual fun wake(ref: ParkingData) {
+        if (ref.wake.compareAndSet(false, true)) {
+            LockSupport.unpark(ref.thread)
         }
     }
 
 
-    override fun wake(ref: Any) {
-        if (atomicLong.compareAndSet(0L, 1L)) {
-            LockSupport.unpark(thread)
-        }
-    }
-
-
-    override fun destroyRef(ref: Any) {
-        thread = null
+    actual fun destroyRef(ref: ParkingData) {
     }
 }
+
+internal actual class ParkingData(val thread: Thread, val wake: AtomicBoolean = AtomicBoolean(false)) 

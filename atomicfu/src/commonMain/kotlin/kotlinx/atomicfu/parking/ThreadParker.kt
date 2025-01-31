@@ -7,9 +7,10 @@ import kotlinx.atomicfu.atomic
  * Should in practice never be used on jvm.
  */
 
-internal class ThreadParker(private val delegator: ParkingDelegator) {
+internal class ThreadParker {
+    private val delegator = ParkingDelegator
     private val state = atomic(STATE_FREE)
-    private val atomicRef = atomic<Any?>(null)
+    private val atomicRef = atomic<ParkingData?>(null)
 
     fun park() = parkWith { delegator.wait(atomicRef.value!!) }
     fun parkNanos(nanos: Long) = parkWith { 

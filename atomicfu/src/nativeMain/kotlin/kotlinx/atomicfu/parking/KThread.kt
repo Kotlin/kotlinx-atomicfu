@@ -3,7 +3,7 @@ package kotlinx.atomicfu.parking
 import kotlinx.atomicfu.atomic
 
 actual class KThread internal actual constructor() {
-    internal val parker: ThreadParker = ThreadParker(PosixParkingDelegator)
+    internal val parker: ThreadParker = ThreadParker()
     actual companion object {
         actual fun currentThread(): KThread = thisKThread
     }

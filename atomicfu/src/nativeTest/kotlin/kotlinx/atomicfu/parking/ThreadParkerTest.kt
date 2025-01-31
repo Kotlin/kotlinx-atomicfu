@@ -14,7 +14,7 @@ class ThreadParkerTest {
     @Test
     fun parkUnpark() {
 
-        val p = ThreadParker(PosixParkingDelegator)
+        val p = ThreadParker()
 
         val worker = Worker.start()
         worker.execute(TransferMode.UNSAFE, { p }) { p ->
@@ -32,7 +32,7 @@ class ThreadParkerTest {
 
     @Test
     fun unparkPark() {
-        val p = ThreadParker(PosixParkingDelegator)
+        val p = ThreadParker()
 
         val worker = Worker.start()
         worker.execute(TransferMode.UNSAFE, { p }) { p ->

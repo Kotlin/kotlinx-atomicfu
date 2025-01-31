@@ -12,7 +12,7 @@ class TimedParkingTest {
     
     @Test
     fun testNanosFirstUnpark400() = retry(3) {
-        val parker = ThreadParker(PosixParkingDelegator)
+        val parker = ThreadParker()
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
@@ -33,7 +33,7 @@ class TimedParkingTest {
 
     @Test
     fun testNanosFirstUnpark700() = retry(3) {
-        val parker = ThreadParker(PosixParkingDelegator)
+        val parker = ThreadParker()
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
@@ -54,7 +54,7 @@ class TimedParkingTest {
 
     @Test
     fun testNanosFirstUnpark1000() = retry(3) {
-        val parker = ThreadParker(PosixParkingDelegator)
+        val parker = ThreadParker()
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
@@ -75,7 +75,7 @@ class TimedParkingTest {
     
     @Test
     fun testNanosFirstDeadline400() = retry(3) {
-        val parker = ThreadParker(PosixParkingDelegator)
+        val parker = ThreadParker()
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
@@ -95,7 +95,7 @@ class TimedParkingTest {
 
     @Test
     fun testNanosFirstDeadline700() = retry(3) {
-        val parker = ThreadParker(PosixParkingDelegator)
+        val parker = ThreadParker()
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
@@ -115,7 +115,7 @@ class TimedParkingTest {
 
     @Test
     fun testNanosFirstDeadline1000() = retry(3) {
-        val parker = ThreadParker(PosixParkingDelegator)
+        val parker = ThreadParker()
 
         val worker1 = Worker.start()
         val future1 = worker1.execute(TransferMode.UNSAFE, { parker }) { parker ->
