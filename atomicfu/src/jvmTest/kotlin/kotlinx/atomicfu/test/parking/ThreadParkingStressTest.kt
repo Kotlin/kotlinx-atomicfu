@@ -91,9 +91,9 @@ class ThreadParkingStressTest {
                 while (!done0.get() || !done1.get()) {
                     sleep(Random.nextLong(0, 5))
                     if (Random.nextBoolean()) {
-                        kthread0.get()?.let {Parker.unpark(it)}
+                        kthread0.get()?.let { Parker.unpark(it)}
                     } else {
-                        kthread1.get()?.let {Parker.unpark(it)}
+                        kthread1.get()?.let { Parker.unpark(it)}
                     }
                 }
             }
@@ -102,9 +102,9 @@ class ThreadParkingStressTest {
                 while (!done0.get() || !done1.get()) {
                     sleep(Random.nextLong(0, 5))
                     if (Random.nextBoolean()) {
-                        kthread0.get()?.let {Parker.unpark(it)}
+                        kthread0.get()?.let { Parker.unpark(it)}
                     } else {
-                        kthread1.get()?.let {Parker.unpark(it)}
+                        kthread1.get()?.let { Parker.unpark(it)}
                     }
                 }
             }

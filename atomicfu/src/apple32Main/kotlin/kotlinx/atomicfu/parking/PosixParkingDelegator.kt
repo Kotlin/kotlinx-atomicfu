@@ -4,7 +4,6 @@ import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import kotlinx.cinterop.alloc
-import kotlinx.cinterop.free
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import platform.posix.*

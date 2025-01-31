@@ -99,9 +99,9 @@ class ThreadParkingStressTest {
                 while (!ppt.done0.value || !ppt.done1.value) {
                     usleep(Random.nextUInt(0u, 500u))
                     if (Random.nextBoolean()) {
-                        ppt.thread0.value?.let {Parker.unpark(it)}
+                        ppt.thread0.value?.let { Parker.unpark(it)}
                     } else {
-                        ppt.thread1.value?.let {Parker.unpark(it)}
+                        ppt.thread1.value?.let { Parker.unpark(it)}
                     }
                 }
             }
@@ -110,9 +110,9 @@ class ThreadParkingStressTest {
                 while (!ppt.done0.value || !ppt.done1.value) {
                     usleep(Random.nextUInt(0u, 500u))
                     if (Random.nextBoolean()) {
-                        ppt.thread0.value?.let {Parker.unpark(it)}
+                        ppt.thread0.value?.let { Parker.unpark(it)}
                     } else {
-                        ppt.thread1.value?.let {Parker.unpark(it)}
+                        ppt.thread1.value?.let { Parker.unpark(it)}
                     }
                 }
             }

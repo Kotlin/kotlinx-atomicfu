@@ -93,6 +93,9 @@ kotlin {
                 implementation(libs.junit.junit)
             }
         }
+        
+        val concurrentMain by creating { dependsOn(commonMain.get()) }
+        val jvmMain by getting { dependsOn(concurrentMain) }
     }
 }
 
@@ -131,16 +134,20 @@ kotlin {
     applyDefaultHierarchyTemplate() 
 
     sourceSets {
-        val nativeUnixLikeMain by creating { dependsOn(nativeMain.get()) }
+        
+        val concurrentMain by getting {}
+        val nativeMain by getting { dependsOn(concurrentMain) }
+        
+        val nativeUnixLikeMain by creating { dependsOn(nativeMain) }
         
         
-        val androidNative64BitMain by creating { dependsOn(nativeMain.get()) }
+        val androidNative64BitMain by creating { dependsOn(nativeMain) }
         androidNative64BitMain.also {
             androidNativeArm64Main.get().dependsOn(it)
             androidNativeX64Main.get().dependsOn(it)
         }
 
-        val androidNative32BitMain by creating { dependsOn(nativeMain.get()) }
+        val androidNative32BitMain by creating { dependsOn(nativeMain) }
         androidNative32BitMain.let {
             androidNativeArm32Main.get().dependsOn(it)
             androidNativeX86Main.get().dependsOn(it)
