@@ -1,18 +1,12 @@
-package kotlinx.atomicfu.test.parking
+package kotlinx.atomicfu.parking
 
-import kotlinx.atomicfu.parking.KThread
-import kotlinx.atomicfu.parking.Parker
-import kotlin.concurrent.thread
+import kotlinx.atomicfu.atomic
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.measureTime
-import java.lang.Thread.sleep
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.IllegalStateException
 
 class TimedParkingTest {
-
 
     @Test
     fun testNanosFirstUnpark400() = retry(3) {
@@ -28,7 +22,7 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        sleep(400)
+        sleepMills(400)
         Parker.unpark(kthread1!!)
 
         thread1.waitThrowing()
@@ -48,7 +42,7 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        sleep(700)
+        sleepMills(700)
         Parker.unpark(kthread1!!)
 
         thread1.waitThrowing()
@@ -68,7 +62,7 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        sleep(1000)
+        sleepMills(1000)
         Parker.unpark(kthread1!!)
 
         thread1.waitThrowing()
@@ -88,7 +82,7 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        sleep(600)
+        sleepMills(600)
         Parker.unpark(kthread1!!)
 
         thread1.waitThrowing()
@@ -108,7 +102,7 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        sleep(900)
+        sleepMills(900)
         Parker.unpark(kthread1!!)
 
         thread1.waitThrowing()
@@ -128,12 +122,12 @@ class TimedParkingTest {
             t.inWholeNanoseconds
         }
 
-        sleep(1200)
+        sleepMills(1200)
         Parker.unpark(kthread1!!)
 
         thread1.waitThrowing()
     }
-    
+
     private fun retry(times: Int, block: () -> Unit): Unit {
         var lastThrowable: Throwable? = null
         repeat(times) {
@@ -151,17 +145,17 @@ class TimedParkingTest {
 
 
 internal class Fut(private val block: () -> Unit) {
-    private var thread: Thread? = null
-    private val atomicError = AtomicReference<Throwable?>(null)
-    val done = AtomicBoolean(false)
+    private var thread: TestThread? = null
+    private val atomicError = atomic<Throwable?>(null)
+    val done = atomic(false)
     init {
-        val th = thread {
-            try { block() } 
+        val th = testThread {
+            try { block() }
             catch (t: Throwable) {
-                atomicError.set(t)
+                atomicError.value = t
                 throw t
             }
-            finally { done.set(true) }
+            finally { done.value = true }
         }
         thread = th
     }
@@ -169,16 +163,16 @@ internal class Fut(private val block: () -> Unit) {
         thread!!.join()
         throwIfError()
     }
-    
-    fun throwIfError() = atomicError.get()?.let { throw it }
-    
+
+    fun throwIfError() = atomicError.value?.let { throw it }
+
     companion object {
         fun waitAllAndThrow(futs: List<Fut>) {
-            while(futs.any { !it.done.get() }) {
-                sleep(1000)
+            while(futs.any { !it.done.value }) {
+                sleepMills(1000)
                 futs.forEach { it.throwIfError() }
             }
         }
     }
-    
+
 }

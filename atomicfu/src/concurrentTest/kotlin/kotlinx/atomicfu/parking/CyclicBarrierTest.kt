@@ -1,41 +1,44 @@
-package kotlinx.atomicfu.test.parking
+package kotlinx.atomicfu.parking
 
 import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.parking.KThread
-import kotlinx.atomicfu.parking.Parker
-import java.util.concurrent.atomic.AtomicIntegerArray
+import kotlinx.atomicfu.atomicArrayOfNulls
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.fail
 
-@OptIn(ExperimentalStdlibApi::class)
 class CyclicBarrierTest {
-
+    private class Arrs(numberOfThreads: Int) {
+        val after = atomicArrayOfNulls<Int>(numberOfThreads)
+        val before = atomicArrayOfNulls<Int>(numberOfThreads)
+        init {repeat(numberOfThreads) {
+            after[it].value = 0
+            before[it].value = 0
+        }}
+    }
     @Test
     fun simpleBarriertest() {
         repeat(5) { iteration ->
             println("Barrier test iteration $iteration")
             (5..50 step 5).forEach { numberOfThreads ->
                 val barrier = JavaCyclicBarrier(numberOfThreads)
-                val before = AtomicIntegerArray(numberOfThreads)
-                val after = AtomicIntegerArray(numberOfThreads)
+                val ar = Arrs(numberOfThreads)
                 val threads = List(numberOfThreads) { myThread ->
                     Fut {
                         repeat(numberOfThreads) { otherThread ->
-                            if (otherThread != myThread && after.get(otherThread) != 0) {
+                            if (otherThread != myThread && ar.after[otherThread].value != 0) {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
-                        Thread.sleep(Random.nextLong(100))
-                        before.set(myThread, 1)
+                        sleepMills(Random.nextLong(100))
+                        ar.before[myThread].value = 1
 
                         barrier.await()
 
-                        after.set(myThread, 1)
+                        ar.after[myThread].value = 1
 
                         repeat(numberOfThreads) { otherThread ->
-                            if (before.get(otherThread) == 0) {
-                                fail("Thread $myThread continued too early: $otherThread had value ${before.get(otherThread)}")
+                            if (ar.before[otherThread].value == 0) {
+                                fail("Thread $myThread continued too early: $otherThread had value ${ar.before[otherThread].value}")
                             }
                         }
                     }
@@ -44,7 +47,7 @@ class CyclicBarrierTest {
             }
         }
     }
-    
+
     @Test
     fun stressCyclicBarrier() {
         repeat(5) { iteration ->
@@ -53,22 +56,22 @@ class CyclicBarrierTest {
             val threadSetSize = (iteration + 1) * 5
             val bar = JavaCyclicBarrier(threadSetSize)
             val syncBar = JavaCyclicBarrier(threadSetSize * 5)
-            val before = AtomicIntegerArray(threadSetSize * 5)
+            val ar = Arrs(threadSetSize * 5)
             repeat(threadSetSize * 5) { tId ->
-                val t = Fut { 
+                val t = Fut {
                     repeat(50) { internalIteration ->
-                        Thread.sleep(Random.nextLong(100))
+                        sleepMills(Random.nextLong(100))
                         bar.await()
-                        Thread.sleep(Random.nextLong(100))
-                        val newN = before.get(tId) + 1
-                        before.set(tId, newN)
+                        sleepMills(Random.nextLong(100))
+                        val newN = ar.before[tId].value!! + 1
+                        ar.before[tId].value = newN
                         syncBar.await()
-                        repeat(before.length()) { otherThread ->
-                            if (before.get(otherThread) < newN) {
-                                fail("Thread $tId continued too early: $otherThread had value ${before.get(otherThread)}")
+                        repeat(ar.before.size) { otherThread ->
+                            if (ar.before[otherThread].value!! < newN) {
+                                fail("Thread $tId continued too early: $otherThread had value ${ar.before[otherThread].value!!}")
                             }
-                            if (before.get(otherThread) > newN + 1) {
-                                fail("Thread $tId too far behind: $otherThread had value ${before.get(otherThread)}")
+                            if (ar.before[otherThread].value!! > newN + 1) {
+                                fail("Thread $tId too far behind: $otherThread had value ${ar.before[otherThread].value!!}")
                             }
                         }
                     }

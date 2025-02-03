@@ -1,11 +1,7 @@
-package kotlinx.atomicfu.test.parking
+package kotlinx.atomicfu.parking
 
-import junit.framework.TestCase.assertTrue
-import kotlinx.atomicfu.parking.KThread
-import kotlinx.atomicfu.parking.Parker
-import java.lang.Thread.sleep
-import kotlin.concurrent.thread
 import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlin.time.measureTime
 
 class ThreadParkerTest {
@@ -14,8 +10,8 @@ class ThreadParkerTest {
     fun parkUnpark() {
         val mainThread = KThread.currentThread()
 
-        thread {
-            sleep(1000)
+        testThread {
+            sleepMills(1000)
             Parker.unpark(mainThread)
         }
 
@@ -30,12 +26,12 @@ class ThreadParkerTest {
     fun unparkPark() {
         val mainThread = KThread.currentThread()
 
-        thread {
+        testThread {
             Parker.unpark(mainThread)
         }
 
-        sleep(1000)
-        Parker.park() 
+        sleepMills(1000)
+        Parker.park()
 
         assertTrue(true)
     }

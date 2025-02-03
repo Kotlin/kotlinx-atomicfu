@@ -1,3 +1,4 @@
+import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
@@ -95,7 +96,10 @@ kotlin {
         }
         
         val concurrentMain by creating { dependsOn(commonMain.get()) }
+        val concurrentTest by creating { dependsOn(commonTest.get()) }
+        
         val jvmMain by getting { dependsOn(concurrentMain) }
+        val jvmTest by getting { dependsOn(concurrentTest) }
     }
 }
 
@@ -136,7 +140,9 @@ kotlin {
     sourceSets {
         
         val concurrentMain by getting {}
+        val concurrentTest by getting {}
         val nativeMain by getting { dependsOn(concurrentMain) }
+        val nativeTest by getting { dependsOn(concurrentTest) }
         
         val nativeUnixLikeMain by creating { dependsOn(nativeMain) }
         

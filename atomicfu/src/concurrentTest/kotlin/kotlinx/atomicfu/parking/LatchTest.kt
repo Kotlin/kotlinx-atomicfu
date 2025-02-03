@@ -1,15 +1,20 @@
-package kotlinx.atomicfu.test.parking
+package kotlinx.atomicfu.parking
 
-import kotlinx.atomicfu.parking.KThread
-import kotlinx.atomicfu.parking.Parker
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicIntegerArray
-import java.util.concurrent.atomic.AtomicReference
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.atomicArrayOfNulls
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.fail
 
 class LatchTest {
+    private class Arrs(numberOfThreads: Int) {
+        val after = atomicArrayOfNulls<Int>(numberOfThreads)
+        val before = atomicArrayOfNulls<Int>(numberOfThreads)
+        init {repeat(numberOfThreads) {
+            after[it].value = 0
+            before[it].value = 0
+        }}
+    }
     @Test
     fun latchTest() {
         repeat(5) { iteration ->
@@ -17,30 +22,30 @@ class LatchTest {
             repeat(5) {
                 val numberOfThreads = it + 2
                 val countingDownTo = iteration + 2
-                val after = AtomicIntegerArray(numberOfThreads)
+                val ar = Arrs(numberOfThreads)
                 val latch = CustomCountDownLatch(countingDownTo)
                 val countingThread = Fut {
-                    repeat(countingDownTo) { 
-                        Thread.sleep(Random.nextLong(100))
-                        
-                        repeat(after.length()) { threadToCheck ->
-                            if (after.get(threadToCheck) != 0) fail("Thread passed latch too early")
+                    repeat(countingDownTo) {
+                        sleepMills(Random.nextLong(100))
+
+                        repeat(ar.after.size) { threadToCheck ->
+                            if (ar.after[threadToCheck].value != 0) fail("Thread passed latch too early")
                         }
-                        
+
                         latch.countDown()
                     }
                 }
-                
+
                 val waiters = List(numberOfThreads) { i -> Fut {
-                    Thread.sleep(Random.nextLong(100))
+                    sleepMills(Random.nextLong(100))
                     latch.await()
-                    after.set(i, 1)
+                    ar.after[i].value = 1
                 }}
-                
+
                 Fut.waitAllAndThrow(waiters + countingThread)
 
-                repeat(after.length()) { threadToCheck ->
-                    if (after.get(threadToCheck) != 1) fail("Thread $threadToCheck stuck")
+                repeat(ar.after.size) { threadToCheck ->
+                    if (ar.after[threadToCheck].value != 1) fail("Thread $threadToCheck stuck")
                 }
             }
         }
@@ -48,16 +53,16 @@ class LatchTest {
 }
 
 class CustomCountDownLatch(count: Int) {
-    private val c = AtomicInteger(count)
-    private val waiters = MSQueue<KThread>()
-    
+    private val c = atomic(count)
+    private val waiters = MSQueueLatch<KThread>()
+
     fun await() {
         val thread = KThread.currentThread()
         waiters.enqueue(thread)
-        if (c.get() <= 0) return
+        if (c.value <= 0) return
         Parker.park()
     }
-    
+
     fun countDown() {
         val myIndex = c.decrementAndGet()
         if (myIndex != 0) return
@@ -69,32 +74,26 @@ class CustomCountDownLatch(count: Int) {
     }
 }
 
-private class MSQueue<E> {
-    private val head: AtomicReference<Node<E>>
-    private val tail: AtomicReference<Node<E>>
-
-    init {
-        val dummy = Node<E>(null)
-        head = AtomicReference(dummy)
-        tail = AtomicReference(dummy)
-    }
+private class MSQueueLatch<E> {
+    private val head = atomic(Node<E>(null))
+    private val tail = atomic(head.value)
 
     fun enqueue(element: E) {
         while (true) {
             val node = Node(element)
-            val curTail = tail.get()
+            val curTail = tail.value
             if (curTail.next.compareAndSet(null, node)) {
                 tail.compareAndSet(curTail, node)
                 return
             }
-            else tail.compareAndSet(curTail, curTail.next.get())
+            else tail.compareAndSet(curTail, curTail.next.value!!)
         }
     }
 
     fun dequeue(): E? {
         while (true) {
-            val currentHead = head.get()
-            val currentHeadNext = currentHead.next.get() ?: return null
+            val currentHead = head.value
+            val currentHeadNext = currentHead.next.value ?: return null
             if (head.compareAndSet(currentHead, currentHeadNext)) {
                 val element = currentHeadNext.element
                 currentHeadNext.element = null
@@ -103,6 +102,6 @@ private class MSQueue<E> {
         }
     }
     private class Node<E>(var element: E?) {
-        val next = AtomicReference<Node<E>?>(null)
+        val next = atomic<Node<E>?>(null)
     }
 }
