@@ -39,7 +39,7 @@ internal class ThreadParker {
                                     return
                                 }
                             }
-                            Unparking -> if (state.compareAndSet(Unparking, Free)) return
+                            is Unparking -> if (state.compareAndSet(changedState, Free)) return
                             Free -> throw IllegalStateException("Only parker thread can set to free")
                             Unparked -> if (state.compareAndSet(Unparked, Free)) {
                                 delegator.destroyRef(pd)
@@ -50,20 +50,21 @@ internal class ThreadParker {
                 }
                 Unparked -> if (state.compareAndSet(Unparked, Free)) return
                 is Parked -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
-                Unparking -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
+                is Unparking -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
             }
         }
     }
 
     fun unpark() {
+        val myUnparkingState = Unparking()
         while (true) {
             when (val currentState = state.value) { 
                 Unparked -> return
-                Unparking -> return
+                is Unparking -> return
                 Free -> if (state.compareAndSet(Free, Unparked)) return
-                is Parked -> if (state.compareAndSet(currentState, Unparking)) {
+                is Parked -> if (state.compareAndSet(currentState, myUnparkingState)) {
                     delegator.wake(currentState.data)
-                    if (!state.compareAndSet(Unparking, Unparked)) delegator.destroyRef(currentState.data)
+                    if (!state.compareAndSet(myUnparkingState, Unparked)) delegator.destroyRef(currentState.data)
                     return
                 }
             }
@@ -74,5 +75,5 @@ private interface ParkingState
 private object Unparked : ParkingState
 private object Free : ParkingState
 private class Parked(val data: ParkingData) : ParkingState
-private object Unparking : ParkingState
+private class Unparking : ParkingState
 
