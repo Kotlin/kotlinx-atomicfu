@@ -102,7 +102,6 @@ class ThreadParkingStressTest {
                     }
                 }
             }
-
             thread0.join()
             thread1.join()
             thread2.join()

@@ -1,82 +1,78 @@
 package kotlinx.atomicfu.parking
 
 import kotlinx.atomicfu.atomic
-
-/**
- * This is defined in common to be testable with lincheck.
- * Should in practice never be used on jvm.
- */
+import kotlin.time.DurationUnit
+import kotlin.time.TimeSource.Monotonic
 
 internal class ThreadParker {
     private val delegator = ParkingDelegator
-    private val state = atomic(STATE_FREE)
-    private val atomicRef = atomic<ParkingData?>(null)
+    private val state = atomic<ParkingState>(Free)
 
-    fun park() = parkWith { delegator.wait(atomicRef.value!!) }
-    fun parkNanos(nanos: Long) = parkWith { 
-        delegator.timedWait(atomicRef.value!!, nanos) 
-        
-        // If this fails it means the unpark call was before timout was reached
-        // Than we need to make sure if the wake call has happened before we return and destroy the ptr
-        // Therefore we call delegator.wait which should return immediately when wake call was already made.
-        // If not it should still return fast (this should be a rare race condition).
-        // This ensures the wake call has happened before cleanup.
-        if (!state.compareAndSet(STATE_PARKED, STATE_FREE)) {
-            delegator.wait(atomicRef.value!!)
+    fun park() = parkWith({ false }) { data ->
+        delegator.wait(data)
+    }
+    fun parkNanos(nanos: Long) {
+        val mark = Monotonic.markNow()
+        parkWith({ mark.elapsedNow().toLong(DurationUnit.NANOSECONDS) >= nanos }) { data ->
+            val remainingTime = nanos - mark.elapsedNow().toLong(DurationUnit.NANOSECONDS)
+            if (remainingTime > 0) delegator.timedWait(data, remainingTime)
         }
     }
-    
-    private fun parkWith(invokeWait: () -> Unit) {
-        while (true) {
-            when (val currentState = state.value) {
 
-                STATE_FREE -> {
-                    atomicRef.value = delegator.createRef()
+    private fun parkWith(timedOut: () -> Boolean, invokeWait: (ParkingData) -> Unit) {
+        while (true) {
+            when (state.value) {
+                Free -> {
+                    val pd = delegator.createRef()
                     // If state changed, cleanup and reiterate.
-                    if (!state.compareAndSet(currentState, STATE_PARKED)) {
-                        delegator.destroyRef(atomicRef.value!!)
-                        atomicRef.value = null 
+                    if (!state.compareAndSet(Free, Parked(pd))) {
+                        delegator.destroyRef(pd)
                         continue
                     }
-                    invokeWait()
-                    delegator.destroyRef(atomicRef.value!!)
-                    atomicRef.value = null
-                    return
+
+                    while (true) {
+                        when (val changedState = state.value) {
+                            is Parked -> {
+                                invokeWait(changedState.data)
+                                if (timedOut() && state.compareAndSet(changedState, Free)) {
+                                    delegator.destroyRef(pd)
+                                    return
+                                }
+                            }
+                            Unparking -> if (state.compareAndSet(Unparking, Free)) return
+                            Free -> throw IllegalStateException("Only parker thread can set to free")
+                            Unparked -> if (state.compareAndSet(Unparked, Free)) {
+                                delegator.destroyRef(pd)
+                                return
+                            }
+                        }
+                    }
                 }
-
-                STATE_UNPARKED -> {
-                    if (!state.compareAndSet(currentState, STATE_FREE)) continue
-                    return
-                }
-
-                STATE_PARKED ->
-                    throw IllegalStateException("Thread should not be able to call park when it is already parked")
-
+                Unparked -> if (state.compareAndSet(Unparked, Free)) return
+                is Parked -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
+                Unparking -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
             }
         }
     }
 
     fun unpark() {
         while (true) {
-            when (val currentState = state.value) {
-
-                STATE_UNPARKED -> return
-
-                STATE_FREE -> {
-                    if (!state.compareAndSet(currentState, STATE_UNPARKED)) continue
-                    return
-                }
-
-                STATE_PARKED -> {
-                    if (!state.compareAndSet(currentState, STATE_FREE)) continue
-                    delegator.wake(atomicRef.value!!)
+            when (val currentState = state.value) { 
+                Unparked -> return
+                Unparking -> return
+                Free -> if (state.compareAndSet(Free, Unparked)) return
+                is Parked -> if (state.compareAndSet(currentState, Unparking)) {
+                    delegator.wake(currentState.data)
+                    if (!state.compareAndSet(Unparking, Unparked)) delegator.destroyRef(currentState.data)
                     return
                 }
             }
         }
     }
 }
+private interface ParkingState
+private object Unparked : ParkingState
+private object Free : ParkingState
+private class Parked(val data: ParkingData) : ParkingState
+private object Unparking : ParkingState
 
-private const val STATE_UNPARKED = 0
-private const val STATE_FREE = 1
-private val STATE_PARKED = 2

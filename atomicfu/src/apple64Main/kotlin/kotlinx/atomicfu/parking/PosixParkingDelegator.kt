@@ -21,9 +21,7 @@ internal actual object ParkingDelegator {
 
     actual fun wait(ref: ParkingData) {
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
-        while (!ref.wake.value) {
-            callAndVerifyNative(0)  { pthread_cond_wait(ref.cond, ref.mut) }
-        }
+        callAndVerifyNative(0)  { pthread_cond_wait(ref.cond, ref.mut) }
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
 
@@ -40,17 +38,13 @@ internal actual object ParkingDelegator {
             ts.pointed.tv_sec += 1
             ts.pointed.tv_nsec -= 1_000_000_000
         }
-        var rc = 0
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
-        while (!ref.wake.value && rc == 0) {
-            rc = pthread_cond_timedwait(ref.cond, ref.mut, ts)
-        }
+        callAndVerifyNative(0, ETIMEDOUT) { pthread_cond_timedwait(ref.cond, ref.mut, ts) }
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
     
     actual fun wake(ref: ParkingData) {
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
-        ref.wake.value = true
         callAndVerifyNative(0)  { pthread_cond_signal(ref.cond) }
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
@@ -63,6 +57,4 @@ internal actual object ParkingDelegator {
     }
 
 }
-internal actual class ParkingData(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>) {
-    val wake: AtomicBoolean = atomic(false)
-}
+internal actual class ParkingData(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>)
