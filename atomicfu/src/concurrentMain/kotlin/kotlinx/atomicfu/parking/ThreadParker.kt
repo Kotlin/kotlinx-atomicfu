@@ -9,13 +9,13 @@ internal class ThreadParker {
     private val state = atomic<ParkingState>(Free)
 
     fun park() = parkWith({ false }) { data ->
-        delegator.wait(data)
+        delegator.wait(data) { state.value is Parked }
     }
     fun parkNanos(nanos: Long) {
         val mark = Monotonic.markNow()
         parkWith({ mark.elapsedNow().toLong(DurationUnit.NANOSECONDS) >= nanos }) { data ->
             val remainingTime = nanos - mark.elapsedNow().toLong(DurationUnit.NANOSECONDS)
-            if (remainingTime > 0) delegator.timedWait(data, remainingTime)
+            if (remainingTime > 0) delegator.timedWait(data, remainingTime) { state.value is Parked }
         }
     }
 

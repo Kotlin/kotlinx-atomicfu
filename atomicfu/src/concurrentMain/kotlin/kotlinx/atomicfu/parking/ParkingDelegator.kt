@@ -9,8 +9,8 @@ internal expect class ParkingData
 
 internal expect object ParkingDelegator {
     fun createRef(): ParkingData
-    fun wait(ref: ParkingData) 
-    fun timedWait(ref: ParkingData, nanos: Long)
+    fun wait(ref: ParkingData, shouldWait: () -> Boolean) 
+    fun timedWait(ref: ParkingData, nanos: Long, shouldWait: () -> Boolean)
     fun wake(ref: ParkingData)
     fun destroyRef(ref: ParkingData)
 }

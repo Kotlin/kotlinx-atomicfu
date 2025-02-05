@@ -4,8 +4,8 @@ import java.util.concurrent.locks.LockSupport
 internal actual object ParkingDelegator {
     
     actual fun createRef(): ParkingData = ParkingData(Thread.currentThread())
-    actual fun wait(ref: ParkingData) = LockSupport.park()
-    actual fun timedWait(ref: ParkingData, nanos: Long) = LockSupport.parkNanos(nanos)
+    actual fun wait(ref: ParkingData, shouldWait: () -> Boolean) = LockSupport.park()
+    actual fun timedWait(ref: ParkingData, nanos: Long, shouldWait: () -> Boolean) = LockSupport.parkNanos(nanos)
     actual fun wake(ref: ParkingData) = LockSupport.unpark(ref.thread)
     actual fun destroyRef(ref: ParkingData) {}
     

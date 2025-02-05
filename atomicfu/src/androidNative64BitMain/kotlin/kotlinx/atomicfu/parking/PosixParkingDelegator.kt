@@ -16,13 +16,13 @@ internal actual object ParkingDelegator {
         return ParkingData(mut, cond)
     }
 
-    actual fun wait(ref: ParkingData) {
+    actual fun wait(ref: ParkingData, shouldWait: () -> Boolean) {
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
-        callAndVerifyNative(0)  { pthread_cond_wait(ref.cond, ref.mut) }
+        if (shouldWait()) callAndVerifyNative(0)  { pthread_cond_wait(ref.cond, ref.mut) }
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
 
-    actual fun timedWait(ref: ParkingData, nanos: Long): Unit = memScoped {
+    actual fun timedWait(ref: ParkingData, nanos: Long, shouldWait: () -> Boolean): Unit = memScoped {
         val ts = alloc<timespec>().ptr
         
         // Add nanos to current time
@@ -36,7 +36,7 @@ internal actual object ParkingDelegator {
             ts.pointed.tv_nsec -= 1_000_000_000
         }
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
-        callAndVerifyNative(0, ETIMEDOUT) { pthread_cond_timedwait(ref.cond, ref.mut, ts) }
+        if (shouldWait()) callAndVerifyNative(0, ETIMEDOUT) { pthread_cond_timedwait(ref.cond, ref.mut, ts) }
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
     
