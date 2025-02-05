@@ -49,37 +49,6 @@ class CyclicBarrierTest {
     }
     
     @Test
-    fun debugTest() {
-        val threads = mutableListOf<Fut>()
-//        val threadSetSize = 1
-//        val bar = JavaCyclicBarrier(threadSetSize)
-        val syncBar = JavaCyclicBarrier(2)
-        val ar = Arrs(2)
-        repeat(2) { tId ->
-            val t = Fut {
-                repeat(50) { internalIteration ->
-//                    sleepMills(Random.nextLong(100))
-//                    bar.await()
-                    sleepMills(Random.nextLong(100))
-                    val newN = ar.before[tId].value!! + 1
-                    ar.before[tId].value = newN
-                    syncBar.await()
-                    repeat(ar.before.size) { otherThread ->
-                        if (ar.before[otherThread].value!! < newN) {
-                            fail("Thread $tId (value: $newN, id: ${currentThreadId()}) continued too early: $otherThread had value ${ar.before[otherThread].value!!}")
-                        }
-                        if (ar.before[otherThread].value!! > newN + 1) {
-                            fail("Thread $tId (value: $newN, id: ${currentThreadId()}) too far behind: $otherThread had value ${ar.before[otherThread].value!!}")
-                        }
-                    }
-                }
-            }
-            threads.add(t)
-        }
-        Fut.waitAllAndThrow(threads)
-    }
-
-    @Test
     fun stressCyclicBarrier() {
         repeat(5) { iteration ->
             println("Stress test $iteration")

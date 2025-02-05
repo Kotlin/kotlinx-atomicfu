@@ -1,7 +1,7 @@
 package kotlinx.atomicfu.parking
 
 /**
- * Internal utility that delegates the thread suspending and resuming calls calls in the platform specific way (darwin, linux, windows).
+ * Internal utility that delegates the thread suspending and resuming to pthread_cond_wait on native.
  * On jvm delegates to LockSupport.Park.
  */
 
