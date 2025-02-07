@@ -164,10 +164,9 @@ public actual open class SynchronizedObject {
             } else {
                 // No existing override, check if we need to set one up.
                 memScoped {
-                    val lockOwnerQosClass = alloc<UIntVar>()
-                    val lockOwnerRelPrio = alloc<IntVar>()
-                    pthread_get_qos_class_np(lockOwner.toCPointer(), lockOwnerQosClass.ptr, lockOwnerRelPrio.ptr)
-                    if (ourQosClass > lockOwnerQosClass.value) {
+
+                    pthread_get_qos_class_np(lockOwner.toCPointer(), nativeMutex.lockOwnerQosClass.ptr, nativeMutex.lockOwnerRelPrio.ptr)
+                    if (ourQosClass > nativeMutex.lockOwnerQosClass.value) {
                         qosOverride = pthread_override_qos_class_start_np(lockOwner.toCPointer(), ourQosClass, 0)
                         qosOverrideQosClass = ourQosClass
                     }
@@ -193,6 +192,10 @@ private class NativeMutexNode {
     private val cond: pthread_cond_t = arena.alloc()
     private val mutex: pthread_mutex_t = arena.alloc()
     private val attr: pthread_mutexattr_t = arena.alloc()
+
+    // Used locally as return parameters in donateQos
+    val lockOwnerQosClass = arena.alloc<UIntVar>()
+    val lockOwnerRelPrio = arena.alloc<IntVar>()
 
     init {
         require(pthread_cond_init(cond.ptr, null) == 0)
