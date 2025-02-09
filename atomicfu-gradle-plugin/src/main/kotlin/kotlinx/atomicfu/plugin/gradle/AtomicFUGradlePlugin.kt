@@ -384,9 +384,15 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                     originalMainClassesDirs + compilation.compileDependencyFiles
                 )
             if (transformTask != null) {
+                val runtimeDependencyFiles = compilation.runtimeDependencyFiles
+                val newClasspath = if (runtimeDependencyFiles != null)
+                    originalMainClassesDirs + runtimeDependencyFiles - mainCompilation.output.classesDirs
+                else
+                    originalMainClassesDirs - mainCompilation.output.classesDirs
                 // if transform task was not created, then originalMainClassesDirs == mainCompilation.output.classesDirs
-                (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
-                    originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+                (tasks.findByName("${target.name}${compilation.name.capitalizeCompat()}") as? Test)?.classpath =
+                    newClasspath
+            }
             }
             compilation.compileKotlinTask.setFriendPaths(originalMainClassesDirs)
         }
