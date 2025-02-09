@@ -15,7 +15,6 @@ import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
 import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import java.io.*
@@ -267,7 +266,7 @@ private fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
     }
 }
 
-private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileCollection) {
+private fun KotlinCompilationTask<*>.setFriendPaths(friendPathsFileCollection: FileCollection) {
     val (majorVersion, minorVersion) = project.getKotlinPluginVersion()
         .split('.')
         .take(2)
@@ -393,8 +392,9 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                 (tasks.findByName("${target.name}${compilation.name.capitalizeCompat()}") as? Test)?.classpath =
                     newClasspath
             }
+            compilation.compileTaskProvider.configure {
+                it.setFriendPaths(originalMainClassesDirs)
             }
-            compilation.compileKotlinTask.setFriendPaths(originalMainClassesDirs)
         }
     }
 }
