@@ -42,7 +42,7 @@ class MetadataTransformer(
             is KotlinClassMetadata.FileFacade -> {
                 val kmPackage = kotlinClassMetadata.kmPackage
                 KotlinClassMetadata.FileFacade(
-                    kmPackage.removeAtomicfuDeclarations() as KmPackage,
+                    kmPackage.removeAtomicfuDeclarations(),
                     metadataVersion,
                     metadata.extraInt
                 ).write()
@@ -51,7 +51,7 @@ class MetadataTransformer(
             is KotlinClassMetadata.MultiFileClassPart -> {
                 val kmPackage = kotlinClassMetadata.kmPackage
                 KotlinClassMetadata.MultiFileClassPart(
-                    kmPackage.removeAtomicfuDeclarations() as KmPackage,
+                    kmPackage.removeAtomicfuDeclarations(),
                     metadata.extraString,
                     metadataVersion,
                     metadata.extraInt
