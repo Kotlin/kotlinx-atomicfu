@@ -17,6 +17,10 @@ kotlin.sourceSets.configureEach {
             apiVersion = overridingKotlinApiVersion
         }
 
-        optIn("kotlinx.cinterop.ExperimentalForeignApi")
+        if (project.path != ":atomicfu-transformer" &&
+            project.path != ":atomicfu-gradle-plugin"
+        ) {
+            optIn("kotlinx.cinterop.ExperimentalForeignApi")
+        }
     }
 }
