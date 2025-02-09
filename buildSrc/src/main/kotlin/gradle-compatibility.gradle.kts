@@ -21,6 +21,9 @@ kotlin {
     // Gradle plugin must be compiled targeting the same Kotlin version as used by Gradle
     @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     compilerOptions {
+        allWarningsAsErrors.set(true)
+        freeCompilerArgs.add("-Xsuppress-version-warnings")
+
         languageVersion = getOverridingKotlinLanguageVersion(project)?.let { KotlinVersion.fromVersion(it) }
             ?: KotlinVersion.KOTLIN_1_6
         apiVersion = getOverridingKotlinApiVersion(project)?.let { KotlinVersion.fromVersion(it) }
