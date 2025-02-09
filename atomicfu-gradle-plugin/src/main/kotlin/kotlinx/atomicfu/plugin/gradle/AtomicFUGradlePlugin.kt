@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import java.io.*
 import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 
 private const val EXTENSION_NAME = "atomicfu"
@@ -399,11 +400,15 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
     }
 }
 
-private fun String.toJvmVariant(): JvmVariant = enumValueOf(toUpperCase(Locale.US))
+private fun String.toJvmVariant(): JvmVariant = enumValueOf(uppercase(Locale.US))
+
+private fun String.capitalizeCompat() = replaceFirstChar {
+    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+}
 
 private fun Project.registerJvmTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformTask> =
     tasks.register(
-        "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
+        "transform${compilation.target.name.capitalizeCompat()}${compilation.name.capitalizeCompat()}Atomicfu",
         AtomicFUTransformTask::class.java
     )
 
