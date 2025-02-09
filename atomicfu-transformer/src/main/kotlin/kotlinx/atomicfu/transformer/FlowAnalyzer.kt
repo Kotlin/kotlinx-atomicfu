@@ -311,7 +311,7 @@ class FlowAnalyzer(
         when (desc[0]) {
             '(' -> {
                 val types = Type.getArgumentTypes(desc)
-                pop(types.indices.sumBy { types[it].size }, forward)
+                pop(types.indices.sumOf { types[it].size }, forward)
             }
             'J', 'D' -> pop(2, forward)
             else -> pop(1, forward)
