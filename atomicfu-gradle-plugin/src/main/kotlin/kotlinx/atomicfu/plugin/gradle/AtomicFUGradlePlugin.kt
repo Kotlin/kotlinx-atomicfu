@@ -15,7 +15,6 @@ import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
 import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import java.io.*
@@ -267,7 +266,7 @@ private fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
     }
 }
 
-private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileCollection) {
+private fun BaseKotlinCompile.setFriendPaths(friendPathsFileCollection: FileCollection) {
     val (majorVersion, minorVersion) = project.getKotlinPluginVersion()
         .split('.')
         .take(2)
@@ -276,7 +275,7 @@ private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileColle
         (this as? AbstractKotlinCompile<*>)?.friendPaths?.from(friendPathsFileCollection)
     } else {
         // See KT-KT-54167 (works only for KGP 1.7.0+)
-        (this as BaseKotlinCompile).friendPaths.from(friendPathsFileCollection)
+        friendPaths.from(friendPathsFileCollection)
     }
 }
 
@@ -384,11 +383,18 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                     originalMainClassesDirs + compilation.compileDependencyFiles
                 )
             if (transformTask != null) {
+                val compilationRuntimeDependencies = compilation.runtimeDependencyFiles ?: error("Runtime dependency files for compilation $compilation are unavailable")
                 // if transform task was not created, then originalMainClassesDirs == mainCompilation.output.classesDirs
                 (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
-                    originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+                    originalMainClassesDirs + compilationRuntimeDependencies - mainCompilation.output.classesDirs
             }
-            compilation.compileKotlinTask.setFriendPaths(originalMainClassesDirs)
+            compilation.compileTaskProvider.configure {
+                if (this is BaseKotlinCompile) {
+                    setFriendPaths(originalMainClassesDirs)
+                } else {
+                    error("Unsupported Kotlin compilation task ${this::class.java.simpleName} for platform ${target.platformType}")
+                }
+            }
         }
     }
 }
