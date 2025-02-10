@@ -1,4 +1,3 @@
-import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
@@ -143,54 +142,6 @@ kotlin {
         val concurrentTest by getting {}
         val nativeMain by getting { dependsOn(concurrentMain) }
         val nativeTest by getting { dependsOn(concurrentTest) }
-        
-        val nativeUnixLikeMain by creating { dependsOn(nativeMain) }
-        
-        
-        val androidNative64BitMain by creating { dependsOn(nativeMain) }
-        androidNative64BitMain.also {
-            androidNativeArm64Main.get().dependsOn(it)
-            androidNativeX64Main.get().dependsOn(it)
-        }
-
-        val androidNative32BitMain by creating { dependsOn(nativeMain) }
-        androidNative32BitMain.let {
-            androidNativeArm32Main.get().dependsOn(it)
-            androidNativeX86Main.get().dependsOn(it)
-        }
-
-        val linux64Main by creating { dependsOn(nativeUnixLikeMain) }
-        linux64Main.let {
-            linuxX64Main.get().dependsOn(it)
-            linuxArm64Main.get().dependsOn(it)
-        }
-
-        val linux32Main by creating { dependsOn(nativeUnixLikeMain) }
-        linux32Main.let {
-            linuxArm32HfpMain.get().dependsOn(it)
-        }
-
-        val apple64Main by creating { dependsOn(nativeUnixLikeMain) }
-        apple64Main.let {
-            watchosDeviceArm64Main.get().dependsOn(it)
-            iosArm64Main.get().dependsOn(it)
-            tvosArm64Main.get().dependsOn(it)
-            tvosX64Main.get().dependsOn(it)
-            tvosSimulatorArm64Main.get().dependsOn(it)
-            watchosX64Main.get().dependsOn(it)
-            watchosSimulatorArm64Main.get().dependsOn(it)
-            iosX64Main.get().dependsOn(it)
-            iosSimulatorArm64Main.get().dependsOn(it)
-            macosX64Main.get().dependsOn(it)
-            macosArm64Main.get().dependsOn(it)
-        }
-
-        val apple32Main by creating { dependsOn(nativeUnixLikeMain) }
-        apple32Main.let {
-            watchosArm32Main.get().dependsOn(it)
-            watchosArm64Main.get().dependsOn(it) // Uses Int for timespec
-        }
-
     }
 
     // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)

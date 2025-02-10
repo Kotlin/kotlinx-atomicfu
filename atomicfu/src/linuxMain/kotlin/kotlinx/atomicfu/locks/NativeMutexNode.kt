@@ -2,7 +2,7 @@ package kotlinx.atomicfu.locks
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import kotlin.concurrent.Volatile
+import kotlin.concurrent.*
 
 public actual class NativeMutexNode {
 
