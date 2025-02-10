@@ -143,10 +143,6 @@ public final class kotlinx/atomicfu/parking/KThread$Companion {
 	public final fun currentThread ()Lkotlinx/atomicfu/parking/KThread;
 }
 
-public final class kotlinx/atomicfu/parking/KThreadKt {
-	public static final fun currentThreadId ()J
-}
-
 public final class kotlinx/atomicfu/parking/Parker {
 	public static final field Companion Lkotlinx/atomicfu/parking/Parker$Companion;
 }
