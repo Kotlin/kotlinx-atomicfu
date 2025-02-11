@@ -27,9 +27,8 @@ internal actual object ParkingDelegator {
 
         // Add nanos to current time
         clock_gettime(CLOCK_REALTIME.toInt(), ts)
-        ts.pointed.tv_sec = (ts.pointed.tv_sec + nanos / 1_000_000_000).convert()
-        ts.pointed.tv_nsec = (ts.pointed.tv_nsec + nanos % 1_000_000_000).convert()
-
+        ts.pointed.tv_sec = (ts.pointed.tv_sec.convert<Long>() + nanos / 1_000_000_000).convert()
+        ts.pointed.tv_nsec = (ts.pointed.tv_nsec.convert<Long>() + nanos % 1_000_000_000).convert()
         //Fix overflow
         if (ts.pointed.tv_nsec >= 1_000_000_000) {
             ts.pointed.tv_sec += 1
