@@ -6,7 +6,7 @@ import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import platform.posix.*
 
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 internal actual object ParkingDelegator {
     actual fun createRef(): ParkingData {
         val mut = nativeHeap.alloc<pthread_mutex_t>().ptr
@@ -22,7 +22,6 @@ internal actual object ParkingDelegator {
         callAndVerifyNative(0) { pthread_mutex_unlock(ref.mut) }
     }
     
-    @OptIn(UnsafeNumber::class)
     actual fun timedWait(ref: ParkingData, nanos: Long, shouldWait: () -> Boolean): Unit = memScoped {
         val ts = alloc<timespec>().ptr
 
