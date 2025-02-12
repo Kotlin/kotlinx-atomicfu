@@ -130,11 +130,8 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate {
-        group("native") {
-            group("nativeUnixLike") {
-                withLinux()
-                withApple()
-            }
+        group("nativeUnixLike") {
+            withLinux()
         }
         group("androidNative32Bit") {
             withAndroidNativeX86()
@@ -146,23 +143,32 @@ kotlin {
             withAndroidNativeArm64()
             withAndroidNativeX64()
         }
-
     }
 
     sourceSets {
+        val nativeNonAppleMain by creating {
+            kotlin.srcDir("src/nativeNonAppleMain/kotlin")
+            dependsOn(nativeMain.get())
+        }
+
         val nativeUnixLikeMain by getting {
             kotlin.srcDir("src/nativeUnixLikeMain/kotlin")
-            dependsOn(nativeMain.get())
+            dependsOn(nativeNonAppleMain)
         }
 
         val androidNative32BitMain by getting {
             kotlin.srcDir("src/androidNative32BitMain/kotlin")
-            dependsOn(nativeMain.get())
+            dependsOn(nativeNonAppleMain)
         }
 
         val androidNative64BitMain by getting {
             kotlin.srcDir("src/androidNative64BitMain/kotlin")
-            dependsOn(nativeMain.get())
+            dependsOn(nativeNonAppleMain)
+        }
+
+        val mingwMain by getting {
+            kotlin.srcDir("src/mingwMain/kotlin")
+            dependsOn(nativeNonAppleMain)
         }
 
         val androidNative32BitTest by getting {
