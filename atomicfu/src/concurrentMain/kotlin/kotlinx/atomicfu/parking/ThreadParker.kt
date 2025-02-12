@@ -49,9 +49,6 @@ internal class ThreadParker {
                             
                             // If other thread is unparking return. Let unparking thread deal with cleanup.
                             is Unparking -> if (state.compareAndSet(changedState, Free)) return
-                            
-                            // If other thread is still unparking, and another thread pre unparked. state -> unparked 
-                            is UnparkedWhileUnparking -> if (state.compareAndSet(changedState, Unparked)) return
 
                             // Unparking thread is done unparking
                             Free -> {
@@ -69,10 +66,9 @@ internal class ThreadParker {
                 // Parker was pre unparked. Set to free and continue.
                 Unparked -> if (state.compareAndSet(Unparked, Free)) return
                 
-                // All states below should only be reachable if parking thread has not yet returned.
+                // The states below should only be reachable if parking thread has not yet returned.
                 is Parked -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
                 is Unparking -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
-                is UnparkedWhileUnparking -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
             }
         }
     }
@@ -84,57 +80,17 @@ internal class ThreadParker {
                 
                 // Is already unparked
                 Unparked -> return
-                is UnparkedWhileUnparking -> return
-                
-                // Other thread is unparking
-                is Unparking -> if (state.compareAndSet(currentState, UnparkedWhileUnparking(currentState))) {
-                    return
-                }
+                is Unparking -> return
                 
                 Free -> if (state.compareAndSet(Free, Unparked)) return
                 
                 // Is parked -> try unpark
                 is Parked -> if (state.compareAndSet(currentState, myUnparkingState)) {
                     delegator.wake(currentState.data)
-                    
-                    while (true) {
-                        when (val changedState = state.value) {
-                            // state hasn't changed so parker is not awake yet, and responsible for cleanup.
-                            myUnparkingState -> if (state.compareAndSet(myUnparkingState, Free)) return
-                            
-                            // Unparked in the meantime (or parker already set state to free and than unpark)
-                            is UnparkedWhileUnparking -> {
-                                
-                                // Parker still asleep. It's parkers responsibility to cleanup.
-                                if (changedState.attempt == myUnparkingState && state.compareAndSet(changedState, Unparked)) return
-                                
-                                // This means that parker was already gone and parker and other thread is unparking.
-                                // Therefore, we are still responsible for cleaning up parking data of our attempt.
-                                if (changedState.attempt != myUnparkingState) {
-                                    delegator.destroyRef(currentState.data)
-                                    return
-                                }
-                            }
-                            
-                            // Parker is already gone. Cleanup
-                            Free -> {
-                                delegator.destroyRef(currentState.data)
-                                return
-                            }
-                            
-                            // Parker is already gone and concurrent unpark call. Cleanup.
-                            Unparked -> {
-                                delegator.destroyRef(currentState.data)
-                                return
-                            }
-                            
-                            // Parker is already gone and parked again in the meantime. Cleanup data of first park.
-                            is Parked -> {
-                                delegator.destroyRef(currentState.data)
-                                return
-                            }
-                        }
-                    }
+                    // state hasn't changed so parker is not awake yet, and responsible for cleanup.
+                    if (state.compareAndSet(myUnparkingState, Free)) return
+                    delegator.destroyRef(currentState.data)
+                    return
                 }
             }
         }
@@ -152,7 +108,3 @@ private class Parked(val data: ParkingData) : ParkingState
 
 // An unpark call happened while the parker was parked. In process of unparking.
 private class Unparking : ParkingState
-
-// An unpark call happened while unparking was already in process.
-private class UnparkedWhileUnparking(val attempt: Unparking) : ParkingState
-
