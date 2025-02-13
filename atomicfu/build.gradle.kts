@@ -10,7 +10,33 @@ plugins {
     id("kotlin-multiplatform-publish-conventions")
 }
 
+// Support of all non-deprecated targets from the official tier list: https://kotlinlang.org/docs/native-target-support.html
 kotlin {
+    // Tier 1
+    macosX64()
+    macosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
+    // Tier 2
+    linuxX64()
+    linuxArm64()
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
+
+    // Tier 3
+    androidNativeArm32()
+    androidNativeArm64()
+    androidNativeX86()
+    androidNativeX64()
+    mingwX64()
+    watchosDeviceArm64()
 
     // JS -- always
     js(IR) {
@@ -33,6 +59,12 @@ kotlin {
     wasmWasi {
         nodejs()
     }
+    
+    @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
+    linuxArm32Hfp()
+
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate()
 
     sourceSets {
         commonMain.dependencies {
@@ -99,50 +131,10 @@ kotlin {
         
         val jvmMain by getting { dependsOn(concurrentMain) }
         val jvmTest by getting { dependsOn(concurrentTest) }
-    }
-}
-
-// Support of all non-deprecated targets from the official tier list: https://kotlinlang.org/docs/native-target-support.html
-kotlin {
-    // Tier 1
-    macosX64()
-    macosArm64()
-    iosSimulatorArm64()
-    iosX64()
-
-    // Tier 2
-    linuxX64()
-    linuxArm64()
-    watchosSimulatorArm64()
-    watchosX64()
-    watchosArm32()
-    watchosArm64()
-    tvosSimulatorArm64()
-    tvosX64()
-    tvosArm64()
-    iosArm64()
-
-    // Tier 3
-    androidNativeArm32()
-    androidNativeArm64()
-    androidNativeX86()
-    androidNativeX64()
-    mingwX64()
-    watchosDeviceArm64()
-
-    @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
-    linuxArm32Hfp()
-
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    applyDefaultHierarchyTemplate() 
-
-    sourceSets {
         
-        val concurrentMain by getting {}
-        val concurrentTest by getting {}
         val nativeMain by getting { dependsOn(concurrentMain) }
         val nativeTest by getting { dependsOn(concurrentTest) }
-        
+
         val nativeUnixLikeMain by creating { dependsOn(nativeMain) }
         val appleMain by getting { dependsOn(nativeUnixLikeMain) }
         val linuxMain by getting { dependsOn(nativeUnixLikeMain) }
@@ -160,6 +152,7 @@ kotlin {
         }
     }
 }
+
 
 val transformer: Configuration by configurations.creating
 
