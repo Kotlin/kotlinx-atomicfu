@@ -17,7 +17,7 @@ internal actual object ParkingDelegator {
     }
 
     actual fun wait(ref: ParkingData, shouldWait: () -> Boolean) {
-        callAndVerifyNative(0)  { callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) } }
+        callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
         if (shouldWait()) callAndVerifyNative(0)  { pthread_cond_wait(ref.cond, ref.mut) }
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
@@ -32,7 +32,7 @@ internal actual object ParkingDelegator {
 
         //Fix overflow
         if (ts.pointed.tv_nsec >= 1_000_000_000) {
-            ts.pointed.tv_sec += 1
+            if (ts.pointed.tv_sec != Long.MAX_VALUE) ts.pointed.tv_sec += 1
             ts.pointed.tv_nsec -= 1_000_000_000
         }
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
