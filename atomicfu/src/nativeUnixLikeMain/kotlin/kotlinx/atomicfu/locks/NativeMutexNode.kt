@@ -2,8 +2,9 @@ package kotlinx.atomicfu.locks
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import kotlin.concurrent.*
+import kotlin.concurrent.Volatile
 
+@OptIn(UnsafeNumber::class)
 public actual class NativeMutexNode {
 
     @Volatile

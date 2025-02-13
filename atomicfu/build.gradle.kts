@@ -142,6 +142,10 @@ kotlin {
         val concurrentTest by getting {}
         val nativeMain by getting { dependsOn(concurrentMain) }
         val nativeTest by getting { dependsOn(concurrentTest) }
+        
+        val nativeUnixLikeMain by creating { dependsOn(nativeMain) }
+        val appleMain by getting { dependsOn(nativeUnixLikeMain) }
+        val linuxMain by getting { dependsOn(nativeUnixLikeMain) }
     }
 
     // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)
