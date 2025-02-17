@@ -2,9 +2,11 @@ plugins {
     alias(libs.plugins.kotlinx.binaryCompatibilityValidator)
 }
 
-val deploy: Task? by tasks.creating {
-    dependsOn(getTasksByName("publish", true))
-    dependsOn(getTasksByName("publishNpm", true))
+val deploy by tasks.registering {
+    dependsOn(
+        getTasksByName("publish", true),
+        getTasksByName("publishNpm", true)
+    )
 }
 
 // This is a WA for the failure of the :model task during publication:
