@@ -19,7 +19,6 @@ class TimedParkingTest {
             }
             assertTrue(t.inWholeNanoseconds > 300_000_000)
             assertTrue(t.inWholeNanoseconds < 500_000_000)
-            t.inWholeNanoseconds
         }
 
         sleepMills(400)
@@ -39,7 +38,6 @@ class TimedParkingTest {
             }
             assertTrue(t.inWholeNanoseconds > 600_000_000)
             assertTrue(t.inWholeNanoseconds < 800_000_000)
-            t.inWholeNanoseconds
         }
 
         sleepMills(700)
@@ -59,7 +57,63 @@ class TimedParkingTest {
             }
             assertTrue(t.inWholeNanoseconds > 900_000_000)
             assertTrue(t.inWholeNanoseconds < 1100_000_000)
-            t.inWholeNanoseconds
+        }
+
+        sleepMills(1000)
+        Parker.unpark(kthread1!!)
+
+        thread1.waitThrowing()
+    }
+    
+    @Test
+    fun testNanosFirstUnparkLongMax() = retry(3) {
+        var kthread1: KThread? = null
+
+        val thread1 = Fut {
+            kthread1 = KThread.currentThread()
+            val t = measureTime {
+                Parker.parkNanos(Long.MAX_VALUE)
+            }
+            assertTrue(t.inWholeNanoseconds > 900_000_000)
+            assertTrue(t.inWholeNanoseconds < 1100_000_000)
+        }
+
+        sleepMills(1000)
+        Parker.unpark(kthread1!!)
+
+        thread1.waitThrowing()
+    }
+    
+    @Test
+    fun testNanosFirstUnparkIntMax() = retry(3) {
+        var kthread1: KThread? = null
+
+        val thread1 = Fut {
+            kthread1 = KThread.currentThread()
+            val t = measureTime {
+                Parker.parkNanos(Int.MAX_VALUE.toLong())
+            }
+            assertTrue(t.inWholeNanoseconds > 900_000_000)
+            assertTrue(t.inWholeNanoseconds < 1100_000_000)
+        }
+
+        sleepMills(1000)
+        Parker.unpark(kthread1!!)
+
+        thread1.waitThrowing()
+    }
+    
+    @Test
+    fun testNanosFirstUnpark3rdLong() = retry(3) {
+        var kthread1: KThread? = null
+
+        val thread1 = Fut {
+            kthread1 = KThread.currentThread()
+            val t = measureTime {
+                Parker.parkNanos(Long.MAX_VALUE / 3)
+            }
+            assertTrue(t.inWholeNanoseconds > 900_000_000)
+            assertTrue(t.inWholeNanoseconds < 1100_000_000)
         }
 
         sleepMills(1000)
@@ -79,7 +133,6 @@ class TimedParkingTest {
             }
             assertTrue(t.inWholeNanoseconds > 300_000_000)
             assertTrue(t.inWholeNanoseconds < 500_000_000)
-            t.inWholeNanoseconds
         }
 
         sleepMills(600)
@@ -99,7 +152,6 @@ class TimedParkingTest {
             }
             assertTrue(t.inWholeNanoseconds > 600_000_000)
             assertTrue(t.inWholeNanoseconds < 800_000_000)
-            t.inWholeNanoseconds
         }
 
         sleepMills(900)
@@ -119,7 +171,6 @@ class TimedParkingTest {
             }
             assertTrue(t.inWholeNanoseconds > 900_000_000)
             assertTrue(t.inWholeNanoseconds < 1100_000_000)
-            t.inWholeNanoseconds
         }
 
         sleepMills(1200)
