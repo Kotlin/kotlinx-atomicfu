@@ -327,8 +327,8 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             .dir("classes/atomicfu-orig/${target.name}/${compilation.name}")
         compilationTask.configure {
             if (it is Kotlin2JsCompile) {
-                @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "EXPOSED_PARAMETER_TYPE")
-                it.defaultDestinationDirectory.value(originalDestinationDirectory)
+                @Suppress("INVISIBLE_MEMBER")
+                it.destinationDirectory.value(originalDestinationDirectory)
             } else {
                 it.destinationDirectory.value(originalDestinationDirectory)
             }
