@@ -1,160 +1,99 @@
+/*
+ * Copyright 2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
 package kotlinx.atomicfu.locks
 
-import platform.posix.*
-import kotlinx.atomicfu.locks.SynchronizedObject.Status.*
-import kotlinx.cinterop.UnsafeNumber
-import kotlin.concurrent.AtomicReference
+import kotlin.native.ref.createCleaner
+import kotlinx.atomicfu.*
 
-@OptIn(UnsafeNumber::class) // required for KT-60572
+import kotlin.native.concurrent.ThreadLocal
+
+private const val NO_OWNER = 0L
+
+private val threadCounter = atomic(0L)
+
+@ThreadLocal
+private var threadId: Long = threadCounter.addAndGet(1)
+
+internal fun currentThreadId(): Long = threadId
+
+// Based on the compose-multiplatform-core implementation with added qos and the pool back-ported
+// from the atomicfu implementation.
 public actual open class SynchronizedObject {
+    private val ownerThreadId: AtomicLong = atomic(NO_OWNER)
+    private var reEnterCount: Int = 0
+    private val threadsOnLock: AtomicInt = atomic(0)
 
-    protected val lock = AtomicReference(LockState(UNLOCKED, 0, 0))
+    private val monitor: MonitorWrapper by lazy { MonitorWrapper() }
+
 
     public fun lock() {
-        val currentThreadId = pthread_self()!!
-        while (true) {
-            val state = lock.value
-            when (state.status) {
-                UNLOCKED -> {
-                    val thinLock = LockState(THIN, 1, 0, currentThreadId)
-                    if (lock.compareAndSet(state, thinLock))
-                        return
-                }
-
-                THIN -> {
-                    if (currentThreadId == state.ownerThreadId) {
-                        // reentrant lock
-                        val thinNested = LockState(THIN, state.nestedLocks + 1, state.waiters, currentThreadId)
-                        if (lock.compareAndSet(state, thinNested))
-                            return
-                    } else {
-                        // another thread is trying to take this lock -> allocate native mutex
-                        val mutex = mutexPool.allocate()
-                        mutex.lock()
-                        val fatLock = LockState(FAT, state.nestedLocks, state.waiters + 1, state.ownerThreadId, mutex)
-                        if (lock.compareAndSet(state, fatLock)) {
-                            //block the current thread waiting for the owner thread to release the permit
-                            mutex.lock()
-                            tryLockAfterResume(currentThreadId)
-                            return
-                        } else {
-                            // return permit taken for the owner thread and release mutex back to the pool
-                            mutex.unlock()
-                            mutexPool.release(mutex)
-                        }
-                    }
-                }
-
-                FAT -> {
-                    if (currentThreadId == state.ownerThreadId) {
-                        // reentrant lock
-                        val nestedFatLock =
-                            LockState(FAT, state.nestedLocks + 1, state.waiters, state.ownerThreadId, state.mutex)
-                        if (lock.compareAndSet(state, nestedFatLock)) return
-                    } else if (state.ownerThreadId != null) {
-                        val fatLock =
-                            LockState(FAT, state.nestedLocks, state.waiters + 1, state.ownerThreadId, state.mutex)
-                        if (lock.compareAndSet(state, fatLock)) {
-                            fatLock.mutex!!.lock()
-                            tryLockAfterResume(currentThreadId)
-                            return
-                        }
-                    }
-                }
+        var self = currentThreadId()
+        if (ownerThreadId.value == self) {
+            reEnterCount += 1
+        } else if (threadsOnLock.incrementAndGet() > 1) {
+            waitForUnlockAndLock(self)
+        } else {
+            if (!ownerThreadId.compareAndSet(NO_OWNER, self)) {
+                waitForUnlockAndLock(self)
             }
         }
     }
 
     public fun tryLock(): Boolean {
-        val currentThreadId = pthread_self()!!
-        while (true) {
-            val state = lock.value
-            if (state.status == UNLOCKED) {
-                val thinLock = LockState(THIN, 1, 0, currentThreadId)
-                if (lock.compareAndSet(state, thinLock))
-                    return true
-            } else {
-                if (currentThreadId == state.ownerThreadId) {
-                    val nestedLock =
-                        LockState(state.status, state.nestedLocks + 1, state.waiters, currentThreadId, state.mutex)
-                    if (lock.compareAndSet(state, nestedLock))
-                        return true
-                } else {
-                    return false
-                }
+        var self = currentThreadId()
+        return if (ownerThreadId.value == self) {
+            reEnterCount += 1
+            true
+        } else if (threadsOnLock.incrementAndGet() == 1 && ownerThreadId.compareAndSet(NO_OWNER, self)) {
+            true
+        } else {
+            threadsOnLock.decrementAndGet()
+            false
+        }
+    }
+
+
+    private fun waitForUnlockAndLock(self: Long) {
+        withMonitor(monitor) {
+            while (!ownerThreadId.compareAndSet(NO_OWNER, self)) {
+                monitor.nativeMutex.wait()
             }
         }
     }
 
     public fun unlock() {
-        val currentThreadId = pthread_self()!!
-        while (true) {
-            val state = lock.value
-            require(currentThreadId == state.ownerThreadId) { "Thin lock may be only released by the owner thread, expected: ${state.ownerThreadId}, real: $currentThreadId" }
-            when (state.status) {
-                THIN -> {
-                    // nested unlock
-                    if (state.nestedLocks == 1) {
-                        val unlocked = LockState(UNLOCKED, 0, 0)
-                        if (lock.compareAndSet(state, unlocked))
-                            return
-                    } else {
-                        val releasedNestedLock =
-                            LockState(THIN, state.nestedLocks - 1, state.waiters, state.ownerThreadId)
-                        if (lock.compareAndSet(state, releasedNestedLock))
-                            return
-                    }
+        require (ownerThreadId.value == currentThreadId())
+        if (reEnterCount > 0) {
+            reEnterCount -= 1
+        } else {
+            ownerThreadId.value = NO_OWNER
+            if (threadsOnLock.decrementAndGet() > 0) {
+                withMonitor(monitor) {
+                    // We expect the highest priority thread to be woken up, but this should work
+                    // in any case.
+                    monitor.nativeMutex.notify()
                 }
-
-                FAT -> {
-                    if (state.nestedLocks == 1) {
-                        // last nested unlock -> release completely, resume some waiter
-                        val releasedLock = LockState(FAT, 0, state.waiters - 1, null, state.mutex)
-                        if (lock.compareAndSet(state, releasedLock)) {
-                            releasedLock.mutex!!.unlock()
-                            return
-                        }
-                    } else {
-                        // lock is still owned by the current thread
-                        val releasedLock =
-                            LockState(FAT, state.nestedLocks - 1, state.waiters, state.ownerThreadId, state.mutex)
-                        if (lock.compareAndSet(state, releasedLock))
-                            return
-                    }
-                }
-
-                else -> error("It is not possible to unlock the mutex that is not obtained")
             }
         }
     }
 
-    private fun tryLockAfterResume(threadId: pthread_t) {
-        while (true) {
-            val state = lock.value
-            val newState = if (state.waiters == 0) // deflate
-                LockState(THIN, 1, 0, threadId)
-            else
-                LockState(FAT, 1, state.waiters, threadId, state.mutex)
-            if (lock.compareAndSet(state, newState)) {
-                if (state.waiters == 0) {
-                    state.mutex!!.unlock()
-                    mutexPool.release(state.mutex)
-                }
-                return
-            }
+    private inline fun withMonitor(monitor: MonitorWrapper, block: () -> Unit) {
+        monitor.nativeMutex.lock()
+        return try {
+            block()
+        } finally {
+            monitor.nativeMutex.unlock()
         }
     }
 
-    protected class LockState(
-        val status: Status,
-        val nestedLocks: Int,
-        val waiters: Int,
-        val ownerThreadId: pthread_t? = null,
-        val mutex: NativeMutexNode? = null
-    )
-
-    protected enum class Status { UNLOCKED, THIN, FAT }
+    @OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+    private class MonitorWrapper {
+        val nativeMutex = mutexPool.allocate()
+        val cleaner = createCleaner(nativeMutex) { mutexPool.release(it) }
+    }
 }
+
 
 public actual fun reentrantLock() = ReentrantLock()
 
@@ -178,19 +117,20 @@ public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () ->
     }
 }
 
+
 private const val INITIAL_POOL_CAPACITY = 64
+private const val MAX_POOL_SIZE = 1024
 
-private val mutexPool by lazy { MutexPool(INITIAL_POOL_CAPACITY) }
+private val mutexPool by lazy { MutexPool() }
 
-class MutexPool(capacity: Int) {
-    private val top = AtomicReference<NativeMutexNode?>(null)
-
-    private val mutexes = Array(capacity) { NativeMutexNode() }
+private class MutexPool() {
+    private val size = atomic(0)
+    private val top = atomic<NativeMutexNode?>(null)
 
     init {
         // Immediately form a stack
-        for (mutex in mutexes) {
-            release(mutex)
+        for (i in 0 until INITIAL_POOL_CAPACITY) {
+            release(NativeMutexNode())
         }
     }
 
@@ -199,11 +139,16 @@ class MutexPool(capacity: Int) {
     fun allocate(): NativeMutexNode = pop() ?: allocMutexNode()
 
     fun release(mutexNode: NativeMutexNode) {
-        while (true) {
-            val oldTop = top.value
-            mutexNode.next = oldTop
-            if (top.compareAndSet(oldTop, mutexNode)) {
-                return
+        if (size.value > MAX_POOL_SIZE) {
+            mutexNode.dispose()
+        } else {
+            while (true) {
+                val oldTop = top.value
+                mutexNode.next = oldTop
+                if (top.compareAndSet(oldTop, mutexNode)) {
+                    size.incrementAndGet()
+                    return
+                }
             }
         }
     }
@@ -211,10 +156,12 @@ class MutexPool(capacity: Int) {
     private fun pop(): NativeMutexNode? {
         while (true) {
             val oldTop = top.value
-            if (oldTop == null)
+            if (oldTop == null) {
                 return null
+            }
             val newHead = oldTop.next
             if (top.compareAndSet(oldTop, newHead)) {
+                size.decrementAndGet()
                 return oldTop
             }
         }
