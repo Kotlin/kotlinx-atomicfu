@@ -32,7 +32,7 @@ internal actual object ParkingDelegator {
 
         //Fix overflow
         if (ts.pointed.tv_nsec >= 1_000_000_000) {
-            if (ts.pointed.tv_sec != Long.MAX_VALUE) ts.pointed.tv_sec += 1
+            ts.pointed.tv_sec += 1
             ts.pointed.tv_nsec -= 1_000_000_000
         }
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }

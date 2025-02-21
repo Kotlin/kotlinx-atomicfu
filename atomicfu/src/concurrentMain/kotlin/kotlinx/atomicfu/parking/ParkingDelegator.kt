@@ -14,3 +14,11 @@ internal expect object ParkingDelegator {
     fun wake(ref: ParkingData)
     fun destroyRef(ref: ParkingData)
 }
+
+/**
+ * Adds nano seconds to current time in seconds.
+ * Clamps for Int.
+ */
+internal fun Int.addNanosToSeconds(nanos: Long): Int = 
+    (this + nanos / 1_000_000_000).coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
+internal fun Long.addNanosToSeconds(nanos: Long): Long = this + nanos / 1_000_000_000

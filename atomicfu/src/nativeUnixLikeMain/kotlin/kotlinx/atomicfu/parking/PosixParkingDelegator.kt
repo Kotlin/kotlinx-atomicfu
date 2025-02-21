@@ -5,7 +5,6 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import platform.posix.*
-import kotlin.math.min
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 internal actual object ParkingDelegator {
@@ -28,11 +27,11 @@ internal actual object ParkingDelegator {
 
         // Add nanos to current time
         clock_gettime(CLOCK_REALTIME.convert(), ts)
-        ts.pointed.tv_sec = min(ts.pointed.tv_sec + nanos / 1_000_000_000, Int.MAX_VALUE.toLong()).convert()
+        ts.pointed.tv_sec = ts.pointed.tv_sec.addNanosToSeconds(nanos)
         ts.pointed.tv_nsec = (ts.pointed.tv_nsec + nanos % 1_000_000_000).convert()
         //Fix overflow
         if (ts.pointed.tv_nsec >= 1_000_000_000) {
-            if (ts.pointed.tv_sec.convert<Int>() != Int.MAX_VALUE) ts.pointed.tv_sec += 1
+            ts.pointed.tv_sec = ts.pointed.tv_sec.addNanosToSeconds(1_000_000_000)
             ts.pointed.tv_nsec -= 1_000_000_000
         }
         callAndVerifyNative(0) { pthread_mutex_lock(ref.mut) }
