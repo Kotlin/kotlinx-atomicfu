@@ -21,4 +21,13 @@ internal expect object ParkingDelegator {
  */
 internal fun Int.addNanosToSeconds(nanos: Long): Int = 
     (this + nanos / 1_000_000_000).coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
-internal fun Long.addNanosToSeconds(nanos: Long): Long = this + nanos / 1_000_000_000
+internal fun Long.addNanosToSeconds(nanos: Long): Long {
+    
+    // Should never happen as this is checked in `ThreadParker`
+    check(nanos >= 0) { "Cannot wait for a negative number of nanoseconds" }
+    val result =  this + nanos / 1_000_000_000
+    
+    // Overflow check: should never happen since this is very far into the future.
+    check(!(this xor result < 0 && this >= 0)) { "Nano seconds addition overflowed, current time in seconds is $this" }
+    return result
+}

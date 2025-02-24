@@ -195,23 +195,20 @@ class TimedParkingTest {
 }
 
 
-internal class Fut(private val block: () -> Unit) {
-    private var thread: TestThread? = null
+internal class Fut(block: () -> Unit) {
+    private val done = atomic(false)
     private val atomicError = atomic<Throwable?>(null)
-    val done = atomic(false)
-    init {
-        val th = testThread {
-            try { block() }
-            catch (t: Throwable) {
-                atomicError.value = t
-                throw t
-            }
-            finally { done.value = true }
+    private val thread: TestThread = testThread {
+        try { block() }
+        catch (t: Throwable) {
+            atomicError.value = t
+            throw t
         }
-        thread = th
+        finally { done.value = true }
     }
+
     fun waitThrowing() {
-        thread!!.join()
+        thread.join()
         throwIfError()
     }
 

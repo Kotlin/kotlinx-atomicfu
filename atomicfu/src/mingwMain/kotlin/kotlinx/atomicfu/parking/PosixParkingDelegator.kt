@@ -16,17 +16,20 @@ internal actual object ParkingDelegator {
         return ParkingData(mut, cond)
     }
 
-    actual fun wait(ref: ParkingData, shouldWait: () -> Boolean) {
+    actual inline fun wait(ref: ParkingData, shouldWait: () -> Boolean) {
         callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
         if (shouldWait()) callAndVerifyNative(0)  { pthread_cond_wait(ref.cond, ref.mut) }
         callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
     }
 
-    actual fun timedWait(ref: ParkingData, nanos: Long, shouldWait: () -> Boolean): Unit = memScoped {
+    actual inline fun timedWait(ref: ParkingData, nanos: Long, shouldWait: () -> Boolean): Unit = memScoped {
         val ts = alloc<timespec>().ptr
 
         // Add nanos to current time
-        clock_gettime(CLOCK_REALTIME.toInt(), ts)
+        callAndVerifyNative(0) { clock_gettime(CLOCK_REALTIME.toInt(), ts) }
+        // According to https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-systemtime
+        // the maximum year on windows is 30827.
+        // Adding Long.MAX_VALUE / 1_000_000_000 should not be able to overflow.
         ts.pointed.tv_sec += nanos / 1_000_000_000
         ts.pointed.tv_nsec += (nanos % 1_000_000_000).toInt()
 
@@ -41,14 +44,14 @@ internal actual object ParkingDelegator {
     }
 
     actual fun wake(ref: ParkingData) {
-        callAndVerifyNative(0)  { pthread_mutex_lock(ref.mut) }
-        callAndVerifyNative(0)  { pthread_cond_signal(ref.cond) }
-        callAndVerifyNative(0)  { pthread_mutex_unlock(ref.mut) }
+        callAndVerifyNative(0) { pthread_mutex_lock(ref.mut) }
+        callAndVerifyNative(0) { pthread_cond_signal(ref.cond) }
+        callAndVerifyNative(0) { pthread_mutex_unlock(ref.mut) }
     }
 
     actual fun destroyRef(ref: ParkingData) {
-        callAndVerifyNative(0)  { pthread_mutex_destroy(ref.mut) }
-        callAndVerifyNative(0)  { pthread_cond_destroy(ref.cond) }
+        callAndVerifyNative(0) { pthread_mutex_destroy(ref.mut) }
+        callAndVerifyNative(0) { pthread_cond_destroy(ref.cond) }
         nativeHeap.free(ref.mut)
         nativeHeap.free(ref.cond)
     }

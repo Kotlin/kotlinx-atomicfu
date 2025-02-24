@@ -19,9 +19,3 @@ actual class Parker private actual constructor() {
 @kotlin.native.concurrent.ThreadLocal
 private val thisKThread: KThread = KThread()
 
-private val threadCounter = atomic(0L)
-
-@kotlin.native.concurrent.ThreadLocal
-private var threadId: Long = threadCounter.addAndGet(1)
-
-internal actual fun currentThreadId(): Long = threadId

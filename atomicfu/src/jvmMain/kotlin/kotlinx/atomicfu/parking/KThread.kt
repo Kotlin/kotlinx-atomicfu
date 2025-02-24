@@ -16,4 +16,3 @@ actual class Parker private actual constructor() {
 }
 
 private val localKThread: ThreadLocal<KThread> = ThreadLocal.withInitial { KThread() }
-internal actual fun currentThreadId(): Long = Thread.currentThread().id

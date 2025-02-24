@@ -5,9 +5,9 @@ import kotlin.native.concurrent.Future
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
 
-internal actual class TestThread actual constructor(private val toDo: () -> Unit) {
+internal actual class TestThread actual constructor(toDo: () -> Unit) {
     private val future: Future<Unit> = Worker.start().execute(TransferMode.UNSAFE, { toDo }) { toDo -> toDo() }
-    actual fun join() = future!!.result
+    actual fun join() = future.result
 }
 
 actual fun sleepMills(millis: Long) {

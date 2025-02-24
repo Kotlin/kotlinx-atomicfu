@@ -34,6 +34,3 @@ expect class Parker private constructor() {
         fun unpark(kThread: KThread): Unit
     }
 }
-
-internal expect fun currentThreadId(): Long 
-
