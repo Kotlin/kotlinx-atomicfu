@@ -6,3 +6,7 @@ dependencies {
     implementation(libs.kotlin.gradlePlugin)
     compileOnly(libs.kotlin.build.tools.api) // runtime dependency of KGP
 }
+
+kotlin {
+    compilerOptions.allWarningsAsErrors = true
+}

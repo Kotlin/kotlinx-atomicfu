@@ -15,11 +15,11 @@ import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
 import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import java.io.*
 import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 
 private const val EXTENSION_NAME = "atomicfu"
@@ -267,7 +267,7 @@ private fun Project.withKotlinTargets(fn: (KotlinTarget) -> Unit) {
     }
 }
 
-private fun KotlinCompile<*>.setFriendPaths(friendPathsFileCollection: FileCollection) {
+private fun KotlinCompilationTask<*>.setFriendPaths(friendPathsFileCollection: FileCollection) {
     val (majorVersion, minorVersion) = project.getKotlinPluginVersion()
         .split('.')
         .take(2)
@@ -327,8 +327,8 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
             .dir("classes/atomicfu-orig/${target.name}/${compilation.name}")
         compilationTask.configure {
             if (it is Kotlin2JsCompile) {
-                @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "EXPOSED_PARAMETER_TYPE")
-                it.defaultDestinationDirectory.value(originalDestinationDirectory)
+                @Suppress("INVISIBLE_MEMBER")
+                it.destinationDirectory.value(originalDestinationDirectory)
             } else {
                 it.destinationDirectory.value(originalDestinationDirectory)
             }
@@ -384,20 +384,31 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                     originalMainClassesDirs + compilation.compileDependencyFiles
                 )
             if (transformTask != null) {
+                val runtimeDependencyFiles = compilation.runtimeDependencyFiles
+                val newClasspath = if (runtimeDependencyFiles != null)
+                    originalMainClassesDirs + runtimeDependencyFiles - mainCompilation.output.classesDirs
+                else
+                    originalMainClassesDirs - mainCompilation.output.classesDirs
                 // if transform task was not created, then originalMainClassesDirs == mainCompilation.output.classesDirs
-                (tasks.findByName("${target.name}${compilation.name.capitalize()}") as? Test)?.classpath =
-                    originalMainClassesDirs + (compilation as KotlinCompilationToRunnableFiles).runtimeDependencyFiles - mainCompilation.output.classesDirs
+                (tasks.findByName("${target.name}${compilation.name.capitalizeCompat()}") as? Test)?.classpath =
+                    newClasspath
             }
-            compilation.compileKotlinTask.setFriendPaths(originalMainClassesDirs)
+            compilation.compileTaskProvider.configure {
+                it.setFriendPaths(originalMainClassesDirs)
+            }
         }
     }
 }
 
-private fun String.toJvmVariant(): JvmVariant = enumValueOf(toUpperCase(Locale.US))
+private fun String.toJvmVariant(): JvmVariant = enumValueOf(uppercase(Locale.US))
+
+private fun String.capitalizeCompat() = replaceFirstChar {
+    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+}
 
 private fun Project.registerJvmTransformTask(compilation: KotlinCompilation<*>): TaskProvider<AtomicFUTransformTask> =
     tasks.register(
-        "transform${compilation.target.name.capitalize()}${compilation.name.capitalize()}Atomicfu",
+        "transform${compilation.target.name.capitalizeCompat()}${compilation.name.capitalizeCompat()}Atomicfu",
         AtomicFUTransformTask::class.java
     )
 

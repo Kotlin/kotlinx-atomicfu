@@ -158,8 +158,8 @@ class FieldInfo(
             return if (hasExternalAccess) mangleInternal(fuName) else fuName
         }
 
-    val refVolatileClassName = "${owner.replace('.', '/')}$${name.capitalize()}RefVolatile"
-    val staticRefVolatileField = refVolatileClassName.substringAfterLast("/").decapitalize()
+    val refVolatileClassName = "${owner.replace('.', '/')}$${name.capitalizeCompat()}RefVolatile"
+    val staticRefVolatileField = refVolatileClassName.substringAfterLast("/").decapitalizeCompat()
 
     fun getPrimitiveType(vh: Boolean): Type = if (vh) typeInfo.originalType else typeInfo.transformedType
 
@@ -1530,6 +1530,12 @@ class AtomicFUTransformer(
         }
 }
 
+private fun String.capitalizeCompat() = replaceFirstChar {
+    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+}
+
+private fun String.decapitalizeCompat() = replaceFirstChar { it.lowercase(Locale.getDefault()) }
+
 fun main(args: Array<String>) {
     if (args.size !in 1..3) {
         println("Usage: AtomicFUTransformerKt <dir> [<output>] [<variant>]")
@@ -1537,7 +1543,7 @@ fun main(args: Array<String>) {
     }
     val t = AtomicFUTransformer(emptyList(), File(args[0]))
     if (args.size > 1) t.outputDir = File(args[1])
-    if (args.size > 2) t.jvmVariant = enumValueOf(args[2].toUpperCase(Locale.US))
+    if (args.size > 2) t.jvmVariant = enumValueOf(args[2].uppercase(Locale.US))
     t.verbose = true
     t.transform()
 }
