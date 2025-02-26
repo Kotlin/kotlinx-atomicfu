@@ -1,21 +1,54 @@
 /*
- * Copyright 2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package kotlinx.atomicfu.locks
 
 import kotlin.native.ref.createCleaner
 import kotlinx.atomicfu.*
+import kotlinx.cinterop.Arena
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
+import kotlinx.cinterop.IntVar
+import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.toLong
+import platform.posix.pthread_cond_destroy
+import platform.posix.pthread_cond_init
+import platform.posix.pthread_cond_signal
+import platform.posix.pthread_cond_t
+import platform.posix.pthread_cond_wait
 import platform.posix.pthread_get_qos_class_np
+import platform.posix.pthread_mutex_destroy
+import platform.posix.pthread_mutex_init
+import platform.posix.pthread_mutex_lock
+import platform.posix.pthread_mutex_t
+import platform.posix.pthread_mutex_unlock
+import platform.posix.pthread_mutexattr_destroy
+import platform.posix.pthread_mutexattr_init
+import platform.posix.pthread_mutexattr_settype
+import platform.posix.pthread_mutexattr_t
 import platform.posix.pthread_override_qos_class_end_np
 import platform.posix.pthread_override_qos_class_start_np
 import platform.posix.pthread_override_t
 import platform.posix.pthread_self
 import platform.posix.qos_class_self
 
+import platform.posix.PTHREAD_MUTEX_ERRORCHECK
 import kotlin.native.concurrent.ThreadLocal
 
 private const val NO_OWNER = 0L
@@ -94,11 +127,11 @@ public actual open class SynchronizedObject {
     }
 
     private inline fun withMonitor(monitor: DonatingMonitor, block: () -> Unit) {
-        monitor.nativeMutex.lock()
+        monitor.nativeMutex.enter()
         return try {
             block()
         } finally {
-            monitor.nativeMutex.unlock()
+            monitor.nativeMutex.exit()
         }
     }
 
@@ -130,10 +163,13 @@ public actual open class SynchronizedObject {
                 }
             } else {
                 // No existing override, check if we need to set one up.
-                pthread_get_qos_class_np(lockOwner.toCPointer(), nativeMutex.lockOwnerQosClass.ptr, nativeMutex.lockOwnerRelPrio.ptr)
-                if (ourQosClass > nativeMutex.lockOwnerQosClass.value) {
-                    qosOverride = pthread_override_qos_class_start_np(lockOwner.toCPointer(), ourQosClass, 0)
-                    qosOverrideQosClass = ourQosClass
+                memScoped {
+
+                    pthread_get_qos_class_np(lockOwner.toCPointer(), nativeMutex.lockOwnerQosClass.ptr, nativeMutex.lockOwnerRelPrio.ptr)
+                    if (ourQosClass > nativeMutex.lockOwnerQosClass.value) {
+                        qosOverride = pthread_override_qos_class_start_np(lockOwner.toCPointer(), ourQosClass, 0)
+                        qosOverrideQosClass = ourQosClass
+                    }
                 }
             }
         }
@@ -144,6 +180,43 @@ public actual open class SynchronizedObject {
                 qosOverride = null
             }
         }
+    }
+}
+
+
+@OptIn(ExperimentalForeignApi::class)
+private class NativeMutexNode {
+    var next: NativeMutexNode? = null
+
+    private val arena: Arena = Arena()
+    private val cond: pthread_cond_t = arena.alloc()
+    private val mutex: pthread_mutex_t = arena.alloc()
+    private val attr: pthread_mutexattr_t = arena.alloc()
+
+    // Used locally as return parameters in donateQos
+    val lockOwnerQosClass = arena.alloc<UIntVar>()
+    val lockOwnerRelPrio = arena.alloc<IntVar>()
+
+    init {
+        require(pthread_cond_init(cond.ptr, null) == 0)
+        require(pthread_mutexattr_init(attr.ptr) == 0)
+        require(pthread_mutexattr_settype(attr.ptr, PTHREAD_MUTEX_ERRORCHECK) == 0)
+        require(pthread_mutex_init(mutex.ptr, attr.ptr) == 0)
+    }
+
+    fun enter() = require(pthread_mutex_lock(mutex.ptr) == 0)
+
+    fun exit() = require(pthread_mutex_unlock(mutex.ptr) == 0)
+
+    fun wait() = require(pthread_cond_wait(cond.ptr, mutex.ptr) == 0)
+
+    fun notify() = require (pthread_cond_signal(cond.ptr) == 0)
+
+    fun dispose() {
+        pthread_cond_destroy(cond.ptr)
+        pthread_mutex_destroy(mutex.ptr)
+        pthread_mutexattr_destroy(attr.ptr)
+        arena.clear()
     }
 }
 
@@ -169,6 +242,7 @@ public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () ->
         lock.unlock()
     }
 }
+
 
 
 private const val INITIAL_POOL_CAPACITY = 64
@@ -209,9 +283,8 @@ private class MutexPool() {
     private fun pop(): NativeMutexNode? {
         while (true) {
             val oldTop = top.value
-            if (oldTop == null) {
+            if (oldTop == null)
                 return null
-            }
             val newHead = oldTop.next
             if (top.compareAndSet(oldTop, newHead)) {
                 size.decrementAndGet()
@@ -220,3 +293,6 @@ private class MutexPool() {
         }
     }
 }
+
+
+
