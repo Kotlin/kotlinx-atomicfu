@@ -6,16 +6,14 @@ package kotlinx.atomicfu.locks
 import kotlin.native.ref.createCleaner
 import kotlinx.atomicfu.*
 
+
 import kotlin.native.concurrent.ThreadLocal
 
-private const val NO_OWNER = 0L
-
-private val threadCounter = atomic(0L)
+internal const val NO_OWNER = 0L
+private const val UNSET = 0L
 
 @ThreadLocal
-private var threadId: Long = threadCounter.addAndGet(1)
-
-internal fun currentThreadId(): Long = threadId
+private var currentThreadId = UNSET
 
 // Based on the compose-multiplatform-core implementation with added qos and the pool back-ported
 // from the atomicfu implementation.
@@ -28,7 +26,11 @@ public actual open class SynchronizedObject {
 
 
     public fun lock() {
-        var self = currentThreadId()
+        var self = currentThreadId
+        if (self == UNSET) {
+            currentThreadId = createThreadId()
+            self = currentThreadId
+        }
         if (ownerThreadId.value == self) {
             reEnterCount += 1
         } else if (threadsOnLock.incrementAndGet() > 1) {
@@ -41,7 +43,11 @@ public actual open class SynchronizedObject {
     }
 
     public fun tryLock(): Boolean {
-        var self = currentThreadId()
+        var self = currentThreadId
+        if (self == 0L) {
+            currentThreadId = createThreadId()
+            self = currentThreadId
+        }
         return if (ownerThreadId.value == self) {
             reEnterCount += 1
             true
@@ -57,13 +63,13 @@ public actual open class SynchronizedObject {
     private fun waitForUnlockAndLock(self: Long) {
         withMonitor(monitor) {
             while (!ownerThreadId.compareAndSet(NO_OWNER, self)) {
-                monitor.nativeMutex.wait()
+                monitor.nativeMutex.wait(ownerThreadId.value)
             }
         }
     }
 
     public fun unlock() {
-        require (ownerThreadId.value == currentThreadId())
+        require (ownerThreadId.value == currentThreadId)
         if (reEnterCount > 0) {
             reEnterCount -= 1
         } else {
@@ -121,9 +127,9 @@ public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () ->
 private const val INITIAL_POOL_CAPACITY = 64
 private const val MAX_POOL_SIZE = 1024
 
-private val mutexPool by lazy { MutexPool() }
+internal val mutexPool by lazy { MutexPool() }
 
-private class MutexPool() {
+internal class MutexPool() {
     private val size = atomic(0)
     private val top = atomic<NativeMutexNode?>(null)
 

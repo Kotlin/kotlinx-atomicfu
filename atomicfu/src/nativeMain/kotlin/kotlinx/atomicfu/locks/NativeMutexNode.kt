@@ -12,7 +12,8 @@ public expect class NativeMutexNode() {
 
     public fun unlock()
 
-    public fun wait()
+    // The lockOwner is used for qos donation on iOS
+    public fun wait(lockOwner: Long)
 
     public fun notify()
 

@@ -29,7 +29,7 @@ actual class NativeMutexNode {
 
     actual fun unlock() = require(pthread_mutex_unlock(mutex.ptr) == 0)
 
-    actual fun wait() = require(pthread_cond_wait(cond.ptr, mutex.ptr) == 0)
+    actual fun wait(lockOwner: Long) = require(pthread_cond_wait(cond.ptr, mutex.ptr) == 0)
 
     actual fun notify() = require(pthread_cond_signal(cond.ptr) == 0)
 
