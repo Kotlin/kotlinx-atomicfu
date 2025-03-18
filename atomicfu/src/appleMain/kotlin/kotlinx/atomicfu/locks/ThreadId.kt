@@ -7,4 +7,4 @@ package kotlinx.atomicfu.locks
 import kotlinx.cinterop.toLong
 import platform.posix.pthread_self
 
-actual fun createThreadId() = pthread_self().toLong()
+internal actual fun createThreadId() = pthread_self().toLong()

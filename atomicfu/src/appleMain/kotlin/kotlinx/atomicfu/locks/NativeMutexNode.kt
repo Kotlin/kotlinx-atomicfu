@@ -55,13 +55,19 @@ actual class NativeMutexNode {
         require(pthread_mutex_init(mutex.ptr, attr.ptr) == 0)
     }
 
-    actual fun lock() = require(pthread_mutex_lock(mutex.ptr) == 0)
+    actual fun lock() {
+        pthread_mutex_lock(mutex.ptr)
+    }
 
-    actual fun unlock() = require(pthread_mutex_unlock(mutex.ptr) == 0)
+    actual fun unlock() {
+        pthread_mutex_unlock(mutex.ptr)
+    }
 
-    actual fun notify() = require(pthread_cond_signal(cond.ptr) == 0)
+    internal actual fun notify() {
+        pthread_cond_signal(cond.ptr)
+    }
 
-    actual fun wait(lockOwner: Long) {
+    internal actual fun wait(lockOwner: Long) {
         donateQos(lockOwner)
         require(pthread_cond_wait(cond.ptr, mutex.ptr) == 0)
         clearDonation()
@@ -97,7 +103,7 @@ actual class NativeMutexNode {
         }
     }
 
-    actual fun dispose() {
+    internal actual fun dispose() {
         pthread_cond_destroy(cond.ptr)
         pthread_mutex_destroy(mutex.ptr)
         pthread_mutexattr_destroy(attr.ptr)
