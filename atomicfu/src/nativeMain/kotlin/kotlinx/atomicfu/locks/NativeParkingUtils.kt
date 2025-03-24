@@ -1,4 +1,4 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 internal inline fun callAndVerifyNative(vararg expectedReturn: Int, getErrno: () -> Int, block: () -> Int): Int = block().also {
     check(expectedReturn.contains(it)) {

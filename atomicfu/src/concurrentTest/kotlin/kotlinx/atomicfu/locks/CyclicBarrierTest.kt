@@ -1,10 +1,11 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.atomicArrayOfNulls
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.fail
+import kotlin.time.Duration
 
 class CyclicBarrierTest {
     private class Arrs(numberOfThreads: Int) {
@@ -20,7 +21,7 @@ class CyclicBarrierTest {
         repeat(5) { iteration ->
             println("Barrier test iteration $iteration")
             (5..50 step 5).forEach { numberOfThreads ->
-                val barrier = JavaCyclicBarrier(numberOfThreads)
+                val barrier = CyclicBarrier(numberOfThreads)
                 val ar = Arrs(numberOfThreads)
                 val threads = List(numberOfThreads) { myThread ->
                     Fut {
@@ -29,7 +30,7 @@ class CyclicBarrierTest {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
-                        sleepMills(Random.nextLong(100))
+                        sleepMills(Random.Default.nextLong(100))
                         ar.before[myThread].value = 1
 
                         barrier.await()
@@ -43,7 +44,7 @@ class CyclicBarrierTest {
                         }
                     }
                 }
-                Fut.waitAllAndThrow(threads)
+                Fut.Companion.waitAllAndThrow(threads)
             }
         }
     }
@@ -54,51 +55,60 @@ class CyclicBarrierTest {
             println("Stress test $iteration")
             val threads = mutableListOf<Fut>()
             val threadSetSize = (iteration + 1) * 5
-            val bar = JavaCyclicBarrier(threadSetSize)
-            val syncBar = JavaCyclicBarrier(threadSetSize * 5)
+            val bar = CyclicBarrier(threadSetSize)
+            val syncBar = CyclicBarrier(threadSetSize * 5)
             val ar = Arrs(threadSetSize * 5)
             repeat(threadSetSize * 5) { tId ->
                 val t = Fut {
                     repeat(50) { internalIteration ->
-                        sleepMills(Random.nextLong(100))
+                        sleepMills(Random.Default.nextLong(100))
                         bar.await()
-                        sleepMills(Random.nextLong(100))
+                        sleepMills(Random.Default.nextLong(100))
                         val newN = ar.before[tId].value!! + 1
                         ar.before[tId].value = newN
                         syncBar.await()
                         repeat(ar.before.size) { otherThread ->
                             if (ar.before[otherThread].value!! < newN) {
-                                fail("Thread $tId (value: $newN, id: ${KThread.currentThread()}) continued too early: $otherThread had value ${ar.before[otherThread].value!!}")
+                                fail("Thread $tId (value: $newN, id: ${ParkingSupport.currentThreadHandle()}) continued too early: $otherThread had value ${ar.before[otherThread].value!!}")
                             }
                             if (ar.before[otherThread].value!! > newN + 1) {
-                                fail("Thread $tId (value: $newN, id: ${KThread.currentThread()}) too far behind: $otherThread had value ${ar.before[otherThread].value!!}")
+                                fail("Thread $tId (value: $newN, id: ${ParkingSupport.currentThreadHandle()}) too far behind: $otherThread had value ${ar.before[otherThread].value!!}")
                             }
                         }
                     }
                 }
                 threads.add(t)
             }
-            Fut.waitAllAndThrow(threads)
+            Fut.Companion.waitAllAndThrow(threads)
         }
     }
 }
 
-private class JavaCyclicBarrier(private val parties: Int) {
-    private val queue = MSQueueCyclicBarrier<KThread>()
+private class HandleWrapper(val handle: ParkingHandle) {
+    val woken = atomic(false)
+}
+
+private class CyclicBarrier(private val parties: Int) {
+    private val queue = MSQueueCyclicBarrier<HandleWrapper>()
 
     fun await() {
-        val n = queue.enqueue(KThread.Companion.currentThread())
+        val wrapper = HandleWrapper(ParkingSupport.currentThreadHandle())
+        val n = queue.enqueue(wrapper)
         if (n % parties == 0L) {
             var wokenUp = 0
             while (wokenUp < parties - 1) {
                 val deq = queue.dequeue()
                 if (deq == null) fail("Not enough parties enqueued")
                 if (deq.first % parties == 0L) continue
-                Parker.unpark(deq.second)
-                wokenUp++
+                if (deq.second.woken.compareAndSet(false, true)) {
+                    ParkingSupport.unpark(deq.second.handle)
+                    wokenUp++
+                }
             }
         } else {
-            Parker.park()
+            while (!wrapper.woken.value) {
+                ParkingSupport.park(Duration.INFINITE)
+            }
         }
     }
 }

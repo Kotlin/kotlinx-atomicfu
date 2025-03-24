@@ -1,11 +1,11 @@
+package kotlinx.atomicfu.locks
+
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.atomicArrayOfNulls
-import kotlinx.atomicfu.parking.Fut
-import kotlinx.atomicfu.parking.KThread
-import kotlinx.atomicfu.parking.Parker
-import kotlinx.atomicfu.parking.sleepMills
 import kotlin.random.Random
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.fail
+import kotlin.time.Duration
 
 class BarrierTest {
     private class Arrs(numberOfThreads: Int) {
@@ -31,7 +31,7 @@ class BarrierTest {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
-                        sleepMills(Random.nextLong(100))
+                        sleepMills(Random.Default.nextLong(100))
                         ar.before[myThread].value = 1
 
                         barrier.await()
@@ -44,7 +44,7 @@ class BarrierTest {
                         }
                     }
                 }
-                Fut.waitAllAndThrow(threads)
+                Fut.Companion.waitAllAndThrow(threads)
             }
         }
     }
@@ -66,13 +66,13 @@ private class Barrier(private val parties: Int) {
             wakeUpEveryone()
             return
         }
-        val currentThread = KThread.currentThread()
+        val currentThread = ParkingSupport.currentThreadHandle()
         while (true) {
             val waiter = waiters[myIndex].value
             when {
                 waiter === null -> waiters[myIndex].compareAndSet(null, currentThread)
                 waiter === FINISHED -> return
-                else -> Parker.park()
+                else -> ParkingSupport.park(Duration.INFINITE)
             }
         }
     }
@@ -82,8 +82,8 @@ private class Barrier(private val parties: Int) {
             while (true) {
                 val waiter = waiters[i].value
                 if (waiters[i].compareAndSet(waiter, FINISHED)) {
-                    if (waiter is KThread) {
-                        Parker.unpark(waiter)
+                    if (waiter is ParkingHandle) {
+                        ParkingSupport.unpark(waiter)
                     } else {
                         check(waiter === null) { "Barrier used more than once: got $waiter" }
                     }

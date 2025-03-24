@@ -1,4 +1,4 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 import kotlinx.cinterop.*
 import kotlinx.cinterop.alloc
@@ -52,7 +52,7 @@ internal actual object ParkingDelegator {
         nativeHeap.free(ref.cond)
     }
     
-    private inline fun callAndVerify(vararg expectedReturn: Int, block: () -> Int) = 
+    private inline fun callAndVerify(vararg expectedReturn: Int, block: () -> Int) =
         callAndVerifyNative(*expectedReturn, getErrno = { errno }, block = block)
 
 }

@@ -1,4 +1,4 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 import kotlin.concurrent.thread
 
 internal actual class TestThread actual constructor(toDo: () -> Unit) {

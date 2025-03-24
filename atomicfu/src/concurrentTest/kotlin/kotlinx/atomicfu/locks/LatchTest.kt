@@ -1,10 +1,11 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.atomicArrayOfNulls
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.fail
+import kotlin.time.Duration
 
 class LatchTest {
     private class Arrs(numberOfThreads: Int) {
@@ -36,11 +37,13 @@ class LatchTest {
                     }
                 }
 
-                val waiters = List(numberOfThreads) { i -> Fut {
-                    sleepMills(Random.nextLong(100))
-                    latch.await()
-                    ar.after[i].value = 1
-                }}
+                val waiters = List(numberOfThreads) { i ->
+                    Fut {
+                        sleepMills(Random.nextLong(100))
+                        latch.await()
+                        ar.after[i].value = 1
+                    }
+                }
 
                 Fut.waitAllAndThrow(waiters + countingThread)
 
@@ -54,13 +57,12 @@ class LatchTest {
 
 class CustomCountDownLatch(count: Int) {
     private val c = atomic(count)
-    private val waiters = MSQueueLatch<KThread>()
+    private val waiters = MSQueueLatch<ParkingHandle>()
 
     fun await() {
-        val thread = KThread.currentThread()
+        val thread = ParkingSupport.currentThreadHandle()
         waiters.enqueue(thread)
-        if (c.value <= 0) return
-        Parker.park()
+        while (c.value > 0) ParkingSupport.park(Duration.INFINITE)
     }
 
     fun countDown() {
@@ -69,7 +71,7 @@ class CustomCountDownLatch(count: Int) {
         while (true) {
             val thread = waiters.dequeue()
             if (thread == null) return
-            Parker.unpark(thread)
+            ParkingSupport.unpark(thread)
         }
     }
 }

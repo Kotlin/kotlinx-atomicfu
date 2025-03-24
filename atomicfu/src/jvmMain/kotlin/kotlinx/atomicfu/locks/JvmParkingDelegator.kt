@@ -1,4 +1,4 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 import java.util.concurrent.locks.LockSupport
 
 internal actual object ParkingDelegator {

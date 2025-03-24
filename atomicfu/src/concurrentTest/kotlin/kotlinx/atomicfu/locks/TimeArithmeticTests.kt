@@ -1,4 +1,4 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -26,7 +26,7 @@ class TimeArithmeticTests {
             
             // Test Long
             repeat(1000) {
-                val nanos = Random.nextLong().absoluteValue
+                val nanos = Random.Default.nextLong().absoluteValue
                 val updatedTime = currentTimeInSeconds.addNanosToSeconds(nanos)
                 assertTrue { updatedTime - currentTimeInSeconds == nanos / 1_000_000_000 }
             }
@@ -34,10 +34,10 @@ class TimeArithmeticTests {
             // Test Int
             repeat(1000) {
                 val currentTimeInInt = currentTimeInSeconds.toInt()
-                val nanos = Random.nextLong().absoluteValue
+                val nanos = Random.Default.nextLong().absoluteValue
                 val updatedTime = currentTimeInInt.addNanosToSeconds(nanos)
-                if (nanos > 0) assertTrue { 
-                    updatedTime.toLong() - currentTimeInInt == nanos / 1_000_000_000 || updatedTime == Int.MAX_VALUE 
+                if (nanos > 0) assertTrue {
+                    updatedTime.toLong() - currentTimeInInt == nanos / 1_000_000_000 || updatedTime == Int.MAX_VALUE
                 }
             }
         }

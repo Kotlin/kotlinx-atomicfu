@@ -1,4 +1,4 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 /**
  * Internal utility that delegates the thread suspending and resuming to pthread_cond_wait on native.

@@ -1,8 +1,9 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 import kotlinx.atomicfu.atomic
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
+import kotlin.time.Duration
 
 class ExchangerTest {
     
@@ -15,14 +16,14 @@ class ExchangerTest {
         
         val exchanger = Exchanger<Int>()
         
-        val at = testThread { 
-            aBefore.forEachIndexed { i, v -> 
+        val at = testThread {
+            aBefore.forEachIndexed { i, v ->
                 val item = exchanger.exchange(v)
                 aAfter.add(item)
             }
         }
         val bt = testThread {
-            bBefore.forEachIndexed { i, v -> 
+            bBefore.forEachIndexed { i, v ->
                 val item = exchanger.exchange(v)
                 bAfter.add(item)
             }
@@ -35,18 +36,19 @@ class ExchangerTest {
 }
 
 internal class Exchanger<T> {
-    private val slot = atomic<Pair<KThread, T>?>(null)
+    private val slot = atomic<Pair<ParkingHandle, T>?>(null)
     fun exchange(item: T): T {
-        if (slot.compareAndSet(null, Pair(KThread.currentThread(), item))) {
-            Parker.park()
+        val myPair = Pair(ParkingSupport.currentThreadHandle(), item)
+        if (slot.compareAndSet(null, myPair)) {
+            while (slot.value == myPair) ParkingSupport.park(Duration.INFINITE)
             val waiterPair = slot.value!!
             slot.value = null
-            Parker.unpark(waiterPair.first)
+            ParkingSupport.unpark(waiterPair.first)
             return waiterPair.second!!
         } else {
-            val waiterPair = slot.getAndSet(Pair(KThread.currentThread(), item))
-            Parker.unpark(waiterPair!!.first)
-            Parker.park()
+            val waiterPair = slot.getAndSet(myPair)
+            ParkingSupport.unpark(waiterPair!!.first)
+            while (slot.value == myPair) ParkingSupport.park(Duration.INFINITE)
             return waiterPair.second
         }
     }

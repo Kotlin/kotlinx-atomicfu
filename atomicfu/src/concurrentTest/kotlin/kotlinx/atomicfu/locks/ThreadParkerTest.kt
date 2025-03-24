@@ -1,22 +1,23 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.measureTime
 
 class ThreadParkerTest {
 
     @Test
     fun parkUnpark() {
-        val mainThread = KThread.currentThread()
+        val mainThread = ParkingSupport.currentThreadHandle()
 
         testThread {
             sleepMills(1000)
-            Parker.unpark(mainThread)
+            ParkingSupport.unpark(mainThread)
         }
 
         val time = measureTime {
-            Parker.park()
+            ParkingSupport.park(Duration.INFINITE)
         }
 
         assertTrue(time.inWholeMilliseconds > 900)
@@ -24,14 +25,14 @@ class ThreadParkerTest {
 
     @Test
     fun unparkPark() {
-        val mainThread = KThread.currentThread()
+        val mainThread = ParkingSupport.currentThreadHandle()
 
         testThread {
-            Parker.unpark(mainThread)
+            ParkingSupport.unpark(mainThread)
         }
 
         sleepMills(1000)
-        Parker.park()
+        ParkingSupport.park(Duration.INFINITE)
 
         assertTrue(true)
     }

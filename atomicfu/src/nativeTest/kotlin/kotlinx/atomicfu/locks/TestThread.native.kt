@@ -1,4 +1,4 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 import platform.posix.usleep
 import kotlin.native.concurrent.Future

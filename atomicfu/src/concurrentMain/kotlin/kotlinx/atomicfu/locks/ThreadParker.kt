@@ -1,29 +1,31 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 import kotlinx.atomicfu.atomic
 import kotlin.time.DurationUnit
-import kotlin.time.TimeSource.Monotonic
+import kotlin.time.TimeSource
 
 /**
- * Multiplatform thread parker.
+ * Thread parker for Kotlin/Native based on POSIX calls.
+ * Resides in a shared sourceSet with JVM, to be testable with Lincheck. 
+ * (Which is part of PR #508)
  */
 internal class ThreadParker {
     private val delegator = ParkingDelegator
     private val state = atomic<ParkingState>(Free)
 
-    fun park() = parkWith({ false }) { data ->
+    fun park() = parkWith { data ->
         delegator.wait(data) { state.value is Parked }
     }
     
     fun parkNanos(nanos: Long) {
-        val mark = Monotonic.markNow()
-        parkWith({ mark.elapsedNow().toLong(DurationUnit.NANOSECONDS) >= nanos }) { data ->
+        val mark = TimeSource.Monotonic.markNow()
+        parkWith { data ->
             val remainingTime = nanos - mark.elapsedNow().toLong(DurationUnit.NANOSECONDS)
             if (remainingTime > 0) delegator.timedWait(data, remainingTime) { state.value is Parked }
         }
     }
 
-    private fun parkWith(timedOut: () -> Boolean, invokeWait: (ParkingData) -> Unit) {
+    private fun parkWith(invokeWait: (ParkingData) -> Unit) {
         while (true) {
             when (state.value) {
                 Free -> {
@@ -33,18 +35,15 @@ internal class ThreadParker {
                         delegator.destroyRef(pd)
                         continue
                     }
+                    
+                    invokeWait(pd)
 
                     while (true) {
                         when (val changedState = state.value) {
                             // If still parked invoke wait.
-                            is Parked -> {
-                                invokeWait(changedState.data)
-                                
-                                // If timedOut and was able to set to free. Cleanup
-                                if (timedOut() && state.compareAndSet(changedState, Free)) {
-                                    delegator.destroyRef(pd)
-                                    return
-                                }
+                            is Parked -> if (state.compareAndSet(changedState, Free)) {
+                                delegator.destroyRef(pd)
+                                return
                             }
                             
                             // If other thread is unparking return. Let unparking thread deal with cleanup.
@@ -96,6 +95,7 @@ internal class ThreadParker {
         }
     }
 }
+
 private interface ParkingState
 // The Parker is pre-unparked. The next park call will change state to Free and return immediately.
 private object Unparked : ParkingState

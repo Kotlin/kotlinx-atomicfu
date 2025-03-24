@@ -1,4 +1,4 @@
-package kotlinx.atomicfu.parking
+package kotlinx.atomicfu.locks
 
 internal fun testThread(doConcurrent: () ->  Unit): TestThread = TestThread { doConcurrent() }
 
