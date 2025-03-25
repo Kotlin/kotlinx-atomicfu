@@ -20,8 +20,8 @@ dependencies {
 }
 
 tasks.compileKotlin {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
+    compilerOptions {
+        freeCompilerArgs.add("-Xskip-prerelease-check")
     }
 }
 
