@@ -4,7 +4,6 @@ import kotlinx.atomicfu.atomic
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.measureTime
 
@@ -21,11 +20,11 @@ class ThreadParkingStressTest {
             val thread1 = testThread {
                 a.handle.value = ParkingSupport.currentThreadHandle()
                 repeat(10000) { i ->
-                    if (Random.Default.nextBoolean()) {
-                        sleepMills(Random.Default.nextLong(0, 5))
+                    if (Random.nextBoolean()) {
+                        sleepMills(Random.nextLong(0, 5))
                         ParkingSupport.park(Duration.INFINITE)
                     } else {
-                        ParkingSupport.park(Random.Default.nextLong(0, 500).nanoseconds)
+                        ParkingSupport.park(Random.nextLong(0, 500).nanoseconds)
                     }
                 }
                 a.done.value = true
@@ -33,14 +32,14 @@ class ThreadParkingStressTest {
 
             val thread2 = testThread {
                 while (a.done.value) {
-                    sleepMills(Random.Default.nextLong(0, 5))
+                    sleepMills(Random.nextLong(0, 5))
                     a.handle.value?.let { ParkingSupport.unpark(it) }
                 }
             }
 
             val thread3 = testThread {
                 while (!a.done.value) {
-                    sleepMills(Random.Default.nextLong(0, 5))
+                    sleepMills(Random.nextLong(0, 5))
                     a.handle.value?.let { ParkingSupport.unpark(it) }
                 }
             }
@@ -61,11 +60,11 @@ class ThreadParkingStressTest {
             val thread0 = testThread {
                 a0.handle.value = ParkingSupport.currentThreadHandle()
                 repeat(10000) { i ->
-                    if (Random.Default.nextBoolean()) {
-                        sleepMills(Random.Default.nextLong(0, 5))
+                    if (Random.nextBoolean()) {
+                        sleepMills(Random.nextLong(0, 5))
                         ParkingSupport.park(Duration.INFINITE)
                     } else {
-                        ParkingSupport.park(Random.Default.nextLong(0, 500).nanoseconds)
+                        ParkingSupport.park(Random.nextLong(0, 500).nanoseconds)
                     }
                 }
                 a0.done.value = true
@@ -74,11 +73,11 @@ class ThreadParkingStressTest {
             val thread1 = testThread {
                 a1.handle.value = ParkingSupport.currentThreadHandle()
                 repeat(10000) { i ->
-                    if (Random.Default.nextBoolean()) {
-                        sleepMills(Random.Default.nextLong(0, 5))
+                    if (Random.nextBoolean()) {
+                        sleepMills(Random.nextLong(0, 5))
                         ParkingSupport.park(Duration.INFINITE)
                     } else {
-                        ParkingSupport.park(Random.Default.nextLong(0, 500).nanoseconds)
+                        ParkingSupport.park(Random.nextLong(0, 500).nanoseconds)
                     }
                 }
                 a1.done.value = true
@@ -86,8 +85,8 @@ class ThreadParkingStressTest {
 
             val thread2 = testThread {
                 while (!a0.done.value || !a1.done.value) {
-                    sleepMills(Random.Default.nextLong(0, 5))
-                    if (Random.Default.nextBoolean()) {
+                    sleepMills(Random.nextLong(0, 5))
+                    if (Random.nextBoolean()) {
                         a0.handle.value?.let { ParkingSupport.unpark(it) }
                     } else {
                         a1.handle.value?.let { ParkingSupport.unpark(it) }
@@ -97,8 +96,8 @@ class ThreadParkingStressTest {
 
             val thread3 = testThread {
                 while (!a0.done.value || !a1.done.value) {
-                    sleepMills(Random.Default.nextLong(0, 5))
-                    if (Random.Default.nextBoolean()) {
+                    sleepMills(Random.nextLong(0, 5))
+                    if (Random.nextBoolean()) {
                         a0.handle.value?.let { ParkingSupport.unpark(it) }
                     } else {
                         a1.handle.value?.let { ParkingSupport.unpark(it) }

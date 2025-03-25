@@ -30,7 +30,7 @@ class CyclicBarrierTest {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
-                        sleepMills(Random.Default.nextLong(100))
+                        sleepMills(Random.nextLong(100))
                         ar.before[myThread].value = 1
 
                         barrier.await()
@@ -44,7 +44,7 @@ class CyclicBarrierTest {
                         }
                     }
                 }
-                Fut.Companion.waitAllAndThrow(threads)
+                Fut.waitAllAndThrow(threads)
             }
         }
     }
@@ -61,9 +61,9 @@ class CyclicBarrierTest {
             repeat(threadSetSize * 5) { tId ->
                 val t = Fut {
                     repeat(50) { internalIteration ->
-                        sleepMills(Random.Default.nextLong(100))
+                        sleepMills(Random.nextLong(100))
                         bar.await()
-                        sleepMills(Random.Default.nextLong(100))
+                        sleepMills(Random.nextLong(100))
                         val newN = ar.before[tId].value!! + 1
                         ar.before[tId].value = newN
                         syncBar.await()
@@ -79,7 +79,7 @@ class CyclicBarrierTest {
                 }
                 threads.add(t)
             }
-            Fut.Companion.waitAllAndThrow(threads)
+            Fut.waitAllAndThrow(threads)
         }
     }
 }

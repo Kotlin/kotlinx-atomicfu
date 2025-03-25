@@ -31,7 +31,7 @@ class BarrierTest {
                                 fail("Thread $myThread arrived too early")
                             }
                         }
-                        sleepMills(Random.Default.nextLong(100))
+                        sleepMills(Random.nextLong(100))
                         ar.before[myThread].value = 1
 
                         barrier.await()
@@ -44,7 +44,7 @@ class BarrierTest {
                         }
                     }
                 }
-                Fut.Companion.waitAllAndThrow(threads)
+                Fut.waitAllAndThrow(threads)
             }
         }
     }
