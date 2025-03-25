@@ -1,31 +1,50 @@
+/*
+ * Copyright 2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
 package kotlinx.atomicfu.locks
 
-import kotlinx.cinterop.*
+import kotlinx.cinterop.Arena
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.ptr
 import platform.posix.*
-import kotlin.concurrent.Volatile
 
-public actual class NativeMutexNode {
+@OptIn(ExperimentalForeignApi::class)
+actual class NativeMutexNode {
+    actual var next: NativeMutexNode? = null
 
-    @Volatile
-    private var isLocked = false
-    private val pMutex = nativeHeap.alloc<pthread_mutex_t>().apply { pthread_mutex_init(ptr, null) }
-    private val pCond = nativeHeap.alloc<pthread_cond_t>().apply { pthread_cond_init(ptr, null) }
+    private val arena: Arena = Arena()
+    private val cond: pthread_cond_t = arena.alloc()
+    private val mutex: pthread_mutex_t = arena.alloc()
+    private val attr: pthread_mutexattr_tVar = arena.alloc()
 
-    internal actual var next: NativeMutexNode? = null
-
-    actual fun lock() {
-        pthread_mutex_lock(pMutex.ptr)
-        while (isLocked) { // wait till locked are available
-            pthread_cond_wait(pCond.ptr, pMutex.ptr)
-        }
-        isLocked = true
-        pthread_mutex_unlock(pMutex.ptr)
+    init {
+        require(pthread_cond_init(cond.ptr, null) == 0)
+        require(pthread_mutexattr_init(attr.ptr) == 0)
+        require(pthread_mutexattr_settype(attr.ptr, PTHREAD_MUTEX_ERRORCHECK.toInt()) == 0)
+        require(pthread_mutex_init(mutex.ptr, attr.ptr) == 0)
     }
 
-   actual fun unlock() {
-        pthread_mutex_lock(pMutex.ptr)
-        isLocked = false
-        pthread_cond_broadcast(pCond.ptr)
-        pthread_mutex_unlock(pMutex.ptr)
+    actual fun lock() {
+        pthread_mutex_lock(mutex.ptr)
+    }
+
+    actual fun unlock() {
+        pthread_mutex_unlock(mutex.ptr)
+    }
+
+    internal actual fun wait(lockOwner: Long) {
+        pthread_cond_wait(cond.ptr, mutex.ptr)
+    }
+
+    internal actual fun notify() {
+        pthread_cond_signal(cond.ptr)
+    }
+
+    internal actual fun dispose() {
+        pthread_cond_destroy(cond.ptr)
+        pthread_mutex_destroy(mutex.ptr)
+        pthread_mutexattr_destroy(attr.ptr)
+        arena.clear()
     }
 }
