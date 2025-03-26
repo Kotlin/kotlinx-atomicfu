@@ -1,4 +1,5 @@
-import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.config.JvmTarget as JvmTargetCompiler
 
 group = "kotlinx.atomicfu.examples"
 version = "DUMMY_VERSION"
@@ -21,24 +22,23 @@ dependencies {
 }
 
 tasks.compileKotlin {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
+    compilerOptions {
+        freeCompilerArgs.add("-Xskip-prerelease-check")
     }
 }
 
 kotlin {
-    val minTarget = JvmTarget.supportedValues().minBy { it.majorVersion }
-    val maxTarget = JvmTarget.supportedValues().maxBy { it.majorVersion }
+    val minTarget = JvmTargetCompiler.supportedValues().minBy { it.majorVersion }
+    val maxTarget = JvmTargetCompiler.supportedValues().maxBy { it.majorVersion }
 
     val useMax = (project.properties["useMaxVersion"]?.toString() ?: "false").toBoolean()
     val target = (if (useMax) maxTarget else minTarget).toString()
 
     val toolchainVersion = target.split('.').last().toInt()
-    val targetVersionString = "JVM_" + target.replace('.', '_')
     jvmToolchain(toolchainVersion)
 
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.valueOf(targetVersionString))
+        jvmTarget.set(JvmTarget.fromTarget(target))
     }
 }
 

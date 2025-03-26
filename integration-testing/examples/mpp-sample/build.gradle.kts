@@ -2,7 +2,7 @@
  * Copyright 2017-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 group = "kotlinx.atomicfu.examples"
 version = "DUMMY_VERSION"
@@ -50,9 +50,9 @@ kotlin {
     }
 }
 
-tasks.withType<KotlinCompile<*>>().configureEach {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xskip-prerelease-check")
     }
 }
 

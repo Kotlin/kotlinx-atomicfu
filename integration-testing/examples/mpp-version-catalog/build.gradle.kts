@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
@@ -6,8 +6,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
 }
 
-tasks.withType<KotlinCompile<*>>().configureEach {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xskip-prerelease-check")
     }
 }
