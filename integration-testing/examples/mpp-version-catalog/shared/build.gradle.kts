@@ -2,8 +2,6 @@
  * Copyright 2017-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
-
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
@@ -16,6 +14,9 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xskip-prerelease-check")
+    }
 
     jvm()
 
@@ -37,8 +38,3 @@ kotlin {
     }
 }
 
-tasks.withType<KotlinCompile<*>>().configureEach {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
-    }
-}
