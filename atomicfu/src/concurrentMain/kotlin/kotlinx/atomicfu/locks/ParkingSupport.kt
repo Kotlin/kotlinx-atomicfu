@@ -15,6 +15,22 @@ import kotlin.time.TimeMark
  * - (Only on JVM) The thread was interrupted
  * 
  * The caller is responsible for verifying the reason of wakeup and how to respond accordingly.
+ * 
+ * Example usage parking thread:
+ * ```Kotlin
+ * // publish my parking handle
+ * handleReference.value = ParkingSupport.currentThreadHandle()
+ * // wait
+ * while (state.value == WAIT) {
+ *   ParkingSupport.park(Duration.INFINITE)
+ * }
+ * ```
+ * 
+ * Example usage unparker thread:
+ * ```Kotlin
+ * state.value = WAKE
+ * ParkingSupport.unpark(handleReference.value)
+ * ```
  */
 expect object ParkingSupport {
     
