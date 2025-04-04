@@ -9,10 +9,11 @@ import kotlin.time.TimeMark
  *
  * A call to [ParkingSupport.park] or [ParkingSupport.parkUntil] will suspend the current thread.
  * A suspended thread will wake up in one of the following four cases:
- * - A call to [ParkingSupport.unpark] 
- * - The given `timout` or `deadline` is exceeded
+ * - A different thread calls [ParkingSupport.unpark].
+ * - The given `timout` or `deadline` is exceeded.
  * - A spurious wakeup
- * - (Only on JVM) The thread was interrupted
+ * - (Only on JVM) The thread was interrupted. The interrupted flag stays set after wakeup.
+ * A future call to [park] this thread will return immediately, unless the `Thread.interrupted` flag is cleared.
  * 
  * The caller is responsible for verifying the reason of wakeup and how to respond accordingly.
  * 
@@ -38,10 +39,11 @@ expect object ParkingSupport {
      * Parks the current thread for [timout] duration.
      * 
      * Wakes up in the following cases:
-     * - A call to [ParkingSupport.unpark]
-     * - [timout] is exceeded
+     * - A different thread calls [ParkingSupport.unpark].
+     * - The given `timout` or `deadline` is exceeded.
      * - A spurious wakeup
-     * - (Only on JVM) The thread was interrupted 
+     * - (Only on JVM) The thread was interrupted. The interrupted flag stays set after wakeup.
+     * A future call to [park] this thread will return immediately, unless the `Thread.interrupted` flag is cleared.
      */
     fun park(timout: Duration)
     
@@ -49,22 +51,27 @@ expect object ParkingSupport {
      * Parks the current thread until [deadline] is reached.
      *
      * Wakes up in the following cases:
-     * - A call to [ParkingSupport.unpark]
-     * - [deadline] is exceeded
+     * - A different thread calls [ParkingSupport.unpark].
+     * - The given `timout` or `deadline` is exceeded.
      * - A spurious wakeup
-     * - (Only on JVM) The thread was interrupted
+     * - (Only on JVM) The thread was interrupted. The interrupted flag stays set after wakeup.
+     * A future call to [park] this thread will return immediately, unless the `Thread.interrupted` flag is cleared.
      */
     fun parkUntil(deadline: TimeMark)
 
     /**
      * Unparks the thread corresponding to [handle].
-     * If the corresponding thread was not parked the next park call will return immediately.
-     * A [ParkingHandle] can only be pre-unparked once.
+     * If [unpark] is called while the corresponding thread is not parked, the next [park] call will return immediately
+     * — the [ParkingHandle] is unparked ahead of time.
+     * 
+     * A [ParkingHandle] can only _remember_ one pre-unpark attempt at a time. 
+     * Meaning, when two consecutive [unpark] calls are made while the corresponding thread is not parked, 
+     * only the next park call will return immediately — [unpark] calls are not accumulated.
      */
     fun unpark(handle: ParkingHandle)
 
     /**
-     * Returns the [ParkingHandle] that can be used to unpark the current thread.
+     * Returns the [ParkingHandle] that can be used to [unpark] the current thread.
      */
     fun currentThreadHandle(): ParkingHandle
 }

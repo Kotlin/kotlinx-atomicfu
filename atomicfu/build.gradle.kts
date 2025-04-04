@@ -59,12 +59,30 @@ kotlin {
     wasmWasi {
         nodejs()
     }
-    
+
     @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
     linuxArm32Hfp()
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    applyDefaultHierarchyTemplate()
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jsAndWasmShared") {
+                withJs()
+                withWasmJs()
+                withWasmWasi()
+            }
+            group("concurrent") {
+                withJvm()
+                group("native") {
+                    group("nativeUnixLike") {
+                        withApple()
+                        withLinux()
+                    }
+                    withMingwX64()
+                }
+            }
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
@@ -78,13 +96,8 @@ kotlin {
             implementation("org.jetbrains.kotlin:kotlin-test-common")
             implementation("org.jetbrains.kotlin:kotlin-test-annotations-common")
         }
-
-        val jsAndWasmSharedMain by creating {
-            dependsOn(commonMain.get())
-        }
-
+        
         jsMain {
-            dependsOn(jsAndWasmSharedMain)
             dependencies {
                 compileOnly("org.jetbrains.kotlin:kotlin-dom-api-compat")
             }
@@ -96,19 +109,10 @@ kotlin {
             }
         }
 
-        wasmJsMain {
-            dependsOn(jsAndWasmSharedMain)
-        }
-
         wasmJsTest {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-test-wasm-js")
             }
-        }
-
-
-        wasmWasiMain {
-            dependsOn(jsAndWasmSharedMain)
         }
 
         wasmWasiTest {
@@ -125,19 +129,6 @@ kotlin {
                 implementation(libs.junit.junit)
             }
         }
-        
-        val concurrentMain by creating { dependsOn(commonMain.get()) }
-        val concurrentTest by creating { dependsOn(commonTest.get()) }
-        
-        val jvmMain by getting { dependsOn(concurrentMain) }
-        val jvmTest by getting { dependsOn(concurrentTest) }
-        
-        val nativeMain by getting { dependsOn(concurrentMain) }
-        val nativeTest by getting { dependsOn(concurrentTest) }
-
-        val nativeUnixLikeMain by creating { dependsOn(nativeMain) }
-        val appleMain by getting { dependsOn(nativeUnixLikeMain) }
-        val linuxMain by getting { dependsOn(nativeUnixLikeMain) }
     }
 
     // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)
@@ -343,4 +334,3 @@ val jvmTest by tasks.getting(Test::class) {
     )
     // run them only for transformed code
 }
-
