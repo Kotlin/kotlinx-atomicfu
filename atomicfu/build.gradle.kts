@@ -75,8 +75,12 @@ kotlin {
                 withJvm()
                 group("native") {
                     group("nativeUnixLike") {
-                        withApple()
-                        withLinux()
+                        group("apple") {
+                            withApple()
+                        }
+                        group("linux") {
+                            withLinux()
+                        }
                     }
                     withMingwX64()
                 }

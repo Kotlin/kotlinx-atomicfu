@@ -11,9 +11,12 @@ internal actual object ParkingDelegator {
     actual fun createRef(): ParkingData {
         val mut = nativeHeap.alloc<pthread_mutex_t>().ptr
         val cond = nativeHeap.alloc<pthread_cond_t>().ptr
+        val attr = nativeHeap.alloc<pthread_condattr_tVar>().ptr
         callAndVerify(0) { pthread_mutex_init(mut, null) }
+        callAndVerify(0) { pthread_condattr_init(attr) }
+        callAndVerify(0) { pthread_condattr_setclock(attr, CLOCK_MONOTONIC) }
         callAndVerify(0) { pthread_cond_init(cond, null) }
-        return ParkingData(mut, cond)
+        return ParkingData(mut, cond, attr)
     }
 
     actual inline fun wait(ref: ParkingData, shouldWait: () -> Boolean){
@@ -26,7 +29,7 @@ internal actual object ParkingDelegator {
         val ts = alloc<timespec>().ptr
 
         // Add nanos to current time
-        callAndVerify(0) { clock_gettime(CLOCK_REALTIME.convert(), ts) }
+        callAndVerify(0) { clock_gettime(CLOCK_MONOTONIC.convert(), ts) }
         ts.pointed.tv_sec = ts.pointed.tv_sec.addNanosToSeconds(nanos)
         ts.pointed.tv_nsec = (ts.pointed.tv_nsec + nanos % 1_000_000_000).convert()
         //Fix overflow
@@ -48,6 +51,7 @@ internal actual object ParkingDelegator {
     actual fun destroyRef(ref: ParkingData) {
         callAndVerify(0) { pthread_mutex_destroy(ref.mut) }
         callAndVerify(0) { pthread_cond_destroy(ref.cond) }
+        nativeHeap.free(ref.attr)
         nativeHeap.free(ref.mut)
         nativeHeap.free(ref.cond)
     }
@@ -56,4 +60,4 @@ internal actual object ParkingDelegator {
         callAndVerifyNative(*expectedReturn, getErrno = { errno }, block = block)
 
 }
-internal actual class ParkingData(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>)
+internal actual class ParkingData @OptIn(UnsafeNumber::class) constructor(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>, val attr: CPointer<pthread_condattr_tVar>)

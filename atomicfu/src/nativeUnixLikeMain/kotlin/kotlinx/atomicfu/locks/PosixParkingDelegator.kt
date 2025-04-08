@@ -11,9 +11,12 @@ internal actual object ParkingDelegator {
     actual fun createRef(): ParkingData {
         val mut = nativeHeap.alloc<pthread_mutex_t>().ptr
         val cond = nativeHeap.alloc<pthread_cond_t>().ptr
+        val attr = nativeHeap.alloc<pthread_condattr_t>().ptr
         callAndVerify(0) { pthread_mutex_init(mut, null) }
-        callAndVerify(0) { pthread_cond_init(cond, null) }
-        return ParkingData(mut, cond)
+        callAndVerify(0) { pthread_condattr_init(attr) }
+        callAndVerify(0) { setClock(attr, cond) }
+        callAndVerify(0) { pthread_cond_init(cond, attr) }
+        return ParkingData(mut, cond, attr)
     }
 
     actual inline fun wait(ref: ParkingData, shouldWait: () -> Boolean){
@@ -26,7 +29,7 @@ internal actual object ParkingDelegator {
         val ts = alloc<timespec>().ptr
 
         // Add nanos to current time
-        callAndVerify(0) { clock_gettime(CLOCK_REALTIME.convert(), ts) }
+        callAndVerify(0) { clock_gettime(clockId.convert(), ts) }
         ts.pointed.tv_sec = ts.pointed.tv_sec.addNanosToSeconds(nanos)
         ts.pointed.tv_nsec = (ts.pointed.tv_nsec + nanos % 1_000_000_000).convert()
         //Fix overflow
@@ -48,12 +51,19 @@ internal actual object ParkingDelegator {
     actual fun destroyRef(ref: ParkingData) {
         callAndVerify(0) { pthread_mutex_destroy(ref.mut) }
         callAndVerify(0) { pthread_cond_destroy(ref.cond) }
+        callAndVerify(0) { pthread_condattr_destroy(ref.attr) }
+        nativeHeap.free(ref.attr)
         nativeHeap.free(ref.mut)
         nativeHeap.free(ref.cond)
     }
     
-    private inline fun callAndVerify(vararg expectedReturn: Int, block: () -> Int) =
-        callAndVerifyNative(*expectedReturn, getErrno = { errno }, block = block)
 
 }
-internal actual class ParkingData(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>)
+
+internal inline fun callAndVerify(vararg expectedReturn: Int, block: () -> Int) =
+    callAndVerifyNative(*expectedReturn, getErrno = { errno }, block = block)
+
+internal actual class ParkingData(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>, val attr: CPointer<pthread_condattr_t>)
+
+internal expect val clockId: Int
+internal expect fun setClock(attr: CPointer<pthread_condattr_t>, cond: CPointer<pthread_cond_t>): Int
