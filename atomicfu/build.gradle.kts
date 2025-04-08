@@ -86,6 +86,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
             implementation("org.jetbrains.kotlin:kotlin-stdlib") {
                 version {
                     prefer(libs.versions.kotlin.asProvider().get())
