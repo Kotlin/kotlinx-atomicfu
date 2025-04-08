@@ -11,12 +11,13 @@ import kotlinx.datetime.toLocalDateTime
 import platform.posix.*
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
 class TimeChangeTest {
-    @Ignore
+    @Ignore // needs sudo rights
     @Test
     fun timeChangeTest() {
         val f = Fut {
@@ -31,6 +32,7 @@ class TimeChangeTest {
             f.waitThrowing()
         }
         println("time: $time")
+        assertTrue(time < 35.seconds)
     }
 }
 
