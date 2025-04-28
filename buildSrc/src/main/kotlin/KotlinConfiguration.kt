@@ -1,8 +1,7 @@
 @file:JvmName("KotlinConfiguration")
 
 import org.gradle.api.Project
-import org.gradle.api.artifacts.dsl.RepositoryHandler
-import java.net.URI
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import java.util.logging.Logger
 
 /*
@@ -83,3 +82,49 @@ fun getOverridingKotlinApiVersion(project: Project): String? {
  */
 fun irValidationMode(project: Project): String? =
     project.providers.gradleProperty("kotlin_ir_validation_mode").orNull
+
+/**
+ * Unconditional compiler flags required of Kotlin User Projects. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.addKotlinUserProjectFlags() {
+    freeCompilerArgs.addAll(
+        "-Xreport-all-warnings",
+        "-Xrender-internal-diagnostic-names",
+    )
+}
+
+/**
+ * Use `kotlin_Werror_override` property to override the state of -Werror:
+ * `true` means that warnings should be treated as errors,`false` means that they should not.
+ */
+private fun warningsAreErrorsOverride(project: Project): Boolean? =
+    when (val prop = project.rootProject.properties["kotlin_Werror_override"] as? String) {
+        null -> null
+        "enable" -> true
+        "disable" -> false
+        else -> error("Unknown value for 'kotlin_Werror_override': $prop")
+    }
+
+/**
+ * Set warnings as errors but allow the Kotlin User Project configuration to override. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
+    if (warningsAreErrorsOverride(project) == false) {
+        freeCompilerArgs.addAll("-Wextra", "-Xuse-fir-experimental-checkers")
+    } else {
+        allWarningsAsErrors.set(true)
+    }
+}
+
+/**
+ * Pass additional CLI options to the Kotlin compiler.
+ */
+fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
+    val extraOptions = project.rootProject.properties["kotlin_additional_cli_options"] as? String
+    if (extraOptions != null) {
+        LOGGER.info("""Adding extra compiler flags '$extraOptions' for a compilation in the project $${project.name}""")
+        extraOptions.split(" ").forEach {
+            if (it.isNotEmpty()) freeCompilerArgs.add(it)
+        }
+    }
+}

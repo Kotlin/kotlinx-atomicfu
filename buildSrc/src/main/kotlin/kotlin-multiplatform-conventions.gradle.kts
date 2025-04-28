@@ -29,6 +29,8 @@ tasks.withType<KotlinCompile>().configureEach {
 
 tasks.withType<KotlinCompilationTask<*>>().configureEach {
     compilerOptions {
+        addKotlinUserProjectFlags()
+        addExtraCompilerFlags(project)
         irValidationMode(project)?.let {
             freeCompilerArgs.addAll("-Xverify-ir=$it", "-Xverify-ir-visibility")
         }
