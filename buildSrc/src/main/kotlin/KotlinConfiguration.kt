@@ -122,7 +122,6 @@ fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
 fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
     val extraOptions = project.rootProject.properties["kotlin_additional_cli_options"] as? String
     if (extraOptions != null) {
-        LOGGER.info("""Adding extra compiler flags '$extraOptions' for a compilation in the project $${project.name}""")
         extraOptions.split(" ").forEach {
             if (it.isNotEmpty()) freeCompilerArgs.add(it)
         }

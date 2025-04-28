@@ -36,3 +36,10 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
         }
     }
 }
+
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    doFirst {
+        logger.info("Added Kotlin compiler flags: ${compilerOptions.freeCompilerArgs.get().joinToString(", ")}")
+        logger.info("allWarningsAsErrors=${compilerOptions.allWarningsAsErrors.get()}")
+    }
+}
