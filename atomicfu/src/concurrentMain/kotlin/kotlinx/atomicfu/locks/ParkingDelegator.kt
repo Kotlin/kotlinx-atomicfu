@@ -24,6 +24,10 @@ internal expect object ParkingDelegator {
  */
 internal fun Int.addNanosToSeconds(nanos: Long): Int = 
     (this + nanos / 1_000_000_000).coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
+
+/**
+ * Adds nano seconds to current time in seconds.
+ */
 internal fun Long.addNanosToSeconds(nanos: Long): Long {
     
     // Should never happen as this is checked in `ThreadParker`

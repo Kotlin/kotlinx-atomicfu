@@ -13,27 +13,30 @@ internal actual object ParkingDelegator {
         val mut = nativeHeap.alloc<pthread_mutex_t>().ptr
         val cond = nativeHeap.alloc<pthread_cond_t>().ptr
         val attr = nativeHeap.alloc<pthread_condattr_t>().ptr
-        callAndVerify(0) { pthread_mutex_init(mut, null) }
-        callAndVerify(0) { pthread_condattr_init(attr) }
-        callAndVerify(0) { setClock(attr) }
-        callAndVerify(0) { pthread_cond_init(cond, attr) }
+        callAndVerify { pthread_mutex_init(mut, null) }
+        callAndVerify { pthread_condattr_init(attr) }
+        callAndVerify { pthreadCondAttrSetClock(attr) }
+        callAndVerify { pthread_cond_init(cond, attr) }
 
-        callAndVerify(0) { pthread_condattr_destroy(attr) }
+        callAndVerify { pthread_condattr_destroy(attr) }
         nativeHeap.free(attr)
         return ParkingData(mut, cond)
     }
 
-    actual inline fun wait(ref: ParkingData, shouldWait: () -> Boolean){
-        callAndVerify(0) { pthread_mutex_lock(ref.mut) }
-        if (shouldWait()) callAndVerify(0) { pthread_cond_wait(ref.cond, ref.mut) }
-        callAndVerify(0) { pthread_mutex_unlock(ref.mut) }
+    actual inline fun wait(ref: ParkingData, shouldWait: () -> Boolean) {
+        callAndVerify { pthread_mutex_lock(ref.mut) }
+        try {
+            if (shouldWait()) callAndVerify { pthread_cond_wait(ref.cond, ref.mut) }
+        } finally {
+            callAndVerify { pthread_mutex_unlock(ref.mut) }
+        }
     }
     
     actual inline fun timedWait(ref: ParkingData, nanos: Long, shouldWait: () -> Boolean): Unit = memScoped {
         val ts = alloc<timespec>().ptr
 
         // Add nanos to current time
-        callAndVerify(0) { clock_gettime(clockId.convert(), ts) }
+        callAndVerify { clock_gettime(posixGetTimeClockId.convert(), ts) }
         ts.pointed.tv_sec = ts.pointed.tv_sec.addNanosToSeconds(nanos)
         ts.pointed.tv_nsec = (ts.pointed.tv_nsec + nanos % 1_000_000_000).convert()
         //Fix overflow
@@ -41,20 +44,26 @@ internal actual object ParkingDelegator {
             ts.pointed.tv_sec = ts.pointed.tv_sec.addNanosToSeconds(1_000_000_000)
             ts.pointed.tv_nsec -= 1_000_000_000
         }
-        callAndVerify(0) { pthread_mutex_lock(ref.mut) }
-        if (shouldWait()) callAndVerify(0, ETIMEDOUT) { pthread_cond_timedwait(ref.cond, ref.mut, ts) }
-        callAndVerify(0) { pthread_mutex_unlock(ref.mut) }
+        callAndVerify { pthread_mutex_lock(ref.mut) }
+        try {
+            if (shouldWait()) callAndVerify(0, ETIMEDOUT) { pthread_cond_timedwait(ref.cond, ref.mut, ts) }
+        } finally {
+            callAndVerify { pthread_mutex_unlock(ref.mut) }
+        }
     }
 
     actual fun wake(ref: ParkingData) {
-        callAndVerify(0) { pthread_mutex_lock(ref.mut) }
-        callAndVerify(0) { pthread_cond_signal(ref.cond) }
-        callAndVerify(0) { pthread_mutex_unlock(ref.mut) }
+        callAndVerify { pthread_mutex_lock(ref.mut) }
+        try {
+            callAndVerify { pthread_cond_signal(ref.cond) }
+        } finally {
+            callAndVerify { pthread_mutex_unlock(ref.mut) }
+        }
     }
 
     actual fun destroyRef(ref: ParkingData) {
-        callAndVerify(0) { pthread_mutex_destroy(ref.mut) }
-        callAndVerify(0) { pthread_cond_destroy(ref.cond) }
+        callAndVerify { pthread_mutex_destroy(ref.mut) }
+        callAndVerify { pthread_cond_destroy(ref.cond) }
         nativeHeap.free(ref.mut)
         nativeHeap.free(ref.cond)
     }
@@ -62,5 +71,5 @@ internal actual object ParkingDelegator {
 
 internal actual class ParkingData(val mut: CPointer<pthread_mutex_t>, val cond: CPointer<pthread_cond_t>)
 
-internal expect val clockId: Int
-internal expect fun setClock(attr: CPointer<pthread_condattr_t>): Int
+internal expect val posixGetTimeClockId: Int
+internal expect fun pthreadCondAttrSetClock(attr: CPointer<pthread_condattr_t>): Int

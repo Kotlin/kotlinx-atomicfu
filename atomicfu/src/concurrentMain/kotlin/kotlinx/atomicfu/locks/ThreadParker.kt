@@ -96,7 +96,7 @@ internal class ThreadParker {
     }
 }
 
-private interface ParkingState
+private sealed interface ParkingState
 // The Parker is pre-unparked. The next park call will change state to Free and return immediately.
 private object Unparked : ParkingState
 
