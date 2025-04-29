@@ -98,7 +98,7 @@ fun KotlinCommonCompilerOptions.addKotlinUserProjectFlags() {
  * `true` means that warnings should be treated as errors,`false` means that they should not.
  */
 private fun warningsAreErrorsOverride(project: Project): Boolean? =
-    when (val prop = project.rootProject.properties["kotlin_Werror_override"] as? String) {
+    when (val prop = project.providers.gradleProperty("kotlin_Werror_override") as? String) {
         null -> null
         "enable" -> true
         "disable" -> false
@@ -120,10 +120,9 @@ fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
  * Pass additional CLI options to the Kotlin compiler.
  */
 fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
-    val extraOptions = project.rootProject.properties["kotlin_additional_cli_options"] as? String
-    if (extraOptions != null) {
-        extraOptions.split(" ").forEach {
-            if (it.isNotEmpty()) freeCompilerArgs.add(it)
+    project.providers.gradleProperty("kotlin_additional_cli_options").orNull?.let { options ->
+        options.removeSurrounding("\"").split(" ").filter { it.isNotBlank() }.forEach {
+            freeCompilerArgs.add(it)
         }
     }
 }
