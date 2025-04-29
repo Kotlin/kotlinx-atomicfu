@@ -124,7 +124,7 @@ fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
  */
 fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
     project.providers.gradleProperty("kotlin_additional_cli_options").orNull?.let { options ->
-        options.removeSurrounding("\"").split(" ").filter { it.isNotBlank() }.forEach {
+        options.split(" ").filter { it.isNotBlank() }.forEach {
             freeCompilerArgs.add(it)
         }
     }
