@@ -1,5 +1,6 @@
 @file:JvmName("KotlinConfiguration")
 
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import java.util.logging.Logger
@@ -98,11 +99,13 @@ fun KotlinCommonCompilerOptions.addKotlinUserProjectFlags() {
  * `true` means that warnings should be treated as errors,`false` means that they should not.
  */
 private fun warningsAreErrorsOverride(project: Project): Boolean? =
-    when (val prop = project.providers.gradleProperty("kotlin_Werror_override") as? String) {
-        null -> null
-        "enable" -> true
-        "disable" -> false
-        else -> error("Unknown value for 'kotlin_Werror_override': $prop")
+    project.providers.gradleProperty("kotlin_Werror_override").orNull.let {
+        when (it) {
+            "enable" -> true
+            "disable" -> false
+            null -> true
+            else -> throw GradleException("Invalid kotlin_Werror_override value. Use 'enable' or 'disable'")
+        }
     }
 
 /**
