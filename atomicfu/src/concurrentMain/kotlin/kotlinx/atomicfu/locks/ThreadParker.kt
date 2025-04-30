@@ -6,7 +6,7 @@ import kotlin.time.TimeSource
 
 /**
  * Thread parker for Kotlin/Native based on POSIX calls.
- * Resides in a shared sourceSet with JVM, to be testable with Lincheck. 
+ * Resides in a shared sourceSet with JVM, to be testable with Lincheck.
  * (Which is part of PR #508)
  */
 internal class ThreadParker {
@@ -16,7 +16,7 @@ internal class ThreadParker {
     fun park() = parkWith { data ->
         delegator.wait(data) { state.value is Parked }
     }
-    
+
     fun parkNanos(nanos: Long) {
         val mark = TimeSource.Monotonic.markNow()
         parkWith { data ->
@@ -35,7 +35,7 @@ internal class ThreadParker {
                         delegator.destroyRef(pd)
                         continue
                     }
-                    
+
                     invokeWait(pd)
 
                     while (true) {
@@ -45,7 +45,7 @@ internal class ThreadParker {
                                 delegator.destroyRef(pd)
                                 return
                             }
-                            
+
                             // If other thread is unparking return. Let unparking thread deal with cleanup.
                             is Unparking -> if (state.compareAndSet(changedState, Free)) return
 
@@ -64,7 +64,7 @@ internal class ThreadParker {
                 }
                 // Parker was pre unparked. Set to free and continue.
                 Unparked -> if (state.compareAndSet(Unparked, Free)) return
-                
+
                 // The states below should only be reachable if parking thread has not yet returned.
                 is Parked -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
                 is Unparking -> throw IllegalStateException("Thread should not be able to call park when it is already parked")
@@ -75,14 +75,14 @@ internal class ThreadParker {
     fun unpark() {
         val myUnparkingState = Unparking()
         while (true) {
-            when (val currentState = state.value) { 
-                
+            when (val currentState = state.value) {
+
                 // Is already unparked
                 Unparked -> return
                 is Unparking -> return
-                
+
                 Free -> if (state.compareAndSet(Free, Unparked)) return
-                
+
                 // Is parked -> try unpark
                 is Parked -> if (state.compareAndSet(currentState, myUnparkingState)) {
                     delegator.wake(currentState.data)
@@ -97,6 +97,7 @@ internal class ThreadParker {
 }
 
 private sealed interface ParkingState
+
 // The Parker is pre-unparked. The next park call will change state to Free and return immediately.
 private object Unparked : ParkingState
 

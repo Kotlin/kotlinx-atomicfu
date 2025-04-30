@@ -11,16 +11,16 @@ class ThreadParkerTest {
     @Test
     fun parkUnpark() {
         var parkingHandle: ParkingHandle? = null
-        
-        val f = Fut { 
+
+        val f = Fut {
             parkingHandle = ParkingSupport.currentThreadHandle()
             ParkingSupport.park(Duration.INFINITE)
         }
-        
+
         // Allow thread to be parked before unpark call
         sleepMillis(100)
         ParkingSupport.unpark(parkingHandle!!)
-        
+
         f.waitThrowing()
     }
 
@@ -29,11 +29,11 @@ class ThreadParkerTest {
 
         val f = Fut {
             atomicHandle.value = ParkingSupport.currentThreadHandle()
-            
-            while (!isPreUnparked.value) { 
-                sleepMillis(10) 
+
+            while (!isPreUnparked.value) {
+                sleepMillis(10)
             }
-            
+
             ParkingSupport.park(Duration.INFINITE)
         }
 
@@ -43,7 +43,7 @@ class ThreadParkerTest {
 
         ParkingSupport.unpark(atomicHandle.value!!)
         isPreUnparked.value = true
-        
+
         f.waitThrowing()
     }
 }

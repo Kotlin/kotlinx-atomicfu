@@ -15,12 +15,15 @@ class LatchTest {
     private class Arrs(numberOfThreads: Int) {
         val after = AtomicIntArray(numberOfThreads)
         val before = AtomicIntArray(numberOfThreads)
-        init {repeat(numberOfThreads) {
-            after[it].value = 0
-            before[it].value = 0
-        }}
+
+        init {
+            repeat(numberOfThreads) {
+                after[it].value = 0
+                before[it].value = 0
+            }
+        }
     }
-    
+
     @Test
     fun latchTest() {
         repeat(TEST_ITERATIONS) { iteration ->
@@ -90,8 +93,7 @@ private class MSQueueLatch<E> {
             if (curTail.next.compareAndSet(null, node)) {
                 tail.compareAndSet(curTail, node)
                 return
-            }
-            else tail.compareAndSet(curTail, curTail.next.value!!)
+            } else tail.compareAndSet(curTail, curTail.next.value!!)
         }
     }
 
@@ -106,6 +108,7 @@ private class MSQueueLatch<E> {
             }
         }
     }
+
     private class Node<E>(var element: E?) {
         val next = atomic<Node<E>?>(null)
     }

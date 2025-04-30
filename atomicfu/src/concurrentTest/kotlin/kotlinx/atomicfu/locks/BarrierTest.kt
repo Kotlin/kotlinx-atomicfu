@@ -16,11 +16,15 @@ class BarrierTest {
     private class Arrs(numberOfThreads: Int) {
         val after = AtomicIntArray(numberOfThreads)
         val before = AtomicIntArray(numberOfThreads)
-        init {repeat(numberOfThreads) {
+
+        init {
+            repeat(numberOfThreads) {
                 after[it].value = 0
                 before[it].value = 0
-            }}
+            }
+        }
     }
+
     @Test
     fun testBarrier() {
         repeat(TEST_ITERATIONS) { iteration ->
@@ -60,6 +64,7 @@ private class Barrier(private val parties: Int) {
     init {
         require(parties > 1)
     }
+
     private val count = atomic(0)
     private val waiters = atomicArrayOfNulls<Any?>(parties - 1)
 

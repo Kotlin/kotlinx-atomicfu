@@ -6,9 +6,8 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class TimeArithmeticTests {
-    
-    
-    
+
+
     @Test
     fun timeArithmeticTest() {
         val currentTimes = listOf<Long>(
@@ -20,10 +19,10 @@ class TimeArithmeticTests {
             31_560_000 * 500,
             31_560_000 * 1000,
             31_560_000 * 10000,
-            )
-        
-        currentTimes.forEach { currentTimeInSeconds -> 
-            
+        )
+
+        currentTimes.forEach { currentTimeInSeconds ->
+
             // Test Long
             repeat(1000) {
                 val nanos = Random.nextLong().absoluteValue
@@ -42,6 +41,6 @@ class TimeArithmeticTests {
             }
         }
     }
-    
-    
+
+
 }

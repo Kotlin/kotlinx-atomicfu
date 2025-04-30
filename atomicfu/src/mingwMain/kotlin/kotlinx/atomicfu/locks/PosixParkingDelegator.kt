@@ -1,9 +1,6 @@
 package kotlinx.atomicfu.locks
 
 import kotlinx.cinterop.*
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
 import platform.posix.*
 
 @OptIn(ExperimentalForeignApi::class)
@@ -65,4 +62,5 @@ internal actual object ParkingDelegator {
         nativeHeap.free(ref.cond)
     }
 }
+
 internal actual class ParkingData(val mut: CPointer<pthread_mutex_tVar>, val cond: CPointer<pthread_cond_tVar>)

@@ -8,16 +8,16 @@ import kotlin.time.Duration
 private const val N_ITEMS_TO_SWAP = 100_000
 
 class ExchangerTest {
-    
+
     @Test
     fun exchangeTwoLists() {
         val aBefore = List(N_ITEMS_TO_SWAP) { 0 }
         val bBefore = List(N_ITEMS_TO_SWAP) { 1 }
         val aAfter = mutableListOf<Int>()
         val bAfter = mutableListOf<Int>()
-        
+
         val exchanger = Exchanger<Int>()
-        
+
         val at = testThread {
             aBefore.forEachIndexed { i, v ->
                 val item = exchanger.exchange(v)

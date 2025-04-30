@@ -16,12 +16,15 @@ class CyclicBarrierTest {
     private class Arrs(numberOfThreads: Int) {
         val after = AtomicIntArray(numberOfThreads)
         val before = AtomicIntArray(numberOfThreads)
-        init {repeat(numberOfThreads) {
-            after[it].value = 0
-            before[it].value = 0
-        }}
+
+        init {
+            repeat(numberOfThreads) {
+                after[it].value = 0
+                before[it].value = 0
+            }
+        }
     }
-    
+
     @Test
     fun stressCyclicBarrier() {
         BARRIER_SIZES.forEach { barrierSize ->
@@ -94,8 +97,7 @@ private class MSQueueCyclicBarrier<E> {
             if (curTail.next.compareAndSet(null, node)) {
                 tail.compareAndSet(curTail, node)
                 return node.id
-            }
-            else tail.compareAndSet(curTail, curTail.next.value!!)
+            } else tail.compareAndSet(curTail, curTail.next.value!!)
         }
     }
 
@@ -111,6 +113,7 @@ private class MSQueueCyclicBarrier<E> {
             }
         }
     }
+
     private class Node<E>(var element: E?, val id: Long) {
         val next = atomic<Node<E>?>(null)
     }

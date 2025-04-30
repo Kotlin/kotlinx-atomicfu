@@ -1,10 +1,6 @@
 package kotlinx.atomicfu.locks
 
 import kotlinx.cinterop.*
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.free
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
 import platform.posix.*
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
@@ -31,7 +27,7 @@ internal actual object ParkingDelegator {
             callAndVerify { pthread_mutex_unlock(ref.mut) }
         }
     }
-    
+
     actual inline fun timedWait(ref: ParkingData, nanos: Long, shouldWait: () -> Boolean): Unit = memScoped {
         val ts = alloc<timespec>().ptr
 

@@ -15,6 +15,7 @@ class ThreadParkingStressTest {
         val handle = atomic<ParkingHandle?>(null)
         val done = atomic(false)
     }
+
     @Test
     fun parkingStress() {
         val duration = measureTime {
