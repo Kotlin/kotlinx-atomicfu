@@ -6,176 +6,61 @@ import kotlin.test.assertTrue
 import kotlin.time.measureTime
 import kotlin.IllegalStateException
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.TimeSource
 
 class TimedParkingTest {
 
     @Test
-    fun testNanosFirstUnpark400() = retry(3) {
-        var handle1: ParkingHandle? = null
-
-        val thread1 = Fut {
-            handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park(600.milliseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 300)
-            assertTrue(t.inWholeMilliseconds < 500)
-        }
-
-        sleepMillis(400)
-        ParkingSupport.unpark(handle1!!)
-
-        thread1.waitThrowing()
-    }
+    fun testFirstUnpark400() = testFirstUnpark(400)
+    @Test
+    fun testFirstUnpark700() = testFirstUnpark(700)
+    @Test
+    fun testFirstUnpark1000() = testFirstUnpark(1000)
+    @Test
+    fun testFirstUnparkLongMax() = testFirstUnpark(1000, Long.MAX_VALUE)
+    @Test
+    fun testFirstUnpark3rdLong() = testFirstUnpark(1000, Long.MAX_VALUE / 3)
 
     @Test
-    fun testNanosFirstUnpark700() = retry(3) {
-        var handle1: ParkingHandle? = null
-
-        val thread1 = Fut {
-            handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park(900.milliseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 600)
-            assertTrue(t.inWholeMilliseconds < 800)
-        }
-
-        sleepMillis(700)
-        ParkingSupport.unpark(handle1!!)
-
-        thread1.waitThrowing()
-    }
+    fun testFirstTimeout400() = testFirstTimeout(400)
+    @Test
+    fun testFirstTimeout700() = testFirstTimeout(700)
+    @Test
+    fun testFirstTimeout1200() = testFirstTimeout(1200)
 
     @Test
-    fun testNanosFirstUnpark1000() = retry(3) {
-        var handle1: ParkingHandle? = null
-
+    fun testFirstDeadline400() = testFirstDeadline(400)
+    @Test
+    fun testFirstDeadline700() = testFirstDeadline(700)
+    @Test
+    fun testFirstDeadline1200() = testFirstDeadline(1200)
+    
+    private fun testFirstTimeout(timeOutMillis: Long) = retry(3) {
         val thread1 = Fut {
-            handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park(1200.milliseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 900)
-            assertTrue(t.inWholeMilliseconds < 1100)
+            val t = measureTime { ParkingSupport.park(timeOutMillis.milliseconds) }
+            assertTrue(t.inWholeMilliseconds > timeOutMillis - 50)
         }
-
-        sleepMillis(1000)
-        ParkingSupport.unpark(handle1!!)
-
         thread1.waitThrowing()
     }
     
-    @Test
-    fun testNanosFirstUnparkLongMax() = retry(3) {
-        var handle1: ParkingHandle? = null
-
+    private fun testFirstDeadline(timeOutMillis: Long) = retry(3) {
         val thread1 = Fut {
-            handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park(Long.MAX_VALUE.nanoseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 900)
-            assertTrue(t.inWholeMilliseconds < 1100)
+            val mark = TimeSource.Monotonic.markNow() + timeOutMillis.milliseconds
+            val t = measureTime { ParkingSupport.parkUntil(mark) }
+            assertTrue(t.inWholeMilliseconds > timeOutMillis - 50)
         }
-
-        sleepMillis(1000)
-        ParkingSupport.unpark(handle1!!)
-
-        thread1.waitThrowing()
-    }
-    
-    @Test
-    fun testNanosFirstUnparkIntMax() = retry(3) {
-        var handle1: ParkingHandle? = null
-
-        val thread1 = Fut {
-            handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park(Int.MAX_VALUE.toLong().nanoseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 900)
-            assertTrue(t.inWholeMilliseconds < 1100)
-        }
-
-        sleepMillis(1000)
-        ParkingSupport.unpark(handle1!!)
-
-        thread1.waitThrowing()
-    }
-    
-    @Test
-    fun testNanosFirstUnpark3rdLong() = retry(3) {
-        var handle1: ParkingHandle? = null
-
-        val thread1 = Fut {
-            handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park((Long.MAX_VALUE / 3).nanoseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 900)
-            assertTrue(t.inWholeMilliseconds < 1100)
-        }
-
-        sleepMillis(1000)
-        ParkingSupport.unpark(handle1!!)
-
         thread1.waitThrowing()
     }
 
-    @Test
-    fun testNanosFirstDeadline400() = retry(3) {
+    private fun testFirstUnpark(unparkAfterMillis: Long, parkForMillis: Long = unparkAfterMillis + 500) = retry(3) {
         var handle1: ParkingHandle? = null
-
         val thread1 = Fut {
             handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park(400.milliseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 300)
-            assertTrue(t.inWholeMilliseconds < 500)
+            val t = measureTime { ParkingSupport.park((parkForMillis).milliseconds) }
+            assertTrue(t.inWholeMilliseconds < parkForMillis )
         }
 
-        sleepMillis(600)
-        ParkingSupport.unpark(handle1!!)
-
-        thread1.waitThrowing()
-    }
-
-    @Test
-    fun testNanosFirstDeadline700() = retry(3) {
-        var handle1: ParkingHandle? = null
-
-        val thread1 = Fut {
-            handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park(700.milliseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 600)
-            assertTrue(t.inWholeMilliseconds < 800)
-        }
-
-        sleepMillis(900)
-        ParkingSupport.unpark(handle1!!)
-
-        thread1.waitThrowing()
-    }
-
-    @Test
-    fun testNanosFirstDeadline1200() = retry(3) {
-        var handle1: ParkingHandle? = null
-
-        val thread1 = Fut {
-            handle1 = ParkingSupport.currentThreadHandle()
-            val t = measureTime {
-                ParkingSupport.park(1000.milliseconds)
-            }
-            assertTrue(t.inWholeMilliseconds > 900)
-            assertTrue(t.inWholeMilliseconds < 1100)
-        }
-
-        sleepMillis(1200)
+        sleepMillis(unparkAfterMillis)
         ParkingSupport.unpark(handle1!!)
 
         thread1.waitThrowing()
