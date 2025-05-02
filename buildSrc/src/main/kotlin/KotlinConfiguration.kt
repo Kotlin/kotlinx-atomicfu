@@ -1,8 +1,8 @@
 @file:JvmName("KotlinConfiguration")
 
+import org.gradle.api.GradleException
 import org.gradle.api.Project
-import org.gradle.api.artifacts.dsl.RepositoryHandler
-import java.net.URI
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import java.util.logging.Logger
 
 /*
@@ -83,3 +83,49 @@ fun getOverridingKotlinApiVersion(project: Project): String? {
  */
 fun irValidationMode(project: Project): String? =
     project.providers.gradleProperty("kotlin_ir_validation_mode").orNull
+
+/**
+ * Unconditional compiler flags required of Kotlin User Projects. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.addKotlinUserProjectFlags() {
+    freeCompilerArgs.addAll(
+        "-Xreport-all-warnings",
+        "-Xrender-internal-diagnostic-names",
+    )
+}
+
+/**
+ * Use `kotlin_Werror_override` property to override the state of -Werror:
+ * `true` means that warnings should be treated as errors,`false` means that they should not.
+ */
+private fun warningsAreErrorsOverride(project: Project): Boolean? =
+    project.providers.gradleProperty("kotlin_Werror_override").orNull.let {
+        when (it) {
+            "enable" -> true
+            "disable" -> false
+            null -> true
+            else -> throw GradleException("Invalid kotlin_Werror_override value. Use 'enable' or 'disable'")
+        }
+    }
+
+/**
+ * Set warnings as errors but allow the Kotlin User Project configuration to override. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
+    if (warningsAreErrorsOverride(project) == false) {
+        freeCompilerArgs.addAll("-Wextra", "-Xuse-fir-experimental-checkers")
+    } else {
+        allWarningsAsErrors.set(true)
+    }
+}
+
+/**
+ * Pass additional CLI options to the Kotlin compiler.
+ */
+fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
+    project.providers.gradleProperty("kotlin_additional_cli_options").orNull?.let { options ->
+        options.split(" ").filter { it.isNotBlank() }.forEach {
+            freeCompilerArgs.add(it)
+        }
+    }
+}

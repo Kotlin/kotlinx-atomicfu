@@ -29,8 +29,17 @@ tasks.withType<KotlinCompile>().configureEach {
 
 tasks.withType<KotlinCompilationTask<*>>().configureEach {
     compilerOptions {
+        addKotlinUserProjectFlags()
+        addExtraCompilerFlags(project)
         irValidationMode(project)?.let {
             freeCompilerArgs.addAll("-Xverify-ir=$it", "-Xverify-ir-visibility")
         }
+    }
+}
+
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    doFirst {
+        logger.info("Added Kotlin compiler flags: ${compilerOptions.freeCompilerArgs.get().joinToString(", ")}")
+        logger.info("allWarningsAsErrors=${compilerOptions.allWarningsAsErrors.get()}")
     }
 }
