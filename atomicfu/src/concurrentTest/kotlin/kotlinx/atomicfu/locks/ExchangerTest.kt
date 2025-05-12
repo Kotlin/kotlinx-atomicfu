@@ -37,7 +37,6 @@ class ExchangerTest {
     }
 }
 
-@OptIn(ExperimentalThreadBlockingApi::class)
 internal class Exchanger<T> {
     private val slot = atomic<Pair<ParkingHandle, T>?>(null)
     fun exchange(item: T): T {

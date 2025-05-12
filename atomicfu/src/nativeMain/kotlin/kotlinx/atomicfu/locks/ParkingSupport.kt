@@ -5,7 +5,6 @@ import kotlin.time.DurationUnit
 import kotlin.time.TimeMark
 
 @kotlin.native.concurrent.ThreadLocal
-@OptIn(ExperimentalThreadBlockingApi::class)
 private val threadLocalParkingHandle = ParkingHandle()
 
 @ExperimentalThreadBlockingApi

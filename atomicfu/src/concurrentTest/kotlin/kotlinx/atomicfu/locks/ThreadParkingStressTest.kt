@@ -10,7 +10,6 @@ import kotlin.time.measureTime
 private const val NUMBER_OF_PARKS = 1000
 private const val DURATION_MILLIS = 5L
 
-@OptIn(ExperimentalThreadBlockingApi::class)
 class ThreadParkingStressTest {
     private class Atomics {
         val handle = atomic<ParkingHandle?>(null)

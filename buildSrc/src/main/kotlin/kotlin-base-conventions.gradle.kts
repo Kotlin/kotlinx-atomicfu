@@ -21,6 +21,7 @@ kotlin.sourceSets.configureEach {
             project.path != ":atomicfu-gradle-plugin"
         ) {
             optIn("kotlinx.cinterop.ExperimentalForeignApi")
+            optIn("kotlinx.atomicfu.locks.ExperimentalThreadBlockingApi")
         }
     }
 }
