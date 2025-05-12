@@ -7,6 +7,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
 
+@OptIn(ExperimentalThreadBlockingApi::class)
 class TimedParkingTest {
 
     @Test

@@ -38,8 +38,9 @@ import kotlin.time.TimeMark
  *
  * PLEASE NOTE: this is a low-level API and should be used with caution.
  * Unless the goal is to create a _synchronization primitive_ like a mutex or semaphore,
- * it is advised to a higher level concurrency API like `kotlinx.coroutines`
+ * it is advised to use a higher level concurrency API like `kotlinx.coroutines`
  */
+@ExperimentalThreadBlockingApi
 expect object ParkingSupport {
 
     /**
@@ -97,4 +98,25 @@ expect object ParkingSupport {
  * Refer to [ParkingSupport] documentation for more details
  * on how to use [ParkingHandle] and how parking works in general.
  */
+@ExperimentalThreadBlockingApi
 expect class ParkingHandle
+
+/**
+ * Marks [ParkingHandle] and [ParkingSupport] API as experimental.
+ * 
+ * The APIs and semantics can change in the future and are considered to be low-level.
+ * Unless the goal is to create a _synchronization primitive_ like a mutex or semaphore,
+ * it is advised to use a higher level concurrency API like `kotlinx.coroutines`
+ */
+@Retention(AnnotationRetention.BINARY)
+@Target(
+    AnnotationTarget.CLASS,
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPEALIAS,
+)
+@RequiresOptIn(
+    level = RequiresOptIn.Level.ERROR,
+    message = "This API is experimental. It is low-level and might change in the future."
+)
+public annotation class ExperimentalThreadBlockingApi

@@ -61,6 +61,7 @@ class LatchTest {
     }
 }
 
+@OptIn(ExperimentalThreadBlockingApi::class)
 class CustomCountDownLatch(count: Int) {
     private val c = atomic(count)
     private val waiters = MSQueueLatch<ParkingHandle>()

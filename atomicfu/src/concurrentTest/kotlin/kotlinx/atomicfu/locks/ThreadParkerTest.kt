@@ -4,6 +4,7 @@ import kotlinx.atomicfu.atomic
 import kotlin.test.Test
 import kotlin.time.Duration
 
+@OptIn(ExperimentalThreadBlockingApi::class)
 class ThreadParkerTest {
     val atomicHandle = atomic<ParkingHandle?>(null)
     val isPreUnparked = atomic(false)

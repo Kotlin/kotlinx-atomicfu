@@ -5,12 +5,15 @@ import kotlin.time.DurationUnit
 import kotlin.time.TimeMark
 
 @kotlin.native.concurrent.ThreadLocal
+@OptIn(ExperimentalThreadBlockingApi::class)
 private val threadLocalParkingHandle = ParkingHandle()
 
+@ExperimentalThreadBlockingApi
 actual class ParkingHandle internal constructor() {
     internal val parker: ThreadParker = ThreadParker()
 }
 
+@ExperimentalThreadBlockingApi
 actual object ParkingSupport {
     actual fun park(timeout: Duration) {
         if (timeout == Duration.INFINITE) threadLocalParkingHandle.parker.park()

@@ -60,6 +60,7 @@ class BarrierTest {
 /**
  * Single-use barrier that blocks all participants until they all arrive.
  */
+@OptIn(ExperimentalThreadBlockingApi::class)
 private class Barrier(private val parties: Int) {
     init {
         require(parties > 1)

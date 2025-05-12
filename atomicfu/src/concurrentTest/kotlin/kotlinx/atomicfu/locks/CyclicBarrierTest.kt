@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalThreadBlockingApi::class)
+
 package kotlinx.atomicfu.locks
 
 import kotlinx.atomicfu.AtomicIntArray
