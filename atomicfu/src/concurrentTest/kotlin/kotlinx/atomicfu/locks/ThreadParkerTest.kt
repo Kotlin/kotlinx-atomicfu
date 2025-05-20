@@ -18,7 +18,7 @@ class ThreadParkerTest {
         }
 
         // Allow thread to be parked before unpark call
-        sleepMillis(100)
+        sleepMillis(500)
         ParkingSupport.unpark(parkingHandle!!)
 
         f.waitThrowing()
