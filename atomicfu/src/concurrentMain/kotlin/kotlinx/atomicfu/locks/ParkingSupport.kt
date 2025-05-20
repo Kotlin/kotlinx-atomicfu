@@ -86,7 +86,8 @@ expect object ParkingSupport {
      * When the _same_ thread makes multiple calls to [currentThreadHandle],
      * it always returns the _same_ [ParkingHandle].
      *
-     * Note: as this function returns a unique [ParkingHandle] for each thread it should not be cached or memoized.
+     * Note: this function returns a different [ParkingHandle] for each thread.
+     * Therefore, caching a single parking handle for multiple threads will lead to unexpected behaviour.
      */
     fun currentThreadHandle(): ParkingHandle
 }
