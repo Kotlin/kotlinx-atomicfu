@@ -135,3 +135,14 @@ public final class kotlinx/atomicfu/TraceKt {
 	public static final fun named (Lkotlinx/atomicfu/TraceBase;Ljava/lang/String;)Lkotlinx/atomicfu/TraceBase;
 }
 
+public abstract interface annotation class kotlinx/atomicfu/locks/ExperimentalThreadBlockingApi : java/lang/annotation/Annotation {
+}
+
+public final class kotlinx/atomicfu/locks/ParkingSupport {
+	public static final field INSTANCE Lkotlinx/atomicfu/locks/ParkingSupport;
+	public final fun currentThreadHandle ()Ljava/lang/Thread;
+	public final fun park-LRDsOJo (J)V
+	public final fun parkUntil (Lkotlin/time/TimeMark;)V
+	public final fun unpark (Ljava/lang/Thread;)V
+}
+

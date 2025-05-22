@@ -3,6 +3,7 @@
  */
 package kotlinx.atomicfu.locks
 
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
@@ -16,7 +17,7 @@ actual class NativeMutexNode {
     private val arena: Arena = Arena()
     private val cond: pthread_cond_t = arena.alloc()
     private val mutex: pthread_mutex_t = arena.alloc()
-    private val attr: pthread_mutexattr_tVar = arena.alloc()
+    private val attr: pthread_mutexattr_t = arena.alloc()
 
     init {
         require(pthread_cond_init(cond.ptr, null) == 0)
@@ -48,3 +49,7 @@ actual class NativeMutexNode {
         arena.clear()
     }
 }
+
+private val threadCounter = atomic(0L)
+
+internal actual fun createThreadId(): Long = threadCounter.incrementAndGet()
