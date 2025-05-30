@@ -18,7 +18,7 @@ class MppProjectTest {
             mppCheckAtomicfuInCompileClasspath("jvm")
             mppCheckNoAtomicfuInRuntimeConfigs("jvm")
         }
-        mppSample.checkConsumableDependencies()
+        mppSample.checkConsumableDependencies(false)
         mppSample.buildAndCheckBytecode()
     }
 
@@ -29,7 +29,7 @@ class MppProjectTest {
             mppCheckAtomicfuInCompileClasspath("jvm")
             mppCheckNoAtomicfuInRuntimeConfigs("jvm")
         }
-        mppSample.checkConsumableDependencies()
+        mppSample.checkConsumableDependencies(false)
         mppSample.buildAndCheckBytecode()
     }
 
@@ -37,23 +37,20 @@ class MppProjectTest {
     @Test
     fun testMppWithEnabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = true
-        mppSample.cleanAndBuild()
-        mppSample.checkConsumableDependencies()
+        mppSample.checkConsumableDependencies(true)
         mppSample.withDependencies { mppCheckAtomicfuInApi("js") }
     }
 
     @Test
     fun testMppWithDisabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = false
-        mppSample.cleanAndBuild()
-        mppSample.checkConsumableDependencies()
+        mppSample.checkConsumableDependencies(true)
         mppSample.withDependencies { mppCheckAtomicfuInApi("js") }
     }
 
     @Test
     fun testMppWasmJsBuild() {
-        mppSample.cleanAndBuild()
-        mppSample.checkConsumableDependencies()
+        mppSample.checkConsumableDependencies(true)
         mppSample.withDependencies {
             mppCheckAtomicfuInCompileClasspath("wasmJs")
             mppCheckAtomicfuInRuntimeClasspath("wasmJs")
@@ -63,7 +60,7 @@ class MppProjectTest {
 
     @Test
     fun testMppWasmWasiBuild() {
-        mppSample.checkConsumableDependencies()
+        mppSample.checkConsumableDependencies(false)
         mppSample.withDependencies {
             mppCheckAtomicfuInCompileClasspath("wasmWasi")
             mppCheckAtomicfuInRuntimeClasspath("wasmWasi")
@@ -74,9 +71,8 @@ class MppProjectTest {
     @Test
     fun testMppNativeWithEnabledIrTransformation() {
         mppSample.enableNativeIrTransformation = true
-        mppSample.cleanAndBuild()
         // When Native IR transformations are applied, atomicfu-gradle-plugin still provides transitive atomicfu dependency
-        mppSample.checkConsumableDependencies()
+        mppSample.checkConsumableDependencies(true)
         mppSample.withDependencies {
             mppNativeCheckAtomicfuInImplementation("macosX64")
             mppCheckAtomicfuInApi("macosX64")
@@ -88,8 +84,7 @@ class MppProjectTest {
     @Test
     fun testMppNativeWithDisabledIrTransformation() {
         mppSample.enableNativeIrTransformation = false
-        mppSample.cleanAndBuild()
-        mppSample.checkConsumableDependencies()
+        mppSample.checkConsumableDependencies(true)
         mppSample.withDependencies {
             mppNativeCheckAtomicfuInImplementation("macosX64")
             mppCheckAtomicfuInApi("macosX64")
