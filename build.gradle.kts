@@ -1,3 +1,7 @@
+@file:OptIn(ExperimentalBCVApi::class)
+
+import kotlinx.validation.ExperimentalBCVApi
+
 plugins {
     alias(libs.plugins.kotlinx.binaryCompatibilityValidator)
 }
@@ -15,4 +19,8 @@ val deploy by tasks.registering {
 // Also, model tasks are going to be completely removed: https://github.com/gradle/gradle/issues/15023
 tasks.named("model") {
     notCompatibleWithConfigurationCache("uses Task.project")
+}
+
+apiValidation {
+    klib.enabled = true
 }
