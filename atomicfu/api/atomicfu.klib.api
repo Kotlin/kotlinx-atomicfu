@@ -2,7 +2,7 @@
 // Targets: [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, js, linuxArm32Hfp, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, wasmJs, wasmWasi, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
 // Alias: native => [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, linuxArm32Hfp, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
 // Alias: androidNative => [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86]
-// Alias: linux => [linuxArm32Hfp, linuxArm64, linuxX64]
+// Alias: apple => [iosArm64, iosSimulatorArm64, iosX64, macosArm64, macosX64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
 // Rendering settings:
 // - Signature version: 2
 // - Show manifest properties: true
@@ -295,65 +295,40 @@ open annotation class kotlinx.atomicfu/OptionalJsName : kotlin/Annotation { // k
 }
 
 // Targets: [native]
+open annotation class kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi : kotlin/Annotation { // kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi|null[0]
+    constructor <init>() // kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi.<init>|<init>(){}[0]
+}
+
+// Targets: [native]
+final class kotlinx.atomicfu.locks/NativeMutexNode { // kotlinx.atomicfu.locks/NativeMutexNode|null[0]
+    constructor <init>() // kotlinx.atomicfu.locks/NativeMutexNode.<init>|<init>(){}[0]
+
+    final var next // kotlinx.atomicfu.locks/NativeMutexNode.next|{}next[0]
+        final fun <get-next>(): kotlinx.atomicfu.locks/NativeMutexNode? // kotlinx.atomicfu.locks/NativeMutexNode.next.<get-next>|<get-next>(){}[0]
+        final fun <set-next>(kotlinx.atomicfu.locks/NativeMutexNode?) // kotlinx.atomicfu.locks/NativeMutexNode.next.<set-next>|<set-next>(kotlinx.atomicfu.locks.NativeMutexNode?){}[0]
+
+    final fun lock() // kotlinx.atomicfu.locks/NativeMutexNode.lock|lock(){}[0]
+    final fun unlock() // kotlinx.atomicfu.locks/NativeMutexNode.unlock|unlock(){}[0]
+}
+
+// Targets: [native]
+final class kotlinx.atomicfu.locks/ParkingHandle // kotlinx.atomicfu.locks/ParkingHandle|null[0]
+
+// Targets: [native]
 open class kotlinx.atomicfu.locks/SynchronizedObject { // kotlinx.atomicfu.locks/SynchronizedObject|null[0]
     constructor <init>() // kotlinx.atomicfu.locks/SynchronizedObject.<init>|<init>(){}[0]
 
     final fun lock() // kotlinx.atomicfu.locks/SynchronizedObject.lock|lock(){}[0]
     final fun tryLock(): kotlin/Boolean // kotlinx.atomicfu.locks/SynchronizedObject.tryLock|tryLock(){}[0]
     final fun unlock() // kotlinx.atomicfu.locks/SynchronizedObject.unlock|unlock(){}[0]
+}
 
-    // Targets: [androidNative, linux, mingwX64]
-    final val lock // kotlinx.atomicfu.locks/SynchronizedObject.lock|{}lock[0]
-        final fun <get-lock>(): kotlin.concurrent/AtomicReference<kotlinx.atomicfu.locks/SynchronizedObject.LockState> // kotlinx.atomicfu.locks/SynchronizedObject.lock.<get-lock>|<get-lock>(){}[0]
-
-    // Targets: [androidNative, linux, mingwX64]
-    final enum class Status : kotlin/Enum<kotlinx.atomicfu.locks/SynchronizedObject.Status> { // kotlinx.atomicfu.locks/SynchronizedObject.Status|null[0]
-        enum entry FAT // kotlinx.atomicfu.locks/SynchronizedObject.Status.FAT|null[0]
-        enum entry THIN // kotlinx.atomicfu.locks/SynchronizedObject.Status.THIN|null[0]
-        enum entry UNLOCKED // kotlinx.atomicfu.locks/SynchronizedObject.Status.UNLOCKED|null[0]
-
-        final val entries // kotlinx.atomicfu.locks/SynchronizedObject.Status.entries|#static{}entries[0]
-            final fun <get-entries>(): kotlin.enums/EnumEntries<kotlinx.atomicfu.locks/SynchronizedObject.Status> // kotlinx.atomicfu.locks/SynchronizedObject.Status.entries.<get-entries>|<get-entries>#static(){}[0]
-
-        final fun valueOf(kotlin/String): kotlinx.atomicfu.locks/SynchronizedObject.Status // kotlinx.atomicfu.locks/SynchronizedObject.Status.valueOf|valueOf#static(kotlin.String){}[0]
-        final fun values(): kotlin/Array<kotlinx.atomicfu.locks/SynchronizedObject.Status> // kotlinx.atomicfu.locks/SynchronizedObject.Status.values|values#static(){}[0]
-    }
-
-    // Targets: [androidNative, linux, mingwX64]
-    final class LockState { // kotlinx.atomicfu.locks/SynchronizedObject.LockState|null[0]
-        final val mutex // kotlinx.atomicfu.locks/SynchronizedObject.LockState.mutex|{}mutex[0]
-            final fun <get-mutex>(): kotlinx.atomicfu.locks/NativeMutexNode? // kotlinx.atomicfu.locks/SynchronizedObject.LockState.mutex.<get-mutex>|<get-mutex>(){}[0]
-        final val nestedLocks // kotlinx.atomicfu.locks/SynchronizedObject.LockState.nestedLocks|{}nestedLocks[0]
-            final fun <get-nestedLocks>(): kotlin/Int // kotlinx.atomicfu.locks/SynchronizedObject.LockState.nestedLocks.<get-nestedLocks>|<get-nestedLocks>(){}[0]
-        final val ownerThreadId // kotlinx.atomicfu.locks/SynchronizedObject.LockState.ownerThreadId|{}ownerThreadId[0]
-            // Targets: [linuxArm64, linuxX64, mingwX64]
-            final fun <get-ownerThreadId>(): kotlin/ULong? // kotlinx.atomicfu.locks/SynchronizedObject.LockState.ownerThreadId.<get-ownerThreadId>|<get-ownerThreadId>(){}[0]
-
-            // Targets: [androidNativeArm32, androidNativeX86]
-            final fun <get-ownerThreadId>(): kotlin/Int? // kotlinx.atomicfu.locks/SynchronizedObject.LockState.ownerThreadId.<get-ownerThreadId>|<get-ownerThreadId>(){}[0]
-
-            // Targets: [androidNativeArm64, androidNativeX64]
-            final fun <get-ownerThreadId>(): kotlin/Long? // kotlinx.atomicfu.locks/SynchronizedObject.LockState.ownerThreadId.<get-ownerThreadId>|<get-ownerThreadId>(){}[0]
-
-            // Targets: [linuxArm32Hfp]
-            final fun <get-ownerThreadId>(): kotlin/UInt? // kotlinx.atomicfu.locks/SynchronizedObject.LockState.ownerThreadId.<get-ownerThreadId>|<get-ownerThreadId>(){}[0]
-        final val status // kotlinx.atomicfu.locks/SynchronizedObject.LockState.status|{}status[0]
-            final fun <get-status>(): kotlinx.atomicfu.locks/SynchronizedObject.Status // kotlinx.atomicfu.locks/SynchronizedObject.LockState.status.<get-status>|<get-status>(){}[0]
-        final val waiters // kotlinx.atomicfu.locks/SynchronizedObject.LockState.waiters|{}waiters[0]
-            final fun <get-waiters>(): kotlin/Int // kotlinx.atomicfu.locks/SynchronizedObject.LockState.waiters.<get-waiters>|<get-waiters>(){}[0]
-
-        // Targets: [linuxArm64, linuxX64, mingwX64]
-        constructor <init>(kotlinx.atomicfu.locks/SynchronizedObject.Status, kotlin/Int, kotlin/Int, kotlin/ULong? = ..., kotlinx.atomicfu.locks/NativeMutexNode? = ...) // kotlinx.atomicfu.locks/SynchronizedObject.LockState.<init>|<init>(kotlinx.atomicfu.locks.SynchronizedObject.Status;kotlin.Int;kotlin.Int;kotlin.ULong?;kotlinx.atomicfu.locks.NativeMutexNode?){}[0]
-
-        // Targets: [androidNativeArm32, androidNativeX86]
-        constructor <init>(kotlinx.atomicfu.locks/SynchronizedObject.Status, kotlin/Int, kotlin/Int, kotlin/Int? = ..., kotlinx.atomicfu.locks/NativeMutexNode? = ...) // kotlinx.atomicfu.locks/SynchronizedObject.LockState.<init>|<init>(kotlinx.atomicfu.locks.SynchronizedObject.Status;kotlin.Int;kotlin.Int;kotlin.Int?;kotlinx.atomicfu.locks.NativeMutexNode?){}[0]
-
-        // Targets: [androidNativeArm64, androidNativeX64]
-        constructor <init>(kotlinx.atomicfu.locks/SynchronizedObject.Status, kotlin/Int, kotlin/Int, kotlin/Long? = ..., kotlinx.atomicfu.locks/NativeMutexNode? = ...) // kotlinx.atomicfu.locks/SynchronizedObject.LockState.<init>|<init>(kotlinx.atomicfu.locks.SynchronizedObject.Status;kotlin.Int;kotlin.Int;kotlin.Long?;kotlinx.atomicfu.locks.NativeMutexNode?){}[0]
-
-        // Targets: [linuxArm32Hfp]
-        constructor <init>(kotlinx.atomicfu.locks/SynchronizedObject.Status, kotlin/Int, kotlin/Int, kotlin/UInt? = ..., kotlinx.atomicfu.locks/NativeMutexNode? = ...) // kotlinx.atomicfu.locks/SynchronizedObject.LockState.<init>|<init>(kotlinx.atomicfu.locks.SynchronizedObject.Status;kotlin.Int;kotlin.Int;kotlin.UInt?;kotlinx.atomicfu.locks.NativeMutexNode?){}[0]
-    }
+// Targets: [native]
+final object kotlinx.atomicfu.locks/ParkingSupport { // kotlinx.atomicfu.locks/ParkingSupport|null[0]
+    final fun currentThreadHandle(): kotlinx.atomicfu.locks/ParkingHandle // kotlinx.atomicfu.locks/ParkingSupport.currentThreadHandle|currentThreadHandle(){}[0]
+    final fun park(kotlin.time/Duration) // kotlinx.atomicfu.locks/ParkingSupport.park|park(kotlin.time.Duration){}[0]
+    final fun parkUntil(kotlin.time/TimeMark) // kotlinx.atomicfu.locks/ParkingSupport.parkUntil|parkUntil(kotlin.time.TimeMark){}[0]
+    final fun unpark(kotlinx.atomicfu.locks/ParkingHandle) // kotlinx.atomicfu.locks/ParkingSupport.unpark|unpark(kotlinx.atomicfu.locks.ParkingHandle){}[0]
 }
 
 // Targets: [native]
@@ -365,21 +340,11 @@ final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu.locks/SynchronizedObject).k
 // Targets: [native]
 final inline fun <#A: kotlin/Any?> kotlinx.atomicfu.locks/synchronized(kotlinx.atomicfu.locks/SynchronizedObject, kotlin/Function0<#A>): #A // kotlinx.atomicfu.locks/synchronized|synchronized(kotlinx.atomicfu.locks.SynchronizedObject;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
 
-// Targets: [androidNative, linux, mingwX64]
-final class kotlinx.atomicfu.locks/MutexPool { // kotlinx.atomicfu.locks/MutexPool|null[0]
-    constructor <init>(kotlin/Int) // kotlinx.atomicfu.locks/MutexPool.<init>|<init>(kotlin.Int){}[0]
+// Targets: [apple]
+final fun kotlinx.atomicfu.locks/pthreadCondAttrSetClock(kotlinx.cinterop/CPointer<platform.posix/_opaque_pthread_condattr_t>): kotlin/Int // kotlinx.atomicfu.locks/pthreadCondAttrSetClock|pthreadCondAttrSetClock(kotlinx.cinterop.CPointer<platform.posix._opaque_pthread_condattr_t>){}[0]
 
-    final fun allocate(): kotlinx.atomicfu.locks/NativeMutexNode // kotlinx.atomicfu.locks/MutexPool.allocate|allocate(){}[0]
-    final fun release(kotlinx.atomicfu.locks/NativeMutexNode) // kotlinx.atomicfu.locks/MutexPool.release|release(kotlinx.atomicfu.locks.NativeMutexNode){}[0]
-}
-
-// Targets: [androidNative, linux, mingwX64]
-final class kotlinx.atomicfu.locks/NativeMutexNode { // kotlinx.atomicfu.locks/NativeMutexNode|null[0]
-    constructor <init>() // kotlinx.atomicfu.locks/NativeMutexNode.<init>|<init>(){}[0]
-
-    final fun lock() // kotlinx.atomicfu.locks/NativeMutexNode.lock|lock(){}[0]
-    final fun unlock() // kotlinx.atomicfu.locks/NativeMutexNode.unlock|unlock(){}[0]
-}
+// Targets: [androidNative, mingwX64]
+final fun kotlinx.atomicfu.locks/createThreadId(): kotlin/Long // kotlinx.atomicfu.locks/createThreadId|createThreadId(){}[0]
 
 // Targets: [js, wasmJs, wasmWasi]
 final class kotlinx.atomicfu.locks/ReentrantLock { // kotlinx.atomicfu.locks/ReentrantLock|null[0]
