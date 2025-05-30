@@ -19,7 +19,7 @@ class JvmProjectTest {
             jvmCheckAtomicfuInCompileClasspath()
             jvmCheckNoAtomicfuInRuntimeConfigs()
         }
-        jvmSample.checkConsumableDependencies()
+        jvmSample.checkConsumableDependencies(false)
         jvmSample.buildAndCheckBytecode()
     }
 
@@ -30,7 +30,7 @@ class JvmProjectTest {
             jvmCheckAtomicfuInCompileClasspath()
             jvmCheckNoAtomicfuInRuntimeConfigs()
         }
-        jvmSample.checkConsumableDependencies()
+        jvmSample.checkConsumableDependencies(false)
         jvmSample.buildAndCheckBytecode()
     }
     
