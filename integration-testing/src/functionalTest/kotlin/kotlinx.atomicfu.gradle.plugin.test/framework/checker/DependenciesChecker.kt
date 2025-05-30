@@ -12,31 +12,34 @@ import kotlinx.atomicfu.gradle.plugin.test.framework.runner.dependencies
 private val commonAtomicfuDependency = "org.jetbrains.kotlinx:atomicfu:$atomicfuVersion"
 private val jvmAtomicfuDependency = "org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion"
 
-private fun GradleBuild.checkAtomicfuDependencyIsPresent(configurations: List<String>, atomicfuDependency: String) {
+internal fun GradleBuild.withDependencies(block: BuildResult.() -> Unit) {
     val dependencies = dependencies()
+    block(dependencies)
+}
+
+private fun BuildResult.checkAtomicfuDependencyIsPresent(configurations: List<String>, atomicfuDependency: String) {
     for (config in configurations) {
-        val configDependencies = dependencies.getDependenciesForConfig(config)
+        val configDependencies = getDependenciesForConfig(config)
         check(configDependencies.contains(atomicfuDependency)) { "Expected $atomicfuDependency in configuration $config, but it was not found." }
     }
 }
 
-private fun GradleBuild.checkAtomicfuDependencyIsAbsent(configurations: List<String>, atomicfuDependency: String) {
-    val dependencies = dependencies()
+private fun BuildResult.checkAtomicfuDependencyIsAbsent(configurations: List<String>, atomicfuDependency: String) {
     for (config in configurations) {
-        val configDependencies = dependencies.getDependenciesForConfig(config)
+        val configDependencies = getDependenciesForConfig(config)
         check(!configDependencies.contains(atomicfuDependency)) { "Dependency $atomicfuDependency should not be present in the configuration: $config" }
     }
 }
 
-internal fun GradleBuild.jvmCheckAtomicfuInCompileClasspath() {
+internal fun BuildResult.jvmCheckAtomicfuInCompileClasspath() {
     checkAtomicfuDependencyIsPresent(listOf("compileClasspath"), jvmAtomicfuDependency)
 }
 
-internal fun GradleBuild.mppCheckAtomicfuInCompileClasspath(targetName: String) {
+internal fun BuildResult.mppCheckAtomicfuInCompileClasspath(targetName: String) {
     checkAtomicfuDependencyIsPresent(listOf("${targetName}CompileClasspath"), commonAtomicfuDependency)
 }
 
-internal fun GradleBuild.mppCheckAtomicfuInRuntimeClasspath(targetName: String) {
+internal fun BuildResult.mppCheckAtomicfuInRuntimeClasspath(targetName: String) {
     checkAtomicfuDependencyIsPresent(listOf("${targetName}CompileClasspath"), commonAtomicfuDependency)
 }
 
@@ -50,20 +53,20 @@ internal fun GradleBuild.mppCheckAtomicfuInRuntimeClasspath(targetName: String) 
  * The functions below check that `org.jetbrains.kotlinx:atomicfu` dependency is not present in the runtime configurations.
  */
 
-internal fun GradleBuild.jvmCheckNoAtomicfuInRuntimeConfigs() {
+internal fun BuildResult.jvmCheckNoAtomicfuInRuntimeConfigs() {
     checkAtomicfuDependencyIsAbsent(listOf("runtimeClasspath", "apiElements", "runtimeElements"), jvmAtomicfuDependency)
 }
 
-internal fun GradleBuild.mppCheckNoAtomicfuInRuntimeConfigs(targetName: String) {
+internal fun BuildResult.mppCheckNoAtomicfuInRuntimeConfigs(targetName: String) {
     checkAtomicfuDependencyIsAbsent(listOf("${targetName}RuntimeClasspath", "${targetName}ApiElements", "${targetName}RuntimeElements"), commonAtomicfuDependency)
 }
 
-internal fun GradleBuild.mppCheckAtomicfuInApi(targetName: String) {
+internal fun BuildResult.mppCheckAtomicfuInApi(targetName: String) {
     checkAtomicfuDependencyIsPresent(listOf("${targetName}MainApi"), commonAtomicfuDependency)
 }
 
 // Checks Native target of an MPP project
-internal fun GradleBuild.mppNativeCheckAtomicfuInImplementation(targetName: String) {
+internal fun BuildResult.mppNativeCheckAtomicfuInImplementation(targetName: String) {
     checkAtomicfuDependencyIsPresent(listOf("${targetName}MainImplementation"), commonAtomicfuDependency)
 }
 

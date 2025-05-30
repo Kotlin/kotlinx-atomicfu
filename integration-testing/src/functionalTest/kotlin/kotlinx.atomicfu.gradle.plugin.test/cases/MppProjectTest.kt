@@ -14,8 +14,10 @@ class MppProjectTest {
     @Test
     fun testMppWithEnabledJvmIrTransformation() {
         mppSample.enableJvmIrTransformation = true
-        mppSample.mppCheckAtomicfuInCompileClasspath("jvm")
-        mppSample.mppCheckNoAtomicfuInRuntimeConfigs("jvm")
+        mppSample.withDependencies {
+            mppCheckAtomicfuInCompileClasspath("jvm")
+            mppCheckNoAtomicfuInRuntimeConfigs("jvm")
+        }
         mppSample.checkConsumableDependencies()
         mppSample.buildAndCheckBytecode()
     }
@@ -23,8 +25,10 @@ class MppProjectTest {
     @Test
     fun testMppWithDisabledJvmIrTransformation() {
         mppSample.enableJvmIrTransformation = false
-        mppSample.mppCheckAtomicfuInCompileClasspath("jvm")
-        mppSample.mppCheckNoAtomicfuInRuntimeConfigs("jvm")
+        mppSample.withDependencies {
+            mppCheckAtomicfuInCompileClasspath("jvm")
+            mppCheckNoAtomicfuInRuntimeConfigs("jvm")
+        }
         mppSample.checkConsumableDependencies()
         mppSample.buildAndCheckBytecode()
     }
@@ -35,7 +39,7 @@ class MppProjectTest {
         mppSample.enableJsIrTransformation = true
         mppSample.cleanAndBuild()
         mppSample.checkConsumableDependencies()
-        mppSample.mppCheckAtomicfuInApi("js")
+        mppSample.withDependencies { mppCheckAtomicfuInApi("js") }
     }
 
     @Test
@@ -43,24 +47,28 @@ class MppProjectTest {
         mppSample.enableJsIrTransformation = false
         mppSample.cleanAndBuild()
         mppSample.checkConsumableDependencies()
-        mppSample.mppCheckAtomicfuInApi("js")
+        mppSample.withDependencies { mppCheckAtomicfuInApi("js") }
     }
 
     @Test
     fun testMppWasmJsBuild() {
         mppSample.cleanAndBuild()
-        mppSample.mppCheckAtomicfuInCompileClasspath("wasmJs")
-        mppSample.mppCheckAtomicfuInRuntimeClasspath("wasmJs")
         mppSample.checkConsumableDependencies()
-        mppSample.mppCheckAtomicfuInApi("wasmJs")
+        mppSample.withDependencies {
+            mppCheckAtomicfuInCompileClasspath("wasmJs")
+            mppCheckAtomicfuInRuntimeClasspath("wasmJs")
+            mppCheckAtomicfuInApi("wasmJs")
+        }
     }
 
     @Test
     fun testMppWasmWasiBuild() {
-        mppSample.mppCheckAtomicfuInCompileClasspath("wasmWasi")
-        mppSample.mppCheckAtomicfuInRuntimeClasspath("wasmWasi")
         mppSample.checkConsumableDependencies()
-        mppSample.mppCheckAtomicfuInApi("wasmWasi")
+        mppSample.withDependencies {
+            mppCheckAtomicfuInCompileClasspath("wasmWasi")
+            mppCheckAtomicfuInRuntimeClasspath("wasmWasi")
+            mppCheckAtomicfuInApi("wasmWasi")
+        }
     }
 
     @Test
@@ -68,9 +76,11 @@ class MppProjectTest {
         mppSample.enableNativeIrTransformation = true
         mppSample.cleanAndBuild()
         // When Native IR transformations are applied, atomicfu-gradle-plugin still provides transitive atomicfu dependency
-        mppSample.mppNativeCheckAtomicfuInImplementation("macosX64")
         mppSample.checkConsumableDependencies()
-        mppSample.mppCheckAtomicfuInApi("macosX64")
+        mppSample.withDependencies {
+            mppNativeCheckAtomicfuInImplementation("macosX64")
+            mppCheckAtomicfuInApi("macosX64")
+        }
         // TODO: klib checks are skipped for now because of this problem KT-61143
         //mppSample.buildAndCheckNativeKlib()
     }
@@ -79,9 +89,11 @@ class MppProjectTest {
     fun testMppNativeWithDisabledIrTransformation() {
         mppSample.enableNativeIrTransformation = false
         mppSample.cleanAndBuild()
-        mppSample.mppNativeCheckAtomicfuInImplementation("macosX64")
         mppSample.checkConsumableDependencies()
-        mppSample.mppCheckAtomicfuInApi("macosX64")
+        mppSample.withDependencies {
+            mppNativeCheckAtomicfuInImplementation("macosX64")
+            mppCheckAtomicfuInApi("macosX64")
+        }
         // TODO: klib checks are skipped for now because of this problem KT-61143
         //mppSample.buildAndCheckNativeKlib()
     }
