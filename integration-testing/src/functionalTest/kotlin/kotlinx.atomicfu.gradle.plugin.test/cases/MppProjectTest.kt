@@ -8,9 +8,11 @@ import kotlinx.atomicfu.gradle.plugin.test.framework.checker.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
 import kotlin.test.*
 
-class MppProjectTest {
-    private val mppSample: GradleBuild = createGradleBuildFromSources("mpp-sample")
+abstract class MppProjectTest {
+    internal val mppSample: GradleBuild = createGradleBuildFromSources("mpp-sample")
+}
 
+class JvmMppProjectTest : MppProjectTest() {
     @Test
     fun testMppWithEnabledJvmIrTransformation() {
         mppSample.enableJvmIrTransformation = true
@@ -32,7 +34,9 @@ class MppProjectTest {
         mppSample.checkConsumableDependencies(false)
         mppSample.buildAndCheckBytecode()
     }
+}
 
+class JsMppProjectTest : MppProjectTest() {
     // TODO: JS klib will be checked for kotlinx.atomicfu references when this issue KT-61143 is fixed.
     @Test
     fun testMppWithEnabledJsIrTransformation() {
@@ -47,7 +51,9 @@ class MppProjectTest {
         mppSample.checkConsumableDependencies(true)
         mppSample.withDependencies { mppCheckAtomicfuInApi("js") }
     }
+}
 
+class WasmMppProjectTest : MppProjectTest() {
     @Test
     fun testMppWasmJsBuild() {
         mppSample.checkConsumableDependencies(true)
@@ -67,7 +73,9 @@ class MppProjectTest {
             mppCheckAtomicfuInApi("wasmWasi")
         }
     }
+}
 
+class NativeMppProjectTest : MppProjectTest() {
     @Test
     fun testMppNativeWithEnabledIrTransformation() {
         mppSample.enableNativeIrTransformation = true
