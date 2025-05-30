@@ -21,6 +21,6 @@ public actual class ReentrantLock {
     public actual inline fun unlock(): Unit {}
 }
 
-public actual inline fun <T> ReentrantLock.withLock(block: () -> T) = block()
+public actual inline fun <T> ReentrantLock.withLock(block: () -> T): T = block()
 
 public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T = block()
