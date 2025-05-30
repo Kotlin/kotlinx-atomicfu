@@ -73,8 +73,12 @@ public actual fun atomic(initial: Boolean): AtomicBoolean = atomic(initial, None
  * [value] property and various atomic read-modify-write operations
  * like [compareAndSet] and others.
  */
-@Suppress("UNCHECKED_CAST")
-public actual class AtomicRef<T> internal constructor(value: T, val trace: TraceBase) {
+@Suppress("UNCHECKED_CAST", "DEPRECATION")
+public actual class AtomicRef<T> internal constructor(
+    value: T,
+    @Deprecated("The property was intended for internal use only and will be hidden in the future release.")
+    public val trace: TraceBase
+) {
     /**
      * Reading/writing this property maps to read/write of volatile variable.
      */
@@ -89,7 +93,9 @@ public actual class AtomicRef<T> internal constructor(value: T, val trace: Trace
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 
     @InlineOnly
-    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) { this.value = value }
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+        this.value = value
+    }
 
     /**
      * Maps to [AtomicReferenceFieldUpdater.lazySet].
@@ -132,8 +138,12 @@ public actual class AtomicRef<T> internal constructor(value: T, val trace: Trace
  * [value] property and various atomic read-modify-write operations
  * like [compareAndSet] and others.
  */
-@Suppress("UNCHECKED_CAST")
-public actual class AtomicBoolean internal constructor(v: Boolean, val trace: TraceBase) {
+@Suppress("UNCHECKED_CAST", "DEPRECATION")
+public actual class AtomicBoolean internal constructor(
+    v: Boolean,
+    @Deprecated("The property was intended for internal use only and will be hidden in the future release.")
+    public val trace: TraceBase
+) {
 
     @Volatile
     private var _value: Int = if (v) 1 else 0
@@ -142,7 +152,9 @@ public actual class AtomicBoolean internal constructor(v: Boolean, val trace: Tr
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = value
 
     @InlineOnly
-    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { this.value = value }
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
+        this.value = value
+    }
 
     /**
      * Reading/writing this property maps to read/write of volatile variable.
@@ -198,7 +210,12 @@ public actual class AtomicBoolean internal constructor(v: Boolean, val trace: Tr
  * [value] property and various atomic read-modify-write operations
  * like [compareAndSet] and others.
  */
-public actual class AtomicInt internal constructor(value: Int, val trace: TraceBase) {
+@Suppress("DEPRECATION")
+public actual class AtomicInt internal constructor(
+    value: Int,
+    @Deprecated("The property was intended for internal use only and will be hidden in the future release.")
+    public val trace: TraceBase
+) {
     /**
      * Reads/writes of this property maps to read/write of volatile variable.
      */
@@ -213,7 +230,9 @@ public actual class AtomicInt internal constructor(value: Int, val trace: TraceB
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
 
     @InlineOnly
-    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) { this.value = value }
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
+        this.value = value
+    }
 
     /**
      * Maps to [AtomicIntegerFieldUpdater.lazySet].
@@ -323,7 +342,12 @@ public actual class AtomicInt internal constructor(value: Int, val trace: TraceB
  * [value] property and various atomic read-modify-write operations
  * like [compareAndSet] and others.
  */
-public actual class AtomicLong internal constructor(value: Long, val trace: TraceBase) {
+@Suppress("DEPRECATION")
+public actual class AtomicLong internal constructor(
+    value: Long,
+    @Deprecated("The property was intended for internal use only and will be hidden in the future release.")
+    public val trace: TraceBase
+) {
     /**
      * Reads/writes of this property maps to read/write of volatile variable.
      */
@@ -338,7 +362,9 @@ public actual class AtomicLong internal constructor(value: Long, val trace: Trac
     public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Long = value
 
     @InlineOnly
-    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) { this.value = value }
+    public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) {
+        this.value = value
+    }
 
     /**
      * Maps to [AtomicLongFieldUpdater.lazySet].

@@ -5,6 +5,7 @@ package kotlinx.atomicfu.locks
 
 import kotlin.native.ref.createCleaner
 import kotlinx.atomicfu.*
+import kotlin.experimental.ExperimentalNativeApi
 
 
 import kotlin.native.concurrent.ThreadLocal
@@ -93,7 +94,7 @@ public actual open class SynchronizedObject {
         }
     }
 
-    @OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+    @OptIn(ExperimentalNativeApi::class)
     private class MonitorWrapper {
         val nativeMutex = mutexPool.allocate()
         val cleaner = createCleaner(nativeMutex) { mutexPool.release(it) }
@@ -101,7 +102,7 @@ public actual open class SynchronizedObject {
 }
 
 
-public actual fun reentrantLock() = ReentrantLock()
+public actual fun reentrantLock(): ReentrantLock = ReentrantLock()
 
 public actual typealias ReentrantLock = SynchronizedObject
 

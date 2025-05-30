@@ -65,7 +65,7 @@ public expect val traceFormatDefault: TraceFormat
 /**
  * Base class for implementations of `Trace`.
  */
-@OptionalJsName(TRACE_BASE_CONSTRUCTOR)
+@Suppress("DEPRECATION") @OptionalJsName(TRACE_BASE_CONSTRUCTOR)
 public open class TraceBase internal constructor() {
     /**
      * Accepts the logging [event] and appends it to the trace.
