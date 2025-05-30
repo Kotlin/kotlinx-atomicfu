@@ -148,6 +148,10 @@ kotlin {
     }
 
     explicitApi()
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+        freeCompilerArgs.add("-Xdont-warn-on-error-suppression")
+    }
 }
 
 val transformer: Configuration by configurations.creating

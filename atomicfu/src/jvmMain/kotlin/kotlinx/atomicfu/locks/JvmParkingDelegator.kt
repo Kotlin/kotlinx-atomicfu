@@ -12,5 +12,4 @@ internal actual object ParkingDelegator {
 
 }
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias ParkingData = Thread

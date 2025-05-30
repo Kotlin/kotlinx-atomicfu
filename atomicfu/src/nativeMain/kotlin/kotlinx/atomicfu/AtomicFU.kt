@@ -32,7 +32,6 @@ public actual fun atomic(initial: Boolean): AtomicBoolean = atomic(initial, None
 
 // ==================================== AtomicRef ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual class AtomicRef<T> internal constructor(@PublishedApi internal val a: KAtomicRef<T>) {
     public actual inline var value: T
         get() = a.value
@@ -67,7 +66,6 @@ public actual class AtomicRef<T> internal constructor(@PublishedApi internal val
 
 // ==================================== AtomicBoolean ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual class AtomicBoolean internal constructor(@PublishedApi internal val a: KAtomicInt) {
     public actual inline var value: Boolean
         get() = a.value != 0
@@ -101,7 +99,6 @@ public actual class AtomicBoolean internal constructor(@PublishedApi internal va
 
 // ==================================== AtomicInt ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual class AtomicInt internal constructor(@PublishedApi internal val a: KAtomicInt) {
     public actual inline var value: Int
         get() = a.value
@@ -141,7 +138,6 @@ public actual class AtomicInt internal constructor(@PublishedApi internal val a:
 
 // ==================================== AtomicLong ====================================
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual class AtomicLong internal constructor(@PublishedApi internal val a: KAtomicLong) {
     public actual inline var value: Long
         get() = a.value
