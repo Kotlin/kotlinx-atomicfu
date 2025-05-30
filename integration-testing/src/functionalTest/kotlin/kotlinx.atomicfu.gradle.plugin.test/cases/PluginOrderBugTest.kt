@@ -28,11 +28,12 @@ class PluginOrderBugTest {
     @Test
     fun testTransitiveKotlinStdlibDependency() {
         pluginOrderBugProject.extraProperties.add("-Pkotlin_version=1.9.20")
-        assertTrue(pluginOrderBugProject.getKotlinVersion() == "1.9.20")
+        val projectKotlinVersion = pluginOrderBugProject.getKotlinVersion()
+        assertTrue(projectKotlinVersion == "1.9.20")
         val dependencies = pluginOrderBugProject.dependencies()
         assertFalse(dependencies.output.contains("org.jetbrains.kotlin:kotlin-stdlib:{strictly $kotlinVersion}"),
             "Strict requirement for 'org.jetbrains.kotlin:kotlin-stdlib:{strictly $kotlinVersion}' was found in the project ${pluginOrderBugProject.projectName} dependencies, " +
-                    "while Kotlin version used in the project is ${pluginOrderBugProject.getKotlinVersion()}"
+                    "while Kotlin version used in the project is $projectKotlinVersion"
         )
     }
 }
