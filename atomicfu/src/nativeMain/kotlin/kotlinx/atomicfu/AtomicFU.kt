@@ -108,7 +108,7 @@ public actual class AtomicInt internal constructor(@PublishedApi internal val a:
         set(value) { a.value = value }
 
     @InlineOnly
-    actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
+    public actual inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Int = value
 
     @InlineOnly
     public actual inline operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) { this.value = value }

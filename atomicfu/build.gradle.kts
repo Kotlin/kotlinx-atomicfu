@@ -146,6 +146,8 @@ kotlin {
             }
         }
     }
+
+    explicitApi()
 }
 
 val transformer: Configuration by configurations.creating

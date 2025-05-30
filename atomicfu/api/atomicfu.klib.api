@@ -1,8 +1,6 @@
 // Klib ABI Dump
 // Targets: [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, js, linuxArm32Hfp, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, wasmJs, wasmWasi, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
 // Alias: native => [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, linuxArm32Hfp, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
-// Alias: androidNative => [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86]
-// Alias: apple => [iosArm64, iosSimulatorArm64, iosX64, macosArm64, macosX64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
 // Rendering settings:
 // - Signature version: 2
 // - Show manifest properties: true
@@ -303,10 +301,6 @@ open annotation class kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi : kot
 final class kotlinx.atomicfu.locks/NativeMutexNode { // kotlinx.atomicfu.locks/NativeMutexNode|null[0]
     constructor <init>() // kotlinx.atomicfu.locks/NativeMutexNode.<init>|<init>(){}[0]
 
-    final var next // kotlinx.atomicfu.locks/NativeMutexNode.next|{}next[0]
-        final fun <get-next>(): kotlinx.atomicfu.locks/NativeMutexNode? // kotlinx.atomicfu.locks/NativeMutexNode.next.<get-next>|<get-next>(){}[0]
-        final fun <set-next>(kotlinx.atomicfu.locks/NativeMutexNode?) // kotlinx.atomicfu.locks/NativeMutexNode.next.<set-next>|<set-next>(kotlinx.atomicfu.locks.NativeMutexNode?){}[0]
-
     final fun lock() // kotlinx.atomicfu.locks/NativeMutexNode.lock|lock(){}[0]
     final fun unlock() // kotlinx.atomicfu.locks/NativeMutexNode.unlock|unlock(){}[0]
 }
@@ -339,12 +333,6 @@ final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu.locks/SynchronizedObject).k
 
 // Targets: [native]
 final inline fun <#A: kotlin/Any?> kotlinx.atomicfu.locks/synchronized(kotlinx.atomicfu.locks/SynchronizedObject, kotlin/Function0<#A>): #A // kotlinx.atomicfu.locks/synchronized|synchronized(kotlinx.atomicfu.locks.SynchronizedObject;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
-
-// Targets: [apple]
-final fun kotlinx.atomicfu.locks/pthreadCondAttrSetClock(kotlinx.cinterop/CPointer<platform.posix/_opaque_pthread_condattr_t>): kotlin/Int // kotlinx.atomicfu.locks/pthreadCondAttrSetClock|pthreadCondAttrSetClock(kotlinx.cinterop.CPointer<platform.posix._opaque_pthread_condattr_t>){}[0]
-
-// Targets: [androidNative, mingwX64]
-final fun kotlinx.atomicfu.locks/createThreadId(): kotlin/Long // kotlinx.atomicfu.locks/createThreadId|createThreadId(){}[0]
 
 // Targets: [js, wasmJs, wasmWasi]
 final class kotlinx.atomicfu.locks/ReentrantLock { // kotlinx.atomicfu.locks/ReentrantLock|null[0]

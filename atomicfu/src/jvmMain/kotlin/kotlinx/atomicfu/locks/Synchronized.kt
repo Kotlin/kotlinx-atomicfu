@@ -7,7 +7,7 @@ import kotlin.internal.InlineOnly
 public actual typealias SynchronizedObject = Any
 
 @InlineOnly
-public actual inline fun reentrantLock() = ReentrantLock()
+public actual inline fun reentrantLock(): ReentrantLock = ReentrantLock()
 
 public actual typealias ReentrantLock = java.util.concurrent.locks.ReentrantLock
 

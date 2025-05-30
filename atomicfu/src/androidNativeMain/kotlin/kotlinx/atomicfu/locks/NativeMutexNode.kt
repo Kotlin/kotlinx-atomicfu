@@ -12,8 +12,8 @@ import kotlinx.cinterop.ptr
 import platform.posix.*
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
-actual class NativeMutexNode {
-    actual var next: NativeMutexNode? = null
+public actual class NativeMutexNode {
+    internal actual var next: NativeMutexNode? = null
 
     private val arena: Arena = Arena()
     private val cond: pthread_cond_t = arena.alloc()
@@ -28,11 +28,11 @@ actual class NativeMutexNode {
         require(pthread_mutex_init(mutex.ptr, attr.ptr) == 0)
     }
 
-    actual fun lock() {
+    public actual fun lock() {
         pthread_mutex_lock(mutex.ptr)
     }
 
-    actual fun unlock() {
+    public actual fun unlock() {
         pthread_mutex_unlock(mutex.ptr)
     }
 
@@ -54,4 +54,4 @@ actual class NativeMutexNode {
 
 private val threadCounter = atomic(0L)
 
-actual fun createThreadId(): Long = threadCounter.incrementAndGet()
+internal actual fun createThreadId(): Long = threadCounter.incrementAndGet()

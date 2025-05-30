@@ -6,16 +6,16 @@ import kotlin.time.DurationUnit
 import kotlin.time.TimeMark
 
 @ExperimentalThreadBlockingApi
-actual typealias ParkingHandle = Thread
+public actual typealias ParkingHandle = Thread
 
 @ExperimentalThreadBlockingApi
-actual object ParkingSupport {
-    actual fun park(timeout: Duration) {
+public actual object ParkingSupport {
+    public actual fun park(timeout: Duration) {
         if (timeout == Duration.INFINITE) LockSupport.park()
         else LockSupport.parkNanos(timeout.toLong(DurationUnit.NANOSECONDS))
     }
 
-    actual fun parkUntil(deadline: TimeMark) = park(deadline.elapsedNow() * -1)
-    actual fun unpark(handle: ParkingHandle) = LockSupport.unpark(handle)
-    actual fun currentThreadHandle(): ParkingHandle = Thread.currentThread()
+    public actual fun parkUntil(deadline: TimeMark): Unit = park(deadline.elapsedNow() * -1)
+    public actual fun unpark(handle: ParkingHandle): Unit = LockSupport.unpark(handle)
+    public actual fun currentThreadHandle(): ParkingHandle = Thread.currentThread()
 }

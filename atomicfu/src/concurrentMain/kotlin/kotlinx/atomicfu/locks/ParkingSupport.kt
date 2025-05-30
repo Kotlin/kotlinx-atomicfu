@@ -41,7 +41,7 @@ import kotlin.time.TimeMark
  * it is advised to use a higher level concurrency API like `kotlinx.coroutines`
  */
 @ExperimentalThreadBlockingApi
-expect object ParkingSupport {
+public expect object ParkingSupport {
 
     /**
      * Parks the current thread for [timeout] duration.
@@ -53,7 +53,7 @@ expect object ParkingSupport {
      * - (Only on JVM) The thread was interrupted. The interrupted flag stays set after wakeup.
      * A future call to [park] this thread will return immediately, unless the `Thread.interrupted` flag is cleared.
      */
-    fun park(timeout: Duration)
+    public fun park(timeout: Duration)
 
     /**
      * Parks the current thread until [deadline] is reached.
@@ -65,7 +65,7 @@ expect object ParkingSupport {
      * - (Only on JVM) The thread was interrupted. The interrupted flag stays set after wakeup.
      * A future call to [park] this thread will return immediately, unless the `Thread.interrupted` flag is cleared.
      */
-    fun parkUntil(deadline: TimeMark)
+    public fun parkUntil(deadline: TimeMark)
 
     /**
      * Unparks the thread corresponding to [handle].
@@ -76,7 +76,7 @@ expect object ParkingSupport {
      * Meaning, when two consecutive [unpark] calls are made while the corresponding thread is not parked,
      * only the next park call will return immediately — [unpark] calls are not accumulated.
      */
-    fun unpark(handle: ParkingHandle)
+    public fun unpark(handle: ParkingHandle)
 
     /**
      * Returns the [ParkingHandle] corresponding to the current thread.
@@ -89,7 +89,7 @@ expect object ParkingSupport {
      * Note: this function returns a different [ParkingHandle] for each thread.
      * Therefore, caching a single parking handle for multiple threads will lead to unexpected behaviour.
      */
-    fun currentThreadHandle(): ParkingHandle
+    public fun currentThreadHandle(): ParkingHandle
 }
 
 /**
@@ -100,7 +100,7 @@ expect object ParkingSupport {
  * on how to use [ParkingHandle] and how parking works in general.
  */
 @ExperimentalThreadBlockingApi
-expect class ParkingHandle
+public expect class ParkingHandle
 
 /**
  * Marks [ParkingHandle] and [ParkingSupport] API as experimental.

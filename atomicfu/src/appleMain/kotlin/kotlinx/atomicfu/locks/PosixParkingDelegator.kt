@@ -10,4 +10,4 @@ import platform.posix.*
 internal actual val posixGetTimeClockId: Int
     get() = CLOCK_REALTIME
 
-actual fun pthreadCondAttrSetClock(attr: CPointer<pthread_condattr_t>): Int = 0
+internal actual fun pthreadCondAttrSetClock(attr: CPointer<pthread_condattr_t>): Int = 0
