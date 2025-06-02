@@ -57,7 +57,7 @@ internal class NativeMutex(
         }
 
         // Otherwise try acquire lock
-        val newState = state.incrementAndGet()
+        val newState = this@NativeMutex.state.incrementAndGet()
         // If new state 1 than I have acquired lock skipping queue.
         if (newState == 1) {
             owningThread.value = currentParkingHandle
@@ -92,14 +92,14 @@ internal class NativeMutex(
         if (newHoldCount < 0) throw IllegalStateException("Thread unlocked more than it locked")
 
         // Lock is released by decrementing (only if decremented to 0)
-        val currentState = state.decrementAndGet()
+        val currentState = this@NativeMutex.state.decrementAndGet()
         if (currentState == 0) return
 
         // If waiters wake up the first in line. The woken up thread will dequeue the node.
         if (currentState > 0) {
             var nextParker = parkingQueue.getHead()
             // If cancelled And there are other waiting nodes, go to next
-            while (!nextParker.nodeWake() && state.decrementAndGet() > 0) {
+            while (!nextParker.nodeWake() && this@NativeMutex.state.decrementAndGet() > 0) {
                 // We only dequeue here in case of timeoud out node.
                 // Dequeueing woken nodes can lead to issues when pre-unparked.
                 parkingQueue.dequeue()
@@ -111,7 +111,7 @@ internal class NativeMutex(
 
     fun tryLock(): Boolean {
         val currentThreadId = ParkingSupport.currentThreadHandle()
-        if (holdCount.value > 0 && owningThread.value == currentThreadId || state.compareAndSet(0, 1)) {
+        if (holdCount.value > 0 && owningThread.value == currentThreadId || this@NativeMutex.state.compareAndSet(0, 1)) {
             owningThread.value = currentThreadId
             holdCount.incrementAndGet()
             return true
@@ -156,40 +156,50 @@ internal class NativeMutex(
 
     }
 
+    /**
+     * A [Node] is one spot in the mutex's queue.
+     * It has a reference to the [next] node in the queue.
+     * 
+     * It can be in one of four [state].
+     * - [Empty] is the initial state where the node is not in use yet.
+     * - [ParkingHandle] is the waiting state.
+     * - [Awoken] is the woken state.
+     * - [TimedOut] is the state after timeout.
+     */
     inner class Node {
-        val parker = atomic<Any>(Empty)
+        val state = atomic<Any>(Empty)
         val next = atomic<Node?>(null)
         
         fun nodeWait(duration: Duration): Boolean {
             val deadline = TimeSource.Monotonic.markNow() + duration
             while (true) {
-                when (parker.value) {
-                    Empty -> if (parker.compareAndSet(Empty, ParkingSupport.currentThreadHandle())) {
+                when (state.value) {
+                    Empty -> if (state.compareAndSet(Empty, ParkingSupport.currentThreadHandle())) {
                         park(deadline - TimeSource.Monotonic.markNow())
                         if (deadline < TimeSource.Monotonic.markNow()) 
-                            parker.compareAndSet(ParkingSupport.currentThreadHandle(), Cancelled)
+                            state.compareAndSet(ParkingSupport.currentThreadHandle(), TimedOut)
                     }
                     is ParkingHandle -> {
                         park(deadline - TimeSource.Monotonic.markNow())
                         if (deadline < TimeSource.Monotonic.markNow())
-                            parker.compareAndSet(ParkingSupport.currentThreadHandle(), Cancelled)
+                            state.compareAndSet(ParkingSupport.currentThreadHandle(), TimedOut)
                     }
                     Awoken -> return true
-                    Cancelled -> return false
+                    TimedOut -> return false
                 }
             }
         }
         
         fun nodeWake(): Boolean {
             while (true) {
-                when (val currentState = parker.value) {
-                    Empty -> if (parker.compareAndSet(Empty, Awoken)) return true
-                    is ParkingHandle -> if (parker.compareAndSet(currentState, Awoken)) {
+                when (val currentState = state.value) {
+                    Empty -> if (state.compareAndSet(Empty, Awoken)) return true
+                    is ParkingHandle -> if (state.compareAndSet(currentState, Awoken)) {
                         unpark(currentState)
                         return true
                     }
                     Awoken -> throw IllegalStateException("Node is already woken")
-                    Cancelled -> return false
+                    TimedOut -> return false
                 }
             }
         }
@@ -197,5 +207,5 @@ internal class NativeMutex(
     
     private object Empty 
     private object Awoken
-    private object Cancelled
+    private object TimedOut
 }

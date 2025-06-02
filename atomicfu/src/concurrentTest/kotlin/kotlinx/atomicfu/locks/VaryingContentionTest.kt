@@ -10,15 +10,9 @@ class VaryingContentionTest {
     fun varyingContentionTest() {
         val lockInt = LockInt()
         multiTestLock(lockInt, 10, 100000)
-        println("Varying Contention Test 1")
         multiTestLock(lockInt, 1, 200000)
-        println("Varying Contention Test 2")
         multiTestLock(lockInt, 20, 300000)
-        println("Varying Contention Test 3")
         multiTestLock(lockInt, 1, 400000)
-        println("Varying Contention Test 4")
-        multiTestLock(lockInt, 2, 1000000)
-        println("Varying Contention Test Done")
     }
 
     
@@ -53,7 +47,7 @@ class VaryingContentionTest {
     )
     
     class LockInt {
-        private val lock = NativeMutex()
+        private val lock = SynchronousMutex()
         private val check = atomic(0)
         var n = 0
         fun lock() {
