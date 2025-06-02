@@ -6,43 +6,38 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val N_THREADS = 5
+private const val TARGET_COUNT = 1_000
+private fun getRandomWait() = Random.nextInt(0, 5).toLong()
+private fun getRandomTimeout() = Random.nextInt(1, 10)
+
 class LockWithTimeoutTests {
-
-    // Helper class with atomic counter in constructor
-    class AtomicCounter(initialValue: Int = 0) {
-        val counter = atomic(initialValue)
-
-        fun incrementAndGet(): Int = counter.incrementAndGet()
-        val value: Int get() = counter.value
-    }
+    val counter = atomic(0)
 
     @Test
     fun timeoutLockStressTest() {
         val mutex = SynchronousMutex()
-        val counter = AtomicCounter(0)
-        val targetCount = 1000
         val threads = mutableListOf<TestThread>()
 
-        // Create 5 test threads
-        repeat(5) { threadId ->
+        repeat(N_THREADS) { threadId ->
             val thread = testThread {
-                while (counter.value < targetCount) {
+                while (counter.value < TARGET_COUNT) {
                     // Try to acquire the lock with a timeout
-                    if (mutex.tryLock((Random.nextInt(1, 10)).milliseconds)) {
+                    if (mutex.tryLock(getRandomTimeout().milliseconds)) {
                         try {
                             // Increment the counter if lock was acquired
-                            if (counter.value < targetCount) {
+                            if (counter.value < TARGET_COUNT) {
                                 counter.incrementAndGet()
                             }
-                            // Random sleep to increase variation
-                            sleepMillis(Random.nextInt(0, 5).toLong())
+                            // Random sleep after increment to increase variation
+                            sleepMillis(getRandomWait())
                         } finally {
                             mutex.unlock()
                         }
                     }
 
-                    // Random sleep between attempts to increase variation
-                    sleepMillis(Random.nextInt(0, 3).toLong())
+                    // Random sleep between increment attempts to increase variation
+                    sleepMillis(getRandomWait())
                 }
             }
             threads.add(thread)
@@ -52,7 +47,7 @@ class LockWithTimeoutTests {
         threads.forEach { it.join() }
 
         // Verify the counter reached the target
-        assertEquals(targetCount, counter.value)
+        assertEquals(TARGET_COUNT, counter.value)
     }
 
 }

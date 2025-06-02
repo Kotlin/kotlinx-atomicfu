@@ -127,7 +127,7 @@ kotlin {
 
         jvmTest {
             dependencies {
-                implementation("org.jetbrains.kotlinx:lincheck:2.38")
+                implementation("org.jetbrains.kotlinx:lincheck:2.39")
                 implementation("org.jetbrains.kotlin:kotlin-reflect")
                 implementation("org.jetbrains.kotlin:kotlin-test")
                 implementation("org.jetbrains.kotlin:kotlin-test-junit")
