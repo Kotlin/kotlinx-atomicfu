@@ -15,14 +15,12 @@ class MultiModuleTest {
     @Test
     fun testMppWithDisabledJvmIrTransformation() {
         multiModuleTest.enableJvmIrTransformation = false
-        multiModuleTest.cleanAndBuild()
         multiModuleTest.buildAndCheckBytecode()
     }
 
     @Test
     fun testMppWithEnabledJvmIrTransformation() {
         multiModuleTest.enableJvmIrTransformation = true
-        multiModuleTest.cleanAndBuild()
         multiModuleTest.buildAndCheckBytecode()
     }
 }

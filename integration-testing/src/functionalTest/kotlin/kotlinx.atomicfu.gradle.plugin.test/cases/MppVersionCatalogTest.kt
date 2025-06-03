@@ -14,7 +14,6 @@ class MppVersionCatalogTest {
     fun testBuildWithKotlinNewerThan_1_9_0() {
         mppWithVersionCatalog.enableJvmIrTransformation = true
         mppWithVersionCatalog.enableNativeIrTransformation = true
-        mppWithVersionCatalog.cleanAndBuild()
         mppWithVersionCatalog.buildAndCheckBytecode()
     }
 }

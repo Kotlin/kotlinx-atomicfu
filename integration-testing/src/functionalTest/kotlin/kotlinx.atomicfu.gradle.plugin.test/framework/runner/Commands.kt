@@ -28,6 +28,11 @@ internal fun GradleBuild.publishToLocalRepository(): BuildResult =
         require(it.isSuccessful) { "${this.projectName}:publish task FAILED: ${it.output} " }
     }
 
+internal fun GradleBuild.buildAndPublishToLocalRepository(): BuildResult =
+    runGradle(listOf("clean", "build", "publish")).also {
+        require(it.isSuccessful) { "${this.projectName}:publish task FAILED: ${it.output} " }
+    }
+
 internal fun GradleBuild.getKotlinVersion(): String {
     val classpath = getProjectClasspath()
     val kpg = classpath.firstOrNull { it.startsWith("org.jetbrains.kotlin:kotlin-gradle-plugin") }
