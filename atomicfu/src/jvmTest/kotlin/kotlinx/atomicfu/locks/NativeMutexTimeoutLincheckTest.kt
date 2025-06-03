@@ -16,6 +16,7 @@ class NativeMutexTimeoutLincheckTest {
         fun inc(): Int = ++value
         fun get() = value
     }
+    
     private val counter = Counter()
     private val localParkers = ConcurrentHashMap<ParkingHandle, ThreadParker>()
 

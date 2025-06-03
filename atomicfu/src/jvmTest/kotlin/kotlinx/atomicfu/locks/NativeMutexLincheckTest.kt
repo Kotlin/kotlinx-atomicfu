@@ -1,7 +1,5 @@
-import kotlinx.atomicfu.locks.NativeMutex
-import kotlinx.atomicfu.locks.ParkingHandle
-import kotlinx.atomicfu.locks.ParkingSupport
-import kotlinx.atomicfu.locks.ThreadParker
+package kotlinx.atomicfu.locks
+
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.check
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.ModelCheckingOptions
@@ -17,6 +15,7 @@ class NativeMutexLincheckTest {
         fun inc(): Int = ++value
         fun get() = value
     }
+    
     private val counter = Counter()
     private val localParkers = ConcurrentHashMap<ParkingHandle, ThreadParker>()
     
