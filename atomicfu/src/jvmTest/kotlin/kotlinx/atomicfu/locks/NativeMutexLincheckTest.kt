@@ -19,10 +19,12 @@ class NativeMutexLincheckTest {
     private val counter = Counter()
     private val localParkers = ConcurrentHashMap<ParkingHandle, ThreadParker>()
     
-    private val lock = NativeMutex(
-        park = { localParkers[ParkingSupport.currentThreadHandle()]!!.park() },
-        unpark = { localParkers[it]!!.unpark() }
-    )
+    private val lock by lazy {
+        NativeMutex(
+            park = { localParkers[ParkingSupport.currentThreadHandle()]!!.park() },
+            unpark = { localParkers[it]!!.unpark() }
+        )
+    }
 
     @Test
     fun modelCheckingTest(): Unit = ModelCheckingOptions()
