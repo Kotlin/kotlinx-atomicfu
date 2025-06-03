@@ -1,7 +1,5 @@
-import kotlinx.atomicfu.locks.NativeMutex
-import kotlinx.atomicfu.locks.ParkingHandle
-import kotlinx.atomicfu.locks.ParkingSupport
-import kotlinx.atomicfu.locks.ThreadParker
+package kotlinx.atomicfu.locks
+
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.check
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.ModelCheckingOptions
@@ -42,8 +40,8 @@ class NativeMutexLincheckReentrantTest {
     fun inc(): Int {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         lock.lock()
-        if (!lock.tryLock()) throw IllegalStateException("couldnt reent with trylock")
-        if (!lock.tryLock()) throw IllegalStateException("couldnt reent with trylock")
+        if (!lock.tryLock()) throw IllegalStateException("couldn't reenter with trylock")
+        if (!lock.tryLock()) throw IllegalStateException("couldn't reenter with trylock")
         val result = counter.inc()
         lock.unlock()
         lock.unlock()
@@ -55,8 +53,8 @@ class NativeMutexLincheckReentrantTest {
     fun get(): Int {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         lock.lock()
-        if (!lock.tryLock()) throw IllegalStateException("couldnt reent with trylock")
-        if (!lock.tryLock()) throw IllegalStateException("couldnt reent with trylock")
+        if (!lock.tryLock()) throw IllegalStateException("couldn't reenter with trylock")
+        if (!lock.tryLock()) throw IllegalStateException("couldn't reenter with trylock")
         val result = counter.get()
         lock.unlock()
         lock.unlock()
