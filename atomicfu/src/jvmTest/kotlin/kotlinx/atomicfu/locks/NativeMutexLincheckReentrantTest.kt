@@ -18,7 +18,8 @@ class NativeMutexLincheckReentrantTest {
     
     private val counter = Counter()
     private val localParkers = ConcurrentHashMap<ParkingHandle, ThreadParker>()
-    
+
+    // Lazy prevents rare issue with lincheck not finding lambdas
     private val lock by lazy {
         NativeMutex(
             park = { localParkers[ParkingSupport.currentThreadHandle()]!!.park() },
