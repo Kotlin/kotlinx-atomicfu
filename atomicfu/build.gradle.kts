@@ -127,6 +127,7 @@ kotlin {
 
         jvmTest {
             dependencies {
+                implementation("org.jetbrains.kotlinx:lincheck:2.39")
                 implementation("org.jetbrains.kotlin:kotlin-reflect")
                 implementation("org.jetbrains.kotlin:kotlin-test")
                 implementation("org.jetbrains.kotlin:kotlin-test-junit")
@@ -206,7 +207,14 @@ val transformedTestFU_current by tasks.registering(Test::class) {
     dependsOn(transformFU)
     classpath = files(configurations.getByName("jvmTestRuntimeClasspath"), classesPostTransformFU)
     testClassesDirs = project.files(classesPostTransformFU)
-    exclude("**/*LFTest.*", "**/TraceToStringTest.*", "**/AtomicfuReferenceJsTest.*")
+    exclude(
+        "**/*LFTest.*",
+        "**/TraceToStringTest.*",
+        "**/AtomicfuReferenceJsTest.*",
+        "**/NativeMutexLincheckTest.*",
+        "**/NativeMutexLincheckReentrantTest.*",
+        "**/NativeMutexTimeoutLincheckTest.*"
+    )
     filter { isFailOnNoMatchingTests = false }
     launcherForJdk(LAUNCHER_JDK_VERSION)
 }
@@ -220,7 +228,10 @@ val transformedTestBOTH_current by tasks.registering(Test::class) {
         "**/TraceToStringTest.*",
         "**/TopLevelGeneratedDeclarationsReflectionTest.*",
         "**/SyntheticFUFieldsTest.*",
-        "**/AtomicfuReferenceJsTest.*"
+        "**/AtomicfuReferenceJsTest.*",
+        "**/NativeMutexLincheckTest.*",
+        "**/NativeMutexLincheckReentrantTest.*",
+        "**/NativeMutexTimeoutLincheckTest.*"
     )
     filter { isFailOnNoMatchingTests = false }
     launcherForJdk(LAUNCHER_JDK_VERSION)
@@ -235,7 +246,10 @@ val transformedTestVH by tasks.registering(Test::class) {
         "**/TraceToStringTest.*",
         "**/TopLevelGeneratedDeclarationsReflectionTest.*",
         "**/SyntheticFUFieldsTest.*",
-        "**/AtomicfuReferenceJsTest.*"
+        "**/AtomicfuReferenceJsTest.*",
+        "**/NativeMutexLincheckTest.*",
+        "**/NativeMutexLincheckReentrantTest.*",
+        "**/NativeMutexTimeoutLincheckTest.*"
     )
     filter { isFailOnNoMatchingTests = false }
 
