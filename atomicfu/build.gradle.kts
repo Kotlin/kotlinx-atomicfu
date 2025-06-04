@@ -207,7 +207,14 @@ val transformedTestFU_current by tasks.registering(Test::class) {
     dependsOn(transformFU)
     classpath = files(configurations.getByName("jvmTestRuntimeClasspath"), classesPostTransformFU)
     testClassesDirs = project.files(classesPostTransformFU)
-    exclude("**/*LFTest.*", "**/TraceToStringTest.*", "**/AtomicfuReferenceJsTest.*")
+    exclude(
+        "**/*LFTest.*",
+        "**/TraceToStringTest.*",
+        "**/AtomicfuReferenceJsTest.*",
+        "**/NativeMutexLincheckTest.*",
+        "**/NativeMutexLincheckReentrantTest.*",
+        "**/NativeMutexTimeoutLincheckTest.*"
+    )
     filter { isFailOnNoMatchingTests = false }
     launcherForJdk(LAUNCHER_JDK_VERSION)
 }
@@ -221,7 +228,10 @@ val transformedTestBOTH_current by tasks.registering(Test::class) {
         "**/TraceToStringTest.*",
         "**/TopLevelGeneratedDeclarationsReflectionTest.*",
         "**/SyntheticFUFieldsTest.*",
-        "**/AtomicfuReferenceJsTest.*"
+        "**/AtomicfuReferenceJsTest.*",
+        "**/NativeMutexLincheckTest.*",
+        "**/NativeMutexLincheckReentrantTest.*",
+        "**/NativeMutexTimeoutLincheckTest.*"
     )
     filter { isFailOnNoMatchingTests = false }
     launcherForJdk(LAUNCHER_JDK_VERSION)
@@ -236,7 +246,10 @@ val transformedTestVH by tasks.registering(Test::class) {
         "**/TraceToStringTest.*",
         "**/TopLevelGeneratedDeclarationsReflectionTest.*",
         "**/SyntheticFUFieldsTest.*",
-        "**/AtomicfuReferenceJsTest.*"
+        "**/AtomicfuReferenceJsTest.*",
+        "**/NativeMutexLincheckTest.*",
+        "**/NativeMutexLincheckReentrantTest.*",
+        "**/NativeMutexTimeoutLincheckTest.*"
     )
     filter { isFailOnNoMatchingTests = false }
 

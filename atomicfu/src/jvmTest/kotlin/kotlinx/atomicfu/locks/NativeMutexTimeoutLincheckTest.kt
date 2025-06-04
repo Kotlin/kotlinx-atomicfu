@@ -20,13 +20,14 @@ class NativeMutexTimeoutLincheckTest {
     private val counter = Counter()
     private val localParkers = ConcurrentHashMap<ParkingHandle, ThreadParker>()
 
-    // Lazy prevents rare issue with lincheck not finding lambdas
+    // Lazy prevents issue with lincheck not finding lambdas
     private val lock by lazy {
         NativeMutex(
             park = { localParkers[ParkingSupport.currentThreadHandle()]!!.parkNanos(it.inWholeNanoseconds) },
             unpark = { localParkers[it]!!.unpark() }
         )
     }
+    
 
     @Test
     fun modelCheckingTest(): Unit = ModelCheckingOptions()
