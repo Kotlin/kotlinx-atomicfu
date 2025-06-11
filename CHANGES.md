@@ -1,5 +1,8 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.28.0
+* No issues reported for `0.28.0-beta`, so the `0.28.0` release only updates the version and includes exactly the same changes as version `0.28.0`. 
+
 # Version 0.28.0-beta
 * Updated ASM version to support JDK 24 (#429)
 * Implemented thread parking primitives (#498)
