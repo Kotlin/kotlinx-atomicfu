@@ -146,3 +146,15 @@ public final class kotlinx/atomicfu/locks/ParkingSupport {
 	public final fun unpark (Ljava/lang/Thread;)V
 }
 
+public final class kotlinx/atomicfu/locks/SynchronousMutex {
+	public fun <init> ()V
+	public final fun lock ()V
+	public final fun tryLock ()Z
+	public final fun tryLock-LRDsOJo (J)Z
+	public final fun unlock ()V
+}
+
+public final class kotlinx/atomicfu/locks/SynchronousMutexKt {
+	public static final fun withLock (Lkotlinx/atomicfu/locks/SynchronousMutex;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
