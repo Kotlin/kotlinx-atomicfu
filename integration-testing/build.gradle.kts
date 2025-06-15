@@ -107,4 +107,9 @@ tasks.withType<Test> {
     // Pass the path to the cache redirector
     val cacheRedirectorPath = project.file("../build-settings-logic/src/main/kotlin/atomicfu-cache-redirector.settings.gradle.kts")
     systemProperty("cache.redirector.path", cacheRedirectorPath.absolutePath)
+
+    val forks = project.providers.gradleProperty("testing.max.forks").orNull?.toInt()
+        ?: (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+
+    maxParallelForks = forks
 }
