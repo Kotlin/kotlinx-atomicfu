@@ -1,0 +1,357 @@
+// Klib ABI Dump
+// Targets: [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, js, linuxArm32Hfp, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, wasmJs, wasmWasi, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
+// Alias: native => [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, linuxArm32Hfp, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <org.jetbrains.kotlinx:atomicfu>
+final class <#A: kotlin/Any?> kotlinx.atomicfu/AtomicArray { // kotlinx.atomicfu/AtomicArray|null[0]
+    final val size // kotlinx.atomicfu/AtomicArray.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // kotlinx.atomicfu/AtomicArray.size.<get-size>|<get-size>(){}[0]
+
+    final fun get(kotlin/Int): kotlinx.atomicfu/AtomicRef<#A?> // kotlinx.atomicfu/AtomicArray.get|get(kotlin.Int){}[0]
+}
+
+final class <#A: kotlin/Any?> kotlinx.atomicfu/AtomicRef { // kotlinx.atomicfu/AtomicRef|null[0]
+    final var value // kotlinx.atomicfu/AtomicRef.value|{}value[0]
+        // Targets: [native]
+        final inline fun <get-value>(): #A // kotlinx.atomicfu/AtomicRef.value.<get-value>|<get-value>(){}[0]
+
+        // Targets: [native]
+        final inline fun <set-value>(#A) // kotlinx.atomicfu/AtomicRef.value.<set-value>|<set-value>(1:0){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final fun <get-value>(): #A // kotlinx.atomicfu/AtomicRef.value.<get-value>|<get-value>(){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final fun <set-value>(#A) // kotlinx.atomicfu/AtomicRef.value.<set-value>|<set-value>(1:0){}[0]
+
+    final fun getAndSet(#A): #A // kotlinx.atomicfu/AtomicRef.getAndSet|getAndSet(1:0){}[0]
+    final fun toString(): kotlin/String // kotlinx.atomicfu/AtomicRef.toString|toString(){}[0]
+    final inline fun getValue(kotlin/Any?, kotlin.reflect/KProperty<*>): #A // kotlinx.atomicfu/AtomicRef.getValue|getValue(kotlin.Any?;kotlin.reflect.KProperty<*>){}[0]
+    final inline fun lazySet(#A) // kotlinx.atomicfu/AtomicRef.lazySet|lazySet(1:0){}[0]
+    final inline fun setValue(kotlin/Any?, kotlin.reflect/KProperty<*>, #A) // kotlinx.atomicfu/AtomicRef.setValue|setValue(kotlin.Any?;kotlin.reflect.KProperty<*>;1:0){}[0]
+
+    // Targets: [native]
+    final val a // kotlinx.atomicfu/AtomicRef.a|{}a[0]
+        final fun <get-a>(): kotlin.concurrent/AtomicReference<#A> // kotlinx.atomicfu/AtomicRef.a.<get-a>|<get-a>(){}[0]
+
+    // Targets: [native]
+    final inline fun compareAndSet(#A, #A): kotlin/Boolean // kotlinx.atomicfu/AtomicRef.compareAndSet|compareAndSet(1:0;1:0){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun compareAndSet(#A, #A): kotlin/Boolean // kotlinx.atomicfu/AtomicRef.compareAndSet|compareAndSet(1:0;1:0){}[0]
+}
+
+final class kotlinx.atomicfu/AtomicBoolean { // kotlinx.atomicfu/AtomicBoolean|null[0]
+    final var value // kotlinx.atomicfu/AtomicBoolean.value|{}value[0]
+        // Targets: [native]
+        final inline fun <get-value>(): kotlin/Boolean // kotlinx.atomicfu/AtomicBoolean.value.<get-value>|<get-value>(){}[0]
+
+        // Targets: [native]
+        final inline fun <set-value>(kotlin/Boolean) // kotlinx.atomicfu/AtomicBoolean.value.<set-value>|<set-value>(kotlin.Boolean){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final fun <get-value>(): kotlin/Boolean // kotlinx.atomicfu/AtomicBoolean.value.<get-value>|<get-value>(){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final fun <set-value>(kotlin/Boolean) // kotlinx.atomicfu/AtomicBoolean.value.<set-value>|<set-value>(kotlin.Boolean){}[0]
+
+    final fun compareAndSet(kotlin/Boolean, kotlin/Boolean): kotlin/Boolean // kotlinx.atomicfu/AtomicBoolean.compareAndSet|compareAndSet(kotlin.Boolean;kotlin.Boolean){}[0]
+    final fun getAndSet(kotlin/Boolean): kotlin/Boolean // kotlinx.atomicfu/AtomicBoolean.getAndSet|getAndSet(kotlin.Boolean){}[0]
+    final fun toString(): kotlin/String // kotlinx.atomicfu/AtomicBoolean.toString|toString(){}[0]
+    final inline fun getValue(kotlin/Any?, kotlin.reflect/KProperty<*>): kotlin/Boolean // kotlinx.atomicfu/AtomicBoolean.getValue|getValue(kotlin.Any?;kotlin.reflect.KProperty<*>){}[0]
+    final inline fun lazySet(kotlin/Boolean) // kotlinx.atomicfu/AtomicBoolean.lazySet|lazySet(kotlin.Boolean){}[0]
+    final inline fun setValue(kotlin/Any?, kotlin.reflect/KProperty<*>, kotlin/Boolean) // kotlinx.atomicfu/AtomicBoolean.setValue|setValue(kotlin.Any?;kotlin.reflect.KProperty<*>;kotlin.Boolean){}[0]
+
+    // Targets: [native]
+    final val a // kotlinx.atomicfu/AtomicBoolean.a|{}a[0]
+        final fun <get-a>(): kotlin.concurrent/AtomicInt // kotlinx.atomicfu/AtomicBoolean.a.<get-a>|<get-a>(){}[0]
+}
+
+final class kotlinx.atomicfu/AtomicBooleanArray { // kotlinx.atomicfu/AtomicBooleanArray|null[0]
+    constructor <init>(kotlin/Int) // kotlinx.atomicfu/AtomicBooleanArray.<init>|<init>(kotlin.Int){}[0]
+
+    final val size // kotlinx.atomicfu/AtomicBooleanArray.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // kotlinx.atomicfu/AtomicBooleanArray.size.<get-size>|<get-size>(){}[0]
+
+    final fun get(kotlin/Int): kotlinx.atomicfu/AtomicBoolean // kotlinx.atomicfu/AtomicBooleanArray.get|get(kotlin.Int){}[0]
+}
+
+final class kotlinx.atomicfu/AtomicInt { // kotlinx.atomicfu/AtomicInt|null[0]
+    final var value // kotlinx.atomicfu/AtomicInt.value|{}value[0]
+        // Targets: [native]
+        final inline fun <get-value>(): kotlin/Int // kotlinx.atomicfu/AtomicInt.value.<get-value>|<get-value>(){}[0]
+
+        // Targets: [native]
+        final inline fun <set-value>(kotlin/Int) // kotlinx.atomicfu/AtomicInt.value.<set-value>|<set-value>(kotlin.Int){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final fun <get-value>(): kotlin/Int // kotlinx.atomicfu/AtomicInt.value.<get-value>|<get-value>(){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final fun <set-value>(kotlin/Int) // kotlinx.atomicfu/AtomicInt.value.<set-value>|<set-value>(kotlin.Int){}[0]
+
+    final fun getAndSet(kotlin/Int): kotlin/Int // kotlinx.atomicfu/AtomicInt.getAndSet|getAndSet(kotlin.Int){}[0]
+    final fun toString(): kotlin/String // kotlinx.atomicfu/AtomicInt.toString|toString(){}[0]
+    final inline fun getValue(kotlin/Any?, kotlin.reflect/KProperty<*>): kotlin/Int // kotlinx.atomicfu/AtomicInt.getValue|getValue(kotlin.Any?;kotlin.reflect.KProperty<*>){}[0]
+    final inline fun lazySet(kotlin/Int) // kotlinx.atomicfu/AtomicInt.lazySet|lazySet(kotlin.Int){}[0]
+    final inline fun minusAssign(kotlin/Int) // kotlinx.atomicfu/AtomicInt.minusAssign|minusAssign(kotlin.Int){}[0]
+    final inline fun plusAssign(kotlin/Int) // kotlinx.atomicfu/AtomicInt.plusAssign|plusAssign(kotlin.Int){}[0]
+    final inline fun setValue(kotlin/Any?, kotlin.reflect/KProperty<*>, kotlin/Int) // kotlinx.atomicfu/AtomicInt.setValue|setValue(kotlin.Any?;kotlin.reflect.KProperty<*>;kotlin.Int){}[0]
+
+    // Targets: [native]
+    final val a // kotlinx.atomicfu/AtomicInt.a|{}a[0]
+        final fun <get-a>(): kotlin.concurrent/AtomicInt // kotlinx.atomicfu/AtomicInt.a.<get-a>|<get-a>(){}[0]
+
+    // Targets: [native]
+    final inline fun addAndGet(kotlin/Int): kotlin/Int // kotlinx.atomicfu/AtomicInt.addAndGet|addAndGet(kotlin.Int){}[0]
+
+    // Targets: [native]
+    final inline fun compareAndSet(kotlin/Int, kotlin/Int): kotlin/Boolean // kotlinx.atomicfu/AtomicInt.compareAndSet|compareAndSet(kotlin.Int;kotlin.Int){}[0]
+
+    // Targets: [native]
+    final inline fun decrementAndGet(): kotlin/Int // kotlinx.atomicfu/AtomicInt.decrementAndGet|decrementAndGet(){}[0]
+
+    // Targets: [native]
+    final inline fun getAndAdd(kotlin/Int): kotlin/Int // kotlinx.atomicfu/AtomicInt.getAndAdd|getAndAdd(kotlin.Int){}[0]
+
+    // Targets: [native]
+    final inline fun getAndDecrement(): kotlin/Int // kotlinx.atomicfu/AtomicInt.getAndDecrement|getAndDecrement(){}[0]
+
+    // Targets: [native]
+    final inline fun getAndIncrement(): kotlin/Int // kotlinx.atomicfu/AtomicInt.getAndIncrement|getAndIncrement(){}[0]
+
+    // Targets: [native]
+    final inline fun incrementAndGet(): kotlin/Int // kotlinx.atomicfu/AtomicInt.incrementAndGet|incrementAndGet(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun addAndGet(kotlin/Int): kotlin/Int // kotlinx.atomicfu/AtomicInt.addAndGet|addAndGet(kotlin.Int){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun compareAndSet(kotlin/Int, kotlin/Int): kotlin/Boolean // kotlinx.atomicfu/AtomicInt.compareAndSet|compareAndSet(kotlin.Int;kotlin.Int){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun decrementAndGet(): kotlin/Int // kotlinx.atomicfu/AtomicInt.decrementAndGet|decrementAndGet(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun getAndAdd(kotlin/Int): kotlin/Int // kotlinx.atomicfu/AtomicInt.getAndAdd|getAndAdd(kotlin.Int){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun getAndDecrement(): kotlin/Int // kotlinx.atomicfu/AtomicInt.getAndDecrement|getAndDecrement(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun getAndIncrement(): kotlin/Int // kotlinx.atomicfu/AtomicInt.getAndIncrement|getAndIncrement(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun incrementAndGet(): kotlin/Int // kotlinx.atomicfu/AtomicInt.incrementAndGet|incrementAndGet(){}[0]
+}
+
+final class kotlinx.atomicfu/AtomicIntArray { // kotlinx.atomicfu/AtomicIntArray|null[0]
+    constructor <init>(kotlin/Int) // kotlinx.atomicfu/AtomicIntArray.<init>|<init>(kotlin.Int){}[0]
+
+    final val size // kotlinx.atomicfu/AtomicIntArray.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // kotlinx.atomicfu/AtomicIntArray.size.<get-size>|<get-size>(){}[0]
+
+    final fun get(kotlin/Int): kotlinx.atomicfu/AtomicInt // kotlinx.atomicfu/AtomicIntArray.get|get(kotlin.Int){}[0]
+}
+
+final class kotlinx.atomicfu/AtomicLong { // kotlinx.atomicfu/AtomicLong|null[0]
+    final var value // kotlinx.atomicfu/AtomicLong.value|{}value[0]
+        // Targets: [native]
+        final inline fun <get-value>(): kotlin/Long // kotlinx.atomicfu/AtomicLong.value.<get-value>|<get-value>(){}[0]
+
+        // Targets: [native]
+        final inline fun <set-value>(kotlin/Long) // kotlinx.atomicfu/AtomicLong.value.<set-value>|<set-value>(kotlin.Long){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final fun <get-value>(): kotlin/Long // kotlinx.atomicfu/AtomicLong.value.<get-value>|<get-value>(){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final fun <set-value>(kotlin/Long) // kotlinx.atomicfu/AtomicLong.value.<set-value>|<set-value>(kotlin.Long){}[0]
+
+    final fun getAndSet(kotlin/Long): kotlin/Long // kotlinx.atomicfu/AtomicLong.getAndSet|getAndSet(kotlin.Long){}[0]
+    final fun toString(): kotlin/String // kotlinx.atomicfu/AtomicLong.toString|toString(){}[0]
+    final inline fun getValue(kotlin/Any?, kotlin.reflect/KProperty<*>): kotlin/Long // kotlinx.atomicfu/AtomicLong.getValue|getValue(kotlin.Any?;kotlin.reflect.KProperty<*>){}[0]
+    final inline fun lazySet(kotlin/Long) // kotlinx.atomicfu/AtomicLong.lazySet|lazySet(kotlin.Long){}[0]
+    final inline fun minusAssign(kotlin/Long) // kotlinx.atomicfu/AtomicLong.minusAssign|minusAssign(kotlin.Long){}[0]
+    final inline fun plusAssign(kotlin/Long) // kotlinx.atomicfu/AtomicLong.plusAssign|plusAssign(kotlin.Long){}[0]
+    final inline fun setValue(kotlin/Any?, kotlin.reflect/KProperty<*>, kotlin/Long) // kotlinx.atomicfu/AtomicLong.setValue|setValue(kotlin.Any?;kotlin.reflect.KProperty<*>;kotlin.Long){}[0]
+
+    // Targets: [native]
+    final val a // kotlinx.atomicfu/AtomicLong.a|{}a[0]
+        final fun <get-a>(): kotlin.concurrent/AtomicLong // kotlinx.atomicfu/AtomicLong.a.<get-a>|<get-a>(){}[0]
+
+    // Targets: [native]
+    final inline fun addAndGet(kotlin/Long): kotlin/Long // kotlinx.atomicfu/AtomicLong.addAndGet|addAndGet(kotlin.Long){}[0]
+
+    // Targets: [native]
+    final inline fun compareAndSet(kotlin/Long, kotlin/Long): kotlin/Boolean // kotlinx.atomicfu/AtomicLong.compareAndSet|compareAndSet(kotlin.Long;kotlin.Long){}[0]
+
+    // Targets: [native]
+    final inline fun decrementAndGet(): kotlin/Long // kotlinx.atomicfu/AtomicLong.decrementAndGet|decrementAndGet(){}[0]
+
+    // Targets: [native]
+    final inline fun getAndAdd(kotlin/Long): kotlin/Long // kotlinx.atomicfu/AtomicLong.getAndAdd|getAndAdd(kotlin.Long){}[0]
+
+    // Targets: [native]
+    final inline fun getAndDecrement(): kotlin/Long // kotlinx.atomicfu/AtomicLong.getAndDecrement|getAndDecrement(){}[0]
+
+    // Targets: [native]
+    final inline fun getAndIncrement(): kotlin/Long // kotlinx.atomicfu/AtomicLong.getAndIncrement|getAndIncrement(){}[0]
+
+    // Targets: [native]
+    final inline fun incrementAndGet(): kotlin/Long // kotlinx.atomicfu/AtomicLong.incrementAndGet|incrementAndGet(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun addAndGet(kotlin/Long): kotlin/Long // kotlinx.atomicfu/AtomicLong.addAndGet|addAndGet(kotlin.Long){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun compareAndSet(kotlin/Long, kotlin/Long): kotlin/Boolean // kotlinx.atomicfu/AtomicLong.compareAndSet|compareAndSet(kotlin.Long;kotlin.Long){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun decrementAndGet(): kotlin/Long // kotlinx.atomicfu/AtomicLong.decrementAndGet|decrementAndGet(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun getAndAdd(kotlin/Long): kotlin/Long // kotlinx.atomicfu/AtomicLong.getAndAdd|getAndAdd(kotlin.Long){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun getAndDecrement(): kotlin/Long // kotlinx.atomicfu/AtomicLong.getAndDecrement|getAndDecrement(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun getAndIncrement(): kotlin/Long // kotlinx.atomicfu/AtomicLong.getAndIncrement|getAndIncrement(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final fun incrementAndGet(): kotlin/Long // kotlinx.atomicfu/AtomicLong.incrementAndGet|incrementAndGet(){}[0]
+}
+
+final class kotlinx.atomicfu/AtomicLongArray { // kotlinx.atomicfu/AtomicLongArray|null[0]
+    constructor <init>(kotlin/Int) // kotlinx.atomicfu/AtomicLongArray.<init>|<init>(kotlin.Int){}[0]
+
+    final val size // kotlinx.atomicfu/AtomicLongArray.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // kotlinx.atomicfu/AtomicLongArray.size.<get-size>|<get-size>(){}[0]
+
+    final fun get(kotlin/Int): kotlinx.atomicfu/AtomicLong // kotlinx.atomicfu/AtomicLongArray.get|get(kotlin.Int){}[0]
+}
+
+open class kotlinx.atomicfu/TraceBase { // kotlinx.atomicfu/TraceBase|null[0]
+    final inline fun invoke(kotlin/Function0<kotlin/Any>) // kotlinx.atomicfu/TraceBase.invoke|invoke(kotlin.Function0<kotlin.Any>){}[0]
+    open fun append(kotlin/Any) // kotlinx.atomicfu/TraceBase.append|append(kotlin.Any){}[0]
+    open fun append(kotlin/Any, kotlin/Any) // kotlinx.atomicfu/TraceBase.append|append(kotlin.Any;kotlin.Any){}[0]
+    open fun append(kotlin/Any, kotlin/Any, kotlin/Any) // kotlinx.atomicfu/TraceBase.append|append(kotlin.Any;kotlin.Any;kotlin.Any){}[0]
+    open fun append(kotlin/Any, kotlin/Any, kotlin/Any, kotlin/Any) // kotlinx.atomicfu/TraceBase.append|append(kotlin.Any;kotlin.Any;kotlin.Any;kotlin.Any){}[0]
+
+    final object None : kotlinx.atomicfu/TraceBase // kotlinx.atomicfu/TraceBase.None|null[0]
+}
+
+open class kotlinx.atomicfu/TraceFormat { // kotlinx.atomicfu/TraceFormat|null[0]
+    constructor <init>() // kotlinx.atomicfu/TraceFormat.<init>|<init>(){}[0]
+
+    open fun format(kotlin/Int, kotlin/Any): kotlin/String // kotlinx.atomicfu/TraceFormat.format|format(kotlin.Int;kotlin.Any){}[0]
+}
+
+final val kotlinx.atomicfu/traceFormatDefault // kotlinx.atomicfu/traceFormatDefault|{}traceFormatDefault[0]
+    final fun <get-traceFormatDefault>(): kotlinx.atomicfu/TraceFormat // kotlinx.atomicfu/traceFormatDefault.<get-traceFormatDefault>|<get-traceFormatDefault>(){}[0]
+
+final fun (kotlinx.atomicfu/TraceBase).kotlinx.atomicfu/named(kotlin/String): kotlinx.atomicfu/TraceBase // kotlinx.atomicfu/named|named@kotlinx.atomicfu.TraceBase(kotlin.String){}[0]
+final fun <#A: kotlin/Any?> kotlinx.atomicfu/atomic(#A): kotlinx.atomicfu/AtomicRef<#A> // kotlinx.atomicfu/atomic|atomic(0:0){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> kotlinx.atomicfu/atomic(#A, kotlinx.atomicfu/TraceBase = ...): kotlinx.atomicfu/AtomicRef<#A> // kotlinx.atomicfu/atomic|atomic(0:0;kotlinx.atomicfu.TraceBase){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> kotlinx.atomicfu/atomicArrayOfNulls(kotlin/Int): kotlinx.atomicfu/AtomicArray<#A?> // kotlinx.atomicfu/atomicArrayOfNulls|atomicArrayOfNulls(kotlin.Int){0§<kotlin.Any?>}[0]
+final fun kotlinx.atomicfu/Trace(kotlin/Int = ..., kotlinx.atomicfu/TraceFormat = ...): kotlinx.atomicfu/TraceBase // kotlinx.atomicfu/Trace|Trace(kotlin.Int;kotlinx.atomicfu.TraceFormat){}[0]
+final fun kotlinx.atomicfu/atomic(kotlin/Boolean): kotlinx.atomicfu/AtomicBoolean // kotlinx.atomicfu/atomic|atomic(kotlin.Boolean){}[0]
+final fun kotlinx.atomicfu/atomic(kotlin/Boolean, kotlinx.atomicfu/TraceBase = ...): kotlinx.atomicfu/AtomicBoolean // kotlinx.atomicfu/atomic|atomic(kotlin.Boolean;kotlinx.atomicfu.TraceBase){}[0]
+final fun kotlinx.atomicfu/atomic(kotlin/Int): kotlinx.atomicfu/AtomicInt // kotlinx.atomicfu/atomic|atomic(kotlin.Int){}[0]
+final fun kotlinx.atomicfu/atomic(kotlin/Int, kotlinx.atomicfu/TraceBase = ...): kotlinx.atomicfu/AtomicInt // kotlinx.atomicfu/atomic|atomic(kotlin.Int;kotlinx.atomicfu.TraceBase){}[0]
+final fun kotlinx.atomicfu/atomic(kotlin/Long): kotlinx.atomicfu/AtomicLong // kotlinx.atomicfu/atomic|atomic(kotlin.Long){}[0]
+final fun kotlinx.atomicfu/atomic(kotlin/Long, kotlinx.atomicfu/TraceBase = ...): kotlinx.atomicfu/AtomicLong // kotlinx.atomicfu/atomic|atomic(kotlin.Long;kotlinx.atomicfu.TraceBase){}[0]
+final inline fun (kotlinx.atomicfu/AtomicBoolean).kotlinx.atomicfu/getAndUpdate(kotlin/Function1<kotlin/Boolean, kotlin/Boolean>): kotlin/Boolean // kotlinx.atomicfu/getAndUpdate|getAndUpdate@kotlinx.atomicfu.AtomicBoolean(kotlin.Function1<kotlin.Boolean,kotlin.Boolean>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicBoolean).kotlinx.atomicfu/loop(kotlin/Function1<kotlin/Boolean, kotlin/Unit>): kotlin/Nothing // kotlinx.atomicfu/loop|loop@kotlinx.atomicfu.AtomicBoolean(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicBoolean).kotlinx.atomicfu/update(kotlin/Function1<kotlin/Boolean, kotlin/Boolean>) // kotlinx.atomicfu/update|update@kotlinx.atomicfu.AtomicBoolean(kotlin.Function1<kotlin.Boolean,kotlin.Boolean>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicBoolean).kotlinx.atomicfu/updateAndGet(kotlin/Function1<kotlin/Boolean, kotlin/Boolean>): kotlin/Boolean // kotlinx.atomicfu/updateAndGet|updateAndGet@kotlinx.atomicfu.AtomicBoolean(kotlin.Function1<kotlin.Boolean,kotlin.Boolean>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicInt).kotlinx.atomicfu/getAndUpdate(kotlin/Function1<kotlin/Int, kotlin/Int>): kotlin/Int // kotlinx.atomicfu/getAndUpdate|getAndUpdate@kotlinx.atomicfu.AtomicInt(kotlin.Function1<kotlin.Int,kotlin.Int>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicInt).kotlinx.atomicfu/loop(kotlin/Function1<kotlin/Int, kotlin/Unit>): kotlin/Nothing // kotlinx.atomicfu/loop|loop@kotlinx.atomicfu.AtomicInt(kotlin.Function1<kotlin.Int,kotlin.Unit>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicInt).kotlinx.atomicfu/update(kotlin/Function1<kotlin/Int, kotlin/Int>) // kotlinx.atomicfu/update|update@kotlinx.atomicfu.AtomicInt(kotlin.Function1<kotlin.Int,kotlin.Int>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicInt).kotlinx.atomicfu/updateAndGet(kotlin/Function1<kotlin/Int, kotlin/Int>): kotlin/Int // kotlinx.atomicfu/updateAndGet|updateAndGet@kotlinx.atomicfu.AtomicInt(kotlin.Function1<kotlin.Int,kotlin.Int>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicLong).kotlinx.atomicfu/getAndUpdate(kotlin/Function1<kotlin/Long, kotlin/Long>): kotlin/Long // kotlinx.atomicfu/getAndUpdate|getAndUpdate@kotlinx.atomicfu.AtomicLong(kotlin.Function1<kotlin.Long,kotlin.Long>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicLong).kotlinx.atomicfu/loop(kotlin/Function1<kotlin/Long, kotlin/Unit>): kotlin/Nothing // kotlinx.atomicfu/loop|loop@kotlinx.atomicfu.AtomicLong(kotlin.Function1<kotlin.Long,kotlin.Unit>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicLong).kotlinx.atomicfu/update(kotlin/Function1<kotlin/Long, kotlin/Long>) // kotlinx.atomicfu/update|update@kotlinx.atomicfu.AtomicLong(kotlin.Function1<kotlin.Long,kotlin.Long>){}[0]
+final inline fun (kotlinx.atomicfu/AtomicLong).kotlinx.atomicfu/updateAndGet(kotlin/Function1<kotlin/Long, kotlin/Long>): kotlin/Long // kotlinx.atomicfu/updateAndGet|updateAndGet@kotlinx.atomicfu.AtomicLong(kotlin.Function1<kotlin.Long,kotlin.Long>){}[0]
+final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu/AtomicRef<#A>).kotlinx.atomicfu/getAndUpdate(kotlin/Function1<#A, #A>): #A // kotlinx.atomicfu/getAndUpdate|getAndUpdate@kotlinx.atomicfu.AtomicRef<0:0>(kotlin.Function1<0:0,0:0>){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu/AtomicRef<#A>).kotlinx.atomicfu/loop(kotlin/Function1<#A, kotlin/Unit>): kotlin/Nothing // kotlinx.atomicfu/loop|loop@kotlinx.atomicfu.AtomicRef<0:0>(kotlin.Function1<0:0,kotlin.Unit>){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu/AtomicRef<#A>).kotlinx.atomicfu/update(kotlin/Function1<#A, #A>) // kotlinx.atomicfu/update|update@kotlinx.atomicfu.AtomicRef<0:0>(kotlin.Function1<0:0,0:0>){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu/AtomicRef<#A>).kotlinx.atomicfu/updateAndGet(kotlin/Function1<#A, #A>): #A // kotlinx.atomicfu/updateAndGet|updateAndGet@kotlinx.atomicfu.AtomicRef<0:0>(kotlin.Function1<0:0,0:0>){0§<kotlin.Any?>}[0]
+final inline fun kotlinx.atomicfu/TraceFormat(crossinline kotlin/Function2<kotlin/Int, kotlin/Any, kotlin/String>): kotlinx.atomicfu/TraceFormat // kotlinx.atomicfu/TraceFormat|TraceFormat(kotlin.Function2<kotlin.Int,kotlin.Any,kotlin.String>){}[0]
+
+// Targets: [native, wasmJs, wasmWasi]
+open annotation class kotlinx.atomicfu/OptionalJsName : kotlin/Annotation { // kotlinx.atomicfu/OptionalJsName|null[1]
+    constructor <init>(kotlin/String) // kotlinx.atomicfu/OptionalJsName.<init>|<init>(kotlin.String){}[1]
+
+    final val name // kotlinx.atomicfu/OptionalJsName.name|{}name[1]
+        final fun <get-name>(): kotlin/String // kotlinx.atomicfu/OptionalJsName.name.<get-name>|<get-name>(){}[1]
+}
+
+// Targets: [native]
+open annotation class kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi : kotlin/Annotation { // kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi|null[0]
+    constructor <init>() // kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi.<init>|<init>(){}[0]
+}
+
+// Targets: [native]
+final class kotlinx.atomicfu.locks/NativeMutexNode { // kotlinx.atomicfu.locks/NativeMutexNode|null[0]
+    constructor <init>() // kotlinx.atomicfu.locks/NativeMutexNode.<init>|<init>(){}[0]
+
+    final fun lock() // kotlinx.atomicfu.locks/NativeMutexNode.lock|lock(){}[0]
+    final fun unlock() // kotlinx.atomicfu.locks/NativeMutexNode.unlock|unlock(){}[0]
+}
+
+// Targets: [native]
+final class kotlinx.atomicfu.locks/ParkingHandle // kotlinx.atomicfu.locks/ParkingHandle|null[0]
+
+// Targets: [native]
+open class kotlinx.atomicfu.locks/SynchronizedObject { // kotlinx.atomicfu.locks/SynchronizedObject|null[0]
+    constructor <init>() // kotlinx.atomicfu.locks/SynchronizedObject.<init>|<init>(){}[0]
+
+    final fun lock() // kotlinx.atomicfu.locks/SynchronizedObject.lock|lock(){}[0]
+    final fun tryLock(): kotlin/Boolean // kotlinx.atomicfu.locks/SynchronizedObject.tryLock|tryLock(){}[0]
+    final fun unlock() // kotlinx.atomicfu.locks/SynchronizedObject.unlock|unlock(){}[0]
+}
+
+// Targets: [native]
+final object kotlinx.atomicfu.locks/ParkingSupport { // kotlinx.atomicfu.locks/ParkingSupport|null[0]
+    final fun currentThreadHandle(): kotlinx.atomicfu.locks/ParkingHandle // kotlinx.atomicfu.locks/ParkingSupport.currentThreadHandle|currentThreadHandle(){}[0]
+    final fun park(kotlin.time/Duration) // kotlinx.atomicfu.locks/ParkingSupport.park|park(kotlin.time.Duration){}[0]
+    final fun parkUntil(kotlin.time/TimeMark) // kotlinx.atomicfu.locks/ParkingSupport.parkUntil|parkUntil(kotlin.time.TimeMark){}[0]
+    final fun unpark(kotlinx.atomicfu.locks/ParkingHandle) // kotlinx.atomicfu.locks/ParkingSupport.unpark|unpark(kotlinx.atomicfu.locks.ParkingHandle){}[0]
+}
+
+// Targets: [native]
+final fun kotlinx.atomicfu.locks/reentrantLock(): kotlinx.atomicfu.locks/SynchronizedObject // kotlinx.atomicfu.locks/reentrantLock|reentrantLock(){}[0]
+
+// Targets: [native]
+final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu.locks/SynchronizedObject).kotlinx.atomicfu.locks/withLock(kotlin/Function0<#A>): #A // kotlinx.atomicfu.locks/withLock|withLock@kotlinx.atomicfu.locks.SynchronizedObject(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+
+// Targets: [native]
+final inline fun <#A: kotlin/Any?> kotlinx.atomicfu.locks/synchronized(kotlinx.atomicfu.locks/SynchronizedObject, kotlin/Function0<#A>): #A // kotlinx.atomicfu.locks/synchronized|synchronized(kotlinx.atomicfu.locks.SynchronizedObject;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+
+// Targets: [js, wasmJs, wasmWasi]
+final class kotlinx.atomicfu.locks/ReentrantLock { // kotlinx.atomicfu.locks/ReentrantLock|null[0]
+    constructor <init>() // kotlinx.atomicfu.locks/ReentrantLock.<init>|<init>(){}[0]
+
+    final inline fun lock() // kotlinx.atomicfu.locks/ReentrantLock.lock|lock(){}[0]
+    final inline fun tryLock(): kotlin/Boolean // kotlinx.atomicfu.locks/ReentrantLock.tryLock|tryLock(){}[0]
+    final inline fun unlock() // kotlinx.atomicfu.locks/ReentrantLock.unlock|unlock(){}[0]
+}
+
+// Targets: [js, wasmJs, wasmWasi]
+final val kotlinx.atomicfu.locks/Lock // kotlinx.atomicfu.locks/Lock|{}Lock[0]
+    final fun <get-Lock>(): kotlinx.atomicfu.locks/ReentrantLock // kotlinx.atomicfu.locks/Lock.<get-Lock>|<get-Lock>(){}[0]
+
+// Targets: [js, wasmJs, wasmWasi]
+final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu.locks/ReentrantLock).kotlinx.atomicfu.locks/withLock(kotlin/Function0<#A>): #A // kotlinx.atomicfu.locks/withLock|withLock@kotlinx.atomicfu.locks.ReentrantLock(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+
+// Targets: [js, wasmJs, wasmWasi]
+final inline fun <#A: kotlin/Any?> kotlinx.atomicfu.locks/synchronized(kotlin/Any, kotlin/Function0<#A>): #A // kotlinx.atomicfu.locks/synchronized|synchronized(kotlin.Any;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+
+// Targets: [js, wasmJs, wasmWasi]
+final inline fun kotlinx.atomicfu.locks/reentrantLock(): kotlinx.atomicfu.locks/ReentrantLock // kotlinx.atomicfu.locks/reentrantLock|reentrantLock(){}[0]

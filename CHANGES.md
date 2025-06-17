@@ -1,5 +1,15 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.28.0
+* No issues reported for `0.28.0-beta`, so the `0.28.0` release only updates the version and includes exactly the same changes as version `0.28.0`. 
+
+# Version 0.28.0-beta
+* Updated ASM version to support JDK 24 (#429)
+* Implemented thread parking primitives (#498)
+* Native mutexes: supported QoS on Apple platforms (#499) and improved implementations on other targets (#512, #517)
+* Various build infrastructure improvements
+* Deprecated some symbols that were made public unintentionally (#534)
+
 # Version 0.27.0
 * Updated Kotlin to 2.1.0.
 

@@ -14,4 +14,5 @@ package kotlinx.atomicfu
     AnnotationTarget.PROPERTY_GETTER,
     AnnotationTarget.PROPERTY_SETTER
 )
-expect annotation class OptionalJsName(val name: String)
+@Deprecated("The annotation was intended for internal use only and will be hidden in the future release.")
+public expect annotation class OptionalJsName(val name: String)

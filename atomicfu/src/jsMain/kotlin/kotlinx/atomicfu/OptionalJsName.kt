@@ -1,3 +1,3 @@
 package kotlinx.atomicfu
 
-actual typealias OptionalJsName = JsName
+public actual typealias OptionalJsName = JsName

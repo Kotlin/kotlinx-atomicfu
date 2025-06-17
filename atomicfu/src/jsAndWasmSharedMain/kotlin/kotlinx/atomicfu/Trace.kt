@@ -4,10 +4,11 @@
 
 package kotlinx.atomicfu
 
-@Suppress("FunctionName")
+@Suppress("FunctionName", "DEPRECATION")
 @OptionalJsName(TRACE_FACTORY_FUNCTION)
 public actual fun Trace(size: Int, format: TraceFormat): TraceBase = TraceBase.None
 
+@Suppress("DEPRECATION")
 @OptionalJsName(TRACE_NAMED)
 public actual fun TraceBase.named(name: String): TraceBase = TraceBase.None
 

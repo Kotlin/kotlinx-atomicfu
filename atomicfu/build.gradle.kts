@@ -10,94 +10,7 @@ plugins {
 
 kotlin {
     jvmToolchain(8)
-
-    // JS -- always
-    js(IR) {
-        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-        moduleName = "kotlinx-atomicfu"
-        // TODO: commented out because browser tests do not work on TeamCity
-        // browser()
-        nodejs()
-    }
-
-    // JVM -- always
-    jvm()
-
-    // Wasm -- always
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        nodejs()
-    }
-
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmWasi {
-        nodejs()
-    }
-
-    sourceSets {
-        commonMain.dependencies {
-            implementation("org.jetbrains.kotlin:kotlin-stdlib") {
-                version {
-                    prefer(libs.versions.kotlin.asProvider().get())
-                }
-            }
-        }
-        commonTest.dependencies {
-            implementation("org.jetbrains.kotlin:kotlin-test-common")
-            implementation("org.jetbrains.kotlin:kotlin-test-annotations-common")
-        }
-
-        val jsAndWasmSharedMain by creating {
-            dependsOn(commonMain.get())
-        }
-
-        jsMain {
-            dependsOn(jsAndWasmSharedMain)
-            dependencies {
-                compileOnly("org.jetbrains.kotlin:kotlin-dom-api-compat")
-            }
-        }
-
-        jsTest {
-            dependencies {
-                implementation("org.jetbrains.kotlin:kotlin-test-js")
-            }
-        }
-
-        wasmJsMain {
-            dependsOn(jsAndWasmSharedMain)
-        }
-
-        wasmJsTest {
-            dependencies {
-                implementation("org.jetbrains.kotlin:kotlin-test-wasm-js")
-            }
-        }
-
-
-        wasmWasiMain {
-            dependsOn(jsAndWasmSharedMain)
-        }
-
-        wasmWasiTest {
-            dependencies {
-                implementation("org.jetbrains.kotlin:kotlin-test-wasm-wasi")
-            }
-        }
-
-        jvmTest {
-            dependencies {
-                implementation("org.jetbrains.kotlin:kotlin-reflect")
-                implementation("org.jetbrains.kotlin:kotlin-test")
-                implementation("org.jetbrains.kotlin:kotlin-test-junit")
-                implementation(libs.junit.junit)
-            }
-        }
-    }
-}
-
-// Support of all non-deprecated targets from the official tier list: https://kotlinlang.org/docs/native-target-support.html
-kotlin {
+    
     // Tier 1
     macosX64()
     macosArm64()
@@ -123,63 +36,103 @@ kotlin {
     androidNativeX64()
     mingwX64()
     watchosDeviceArm64()
-
+    
     @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
     linuxArm32Hfp()
 
+    // JS -- always
+    js(IR) {
+        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+        moduleName = "kotlinx-atomicfu"
+        // TODO: commented out because browser tests do not work on TeamCity
+        // browser()
+        nodejs()
+    }
+
+    // JVM -- always
+    jvm()
+
+    // Wasm -- always
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        nodejs()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmWasi {
+        nodejs()
+    }
+
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate {
-        group("nativeUnixLike") {
-            withLinux()
-        }
-        group("androidNative32Bit") {
-            withAndroidNativeX86()
-            withCompilations { compilation ->
-                (compilation.target as? KotlinNativeTarget)?.konanTarget?.name == "android_arm32"
+        common {
+            group("jsAndWasmShared") {
+                withJs()
+                withWasmJs()
+                withWasmWasi()
             }
-        }
-        group("androidNative64Bit") {
-            withAndroidNativeArm64()
-            withAndroidNativeX64()
+            group("concurrent") {
+                withJvm()
+                group("native") {
+                    group("nativeUnixLike") {
+                        group("apple") {
+                            withApple()
+                        }
+                        group("linux") {
+                            withLinux()
+                        }
+                    }
+                    withMingwX64()
+                }
+            }
         }
     }
 
     sourceSets {
-        val nativeNonAppleMain by creating {
-            kotlin.srcDir("src/nativeNonAppleMain/kotlin")
-            dependsOn(nativeMain.get())
+        commonMain.dependencies {
+            implementation("org.jetbrains.kotlin:kotlin-stdlib") {
+                version {
+                    prefer(libs.versions.kotlin.asProvider().get())
+                }
+            }
+        }
+        commonTest.dependencies {
+            implementation("org.jetbrains.kotlin:kotlin-test-common")
+            implementation("org.jetbrains.kotlin:kotlin-test-annotations-common")
+        }
+        
+        jsMain {
+            dependencies {
+                compileOnly("org.jetbrains.kotlin:kotlin-dom-api-compat")
+            }
         }
 
-        val nativeUnixLikeMain by getting {
-            kotlin.srcDir("src/nativeUnixLikeMain/kotlin")
-            dependsOn(nativeNonAppleMain)
+        jsTest {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-test-js")
+            }
         }
 
-        val androidNative32BitMain by getting {
-            kotlin.srcDir("src/androidNative32BitMain/kotlin")
-            dependsOn(nativeNonAppleMain)
+        wasmJsTest {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-test-wasm-js")
+            }
         }
 
-        val androidNative64BitMain by getting {
-            kotlin.srcDir("src/androidNative64BitMain/kotlin")
-            dependsOn(nativeNonAppleMain)
+        wasmWasiTest {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-test-wasm-wasi")
+            }
         }
 
-        val mingwMain by getting {
-            kotlin.srcDir("src/mingwMain/kotlin")
-            dependsOn(nativeNonAppleMain)
+        jvmTest {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-reflect")
+                implementation("org.jetbrains.kotlin:kotlin-test")
+                implementation("org.jetbrains.kotlin:kotlin-test-junit")
+                implementation(libs.junit.junit)
+            }
         }
-
-        val androidNative32BitTest by getting {
-            kotlin.srcDir("src/androidNative32BitTest/kotlin")
-            dependsOn(nativeTest.get())
-        }
-
-        val androidNative64BitTest by getting {
-            kotlin.srcDir("src/androidNative64BitTest/kotlin")
-            dependsOn(nativeTest.get())
-        }
-
     }
 
     // atomicfu-cinterop-interop.klib with an empty interop.def file will still be published for compatibility reasons (see KT-68411)
@@ -192,6 +145,12 @@ kotlin {
                 }
             }
         }
+    }
+
+    explicitApi()
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+        freeCompilerArgs.add("-Xdont-warn-on-error-suppression")
     }
 }
 
@@ -387,4 +346,3 @@ val jvmTest by tasks.getting(Test::class) {
     )
     // run them only for transformed code
 }
-
