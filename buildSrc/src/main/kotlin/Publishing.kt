@@ -14,6 +14,11 @@ import java.net.*
 // Pom configuration
 
 fun mavenRepositoryUri(): URI {
+    if (getSensitiveProperty("libs.publication_repository") == "central") {
+        val repoUrl = getSensitiveProperty("libs.repo.url")
+            ?: throw IllegalArgumentException("Using central repository for deployment implies presence of libs.repo.url property")
+        return URI(repoUrl)
+    }
     val repositoryId: String? = System.getenv("libs.repository.id")
     return if (repositoryId == null) {
         // Using implicitly created staging, for MPP it's likely to be a mistake because

@@ -8,20 +8,11 @@ publishing {
         maven {
             // if you change the name, you should change the name of the credential properties on CI as well
             name = "MavenRepositoryForPublishing"
+            url = mavenRepositoryUri()
 
-            if (getSensitiveProperty("libs.publication_repository") == "central") {
-                url = uri(getSensitiveProperty("libs.repo.url")!!)
-                credentials {
-                    username = getSensitiveProperty("libs.repo.user")
-                    password = getSensitiveProperty("libs.repo.password")
-                }
-            } else {
-                url = mavenRepositoryUri()
-
-                // we use such type of credential because of the configuration cache problems with other types:
-                // https://github.com/gradle/gradle/issues/24040
-                credentials(PasswordCredentials::class)
-            }
+            // we use such type of credential because of the configuration cache problems with other types:
+            // https://github.com/gradle/gradle/issues/24040
+            credentials(PasswordCredentials::class)
         }
     }
     publications.withType<MavenPublication>().configureEach {
