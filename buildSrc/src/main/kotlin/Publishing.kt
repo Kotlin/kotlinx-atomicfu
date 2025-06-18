@@ -14,8 +14,8 @@ import java.net.*
 // Pom configuration
 
 fun mavenRepositoryUri(): URI {
-    if (getSensitiveProperty("libs.publication_repository") == "central") {
-        val repoUrl = getSensitiveProperty("libs.repo.url")
+    if (System.getenv("libs.publication_repository") == "central") {
+        val repoUrl = System.getenv("libs.repo.url")
             ?: throw IllegalArgumentException("Using central repository for deployment implies presence of libs.repo.url property")
         return URI(repoUrl)
     }
