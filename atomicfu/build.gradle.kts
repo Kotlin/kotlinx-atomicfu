@@ -42,8 +42,7 @@ kotlin {
 
     // JS -- always
     js(IR) {
-        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-        moduleName = "kotlinx-atomicfu"
+        outputModuleName = "kotlinx-atomicfu"
         // TODO: commented out because browser tests do not work on TeamCity
         // browser()
         nodejs()
