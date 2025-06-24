@@ -25,8 +25,8 @@ kotlin {
         freeCompilerArgs.add("-Xsuppress-version-warnings")
 
         languageVersion = getOverridingKotlinLanguageVersion(project)?.let { KotlinVersion.fromVersion(it) }
-            ?: KotlinVersion.KOTLIN_1_6
+            ?: KotlinVersion.KOTLIN_1_8
         apiVersion = getOverridingKotlinApiVersion(project)?.let { KotlinVersion.fromVersion(it) }
-            ?: KotlinVersion.KOTLIN_1_6
+            ?: KotlinVersion.KOTLIN_1_8
     }
 }

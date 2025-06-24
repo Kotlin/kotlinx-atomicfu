@@ -4,6 +4,7 @@
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.28.0/pom)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.2-blue.svg?logo=kotlin)](http://kotlinlang.org)
 
 >Note on Beta status: the plugin is in its active development phase and changes from release to release.
 >We do provide a compatibility of atomicfu-transformed artifacts between releases, but we do not provide 
@@ -39,6 +40,9 @@ Starting from version `0.24.0` of the library your project is required to use:
 * Gradle `7.0` or newer
 
 * Kotlin `1.9.0` or newer
+
+Kotlin version requirements differ depending on targets enabled for a project.
+For native targets, Kotlin `2.2.0` is required in order to link with the runtime library.
 
 > **Note on Kotlin version:** Currently, the `kotlinx-atomicfu` Gradle plugin only relies on the version of Kotlin Gradle Plugin (KGP) present in the user's project.
 > It's important to note this constraint if your project configures the custom Kotlin compiler version or modifies the Kotlin Native compiler version using `kotlin.native.version` property.
