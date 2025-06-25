@@ -15,18 +15,22 @@ class JvmProjectTest {
     @Test
     fun testJvmWithEnabledIrTransformation() {
         jvmSample.enableJvmIrTransformation = true
-        jvmSample.jvmCheckAtomicfuInCompileClasspath()
-        jvmSample.jvmCheckNoAtomicfuInRuntimeConfigs()
-        jvmSample.checkConsumableDependencies()
+        jvmSample.withDependencies {
+            jvmCheckAtomicfuInCompileClasspath()
+            jvmCheckNoAtomicfuInRuntimeConfigs()
+        }
+        jvmSample.checkConsumableDependencies(false)
         jvmSample.buildAndCheckBytecode()
     }
 
     @Test
     fun testJvmWithDisabledIrTransformation() {
         jvmSample.enableJvmIrTransformation = false
-        jvmSample.jvmCheckAtomicfuInCompileClasspath()
-        jvmSample.jvmCheckNoAtomicfuInRuntimeConfigs()
-        jvmSample.checkConsumableDependencies()
+        jvmSample.withDependencies {
+            jvmCheckAtomicfuInCompileClasspath()
+            jvmCheckNoAtomicfuInRuntimeConfigs()
+        }
+        jvmSample.checkConsumableDependencies(false)
         jvmSample.buildAndCheckBytecode()
     }
     
