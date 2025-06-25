@@ -8,6 +8,7 @@ plugins {
     id("kotlin-multiplatform-publish-conventions")
 }
 
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     jvmToolchain(8)
     
@@ -63,7 +64,6 @@ kotlin {
         nodejs()
     }
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate {
         common {
             group("jsAndWasmShared") {
