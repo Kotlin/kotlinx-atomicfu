@@ -1,6 +1,7 @@
 package kotlinx.atomicfu.locks
 
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
+import org.jetbrains.kotlinx.lincheck.annotations.Validate
 import org.jetbrains.kotlinx.lincheck.check
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.ModelCheckingOptions
 import org.jetbrains.kotlinx.lincheck.util.LoggingLevel
@@ -64,5 +65,11 @@ class NativeMutexTimeoutLincheckTest {
         lock.lock()
         counter.get()
         lock.unlock()
+    }
+
+    @Validate
+    fun validate() {
+        // Check queue is empty (only have head)
+        check(lock.getQueueSize() == 1)
     }
 }
