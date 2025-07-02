@@ -53,7 +53,7 @@ public expect class SynchronousMutex() {
     public fun tryLock(timeout: Duration): Boolean
 
     /**
-     * Locks the mutex, suspends the thread until the lock is acquired.
+     * Locks the mutex, blocks the thread until the lock is acquired.
      * 
      * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
      * released at the end of your critical section, and [unlock] is never invoked before a successful
