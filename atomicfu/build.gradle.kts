@@ -210,9 +210,7 @@ val transformedTestFU_current by tasks.registering(Test::class) {
         "**/*LFTest.*",
         "**/TraceToStringTest.*",
         "**/AtomicfuReferenceJsTest.*",
-        "**/NativeMutexLincheckTest.*",
-        "**/NativeMutexLincheckReentrantTest.*",
-        "**/NativeMutexTimeoutLincheckTest.*"
+        "**/*LincheckTest.*",
     )
     filter { isFailOnNoMatchingTests = false }
     launcherForJdk(LAUNCHER_JDK_VERSION)
@@ -228,9 +226,7 @@ val transformedTestBOTH_current by tasks.registering(Test::class) {
         "**/TopLevelGeneratedDeclarationsReflectionTest.*",
         "**/SyntheticFUFieldsTest.*",
         "**/AtomicfuReferenceJsTest.*",
-        "**/NativeMutexLincheckTest.*",
-        "**/NativeMutexLincheckReentrantTest.*",
-        "**/NativeMutexTimeoutLincheckTest.*"
+        "**/*LincheckTest.*",
     )
     filter { isFailOnNoMatchingTests = false }
     launcherForJdk(LAUNCHER_JDK_VERSION)
@@ -246,9 +242,7 @@ val transformedTestVH by tasks.registering(Test::class) {
         "**/TopLevelGeneratedDeclarationsReflectionTest.*",
         "**/SyntheticFUFieldsTest.*",
         "**/AtomicfuReferenceJsTest.*",
-        "**/NativeMutexLincheckTest.*",
-        "**/NativeMutexLincheckReentrantTest.*",
-        "**/NativeMutexTimeoutLincheckTest.*"
+        "**/*LincheckTest.*",
     )
     filter { isFailOnNoMatchingTests = false }
 

@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.lincheck.util.LoggingLevel
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.Test
 
-class NativeMutexLincheckReentrantTest {
+class NativeMutexReentrantLincheckTest {
     class Counter {
         @Volatile
         private var value = 0
