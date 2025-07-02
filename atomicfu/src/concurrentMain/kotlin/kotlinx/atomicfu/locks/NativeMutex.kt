@@ -65,19 +65,16 @@ internal class NativeMutex(
             return true
         }
 
+        if (newState < 0) throw IllegalStateException("Negative mutex state should not be possible")
         // If state larger than 1 -> enqueue and park
         // When woken up thread has acquired lock and his node in the queue is therefore at the head.
         // Remove head
-        if (newState > 1) {
-            val prevNode = parkingQueue.enqueue()
-            // if timeout
-            if (!prevNode.nodeWait(duration)) return false
-            parkingQueue.dequeue()
-            owningThread.value = currentParkingHandle
-            holdCount.incrementAndGet()
-            return true
-        }
-        
+        val prevNode = parkingQueue.enqueue()
+        // if timeout
+        if (!prevNode.nodeWait(duration)) return false
+        parkingQueue.dequeue()
+        owningThread.value = currentParkingHandle
+        holdCount.incrementAndGet()
         return true
     }
 
@@ -87,24 +84,23 @@ internal class NativeMutex(
         if (currentThreadId != currentOwnerId) throw IllegalStateException("Thread is not holding the lock")
 
         // dec hold count
+        if (holdCount.value <= 0) throw IllegalStateException("Thread unlocked more than it locked")
         val newHoldCount = holdCount.decrementAndGet()
         if (newHoldCount > 0) return
-        if (newHoldCount < 0) throw IllegalStateException("Thread unlocked more than it locked")
 
         // Lock is released by decrementing (only if decremented to 0)
         val currentState = this@NativeMutex.state.decrementAndGet()
         if (currentState == 0) return
 
+        if (currentState < 0) throw IllegalStateException("Negative mutex state should not be possible")
         // If waiters wake up the first in line. The woken up thread will dequeue the node.
-        if (currentState > 0) {
-            var nextParker = parkingQueue.getHead()
-            // If cancelled And there are other waiting nodes, go to next
-            while (!nextParker.nodeWake() && this@NativeMutex.state.decrementAndGet() >= 0) {
-                // We only dequeue here in case of timeoud out node.
-                // Dequeueing woken nodes can lead to issues when pre-unparked.
-                parkingQueue.dequeue()
-                nextParker = parkingQueue.getHead()
-            }
+        var nextParker = parkingQueue.getHead()
+        // If cancelled And there are other waiting nodes, go to next
+        while (!nextParker.nodeWake() && this@NativeMutex.state.decrementAndGet() >= 0) {
+            // We only dequeue here in case of timed out node.
+            // Dequeueing woken nodes can lead to issues when pre-unparked.
+            parkingQueue.dequeue()
+            nextParker = parkingQueue.getHead()
         }
     }
 
