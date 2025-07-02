@@ -95,12 +95,15 @@ internal class NativeMutex(
         if (currentState < 0) throw IllegalStateException("Negative mutex state should not be possible")
         // If waiters wake up the first in line. The woken up thread will dequeue the node.
         var nextParker = parkingQueue.getHead()
-        // If cancelled And there are other waiting nodes, go to next
-        while (!nextParker.nodeWake() && this@NativeMutex.state.decrementAndGet() >= 0) {
+        // If cancelled and dequeue and try next
+        while (!nextParker.nodeWake()) {
             // We only dequeue here in case of timed out node.
             // Dequeueing woken nodes can lead to issues when pre-unparked.
             parkingQueue.dequeue()
             nextParker = parkingQueue.getHead()
+            
+            // If no nodes left leave mutex in unlocked state
+            if (this@NativeMutex.state.decrementAndGet() == 0) return
         }
     }
 
