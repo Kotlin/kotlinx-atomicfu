@@ -105,7 +105,6 @@ internal class NativeMutex(
                 parkingQueue.dequeue()
                 nextParker = parkingQueue.getHead()
             }
-            return
         }
     }
 
