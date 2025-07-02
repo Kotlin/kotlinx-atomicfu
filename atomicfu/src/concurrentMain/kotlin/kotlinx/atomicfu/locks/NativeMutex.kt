@@ -99,7 +99,7 @@ internal class NativeMutex(
         if (currentState > 0) {
             var nextParker = parkingQueue.getHead()
             // If cancelled And there are other waiting nodes, go to next
-            while (!nextParker.nodeWake() && this@NativeMutex.state.decrementAndGet() > 0) {
+            while (!nextParker.nodeWake() && this@NativeMutex.state.decrementAndGet() >= 0) {
                 // We only dequeue here in case of timeoud out node.
                 // Dequeueing woken nodes can lead to issues when pre-unparked.
                 parkingQueue.dequeue()
@@ -208,4 +208,18 @@ internal class NativeMutex(
     private object Empty 
     private object Awoken
     private object TimedOut
+
+
+    /**
+     * For testing purposes only, not thread safe!
+     */
+    internal fun getQueueSize(): Int {
+        var size = 0
+        var node: Node? = parkingQueue.getHead()
+        while (node != null) {
+            node = node.next.value
+            size++
+        }
+        return size
+    }
 }
