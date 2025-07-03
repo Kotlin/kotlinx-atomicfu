@@ -7,6 +7,9 @@ package kotlinx.atomicfu.gradle.plugin.test.framework.runner
 import java.io.File
 import java.nio.file.Files
 
+/**
+ * @param[targetDir] The root Gradle project directory.
+ */
 internal class GradleBuild(val projectName: String, val targetDir: File) {
     var enableJvmIrTransformation = false
     var enableJsIrTransformation = false
