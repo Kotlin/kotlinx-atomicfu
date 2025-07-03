@@ -7,7 +7,6 @@ package kotlinx.atomicfu.plugin.gradle
 import kotlinx.atomicfu.transformer.*
 import org.gradle.api.*
 import org.gradle.api.file.*
-import org.gradle.api.internal.*
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
@@ -74,8 +73,8 @@ private fun Project.checkCompatibility(afuPluginVersion: String) {
         )
     }
     if (!kotlinVersion.atLeast(1, 9, 0)) {
-        // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin) 
-        // may be moved to the Gradle plugin in the library. The sources of the compiler plugin 
+        // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin)
+        // may be moved to the Gradle plugin in the library. The sources of the compiler plugin
         // are published as `kotlin-atomicfu-compiler-plugin-embeddable` since Kotlin 1.9.0 and may be accessed out of the Kotlin repo.
         error(
             "You are applying `kotlinx-atomicfu` plugin of version $afuPluginVersion. " +
@@ -451,7 +450,7 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 }
 
 @CacheableTask
-abstract class AtomicFUTransformTask : ConventionTask() {
+abstract class AtomicFUTransformTask : DefaultTask() {
     @get:Inject
     internal abstract val providerFactory: ProviderFactory
 

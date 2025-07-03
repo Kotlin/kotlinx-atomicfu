@@ -18,7 +18,7 @@ public final class kotlinx/atomicfu/plugin/gradle/AtomicFUPluginExtension {
 	public final fun setVerbose (Z)V
 }
 
-public abstract class kotlinx/atomicfu/plugin/gradle/AtomicFUTransformTask : org/gradle/api/internal/ConventionTask {
+public abstract class kotlinx/atomicfu/plugin/gradle/AtomicFUTransformTask : org/gradle/api/DefaultTask {
 	public field classPath Lorg/gradle/api/file/FileCollection;
 	public field inputFiles Lorg/gradle/api/file/FileCollection;
 	public fun <init> ()V
