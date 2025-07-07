@@ -4,17 +4,8 @@ plugins {
 }
 
 publishing {
-    repositories {
-        maven {
-            // if you change the name, you should change the name of the credential properties on CI as well
-            name = "MavenRepositoryForPublishing"
-            url = mavenRepositoryUri()
+    addPublishingRepositoryIfPresent()
 
-            // we use such type of credential because of the configuration cache problems with other types:
-            // https://github.com/gradle/gradle/issues/24040
-            credentials(PasswordCredentials::class)
-        }
-    }
     publications.withType<MavenPublication>().configureEach {
         pom {
             name = project.name
@@ -42,7 +33,6 @@ publishing {
                 url = "https://github.com/Kotlin/kotlinx.atomicfu"
             }
         }
-
 
         signPublicationIfKeyPresent(project, this)
     }

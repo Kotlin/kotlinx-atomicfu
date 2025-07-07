@@ -6,28 +6,14 @@
 
 import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
+import org.gradle.api.artifacts.repositories.PasswordCredentials
 import org.gradle.api.provider.*
 import org.gradle.api.publish.maven.*
+import org.gradle.api.publish.PublishingExtension
 import org.gradle.plugins.signing.*
 import java.net.*
 
 // Pom configuration
-
-fun mavenRepositoryUri(): URI {
-    if (System.getenv("libs.publication_repository") == "central") {
-        val repoUrl = System.getenv("libs.repo.url")
-            ?: throw IllegalArgumentException("Using central repository for deployment implies presence of libs.repo.url property")
-        return URI(repoUrl)
-    }
-    val repositoryId: String? = System.getenv("libs.repository.id")
-    return if (repositoryId == null) {
-        // Using implicitly created staging, for MPP it's likely to be a mistake because
-        // publication on TeamCity will create 3 independent staging repositories
-        URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-    } else {
-        URI("https://oss.sonatype.org/service/local/staging/deployByRepositoryId/$repositoryId")
-    }
-}
 
 fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication) {
     val keyId = project.getSensitiveProperty("libs.sign.key.id")
@@ -37,6 +23,23 @@ fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication)
         project.extensions.configure<SigningExtension>("signing") {
             useInMemoryPgpKeys(keyId, signingKey, signingKeyPassphrase)
             sign(publication)
+        }
+    }
+}
+
+fun PublishingExtension.addPublishingRepositoryIfPresent() {
+    val repoUrl = System.getenv("libs.repo.url")
+    if (!repoUrl.isNullOrBlank()) {
+        repositories {
+            maven {
+                // if you change the name, you should change the name of the credential properties on CI as well
+                name = "MavenRepositoryForPublishing"
+                url = URI(repoUrl)
+
+                // we use such type of credential because of the configuration cache problems with other types:
+                // https://github.com/gradle/gradle/issues/24040
+                credentials(PasswordCredentials::class.java)
+            }
         }
     }
 }
