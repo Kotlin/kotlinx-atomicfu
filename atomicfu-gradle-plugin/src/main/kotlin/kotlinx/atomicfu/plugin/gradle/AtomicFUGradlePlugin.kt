@@ -74,8 +74,8 @@ private fun Project.checkCompatibility(afuPluginVersion: String) {
         )
     }
     if (!kotlinVersion.atLeast(1, 9, 0)) {
-        // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin) 
-        // may be moved to the Gradle plugin in the library. The sources of the compiler plugin 
+        // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin)
+        // may be moved to the Gradle plugin in the library. The sources of the compiler plugin
         // are published as `kotlin-atomicfu-compiler-plugin-embeddable` since Kotlin 1.9.0 and may be accessed out of the Kotlin repo.
         error(
             "You are applying `kotlinx-atomicfu` plugin of version $afuPluginVersion. " +
@@ -487,6 +487,7 @@ abstract class AtomicFUTransformTask : ConventionTask() {
 
     @TaskAction
     fun transform() {
+        destinationDirectory.get().asFile.deleteRecursively()
         val cp = classPath.files.map { it.absolutePath }
         inputFiles.files.forEach { inputDir ->
             AtomicFUTransformer(cp, inputDir, destinationDirectory.get().asFile).let { t ->
