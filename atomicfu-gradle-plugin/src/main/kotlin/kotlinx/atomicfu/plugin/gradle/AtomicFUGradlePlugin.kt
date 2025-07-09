@@ -7,7 +7,6 @@ package kotlinx.atomicfu.plugin.gradle
 import kotlinx.atomicfu.transformer.*
 import org.gradle.api.*
 import org.gradle.api.file.*
-import org.gradle.api.internal.*
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
@@ -451,7 +450,7 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 }
 
 @CacheableTask
-abstract class AtomicFUTransformTask : ConventionTask() {
+abstract class AtomicFUTransformTask : DefaultTask() {
     @get:Inject
     internal abstract val providerFactory: ProviderFactory
 
