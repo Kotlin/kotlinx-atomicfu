@@ -3,7 +3,8 @@
 [![Kotlin Beta](https://kotl.in/badges/beta.svg)](https://kotlinlang.org/docs/components-stability.html)
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.28.0/pom)
+[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/atomicfu)](https://search.maven.org/artifact/org.jetbrains.kotlinx/atomicfu/0.29.0/pom)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.2-blue.svg?logo=kotlin)](http://kotlinlang.org)
 
 >Note on Beta status: the plugin is in its active development phase and changes from release to release.
 >We do provide a compatibility of atomicfu-transformed artifacts between releases, but we do not provide 
@@ -34,18 +35,17 @@
 
 ## Requirements
 
-Starting from version `0.24.0` of the library your project is required to use:
+To apply the current version of the atomicfu Gradle plugin, your project has to use:
 
-* Gradle `7.0` or newer
+* Gradle `8.2` or newer
 
-* Kotlin `1.9.0` or newer
+* Kotlin `2.2.0` or newer
+
+Consider using [previous versions](https://github.com/Kotlin/kotlinx-atomicfu/releases) of the plugin
+if your project could not meet these requirements.
 
 > **Note on Kotlin version:** Currently, the `kotlinx-atomicfu` Gradle plugin only relies on the version of Kotlin Gradle Plugin (KGP) present in the user's project.
 > It's important to note this constraint if your project configures the custom Kotlin compiler version or modifies the Kotlin Native compiler version using `kotlin.native.version` property.
-
->**In case, you cannot upgrade the Kotlin version to 1.9.0 or newer** in your project,
-you can downgrade `kotlinx-atomicfu` plugin version to `0.22.0`. 
-> Please note, though, that using the latest version of the plugin and upgrading the Kotlin version is the more recommended approach.
 
 ## Features
 
@@ -121,7 +121,7 @@ Add the following to your top-level build file:
 
 ```kotlin
 plugins {
-     id("org.jetbrains.kotlinx.atomicfu") version "0.28.0"
+     id("org.jetbrains.kotlinx.atomicfu") version "0.29.0"
 }
 ```
 </details>
@@ -131,7 +131,7 @@ plugins {
 
 ```groovy
 plugins {
-    id 'org.jetbrains.kotlinx.atomicfu' version '0.28.0'
+    id 'org.jetbrains.kotlinx.atomicfu' version '0.29.0'
 }
 ```
 </details>
@@ -149,7 +149,7 @@ buildscript {
   }
 
   dependencies {
-    classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.28.0")
+    classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.29.0")
   }
 }
 
@@ -166,7 +166,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.28.0'
+        classpath 'org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.29.0'
     }
 }
   
@@ -184,7 +184,7 @@ Maven configuration is supported for JVM projects.
 
 ```xml
 <properties>
-     <atomicfu.version>0.28.0</atomicfu.version>
+     <atomicfu.version>0.29.0</atomicfu.version>
 </properties> 
 ```
 
@@ -331,7 +331,7 @@ To set configuration options you should create `atomicfu` section in a `build.gr
 like this:
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.28.0'
+  dependenciesVersion = '0.29.0'
 }
 ```
 
@@ -354,7 +354,7 @@ Here are the valid options:
 Here are all available configuration options (with their defaults):
 ```groovy
 atomicfu {
-  dependenciesVersion = '0.28.0' // set to null to turn-off auto dependencies
+  dependenciesVersion = '0.29.0' // set to null to turn-off auto dependencies
   transformJvm = true // set to false to turn off JVM transformation
   jvmVariant = "FU" // JVM transformation variant: FU,VH, or BOTH
 }

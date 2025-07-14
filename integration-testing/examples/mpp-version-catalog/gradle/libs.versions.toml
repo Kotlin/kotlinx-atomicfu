@@ -1,7 +1,7 @@
 [versions]
 junit = "4.13.2"
-kotlin = "2.1.0"
-atomicfu = "0.28.0-SNAPSHOT"
+kotlin = "2.2.0"
+atomicfu = "0.29.0-SNAPSHOT"
 ktor = "2.3.8"
 logback = "1.5.0"
 

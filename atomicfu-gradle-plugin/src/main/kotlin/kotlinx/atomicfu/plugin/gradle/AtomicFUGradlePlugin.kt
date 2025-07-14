@@ -7,7 +7,6 @@ package kotlinx.atomicfu.plugin.gradle
 import kotlinx.atomicfu.transformer.*
 import org.gradle.api.*
 import org.gradle.api.file.*
-import org.gradle.api.internal.*
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
@@ -33,7 +32,7 @@ private const val ENABLE_JS_IR_TRANSFORMATION_LEGACY = "kotlinx.atomicfu.enableI
 internal const val ENABLE_JS_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJsIrTransformation"
 internal const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrTransformation"
 internal const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
-private const val MIN_SUPPORTED_GRADLE_VERSION = "7.0"
+private const val MIN_SUPPORTED_GRADLE_VERSION = "8.2"
 private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
@@ -74,8 +73,8 @@ private fun Project.checkCompatibility(afuPluginVersion: String) {
         )
     }
     if (!kotlinVersion.atLeast(1, 9, 0)) {
-        // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin) 
-        // may be moved to the Gradle plugin in the library. The sources of the compiler plugin 
+        // Since Kotlin 1.9.0 the logic of the Gradle plugin from the Kotlin repo (AtomicfuKotlinGradleSubplugin)
+        // may be moved to the Gradle plugin in the library. The sources of the compiler plugin
         // are published as `kotlin-atomicfu-compiler-plugin-embeddable` since Kotlin 1.9.0 and may be accessed out of the Kotlin repo.
         error(
             "You are applying `kotlinx-atomicfu` plugin of version $afuPluginVersion. " +
@@ -451,7 +450,7 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 }
 
 @CacheableTask
-abstract class AtomicFUTransformTask : ConventionTask() {
+abstract class AtomicFUTransformTask : DefaultTask() {
     @get:Inject
     internal abstract val providerFactory: ProviderFactory
 
@@ -487,6 +486,7 @@ abstract class AtomicFUTransformTask : ConventionTask() {
 
     @TaskAction
     fun transform() {
+        destinationDirectory.get().asFile.deleteRecursively()
         val cp = classPath.files.map { it.absolutePath }
         inputFiles.files.forEach { inputDir ->
             AtomicFUTransformer(cp, inputDir, destinationDirectory.get().asFile).let { t ->
