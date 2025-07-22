@@ -15,21 +15,13 @@ kotlin.sourceSets.configureEach {
     }
 }
 
-val buildSnapshotTrain = project.hasProperty("build_snapshot_train")
-
 dependencies {
     api(libs.bundles.asm)
     api(libs.slf4j.api)
     api(libs.mozilla.rhino)
+    api(libs.kotlin.metadataJvm)
 
-    if(buildSnapshotTrain) {
-        implementation("org.jetbrains.kotlin:kotlin-metadata-jvm:2.1.0-dev-8424")
-        compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.1.0-dev-8424")
-    }
-    else {
-        api(libs.kotlin.metadataJvm)
-        compileOnly(libs.kotlin.stdlib)
-    }
+    compileOnly(libs.kotlin.stdlib)
 
     runtimeOnly(libs.slf4j.simple)
 }
