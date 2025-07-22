@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.2.0"
-kotlin-for-gradle-plugin = "2.1.0"
+kotlin-for-gradle-plugin = "2.2.0"
 kotlinx-binaryCompatibilityValidator = "0.17.0"
 asm = "9.8"
 slf4j = "1.8.0-alpha2"
