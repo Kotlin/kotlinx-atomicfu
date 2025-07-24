@@ -42,8 +42,8 @@ class NativeMutexReentrantLincheckTest {
     fun inc(): Int {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         lock.lock()
-        if (!lock.tryLock()) throw IllegalStateException("couldn't reenter with trylock")
-        if (!lock.tryLock()) throw IllegalStateException("couldn't reenter with trylock")
+        check(lock.tryLock()) {"couldn't reenter with trylock"}
+        check(lock.tryLock()) {"couldn't reenter with trylock"}
         val result = counter.inc()
         lock.unlock()
         lock.unlock()
@@ -55,8 +55,8 @@ class NativeMutexReentrantLincheckTest {
     fun get(): Int {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         lock.lock()
-        if (!lock.tryLock()) throw IllegalStateException("couldn't reenter with trylock")
-        if (!lock.tryLock()) throw IllegalStateException("couldn't reenter with trylock")
+        check(lock.tryLock()) {"couldn't reenter with trylock"}
+        check(lock.tryLock()) {"couldn't reenter with trylock"}
         val result = counter.get()
         lock.unlock()
         lock.unlock()

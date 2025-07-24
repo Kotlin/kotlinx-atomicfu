@@ -14,7 +14,7 @@ public actual class SynchronousMutex {
     public actual fun tryLock(timeout: Duration): Boolean = true
     public actual fun lock(): Unit { state++ }
     public actual fun unlock(): Unit { 
-        if (state == 0) throw IllegalStateException("Mutex already unlocked") 
+        check(state > 0) { "Mutex already unlocked" }
         state--
     }
 }
