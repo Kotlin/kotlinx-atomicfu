@@ -23,6 +23,7 @@ kotlin {
     compilerOptions {
         setWarningsAsErrors(project)
         freeCompilerArgs.add("-Xsuppress-version-warnings")
+        freeCompilerArgs.add("-Xskip-metadata-version-check")
 
         languageVersion = getOverridingKotlinLanguageVersion(project)?.let { KotlinVersion.fromVersion(it) }
             ?: KotlinVersion.KOTLIN_1_6
