@@ -1,10 +1,9 @@
 package kotlinx.atomicfu.locks
 
-import org.jetbrains.kotlinx.lincheck.annotations.Operation
-import org.jetbrains.kotlinx.lincheck.annotations.Validate
-import org.jetbrains.kotlinx.lincheck.check
-import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.ModelCheckingOptions
-import org.jetbrains.kotlinx.lincheck.util.LoggingLevel
+import org.jetbrains.lincheck.datastructures.ModelCheckingOptions
+import org.jetbrains.lincheck.datastructures.Operation
+import org.jetbrains.lincheck.datastructures.Validate
+import org.jetbrains.lincheck.util.LoggingLevel
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.Test
 
