@@ -29,7 +29,7 @@ internal class NativeMutex(
      * When a thread tries to acquire the lock, but finds it is already locked it enqueues by appending to the [parkingQueue].
      * On enqueue the parking queue provides the second last node, this node is used to park on.
      * When our thread is woken up that means that the thread parked on the thrid last node called unpark on the second last node.
-     * Since a woken up thread is first inline it means that it's node is the head and can therefore dequeue.
+     * Since a woken up thread is the first in line it means that it's node is the head and can therefore dequeue.
      *
      * Unlocking happens by calling state.decrementAndGet().
      * When the returned value is 0 it means the lock is free and we can simply return.
