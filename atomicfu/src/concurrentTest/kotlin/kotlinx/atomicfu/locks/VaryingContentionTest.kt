@@ -18,31 +18,24 @@ class VaryingContentionTest {
     
     private fun multiTestLock(lockInt: LockInt, nThreads: Int, countTo: Int) {
         val futureList = List(nThreads) { i ->
-            testWithThread(LockIntTest(lockInt, countTo, nThreads, i))
+            testWithThread(lockInt, countTo, nThreads, i)
         }
         Fut.waitAllAndThrow(futureList)
     }
 
-    private fun testWithThread(t: LockIntTest): Fut {
+    private fun testWithThread(lockInt: LockInt, max: Int, mod: Int, id: Int): Fut {
         return Fut {
             while (true) {
-                t.lockInt.lock()
+                lockInt.lock()
                 try {
-                    if (t.lockInt.n % t.mod == t.id) t.lockInt.n++
-                    if (t.lockInt.n >= t.max) break
+                    if (lockInt.n % mod == id) lockInt.n++
+                    if (lockInt.n >= max) break
                 } finally {
-                    t.lockInt.unlock()
+                    lockInt.unlock()
                 }
             }
         }
     }
-    
-    data class LockIntTest(
-        val lockInt: LockInt,
-        val max: Int,
-        val mod: Int,
-        val id: Int,
-    )
     
     class LockInt {
         private val lock = SynchronousMutex()
