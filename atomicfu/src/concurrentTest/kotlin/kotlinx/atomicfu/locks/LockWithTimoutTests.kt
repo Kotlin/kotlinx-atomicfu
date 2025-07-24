@@ -17,10 +17,8 @@ class LockWithTimeoutTests {
     @Test
     fun timeoutLockStressTest() {
         val mutex = SynchronousMutex()
-        val threads = mutableListOf<TestThread>()
-
-        repeat(N_THREADS) { threadId ->
-            val thread = testThread {
+        val threads = List(N_THREADS) { threadId ->
+            testThread {
                 while (counter.value < TARGET_COUNT) {
                     // Try to acquire the lock with a timeout
                     if (mutex.tryLock(getRandomTimeout().milliseconds)) {
@@ -35,12 +33,10 @@ class LockWithTimeoutTests {
                             mutex.unlock()
                         }
                     }
-
                     // Random sleep between increment attempts to increase variation
                     sleepMillis(getRandomWait())
                 }
             }
-            threads.add(thread)
         }
 
         // Wait for all threads to complete
