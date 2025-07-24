@@ -11,9 +11,7 @@ import kotlin.time.Duration.Companion.nanoseconds
 
 class NativeMutexTimeoutLincheckTest {
     class Counter {
-        @Volatile
         private var value = 0
-
         fun inc(): Int = ++value
         fun get() = value
     }
