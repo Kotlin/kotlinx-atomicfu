@@ -11,6 +11,7 @@ node-gradle = "3.1.1"
 rhino = "1.7.10"
 gradle-plugin-publish = "1.2.1"
 gradle-develocity = "3.17.6"
+lincheck = "3.1.1"
 
 [libraries]
 
@@ -40,6 +41,7 @@ slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version.ref = "slf4
 
 # Testing depedencies
 junit-junit = { group = "junit", name = "junit", version.ref = "junit" }
+jetbrains-lincheck = { group = "org.jetbrains.lincheck", name = "lincheck", version.ref = "lincheck" }
 
 # Maven dependencies
 maven-core = { group = "org.apache.maven", name = "maven-core", version.ref = "maven" }
