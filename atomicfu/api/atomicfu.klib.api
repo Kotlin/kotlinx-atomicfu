@@ -45,6 +45,15 @@ final class <#A: kotlin/Any?> kotlinx.atomicfu/AtomicRef { // kotlinx.atomicfu/A
     final fun compareAndSet(#A, #A): kotlin/Boolean // kotlinx.atomicfu/AtomicRef.compareAndSet|compareAndSet(1:0;1:0){}[0]
 }
 
+final class kotlinx.atomicfu.locks/SynchronousMutex { // kotlinx.atomicfu.locks/SynchronousMutex|null[0]
+    constructor <init>() // kotlinx.atomicfu.locks/SynchronousMutex.<init>|<init>(){}[0]
+
+    final fun lock() // kotlinx.atomicfu.locks/SynchronousMutex.lock|lock(){}[0]
+    final fun tryLock(): kotlin/Boolean // kotlinx.atomicfu.locks/SynchronousMutex.tryLock|tryLock(){}[0]
+    final fun tryLock(kotlin.time/Duration): kotlin/Boolean // kotlinx.atomicfu.locks/SynchronousMutex.tryLock|tryLock(kotlin.time.Duration){}[0]
+    final fun unlock() // kotlinx.atomicfu.locks/SynchronousMutex.unlock|unlock(){}[0]
+}
+
 final class kotlinx.atomicfu/AtomicBoolean { // kotlinx.atomicfu/AtomicBoolean|null[0]
     final var value // kotlinx.atomicfu/AtomicBoolean.value|{}value[0]
         // Targets: [native]
@@ -278,6 +287,7 @@ final inline fun (kotlinx.atomicfu/AtomicLong).kotlinx.atomicfu/getAndUpdate(kot
 final inline fun (kotlinx.atomicfu/AtomicLong).kotlinx.atomicfu/loop(kotlin/Function1<kotlin/Long, kotlin/Unit>): kotlin/Nothing // kotlinx.atomicfu/loop|loop@kotlinx.atomicfu.AtomicLong(kotlin.Function1<kotlin.Long,kotlin.Unit>){}[0]
 final inline fun (kotlinx.atomicfu/AtomicLong).kotlinx.atomicfu/update(kotlin/Function1<kotlin/Long, kotlin/Long>) // kotlinx.atomicfu/update|update@kotlinx.atomicfu.AtomicLong(kotlin.Function1<kotlin.Long,kotlin.Long>){}[0]
 final inline fun (kotlinx.atomicfu/AtomicLong).kotlinx.atomicfu/updateAndGet(kotlin/Function1<kotlin/Long, kotlin/Long>): kotlin/Long // kotlinx.atomicfu/updateAndGet|updateAndGet@kotlinx.atomicfu.AtomicLong(kotlin.Function1<kotlin.Long,kotlin.Long>){}[0]
+final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu.locks/SynchronousMutex).kotlinx.atomicfu.locks/withLock(kotlin/Function0<#A>): #A // kotlinx.atomicfu.locks/withLock|withLock@kotlinx.atomicfu.locks.SynchronousMutex(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu/AtomicRef<#A>).kotlinx.atomicfu/getAndUpdate(kotlin/Function1<#A, #A>): #A // kotlinx.atomicfu/getAndUpdate|getAndUpdate@kotlinx.atomicfu.AtomicRef<0:0>(kotlin.Function1<0:0,0:0>){0§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu/AtomicRef<#A>).kotlinx.atomicfu/loop(kotlin/Function1<#A, kotlin/Unit>): kotlin/Nothing // kotlinx.atomicfu/loop|loop@kotlinx.atomicfu.AtomicRef<0:0>(kotlin.Function1<0:0,kotlin.Unit>){0§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?> (kotlinx.atomicfu/AtomicRef<#A>).kotlinx.atomicfu/update(kotlin/Function1<#A, #A>) // kotlinx.atomicfu/update|update@kotlinx.atomicfu.AtomicRef<0:0>(kotlin.Function1<0:0,0:0>){0§<kotlin.Any?>}[0]
@@ -295,14 +305,6 @@ open annotation class kotlinx.atomicfu/OptionalJsName : kotlin/Annotation { // k
 // Targets: [native]
 open annotation class kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi : kotlin/Annotation { // kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi|null[0]
     constructor <init>() // kotlinx.atomicfu.locks/ExperimentalThreadBlockingApi.<init>|<init>(){}[0]
-}
-
-// Targets: [native]
-final class kotlinx.atomicfu.locks/NativeMutexNode { // kotlinx.atomicfu.locks/NativeMutexNode|null[0]
-    constructor <init>() // kotlinx.atomicfu.locks/NativeMutexNode.<init>|<init>(){}[0]
-
-    final fun lock() // kotlinx.atomicfu.locks/NativeMutexNode.lock|lock(){}[0]
-    final fun unlock() // kotlinx.atomicfu.locks/NativeMutexNode.unlock|unlock(){}[0]
 }
 
 // Targets: [native]
