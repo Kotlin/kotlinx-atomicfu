@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.30.0-beta
+* Provided common SynchronousMutex (#508)
+  > This release also removed `kotlinx.atomicfu.locks.NativeMutexNode` class, that was unintentionally made public in the past.
+* Build scripts were improved and updated (#550, #549, #548, #553)
+* Minor test improvements (#552)
+
 # Version 0.29.0
 * Updated Kotlin to 2.2.0.
 
