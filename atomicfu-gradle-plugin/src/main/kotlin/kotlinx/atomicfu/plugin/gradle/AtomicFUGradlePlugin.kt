@@ -205,7 +205,7 @@ private fun Project.addJsCompilerPluginRuntimeDependency() {
         withKotlinTargets { target ->
             if (needsJsIrTransformation(target.platformType)) {
                 target.compilations.forEach { kotlinCompilation ->
-                    kotlinCompilation.dependencies {
+                    kotlinCompilation.defaultSourceSet.dependencies {
                         if (getKotlinVersion().atLeast(1, 7, 10)) {
                             // since Kotlin 1.7.10 `kotlinx-atomicfu-runtime` is published and should be added directly
                             implementation("org.jetbrains.kotlin:kotlinx-atomicfu-runtime:${getKotlinPluginVersion()}")

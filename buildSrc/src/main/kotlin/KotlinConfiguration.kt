@@ -98,12 +98,12 @@ fun KotlinCommonCompilerOptions.addKotlinUserProjectFlags() {
  * Use `kotlin_Werror_override` property to override the state of -Werror:
  * `true` means that warnings should be treated as errors,`false` means that they should not.
  */
-private fun warningsAreErrorsOverride(project: Project): Boolean? =
+private fun warningsAreErrorsOverride(project: Project): Boolean =
     project.providers.gradleProperty("kotlin_Werror_override").orNull.let {
         when (it) {
             "enable" -> true
             "disable" -> false
-            null -> true
+            null -> true // default value
             else -> throw GradleException("Invalid kotlin_Werror_override value. Use 'enable' or 'disable'")
         }
     }
@@ -112,11 +112,7 @@ private fun warningsAreErrorsOverride(project: Project): Boolean? =
  * Set warnings as errors but allow the Kotlin User Project configuration to override. See KT-75078.
  */
 fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
-    if (warningsAreErrorsOverride(project) == false) {
-        freeCompilerArgs.addAll("-Wextra", "-Xuse-fir-experimental-checkers")
-    } else {
-        allWarningsAsErrors.set(true)
-    }
+    allWarningsAsErrors.set(warningsAreErrorsOverride(project))
 }
 
 /**
