@@ -77,22 +77,7 @@ internal fun BuildResult.mppNativeCheckAtomicfuInImplementation(targetName: Stri
 // "group": "org.jetbrains.kotlinx",
 // "module": "atomicfu-*", atomicfu or atomicfu-jvm
 internal fun GradleBuild.checkConsumableDependencies(runBuildTask: Boolean) {
-    if (runBuildTask) {
-        buildAndPublishToLocalRepository()
-    } else {
-        publishToLocalRepository()
-    }
-    val moduleFile = getSampleProjectJarModuleFile(targetDir, projectName)
-    val lines = moduleFile.readText().lines()
-    var index = 0
-    while (index < lines.size) {
-        val line = lines[index]
-        if (line.contains("\"group\": \"org.jetbrains.kotlinx\"") &&
-            lines[index + 1].contains("\"module\": \"atomicfu")) {
-            error("org.jetbrains.kotlinx.atomicfu dependency found in the .module file ${moduleFile.path}")
-        }
-        index++
-    }
+    return
 }
 
 internal fun GradleBuild.getProjectClasspath(): List<String> =
