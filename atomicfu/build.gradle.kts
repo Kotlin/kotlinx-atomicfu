@@ -13,20 +13,16 @@ kotlin {
     jvmToolchain(8)
     
     // Tier 1
-    macosX64()
     macosArm64()
     iosSimulatorArm64()
-    iosX64()
 
     // Tier 2
     linuxX64()
     linuxArm64()
     watchosSimulatorArm64()
-    watchosX64()
     watchosArm32()
     watchosArm64()
     tvosSimulatorArm64()
-    tvosX64()
     tvosArm64()
     iosArm64()
 
@@ -37,9 +33,19 @@ kotlin {
     androidNativeX64()
     mingwX64()
     watchosDeviceArm64()
-    
+
+    // Deprecated
     @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
     linuxArm32Hfp()
+
+    @Suppress("DEPRECATION")
+    iosX64()
+    @Suppress("DEPRECATION")
+    macosX64()
+    @Suppress("DEPRECATION")
+    tvosX64()
+    @Suppress("DEPRECATION")
+    watchosX64()
 
     // JS -- always
     js(IR) {
