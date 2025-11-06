@@ -29,7 +29,7 @@ class UserProjectTest {
         require(mppSamplePublishDirectory.exists() && mppSamplePublishDirectory.isDirectory) {
             "Failed to find the local repository for ${mppSample.projectName}, this directory does not exist: ${mppSamplePublishDirectory.path}"
         }
-        userProject.localRepositoryUrl = mppSamplePublishDirectory.path
+        userProject.localRepositoryUrl = mppSamplePublishDirectory.absolutePath
         userProject.cleanAndBuild()
     }
 }
