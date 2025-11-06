@@ -12,7 +12,7 @@ import kotlin.test.Test
 // As a result, tests are unstable and have to be disabled.
 @Ignore("KTI-1966")
 class JvmVersionCompatibilityTest {
-    private val jvmSample: GradleBuild = createGradleBuildFromSources("jdk-compatibility")
+    private val jvmSample: GradleBuild = createGradleBuildFromSources("jdk-compatibility", "")
 
     @Test
     fun testClassTransformationWithEarliestJdkVersion() {

@@ -6,6 +6,7 @@ package kotlinx.atomicfu.gradle.plugin.test.framework.runner
 
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Paths
 
 /**
  * @param[targetDir] The root Gradle project directory.
@@ -61,9 +62,11 @@ internal class BuildResult(exitCode: Int, private val logFile: File) {
     }
 }
 
-internal fun createGradleBuildFromSources(projectName: String): GradleBuild {
+internal fun createGradleBuildFromSources(projectName: String, testName: String): GradleBuild {
     val projectDir = projectExamplesDir.resolve(projectName)
-    val targetDir = Files.createTempDirectory("${projectName.substringAfterLast('/')}-").toFile().apply {
+    val targetDir = Files.createTempDirectory(
+        Paths.get("build"),
+        "${testName}-${projectName.substringAfterLast('/')}-").toFile().apply {
         projectDir.copyRecursively(this)
     }
 

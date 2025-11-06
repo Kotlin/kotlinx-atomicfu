@@ -8,7 +8,7 @@ import kotlin.test.*
  * This test checks the build of mpp-version-catalog project that uses a versions catalog and was a reproducer for this error (#399).
  */
 class MppVersionCatalogTest {
-    private val mppWithVersionCatalog: GradleBuild = createGradleBuildFromSources("mpp-version-catalog")
+    private val mppWithVersionCatalog: GradleBuild = createGradleBuildFromSources("mpp-version-catalog", "MppVersionCatalogTest_testBuildWithKotlinNewerThan_1_9_0")
 
     @Test
     fun testBuildWithKotlinNewerThan_1_9_0() {

@@ -17,9 +17,9 @@ import kotlin.test.*
  */
 class UserProjectTest {
     // Build mpp-sample project as the mpp library and publish it to the local repo
-    private val mppSample: GradleBuild = createGradleBuildFromSources("mpp-sample")
+    private val mppSample: GradleBuild = createGradleBuildFromSources("mpp-sample", "UserProjectTest_testUserProjectBuild")
     
-    private val userProject: GradleBuild = createGradleBuildFromSources("user-project")
+    private val userProject: GradleBuild = createGradleBuildFromSources("user-project", "UserProjectTest_testUserProjectBuild")
 
     @Test
     fun testUserProjectBuild() {

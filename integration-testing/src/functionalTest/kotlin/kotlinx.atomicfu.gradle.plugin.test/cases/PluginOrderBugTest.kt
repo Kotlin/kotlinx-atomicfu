@@ -10,11 +10,11 @@ import kotlin.test.*
  * This test reproduces and tracks the issue #384.
  */
 class PluginOrderBugTest {
-    private val pluginOrderBugProject: GradleBuild = createGradleBuildFromSources("plugin-order-bug")
+    private fun getBuild(testName: String): GradleBuild = createGradleBuildFromSources("plugin-order-bug", testName)
 
     @Test
     fun testUserProjectBuild() {
-        pluginOrderBugProject.cleanAndBuild()
+        getBuild("PluginOrderBugTest_testUserProjectBuild").cleanAndBuild()
     }
 
     /**
@@ -27,6 +27,7 @@ class PluginOrderBugTest {
      */
     @Test
     fun testTransitiveKotlinStdlibDependency() {
+        val pluginOrderBugProject = getBuild("PluginOrderBugTest_testTransitiveKotlinStdlibDependency")
         pluginOrderBugProject.extraProperties.add("-Pkotlin_version=1.9.20")
         val projectKotlinVersion = pluginOrderBugProject.getKotlinVersion()
         assertTrue(projectKotlinVersion == "1.9.20")

@@ -10,10 +10,11 @@ import kotlin.test.*
 
 class JvmProjectTest {
 
-    private val jvmSample: GradleBuild = createGradleBuildFromSources("jvm-sample")
+    private fun getProject(testName: String): GradleBuild = createGradleBuildFromSources("jvm-sample", testName)
 
     @Test
     fun testJvmWithEnabledIrTransformation() {
+        val jvmSample = getProject("JvmProjectTest_testJvmWithEnabledIrTransformation")
         jvmSample.enableJvmIrTransformation = true
         jvmSample.withDependencies {
             jvmCheckAtomicfuInCompileClasspath()
@@ -25,6 +26,8 @@ class JvmProjectTest {
 
     @Test
     fun testJvmWithDisabledIrTransformation() {
+        val jvmSample = getProject("JvmProjectTest_testJvmWithDisabledIrTransformation")
+
         jvmSample.enableJvmIrTransformation = false
         jvmSample.withDependencies {
             jvmCheckAtomicfuInCompileClasspath()
@@ -37,11 +40,14 @@ class JvmProjectTest {
     // This test checks that jar is packed without duplicates, see #303
     @Test
     fun testJar() {
+        val jvmSample = getProject("JvmProjectTest_testJar")
+
         assertTrue(jvmSample.cleanAndJar().isSuccessful)
     }
 
     @Test
     fun testFilesDeleted() {
+        val jvmSample = getProject("JvmProjectTest_testFilesDeleted")
 
         val buildClassesAtomicfuDir = jvmSample.targetDir.resolve("build/classes/atomicfu")
 

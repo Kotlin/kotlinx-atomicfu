@@ -10,16 +10,18 @@ import kotlin.test.*
  * `multi-module-test` is also a reproducer for the problem with leftovers of atomicfu references in Metadata, see KT-63413
  */
 class MultiModuleTest {
-    private val multiModuleTest: GradleBuild = createGradleBuildFromSources("multi-module-test")
+    private fun getBuild(testName: String): GradleBuild = createGradleBuildFromSources("multi-module-test", testName)
 
     @Test
     fun testMppWithDisabledJvmIrTransformation() {
+        val multiModuleTest = getBuild("MultiModuleTest_testMppWithDisabledJvmIrTransformation")
         multiModuleTest.enableJvmIrTransformation = false
         multiModuleTest.buildAndCheckBytecode()
     }
 
     @Test
     fun testMppWithEnabledJvmIrTransformation() {
+        val multiModuleTest = getBuild("MultiModuleTest_testMppWithEnabledJvmIrTransformation")
         multiModuleTest.enableJvmIrTransformation = true
         multiModuleTest.buildAndCheckBytecode()
     }
