@@ -15,7 +15,7 @@ internal fun GradleBuild.buildGradleByShell(
     commands: List<String>,
     properties: List<String>
 ): BuildResult {
-    val logFile = targetDir.resolve("build-daemon-${targetDir.name.split("-")[0]}-$runIndex.log")
+    val logFile = targetDir.resolve("kotlin-daemon-${targetDir.name.split("-")[0]}-$runIndex.log")
 
     val gradleCommands = buildSystemCommand(targetDir, commands, properties)
 
