@@ -8,7 +8,6 @@ junit = "4.12"
 maven = "3.5.3"
 maven-pluginTools = "3.5"
 node-gradle = "3.1.1"
-rhino = "1.7.10"
 gradle-plugin-publish = "1.2.1"
 gradle-develocity = "3.17.6"
 lincheck = "3.1.1"
@@ -47,9 +46,6 @@ jetbrains-lincheck = { group = "org.jetbrains.lincheck", name = "lincheck", vers
 maven-core = { group = "org.apache.maven", name = "maven-core", version.ref = "maven" }
 maven-pluginApi = { group = "org.apache.maven", name = "maven-plugin-api", version.ref = "maven" }
 maven-pluginAnnotations = { group = "org.apache.maven.plugin-tools", name = "maven-plugin-annotations", version.ref = "maven-pluginTools" }
-
-# Other dependencies
-mozilla-rhino = { group = "org.mozilla", name = "rhino", version.ref = "rhino" }
 
 [bundles]
 asm = ["asm", "asm-commons", "asm-tree", "asm-util"]
