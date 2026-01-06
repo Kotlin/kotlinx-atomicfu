@@ -12,19 +12,23 @@ kotlin {
     jvmToolchain(8)
     
     // Tier 1
+    @Suppress("DEPRECATION")
     macosX64()
     macosArm64()
     iosSimulatorArm64()
+    @Suppress("DEPRECATION")
     iosX64()
 
     // Tier 2
     linuxX64()
     linuxArm64()
     watchosSimulatorArm64()
+    @Suppress("DEPRECATION")
     watchosX64()
     watchosArm32()
     watchosArm64()
     tvosSimulatorArm64()
+    @Suppress("DEPRECATION")
     tvosX64()
     tvosArm64()
     iosArm64()
