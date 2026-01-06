@@ -10,9 +10,10 @@ plugins {
 dependencies {
     api(libs.bundles.asm)
     api(libs.slf4j.api)
-    api(libs.kotlin.metadataJvm)
+    api(libs.kotlin.stdlib)
 
-    compileOnly(libs.kotlin.stdlib)
-
+    compileOnly(libs.kotlin.metadataJvm) // will be supplied by the plugin
     runtimeOnly(libs.slf4j.simple)
+
+    testImplementation(libs.kotlin.metadataJvm)
 }

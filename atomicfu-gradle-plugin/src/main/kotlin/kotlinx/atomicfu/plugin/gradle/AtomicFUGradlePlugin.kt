@@ -7,11 +7,13 @@ package kotlinx.atomicfu.plugin.gradle
 import kotlinx.atomicfu.transformer.*
 import org.gradle.api.*
 import org.gradle.api.file.*
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.*
+import org.gradle.workers.*
 import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.*
@@ -34,6 +36,8 @@ internal const val ENABLE_JVM_IR_TRANSFORMATION = "kotlinx.atomicfu.enableJvmIrT
 internal const val ENABLE_NATIVE_IR_TRANSFORMATION = "kotlinx.atomicfu.enableNativeIrTransformation"
 private const val MIN_SUPPORTED_GRADLE_VERSION = "8.2"
 private const val MIN_SUPPORTED_KGP_VERSION = "1.7.0"
+
+private const val ATOMICFU_TRANSFORMER_CLASSPATH_RESOLVER_ID = "atomicfu.transformer.classpath.resolver"
 
 open class AtomicFUGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) = project.run {
@@ -93,6 +97,7 @@ private fun Project.configureDependencies() {
             getAtomicfuDependencyNotation(Platform.JVM, version)
         )
         dependencies.add(TEST_IMPLEMENTATION_CONFIGURATION, getAtomicfuDependencyNotation(Platform.JVM, version))
+        prepareAtomicfuTransformerClasspath(version)
     }
     withPluginWhenEvaluatedDependencies("org.jetbrains.kotlin.js") { version ->
         dependencies.add(
@@ -105,6 +110,7 @@ private fun Project.configureDependencies() {
     withPluginWhenEvaluatedDependencies("kotlin-multiplatform") { version ->
         addJsCompilerPluginRuntimeDependency()
         configureMultiplatformPluginDependencies(version)
+        prepareAtomicfuTransformerClasspath(version)
     }
 }
 
@@ -238,6 +244,28 @@ private val Project.config: AtomicFUPluginExtension
 private fun getAtomicfuDependencyNotation(platform: Platform, version: String): String =
     "org.jetbrains.kotlinx:atomicfu${platform.suffix}:$version"
 
+private fun Project.prepareAtomicfuTransformerClasspath(version: String) {
+    val configName = "atomicfu.transformer.classpath"
+    val dependencyConfiguration =
+        project.configurations.create(configName) {
+            it.description = "Runtime classpath for running atomicfu classfile transformation."
+            it.isCanBeResolved = false
+            it.isCanBeConsumed = false
+            it.isVisible = false
+        }
+
+    project.dependencies.add(configName, "org.jetbrains.kotlinx:atomicfu-transformer:$version")
+    project.dependencies.add(configName, "org.jetbrains.kotlin:kotlin-metadata-jvm:${getKotlinPluginVersion()}")
+
+    project.configurations.register(ATOMICFU_TRANSFORMER_CLASSPATH_RESOLVER_ID) {
+        it.description = "Resolve the runtime classpath for running atomicfu classfile transformation."
+        it.isCanBeResolved = true
+        it.isCanBeConsumed = false
+        it.isVisible = false
+        it.extendsFrom(dependencyConfiguration)
+    }
+}
+
 // Note "afterEvaluate" does nothing when the project is already in executed state, so we need
 // a special check for this case
 private fun <T> Project.whenEvaluated(fn: Project.() -> T) {
@@ -338,13 +366,18 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         originalDirsByCompilation[compilation] = originalClassesDirs
         val transformedClassesDir = project.layout.buildDirectory
             .dir("classes/atomicfu/${target.name}/${compilation.name}")
+        val transformedConfiguration = project.configurations.getByName(ATOMICFU_TRANSFORMER_CLASSPATH_RESOLVER_ID)
+        val transformationRuntimeClasspath = project.objects.fileCollection()
+            .from(transformedConfiguration)
+            .plus(compilation.compileDependencyFiles)
+
         val transformTask = when (target.platformType) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
                 // create transformation task only if transformation is required and JVM IR compiler transformation is not enabled
                 if (config.transformJvm) {
                     project.registerJvmTransformTask(compilation)
                         .configureJvmTask(
-                            compilation.compileDependencyFiles,
+                            transformationRuntimeClasspath,
                             compilation.compileAllTaskName,
                             transformedClassesDir,
                             originalClassesDirs,
@@ -450,7 +483,7 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 }
 
 @CacheableTask
-abstract class AtomicFUTransformTask : DefaultTask() {
+abstract class AtomicFUTransformTask @Inject constructor(private val executor: WorkerExecutor) : DefaultTask() {
     @get:Inject
     internal abstract val providerFactory: ProviderFactory
 
@@ -486,12 +519,39 @@ abstract class AtomicFUTransformTask : DefaultTask() {
 
     @TaskAction
     fun transform() {
-        destinationDirectory.get().asFile.deleteRecursively()
-        val cp = classPath.files.map { it.absolutePath }
-        inputFiles.files.forEach { inputDir ->
-            AtomicFUTransformer(cp, inputDir, destinationDirectory.get().asFile).let { t ->
-                t.jvmVariant = jvmVariant.toJvmVariant()
-                t.verbose = verbose
+        val q = executor.classLoaderIsolation {
+            it.classpath.from(classPath)
+        }
+        q.submit(AtomicFUTransformerWorker::class.java) {
+            it.jvmVariant.set(jvmVariant)
+            it.verbose.set(verbose)
+            it.classPath.setFrom(classPath)
+            it.inputFiles.setFrom(inputFiles)
+            it.destinationDirectory.set(destinationDirectory.get())
+        }
+        q.await()
+    }
+}
+
+internal abstract class AtomicFUTransformerWorker : WorkAction<AtomicFUTransformerWorker.Params> {
+    internal interface Params : WorkParameters {
+        val jvmVariant: Property<String>
+        val verbose: Property<Boolean>
+        val classPath: ConfigurableFileCollection
+        val inputFiles: ConfigurableFileCollection
+        val destinationDirectory: DirectoryProperty
+    }
+
+    override fun execute() {
+        val destinationDirectory = parameters.destinationDirectory.get().asFile
+        destinationDirectory.deleteRecursively()
+
+        val cp = parameters.classPath.files.map { it.absolutePath }
+
+        parameters.inputFiles.files.forEach { inputDir ->
+            AtomicFUTransformer(cp, inputDir, destinationDirectory).let { t ->
+                t.jvmVariant = parameters.jvmVariant.get().toJvmVariant()
+                t.verbose = parameters.verbose.get()
                 t.transform()
             }
         }

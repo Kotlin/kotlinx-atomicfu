@@ -10,10 +10,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":atomicfu-transformer")) {
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-    }
-
+    compileOnly(project(":atomicfu-transformer"))
     compileOnly(gradleApi())
     compileOnly(libs.kotlin.stdlib)
     compileOnly(libs.kotlin.gradlePlugin)
