@@ -157,7 +157,9 @@ kotlin {
 val transformer: Configuration by configurations.creating
 
 dependencies {
-    transformer(project(":atomicfu-transformer"))
+    val cfg = transformer
+    cfg(project(":atomicfu-transformer"))
+    cfg(libs.kotlin.metadataJvm)
 }
 
 // ==== CONFIGURE JVM =====
