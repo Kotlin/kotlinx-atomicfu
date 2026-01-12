@@ -2,7 +2,7 @@
 kotlin = "2.2.0"
 kotlin-for-gradle-plugin = "2.1.0"
 kotlinx-binaryCompatibilityValidator = "0.17.0"
-asm = "9.8"
+asm = "9.9.1"
 slf4j = "1.8.0-alpha2"
 junit = "4.12"
 maven = "3.5.3"
