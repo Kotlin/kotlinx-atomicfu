@@ -10,12 +10,9 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":atomicfu-transformer")) {
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-    }
-
+    compileOnly(project(":atomicfu-transformer"))
     compileOnly(gradleApi())
-    compileOnly(libs.kotlin.stdlib)
+    compileOnly(libs.kotlin.stdlib.compat)
     compileOnly(libs.kotlin.gradlePlugin)
     // Atomicfu compiler plugin dependency will be loaded to kotlinCompilerPluginClasspath
     // Atomicfu plugin will only be applied if the flag is set kotlinx.atomicfu.enableJsIrTransformation=true
