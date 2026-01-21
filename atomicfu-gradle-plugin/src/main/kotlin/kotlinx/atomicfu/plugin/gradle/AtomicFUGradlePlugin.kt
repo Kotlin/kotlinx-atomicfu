@@ -144,7 +144,11 @@ private fun Project.configureMultiplatformPluginDependencies(version: String) {
                 compilation
                     .defaultSourceSet
                     .dependencies {
-                        api(atomicfuDependency)
+                        // api dependency does not make a lot of sense for test compilations;
+                        // moreover, they are no longer supported there: KT-63285
+                        if (compilation.name != "test") {
+                            api(atomicfuDependency)
+                        }
                     }
             }
         }

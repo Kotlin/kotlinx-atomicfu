@@ -18,7 +18,6 @@ kotlin.sourceSets.configureEach {
 dependencies {
     api(libs.bundles.asm)
     api(libs.slf4j.api)
-    api(libs.mozilla.rhino)
     api(libs.kotlin.metadataJvm)
     compileOnly(libs.kotlin.stdlib)
     runtimeOnly(libs.slf4j.simple)
