@@ -13,10 +13,6 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.base
-import java.net.URI
-import java.nio.file.FileSystems
-import java.nio.file.Paths
-import kotlin.math.log
 
 plugins {
     base
