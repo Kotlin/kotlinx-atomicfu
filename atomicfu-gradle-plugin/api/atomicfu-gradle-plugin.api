@@ -21,7 +21,7 @@ public final class kotlinx/atomicfu/plugin/gradle/AtomicFUPluginExtension {
 public abstract class kotlinx/atomicfu/plugin/gradle/AtomicFUTransformTask : org/gradle/api/DefaultTask {
 	public field classPath Lorg/gradle/api/file/FileCollection;
 	public field inputFiles Lorg/gradle/api/file/FileCollection;
-	public fun <init> (Lorg/gradle/workers/WorkerExecutor;)V
+	public fun <init> ()V
 	public final fun getClassPath ()Lorg/gradle/api/file/FileCollection;
 	public abstract fun getDestinationDirectory ()Lorg/gradle/api/file/DirectoryProperty;
 	public final fun getInputFiles ()Lorg/gradle/api/file/FileCollection;

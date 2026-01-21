@@ -245,13 +245,19 @@ private fun getAtomicfuDependencyNotation(platform: Platform, version: String): 
     "org.jetbrains.kotlinx:atomicfu${platform.suffix}:$version"
 
 private fun Project.prepareAtomicfuTransformerClasspath(version: String) {
+    // isVisible was deprecated in 9.0 (and the "default" became isVisible=true),
+    // and it is scheduled for removal in 10.0.
+    fun isVisibleSupported() = GradleVersion.current() < GradleVersion.version("9.0")
+
     val configName = "atomicfu.transformer.classpath"
     val dependencyConfiguration =
         project.configurations.create(configName) {
             it.description = "Runtime classpath for running atomicfu classfile transformation."
             it.isCanBeResolved = false
             it.isCanBeConsumed = false
-            it.isVisible = false
+            if (isVisibleSupported()) {
+                it.isVisible = false
+            }
         }
 
     project.dependencies.add(configName, "org.jetbrains.kotlinx:atomicfu-transformer:$version")
@@ -261,7 +267,9 @@ private fun Project.prepareAtomicfuTransformerClasspath(version: String) {
         it.description = "Resolve the runtime classpath for running atomicfu classfile transformation."
         it.isCanBeResolved = true
         it.isCanBeConsumed = false
-        it.isVisible = false
+        if (isVisibleSupported()) {
+            it.isVisible = false
+        }
         it.extendsFrom(dependencyConfiguration)
     }
 }
@@ -366,14 +374,14 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
         originalDirsByCompilation[compilation] = originalClassesDirs
         val transformedClassesDir = project.layout.buildDirectory
             .dir("classes/atomicfu/${target.name}/${compilation.name}")
-        val transformedConfiguration = project.configurations.getByName(ATOMICFU_TRANSFORMER_CLASSPATH_RESOLVER_ID)
+        val transformerConfiguration = project.configurations.getByName(ATOMICFU_TRANSFORMER_CLASSPATH_RESOLVER_ID)
         val transformationRuntimeClasspath = project.objects.fileCollection()
-            .from(transformedConfiguration)
+            .from(transformerConfiguration)
             .plus(compilation.compileDependencyFiles)
 
         val transformTask = when (target.platformType) {
             KotlinPlatformType.jvm, KotlinPlatformType.androidJvm -> {
-                // create transformation task only if transformation is required and JVM IR compiler transformation is not enabled
+                // create a transformation task only if transformation is required and JVM IR compiler transformation is not enabled
                 if (config.transformJvm) {
                     project.registerJvmTransformTask(compilation)
                         .configureJvmTask(
@@ -421,7 +429,7 @@ private fun Project.configureTransformationForTarget(target: KotlinTarget) {
                     originalMainClassesDirs + runtimeDependencyFiles - mainCompilation.output.classesDirs
                 else
                     originalMainClassesDirs - mainCompilation.output.classesDirs
-                // if transform task was not created, then originalMainClassesDirs == mainCompilation.output.classesDirs
+                // if a transform task was not created, then originalMainClassesDirs == mainCompilation.output.classesDirs
                 (tasks.findByName("${target.name}${compilation.name.capitalizeCompat()}") as? Test)?.classpath =
                     newClasspath
             }
@@ -483,12 +491,15 @@ class AtomicFUPluginExtension(pluginVersion: String?) {
 }
 
 @CacheableTask
-abstract class AtomicFUTransformTask @Inject constructor(private val executor: WorkerExecutor) : DefaultTask() {
+abstract class AtomicFUTransformTask() : DefaultTask() {
     @get:Inject
     internal abstract val providerFactory: ProviderFactory
 
     @get:Inject
     internal abstract val projectLayout: ProjectLayout
+
+    @get:Inject
+    internal abstract val executor: WorkerExecutor
 
     @PathSensitive(PathSensitivity.RELATIVE)
     @InputFiles
@@ -519,21 +530,21 @@ abstract class AtomicFUTransformTask @Inject constructor(private val executor: W
 
     @TaskAction
     fun transform() {
-        val q = executor.classLoaderIsolation {
+        val workQueue = executor.classLoaderIsolation {
             it.classpath.from(classPath)
         }
-        q.submit(AtomicFUTransformerWorker::class.java) {
+        workQueue.submit(AtomicFUTransformerAction::class.java) {
             it.jvmVariant.set(jvmVariant)
             it.verbose.set(verbose)
             it.classPath.setFrom(classPath)
             it.inputFiles.setFrom(inputFiles)
             it.destinationDirectory.set(destinationDirectory.get())
         }
-        q.await()
+        workQueue.await()
     }
 }
 
-internal abstract class AtomicFUTransformerWorker : WorkAction<AtomicFUTransformerWorker.Params> {
+internal abstract class AtomicFUTransformerAction : WorkAction<AtomicFUTransformerAction.Params> {
     internal interface Params : WorkParameters {
         val jvmVariant: Property<String>
         val verbose: Property<Boolean>
@@ -546,10 +557,10 @@ internal abstract class AtomicFUTransformerWorker : WorkAction<AtomicFUTransform
         val destinationDirectory = parameters.destinationDirectory.get().asFile
         destinationDirectory.deleteRecursively()
 
-        val cp = parameters.classPath.files.map { it.absolutePath }
+        val classPath = parameters.classPath.files.map { it.absolutePath }
 
         parameters.inputFiles.files.forEach { inputDir ->
-            AtomicFUTransformer(cp, inputDir, destinationDirectory).let { t ->
+            AtomicFUTransformer(classPath, inputDir, destinationDirectory).let { t ->
                 t.jvmVariant = parameters.jvmVariant.get().toJvmVariant()
                 t.verbose = parameters.verbose.get()
                 t.transform()
