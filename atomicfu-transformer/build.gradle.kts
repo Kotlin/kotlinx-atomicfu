@@ -18,7 +18,9 @@ kotlin.sourceSets.configureEach {
 dependencies {
     api(libs.bundles.asm)
     api(libs.slf4j.api)
-    api(libs.kotlin.metadataJvm)
-    compileOnly(libs.kotlin.stdlib)
+    api(libs.kotlin.stdlib.compat)
+    compileOnly(libs.kotlin.metadataJvm.compat) // will be supplied by the plugin
     runtimeOnly(libs.slf4j.simple)
+
+    testImplementation(libs.kotlin.metadataJvm.compat)
 }
