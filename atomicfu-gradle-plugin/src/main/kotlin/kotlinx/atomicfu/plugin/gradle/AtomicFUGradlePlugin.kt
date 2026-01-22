@@ -179,7 +179,7 @@ private fun KotlinVersion.atLeast(major: Int, minor: Int, patch: Int) =
 private fun Project.isCompilerPluginAvailable() = getKotlinVersion().atLeast(1, 6, 20)
 
 internal fun Project.getBooleanProperty(name: String) =
-    rootProject.findProperty(name)?.toString()?.toBooleanStrict() ?: false
+    providers.gradleProperty(name).orNull?.toBooleanStrict() ?: false
 
 private fun String.toBooleanStrict(): Boolean = when (this) {
     "true" -> true
