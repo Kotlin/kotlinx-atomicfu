@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Version 0.31.0
+* Reworked dependencies for the Gradle plugin to make it work with the latest Kotlin versions (#569)
+* Changed a dependency type for test configurations to suppress compile-time warnings in dependant projects (#570)
+* Removed dependency on Rhino (#566)
+* Updated ASM version to support JDK 25 and 26 (#571)
+
 # Version 0.30.0
 * No major issues reported for `0.30.0-beta`, so the `0.30.0` release only updates the version and includes exactly the same changes as version `0.30.0`.
 
