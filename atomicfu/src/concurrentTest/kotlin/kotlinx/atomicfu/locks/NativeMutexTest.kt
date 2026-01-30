@@ -39,7 +39,7 @@ class NativeMutexTest {
 
         resultList.filterIndexed { i, _ -> i % 2 == 0 }
             .zip(resultList.filterIndexed { i, _ -> i % 2 == 1 }) { a, b ->
-                assertEquals(a, b)
-            }
+                a to b
+            }.forEach { (a, b) -> assertEquals(a, b) }
     }
 }

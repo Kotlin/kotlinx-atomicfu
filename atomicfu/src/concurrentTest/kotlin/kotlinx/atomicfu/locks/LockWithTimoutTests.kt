@@ -25,7 +25,7 @@ class LockWithTimeoutTests {
                         try {
                             // Increment the counter if lock was acquired
                             if (counter.value < TARGET_COUNT) {
-                                counter.incrementAndGet()
+                                counter -= 1
                             }
                             // Random sleep after increment to increase variation
                             sleepMillis(getRandomWait())

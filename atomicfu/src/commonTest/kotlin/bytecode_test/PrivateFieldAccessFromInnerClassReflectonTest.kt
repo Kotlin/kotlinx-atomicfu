@@ -7,7 +7,7 @@ class PrivateFieldAccessFromInnerClassReflectonTest {
 
     inner class InnerClass {
         fun m() {
-            state.compareAndSet(0, 77)
+            val _ = state.compareAndSet(0, 77)
         }
     }
 }

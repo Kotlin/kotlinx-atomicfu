@@ -37,11 +37,11 @@ public class LockFreeQueue {
         tail.loop { curTail ->
             val curNext = curTail.next.value
             if (curNext != null) {
-                tail.compareAndSet(curTail, curNext)
+                val _ = tail.compareAndSet(curTail, curNext)
                 return@loop
             }
             if (curTail.next.compareAndSet(null, node)) {
-                tail.compareAndSet(curTail, node)
+                val _ = tail.compareAndSet(curTail, node)
                 return
             }
         }

@@ -49,7 +49,7 @@ class TopLevelPrimitiveTest {
         check(a.value == 8)
         check(a.decrementAndGet() == 7)
         check(a.value == 7)
-        a.compareAndSet(7, 10)
+        check(a.compareAndSet(7, 10))
     }
 
     @Test
@@ -150,7 +150,7 @@ class TopLevelArrayTest {
     @Test
     fun testBooleanArray() {
         check(!booleanArr[1].value)
-        booleanArr[1].compareAndSet(false, true)
+        check(booleanArr[1].compareAndSet(false, true))
         booleanArr[0].lazySet(true)
         check(!booleanArr[2].getAndSet(true))
         check(booleanArr[0].value && booleanArr[1].value && booleanArr[2].value)

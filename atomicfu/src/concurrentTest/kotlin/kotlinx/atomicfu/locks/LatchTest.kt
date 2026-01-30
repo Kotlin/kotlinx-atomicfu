@@ -91,9 +91,11 @@ private class MSQueueLatch<E> {
             val node = Node(element)
             val curTail = tail.value
             if (curTail.next.compareAndSet(null, node)) {
-                tail.compareAndSet(curTail, node)
+                val _ = tail.compareAndSet(curTail, node)
                 return
-            } else tail.compareAndSet(curTail, curTail.next.value!!)
+            } else {
+                val _ = tail.compareAndSet(curTail, curTail.next.value!!)
+            }
         }
     }
 

@@ -17,6 +17,7 @@ class A {
     internal val intArr = AtomicIntArray(5)
     internal val refArr = atomicArrayOfNulls<String>(10)
 
+    @IgnorableReturnValue
     fun set(index: Int, data: String) = refArr[index].compareAndSet(null, data)
 }
 

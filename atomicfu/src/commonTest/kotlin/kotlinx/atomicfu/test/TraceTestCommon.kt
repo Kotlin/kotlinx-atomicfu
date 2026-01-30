@@ -5,9 +5,12 @@
 package kotlinx.atomicfu.test
 
 import internal_test2.Updater
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.Trace
+import kotlinx.atomicfu.TraceFormat
+import kotlinx.atomicfu.atomic
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class CounterWithDefaultTrace {
     private val a = atomic(0)
@@ -15,9 +18,8 @@ class CounterWithDefaultTrace {
     private val defaultTrace = Trace()
     private val a1 = atomic(5, defaultTrace)
 
-    fun inc(): Int {
-        val x = a.incrementAndGet()
-        return x
+    fun inc() {
+        val _ = a.incrementAndGet()
     }
 
     fun multTen(): Boolean {
@@ -34,21 +36,23 @@ class CounterWithCustomSizeTrace {
     private val t = Trace(30)
     private val a = atomic(0, t)
 
-    fun dec(): Int {
+    fun dec() {
         t { "current value = ${a.value}" }
-        return a.getAndDecrement()
+        val _ = a.getAndDecrement()
     }
+
     internal fun get() = a.value
 }
 
 class CounterWithCustomSizeAndFuncTrace {
-    private val t = Trace(30, TraceFormat { id, text -> "$id: $text"})
+    private val t = Trace(30, TraceFormat { id, text -> "$id: $text" })
     private val a = atomic(0)
 
-    fun dec(): Int {
+    fun dec() {
         t { "current value = ${a.value}" }
-        return a.getAndDecrement()
+        val _ =  a.getAndDecrement()
     }
+
     internal fun get() = a.value
 }
 
@@ -59,8 +63,9 @@ class CounterWithInternalTrace {
     fun update() {
         val oldValue = a.value
         u.internalTrace { "old value = $oldValue" }
-        a.compareAndSet(oldValue, oldValue + 5)
+        assertTrue(a.compareAndSet(oldValue, oldValue + 5))
     }
+
     internal fun get() = a.value
 }
 
@@ -80,7 +85,7 @@ class MyCounter {
         assertEquals(0, c.getA())
         c.inc()
         assertEquals(1, c.getA())
-        c.multTen()
+        assertTrue(c.multTen())
         assertEquals(c.getA1(), 50)
     }
 

@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.2.0"
+kotlin = "2.3.0"
 kotlin-for-gradle-plugin = "2.1.0"
 kotlinx-binaryCompatibilityValidator = "0.17.0"
 asm = "9.9.1"

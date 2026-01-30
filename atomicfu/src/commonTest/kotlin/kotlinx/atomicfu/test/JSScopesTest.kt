@@ -12,12 +12,12 @@ class AA(val value: Int) {
     val c = C(D(E(value + 1)))
 
     fun updateToB(affected: Any): Boolean {
-        (affected as AtomicState).state.compareAndSet(this, b)
+        val _ = (affected as AtomicState).state.compareAndSet(this, b)
         return (affected.state.value is B && (affected.state.value as B).value == value + 1)
     }
 
     fun manyProperties(affected: Any): Boolean {
-        (affected as AtomicState).state.compareAndSet(this, c.d.e)
+        val _ = (affected as AtomicState).state.compareAndSet(this, c.d.e)
         return (affected.state.value is E && (affected.state.value as E).x == value + 1)
     }
 }

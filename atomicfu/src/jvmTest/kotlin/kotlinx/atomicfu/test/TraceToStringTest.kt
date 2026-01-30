@@ -14,6 +14,7 @@ class TraceToStringTest {
     private val shortTrace = Trace(4)
     private val s = atomic(0, shortTrace.named("s"))
 
+    @Suppress("DEPRECATION")
     @Test
     fun testTraceFormat() {
         repeat(3) { i ->
@@ -35,18 +36,19 @@ class TraceToStringTest {
         assertEquals(expected, a.trace.toString())
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testTraceSequence() {
         s.value = 5
-        s.compareAndSet(5, -2)
+        assertTrue(s.compareAndSet(5, -2))
         assertEquals("""
             0: s.set(5)
             1: s.CAS(5, -2)
             """.trimIndent(), s.trace.toString()
         )
         s.lazySet(3)
-        s.getAndIncrement()
-        s.getAndAdd(7)
+        assertEquals(3, s.getAndIncrement())
+        assertEquals(4, s.getAndAdd(7))
         assertEquals("""
             1: s.CAS(5, -2)
             2: s.lazySet(3)
@@ -54,8 +56,8 @@ class TraceToStringTest {
             4: s.getAndAdd(7):4
             """.trimIndent(), s.trace.toString()
         )
-        s.getAndAdd(8)
-        s.getAndAdd(9)
+        assertEquals(11, s.getAndAdd(8))
+        assertEquals(19, s.getAndAdd(9))
         assertEquals("""
             3: s.getAndInc():3
             4: s.getAndAdd(7):4
@@ -71,8 +73,8 @@ class TraceToStringTest {
             7: s.lazySet(3)
             """.trimIndent(), s.trace.toString()
         )
-        s.getAndIncrement()
-        s.getAndAdd(7)
+        assertEquals(3, s.getAndIncrement())
+        assertEquals(4, s.getAndAdd(7))
         assertEquals("""
             6: s.getAndAdd(9):19
             7: s.lazySet(3)

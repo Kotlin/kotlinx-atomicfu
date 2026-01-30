@@ -41,7 +41,7 @@ class NativeMutexLincheckTest {
     fun inc() {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         lock.lock()
-        counter.inc()
+        val _ = counter.inc()
         lock.unlock()
     }
 
@@ -49,7 +49,7 @@ class NativeMutexLincheckTest {
     fun get() {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         lock.lock()
-        counter.get()
+        val _ = counter.get()
         lock.unlock()
     }
     

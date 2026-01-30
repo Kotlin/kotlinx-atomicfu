@@ -66,7 +66,7 @@ class ArrayTest {
         val A = AtomicArrayClass()
         check(A.booleanArr.size == 10)
         check(!A.booleanArr[1].value)
-        A.booleanArr[1].compareAndSet(false, true)
+        check(A.booleanArr[1].compareAndSet(false, true))
         A.booleanArr[0].lazySet(true)
         check(!A.booleanArr[2].getAndSet(true))
         check(A.booleanArr[0].value && A.booleanArr[1].value && A.booleanArr[2].value)

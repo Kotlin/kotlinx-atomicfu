@@ -43,7 +43,7 @@ class NativeMutexTimeoutLincheckTest {
     fun incNoTimeout() {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         lock.lock()
-        counter.inc()
+        val _ = counter.inc()
         lock.unlock()
     }
     
@@ -51,7 +51,7 @@ class NativeMutexTimeoutLincheckTest {
     fun incTimeout() {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         if (lock.tryLock(0.nanoseconds)) {
-            counter.inc()
+            val _ = counter.inc()
             lock.unlock()
         }
     }
@@ -60,7 +60,7 @@ class NativeMutexTimeoutLincheckTest {
     fun get() {
         localParkers.computeIfAbsent(ParkingSupport.currentThreadHandle()) { ThreadParker() }
         lock.lock()
-        counter.get()
+        val _ = counter.get()
         lock.unlock()
     }
 

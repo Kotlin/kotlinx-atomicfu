@@ -9,6 +9,6 @@ private val b = atomic(2)
 
 class PrivateTopLevelReflectionTest {
     fun update() {
-        b.compareAndSet(0, 42)
+        val _ = b.compareAndSet(0, 42)
     }
 }

@@ -15,7 +15,9 @@ class TopLevelStoredToLocalVariableTest {
         assertEquals(55, topArr[3].getAndUpdate { 66 })
         assertEquals(77, topArr[3].updateAndGet { 77 })
         topArr[3].loop {  value ->
-            if (value == 77) topArr[3].compareAndSet(value, 66)
+            if (value == 77) {
+                val _ = topArr[3].compareAndSet(value, 66)
+            }
             assertEquals(66, topArr[3].value)
             return
         }
@@ -28,7 +30,9 @@ class TopLevelStoredToLocalVariableTest {
         assertEquals(77, top.updateAndGet { 77 })
         top.loop { value ->
             assertEquals(77, value)
-            if (value == 77) top.compareAndSet(value, 66)
+            if (value == 77) {
+                val _ = top.compareAndSet(value, 66)
+            }
             assertEquals(66, top.value)
             return
         }
@@ -46,6 +50,6 @@ object Example {
     val x get() = _x.value
 
     fun update() {
-        _x.getAndUpdate { "$it !" }
+        val _ = _x.getAndUpdate { "$it !" }
     }
 }

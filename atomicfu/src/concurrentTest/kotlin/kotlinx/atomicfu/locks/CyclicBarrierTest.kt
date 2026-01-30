@@ -95,9 +95,11 @@ private class MSQueueCyclicBarrier<E> {
             val curTail = tail.value
             val node = Node(element, curTail.id + 1)
             if (curTail.next.compareAndSet(null, node)) {
-                tail.compareAndSet(curTail, node)
+                val _ = tail.compareAndSet(curTail, node)
                 return node.id
-            } else tail.compareAndSet(curTail, curTail.next.value!!)
+            } else {
+                val _ = tail.compareAndSet(curTail, curTail.next.value!!)
+            }
         }
     }
 

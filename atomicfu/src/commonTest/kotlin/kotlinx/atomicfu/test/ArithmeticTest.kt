@@ -30,7 +30,7 @@ class ArithmeticTest {
         check(a.x == 8)
         check(a._x.decrementAndGet() == 7)
         check(a.x == 7)
-        a._x.compareAndSet(7, 10)
+        check(a._x.compareAndSet(7, 10))
     }
 
     @Test

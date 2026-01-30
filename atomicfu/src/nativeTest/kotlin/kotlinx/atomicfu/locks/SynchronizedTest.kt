@@ -20,7 +20,7 @@ class SynchronizedTest {
             val counter = AtomicInt(0)
             val so = SynchronizedObject()
             workers.forEach { worker ->
-                worker.execute(TransferMode.SAFE, {
+                val _ = worker.execute(TransferMode.SAFE, {
                     counter to so
                 }) { (count, lock) ->
                     repeat(increments) {
@@ -47,7 +47,7 @@ class SynchronizedTest {
             val counters = Array(nLocks) { AtomicInt(0) }
             val locks = Array(nLocks) { SynchronizedObject() }
             workers.forEach { worker ->
-                worker.execute(TransferMode.SAFE, {
+                val _ = worker.execute(TransferMode.SAFE, {
                     counters to locks
                 }) { (counters, locks) ->
                     locks.forEachIndexed { i, lock ->
@@ -74,7 +74,7 @@ class SynchronizedTest {
             val counter = AtomicInt(0)
             val so = ReentrantLock()
             workers.forEach { worker ->
-                worker.execute(TransferMode.SAFE, {
+                val _ = worker.execute(TransferMode.SAFE, {
                     counter to so
                 }) { (count, lock) ->
                     repeat(increments) {
@@ -99,7 +99,7 @@ class SynchronizedTest {
             val counter = AtomicInt(0)
             val so = ReentrantLock()
             workers.forEach { worker ->
-                worker.execute(TransferMode.SAFE, {
+                val _ = worker.execute(TransferMode.SAFE, {
                     counter to so
                 }) { (count, lock) ->
                     repeat(increments) {

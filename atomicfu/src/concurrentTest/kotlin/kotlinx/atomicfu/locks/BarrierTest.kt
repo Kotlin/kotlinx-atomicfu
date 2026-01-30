@@ -78,7 +78,10 @@ private class Barrier(private val parties: Int) {
         while (true) {
             val waiter = waiters[myIndex].value
             when {
-                waiter === null -> waiters[myIndex].compareAndSet(null, currentThread)
+                waiter === null -> {
+                    val updated = waiters[myIndex].compareAndSet(null, currentThread)
+                    check(updated)
+                }
                 waiter === FINISHED -> return
                 else -> ParkingSupport.park(Duration.INFINITE)
             }
