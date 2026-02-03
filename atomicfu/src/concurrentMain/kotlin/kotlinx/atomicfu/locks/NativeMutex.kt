@@ -43,7 +43,8 @@ internal class NativeMutex(
     private val holdCount = atomic(0)
     
     fun lock() {
-        tryLock(Duration.INFINITE)
+        val locked = tryLock(Duration.INFINITE)
+        check(locked) { "Lock failed" }
     }
 
     fun tryLock(duration: Duration): Boolean {
@@ -52,7 +53,7 @@ internal class NativeMutex(
         // Has to be checked in this order!
         if (holdCount.value > 0 && currentParkingHandle == owningThread.value) {
             // Is reentring thread 
-            holdCount.incrementAndGet()
+            holdCount += 1
             return true
         }
 
@@ -63,7 +64,7 @@ internal class NativeMutex(
         // If new state 1 than I have acquired lock skipping queue.
         if (newState == 1) {
             owningThread.value = currentParkingHandle
-            holdCount.incrementAndGet()
+            holdCount += 1
             return true
         }
 
@@ -75,7 +76,7 @@ internal class NativeMutex(
         if (!prevNode.nodeWait(duration)) return false
         parkingQueue.dequeue()
         owningThread.value = currentParkingHandle
-        holdCount.incrementAndGet()
+        holdCount += 1
         return true
     }
 
@@ -112,7 +113,7 @@ internal class NativeMutex(
         val currentThreadId = ParkingSupport.currentThreadHandle()
         if (holdCount.value > 0 && owningThread.value == currentThreadId || this@NativeMutex.state.compareAndSet(0, 1)) {
             owningThread.value = currentThreadId
-            holdCount.incrementAndGet()
+            holdCount += 1
             return true
         }
         return false
@@ -138,10 +139,11 @@ internal class NativeMutex(
                 val node = Node()
                 val curTail = tail.value
                 if (curTail.next.compareAndSet(null, node)) {
-                    tail.compareAndSet(curTail, node)
+                    val _ = tail.compareAndSet(curTail, node)
                     return curTail
+                } else {
+                    val _ = tail.compareAndSet(curTail, curTail.next.value!!)
                 }
-                else tail.compareAndSet(curTail, curTail.next.value!!)
             }
         }
 
@@ -175,13 +177,15 @@ internal class NativeMutex(
                 when (state.value) {
                     Empty -> if (state.compareAndSet(Empty, ParkingSupport.currentThreadHandle())) {
                         park(deadline - TimeSource.Monotonic.markNow())
-                        if (deadline < TimeSource.Monotonic.markNow()) 
-                            state.compareAndSet(ParkingSupport.currentThreadHandle(), TimedOut)
+                        if (deadline < TimeSource.Monotonic.markNow()) {
+                            val _ = state.compareAndSet(ParkingSupport.currentThreadHandle(), TimedOut)
+                        }
                     }
                     is ParkingHandle -> {
                         park(deadline - TimeSource.Monotonic.markNow())
-                        if (deadline < TimeSource.Monotonic.markNow())
-                            state.compareAndSet(ParkingSupport.currentThreadHandle(), TimedOut)
+                        if (deadline < TimeSource.Monotonic.markNow()) {
+                            val _ = state.compareAndSet(ParkingSupport.currentThreadHandle(), TimedOut)
+                        }
                     }
                     Awoken -> return true
                     TimedOut -> return false

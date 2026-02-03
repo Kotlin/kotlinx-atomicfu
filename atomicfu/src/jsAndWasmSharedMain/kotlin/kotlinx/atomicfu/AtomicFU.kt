@@ -157,9 +157,9 @@ public actual class AtomicInt internal constructor(value: Int) {
     @Suppress("DEPRECATION") @OptionalJsName(DECREMENT_AND_GET)
     public actual fun decrementAndGet(): Int = --value
 
-    public actual inline operator fun plusAssign(delta: Int) { getAndAdd(delta) }
+    public actual inline operator fun plusAssign(delta: Int) { val _ = getAndAdd(delta) }
 
-    public actual inline operator fun minusAssign(delta: Int) { getAndAdd(-delta) }
+    public actual inline operator fun minusAssign(delta: Int) { val _ = getAndAdd(-delta) }
 
     override fun toString(): String = value.toString()
 }
@@ -217,9 +217,9 @@ public actual class AtomicLong internal constructor(value: Long) {
     @Suppress("DEPRECATION") @OptionalJsName(DECREMENT_AND_GET_LONG)
     public actual fun decrementAndGet(): Long = --value
 
-    public actual inline operator fun plusAssign(delta: Long) { getAndAdd(delta) }
+    public actual inline operator fun plusAssign(delta: Long) { val _ = getAndAdd(delta) }
 
-    public actual inline operator fun minusAssign(delta: Long) { getAndAdd(-delta) }
+    public actual inline operator fun minusAssign(delta: Long) { val _ = getAndAdd(-delta) }
 
     override fun toString(): String = value.toString()
 }
