@@ -2,6 +2,7 @@ package kotlinx.atomicfu.locks
 
 import kotlinx.atomicfu.AtomicIntArray
 import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.fail
