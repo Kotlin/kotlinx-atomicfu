@@ -69,7 +69,9 @@ class CustomCountDownLatch(count: Int) {
     fun await() {
         val thread = ParkingSupport.currentThreadHandle()
         if (waiters.enqueue(thread)) {
-            while (c.value > 0) ParkingSupport.park(Duration.INFINITE)
+            while (c.value > 0) {
+                ParkingSupport.park(Duration.INFINITE)
+            }
         }
     }
 
@@ -85,14 +87,15 @@ private class MPSCQueueLatch<E> {
     private val tail = atomic<Any>(head.value)
 
     fun enqueue(element: E): Boolean {
-        while (true) {
-            val node = Node(element)
-            val curTail = tail.value
-            if (curTail === finished) return false
-            if ((curTail as Node<E>).next.compareAndSet(null, node)) {
-                tail.compareAndSet(curTail, node)
+        val node = Node(element)
+        tail.loop {
+            if (it === finished) return false
+            if ((it as Node<E>).next.compareAndSet(null, node)) {
+                tail.compareAndSet(it, node)
                 return true
-            } else tail.compareAndSet(curTail, curTail.next.value!!)
+            } else {
+                tail.compareAndSet(it, it.next.value!!)
+            }
         }
     }
 
