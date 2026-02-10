@@ -2,6 +2,9 @@ package kotlinx.atomicfu.gradle.plugin.test.cases
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.buildAndCheckBytecode
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
+import org.junit.Rule
+import org.junit.rules.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 
 /**
@@ -11,6 +14,9 @@ import kotlin.test.*
  */
 class MultiModuleTest {
     private val multiModuleTest: GradleBuild = createGradleBuildFromSources("multi-module-test")
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
 
     @Test
     fun testMppWithDisabledJvmIrTransformation() {

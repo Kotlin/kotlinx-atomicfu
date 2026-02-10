@@ -70,7 +70,7 @@ val mavenTest by tasks.registering(Test::class) {
     outputs.upToDateWhen { false }
 }
 
-val functionalTest by tasks.registering(Test::class) {
+val newFunctionalTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["functionalTest"].output.classesDirs
     classpath = sourceSets["functionalTest"].runtimeClasspath
 
@@ -91,7 +91,7 @@ val functionalTest by tasks.registering(Test::class) {
     outputs.upToDateWhen { false }
 }
 
-tasks.check { dependsOn(mavenTest, functionalTest) }
+tasks.check { dependsOn(mavenTest, newFunctionalTest) }
 
 // Setup K/N infrastructure to use klib utility in tests
 // TODO: klib checks are skipped for now because of this problem KT-61143

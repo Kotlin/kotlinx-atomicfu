@@ -6,10 +6,16 @@ package test
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
+import org.junit.Rule
+import org.junit.rules.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 
 abstract class MppProjectTest {
     internal val mppSample: GradleBuild = createGradleBuildFromSources("mpp-sample")
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
 }
 
 class JvmMppProjectTest : MppProjectTest() {

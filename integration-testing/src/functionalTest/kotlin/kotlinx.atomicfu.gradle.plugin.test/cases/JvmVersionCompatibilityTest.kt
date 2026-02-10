@@ -3,6 +3,9 @@ package kotlinx.atomicfu.gradle.plugin.test.cases
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.GradleBuild
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.cleanAndBuild
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.createGradleBuildFromSources
+import org.junit.Rule
+import org.junit.rules.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.test.Ignore
 import kotlin.test.Test
 
@@ -13,6 +16,9 @@ import kotlin.test.Test
 @Ignore("KTI-1966")
 class JvmVersionCompatibilityTest {
     private val jvmSample: GradleBuild = createGradleBuildFromSources("jdk-compatibility")
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
 
     @Test
     fun testClassTransformationWithEarliestJdkVersion() {

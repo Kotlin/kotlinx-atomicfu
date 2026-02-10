@@ -4,6 +4,9 @@ import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.GradleBuild
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.cleanAndBuild
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.createGradleBuildFromSources
+import org.junit.Rule
+import org.junit.rules.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 
 /**
@@ -11,6 +14,9 @@ import kotlin.test.*
  */
 class PluginOrderBugTest {
     private val pluginOrderBugProject: GradleBuild = createGradleBuildFromSources("plugin-order-bug")
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
 
     @Test
     fun testUserProjectBuild() {

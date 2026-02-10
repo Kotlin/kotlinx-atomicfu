@@ -6,11 +6,17 @@ package kotlinx.atomicfu.gradle.plugin.test.cases
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
+import org.junit.Rule
+import org.junit.rules.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 
 class JvmProjectTest {
 
     private val jvmSample: GradleBuild = createGradleBuildFromSources("jvm-sample")
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
 
     @Test
     fun testJvmWithEnabledIrTransformation() {

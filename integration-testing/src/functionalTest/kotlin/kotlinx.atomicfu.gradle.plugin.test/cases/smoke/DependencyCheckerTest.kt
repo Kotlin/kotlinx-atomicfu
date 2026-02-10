@@ -6,7 +6,10 @@ package kotlinx.atomicfu.gradle.plugin.test.cases.smoke
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.BuildResult
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.atomicfuVersion
+import org.junit.Rule
+import org.junit.rules.Timeout
 import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 
 class DependencyParserSmokeTest {
@@ -54,6 +57,9 @@ class DependencyParserSmokeTest {
             "     \\--- junit:junit:4.13.2\n" +
             "          \\--- org.hamcrest:hamcrest-core:1.3\n" +
             "\n"
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
     
     @Test
     fun testGetDependenciesForConfig() {

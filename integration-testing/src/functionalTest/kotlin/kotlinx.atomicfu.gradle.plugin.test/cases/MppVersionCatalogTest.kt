@@ -2,6 +2,9 @@ package kotlinx.atomicfu.gradle.plugin.test.cases
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
+import org.junit.Rule
+import org.junit.rules.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 
 /**
@@ -9,6 +12,9 @@ import kotlin.test.*
  */
 class MppVersionCatalogTest {
     private val mppWithVersionCatalog: GradleBuild = createGradleBuildFromSources("mpp-version-catalog")
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
 
     @Test
     fun testBuildWithKotlinNewerThan_1_9_0() {

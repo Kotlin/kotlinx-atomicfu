@@ -6,6 +6,9 @@ import kotlinx.atomicfu.gradle.plugin.test.framework.runner.LOCAL_REPO_DIR_PREFI
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.cleanAndBuild
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.createGradleBuildFromSources
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.publishToLocalRepository
+import org.junit.Rule
+import org.junit.rules.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 
 /**
@@ -20,6 +23,9 @@ class UserProjectTest {
     private val mppSample: GradleBuild = createGradleBuildFromSources("mpp-sample")
     
     private val userProject: GradleBuild = createGradleBuildFromSources("user-project")
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
 
     @Test
     fun testUserProjectBuild() {

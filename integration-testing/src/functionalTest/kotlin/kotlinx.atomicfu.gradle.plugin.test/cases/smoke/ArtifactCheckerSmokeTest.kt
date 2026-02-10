@@ -5,10 +5,14 @@
 package kotlinx.atomicfu.gradle.plugin.test.cases.smoke
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.ArtifactChecker
+import org.junit.Rule
+import org.junit.rules.Timeout
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 import kotlin.text.*
+import kotlin.time.Duration.Companion.minutes
 
 class ArtifactCheckerSmokeTest {
     val tempDir = Files.createTempDirectory("sample").toFile()
@@ -74,7 +78,10 @@ class ArtifactCheckerSmokeTest {
     }
     
     private val checker = MyArtifactChecker(tempDir)
-    
+
+    @get:Rule
+    val timeout = Timeout(30L, TimeUnit.MINUTES)
+
     @Test
     fun testAtomicfuReferenciesLookup() {
         checker.checkClassesInBuildDirectories()
