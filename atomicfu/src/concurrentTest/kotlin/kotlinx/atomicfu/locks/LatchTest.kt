@@ -64,7 +64,7 @@ class LatchTest {
 
 class CustomCountDownLatch(count: Int) {
     private val c = atomic(count)
-    private val waiters = MSQueueLatch<ParkingHandle>()
+    private val waiters = MPSCQueueLatch<ParkingHandle>()
 
     fun await() {
         val thread = ParkingSupport.currentThreadHandle()
@@ -76,16 +76,11 @@ class CustomCountDownLatch(count: Int) {
     fun countDown() {
         val myIndex = c.decrementAndGet()
         if (myIndex != 0) return
-        waiters.close()
-        while (true) {
-            val thread = waiters.dequeue()
-            if (thread == null) return
-            ParkingSupport.unpark(thread)
-        }
+        waiters.drain { ParkingSupport.unpark(it) }
     }
 }
 
-private class MSQueueLatch<E> {
+private class MPSCQueueLatch<E> {
     private val head = atomic(Node<E>(null))
     private val tail = atomic<Any>(head.value)
 
@@ -101,21 +96,18 @@ private class MSQueueLatch<E> {
         }
     }
 
-    fun close() {
-        tail.loop { curTail ->
-            if (tail.compareAndSet(curTail, finished)) return
+    fun drain(action: (E) -> Unit) {
+        close()
+        var node = head.value.next.value
+        while (node != null) {
+            action(node.element!!)
+            node = node.next.value
         }
     }
 
-    fun dequeue(): E? {
-        while (true) {
-            val currentHead = head.value
-            val currentHeadNext = currentHead.next.value ?: return null
-            if (head.compareAndSet(currentHead, currentHeadNext)) {
-                val element = currentHeadNext.element
-                currentHeadNext.element = null
-                return element
-            }
+    private fun close() {
+        tail.loop {
+            if (tail.compareAndSet(it, finished)) return
         }
     }
 
