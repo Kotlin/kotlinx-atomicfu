@@ -82,8 +82,8 @@ class CustomCountDownLatch(count: Int) {
 }
 
 private class MPSCQueueLatch<E> {
-    private val head = atomic(Node<E>(null))
-    private val tail = atomic<Node<E>?>(head.value) // if null, then closed
+    private val head = Node<E>(null)
+    private val tail = atomic<Node<E>?>(head) // if null, then closed
 
     fun enqueue(element: E): Boolean {
         val node = Node(element)
@@ -100,12 +100,12 @@ private class MPSCQueueLatch<E> {
 
     fun drain(action: (E) -> Unit) {
         close()
-        var node = head.value.next.value
+        var node = head.next.value
         while (node != null) {
             action(node.element!!)
             node = node.next.value
         }
-        head.value.next.value = null
+        head.next.value = null
     }
 
     private fun close() {
