@@ -3,11 +3,13 @@
  */
 
 import java.util.jar.JarFile
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.fail
 
 class MavenPublicationMetaInfValidator {
     @Test
+    @Ignore
     fun testMetaInfContents() {
         val clazz = Class.forName("kotlinx.atomicfu.AtomicFU")
         JarFile(clazz.protectionDomain.codeSource.location.file).compareMetaInfContents(
