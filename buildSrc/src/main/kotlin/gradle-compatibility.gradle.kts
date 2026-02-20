@@ -24,9 +24,11 @@ kotlin {
         setWarningsAsErrors(project)
         freeCompilerArgs.add("-Xsuppress-version-warnings")
 
-        languageVersion = getOverridingKotlinLanguageVersion(project)?.let { KotlinVersion.fromVersion(it) }
-            ?: KotlinVersion.KOTLIN_1_6
-        apiVersion = getOverridingKotlinApiVersion(project)?.let { KotlinVersion.fromVersion(it) }
-            ?: KotlinVersion.KOTLIN_1_6
+        // We're using a fixed Kotlin version for compatibility with older Gradle versions.
+        // As a result, a set of support LV and AV values is limited, and we can't take those
+        // coming from getOverridingKotlinLanguageVersion / getOverridingKotlinApiVersion
+        // as they tend to be "too new" nowadays.
+        languageVersion = KotlinVersion.KOTLIN_1_6
+        apiVersion = KotlinVersion.KOTLIN_1_6
     }
 }
