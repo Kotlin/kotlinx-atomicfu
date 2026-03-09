@@ -65,6 +65,10 @@ internal fun BuildResult.mppCheckAtomicfuInApi(targetName: String) {
     checkAtomicfuDependencyIsPresent(listOf("${targetName}MainApi"), commonAtomicfuDependency)
 }
 
+internal fun BuildResult.mppCheckNoAtomicfuInTestApi(targetName: String) {
+    checkAtomicfuDependencyIsAbsent(listOf("${targetName}TestApi"), commonAtomicfuDependency)
+}
+
 // Checks Native target of an MPP project
 internal fun BuildResult.mppNativeCheckAtomicfuInImplementation(targetName: String) {
     checkAtomicfuDependencyIsPresent(listOf("${targetName}MainImplementation"), commonAtomicfuDependency)

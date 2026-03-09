@@ -19,6 +19,8 @@ class JvmMppProjectTest : MppProjectTest() {
         mppSample.withDependencies {
             mppCheckAtomicfuInCompileClasspath("jvm")
             mppCheckNoAtomicfuInRuntimeConfigs("jvm")
+            mppCheckNoAtomicfuInTestApi("jvm")
+
         }
         mppSample.checkConsumableDependencies(false)
         mppSample.buildAndCheckBytecode()
@@ -30,6 +32,7 @@ class JvmMppProjectTest : MppProjectTest() {
         mppSample.withDependencies {
             mppCheckAtomicfuInCompileClasspath("jvm")
             mppCheckNoAtomicfuInRuntimeConfigs("jvm")
+            mppCheckNoAtomicfuInTestApi("jvm")
         }
         mppSample.checkConsumableDependencies(false)
         mppSample.buildAndCheckBytecode()
@@ -42,14 +45,20 @@ class JsMppProjectTest : MppProjectTest() {
     fun testMppWithEnabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = true
         mppSample.checkConsumableDependencies(true)
-        mppSample.withDependencies { mppCheckAtomicfuInApi("js") }
+        mppSample.withDependencies {
+            mppCheckAtomicfuInApi("js")
+            mppCheckNoAtomicfuInTestApi("js")
+        }
     }
 
     @Test
     fun testMppWithDisabledJsIrTransformation() {
         mppSample.enableJsIrTransformation = false
         mppSample.checkConsumableDependencies(true)
-        mppSample.withDependencies { mppCheckAtomicfuInApi("js") }
+        mppSample.withDependencies {
+            mppCheckAtomicfuInApi("js")
+            mppCheckNoAtomicfuInTestApi("js")
+        }
     }
 }
 
@@ -61,6 +70,7 @@ class WasmMppProjectTest : MppProjectTest() {
             mppCheckAtomicfuInCompileClasspath("wasmJs")
             mppCheckAtomicfuInRuntimeClasspath("wasmJs")
             mppCheckAtomicfuInApi("wasmJs")
+            mppCheckNoAtomicfuInTestApi("wasmWasi")
         }
     }
 
@@ -71,6 +81,7 @@ class WasmMppProjectTest : MppProjectTest() {
             mppCheckAtomicfuInCompileClasspath("wasmWasi")
             mppCheckAtomicfuInRuntimeClasspath("wasmWasi")
             mppCheckAtomicfuInApi("wasmWasi")
+            mppCheckNoAtomicfuInTestApi("wasmWasi")
         }
     }
 }
@@ -84,6 +95,7 @@ class NativeMppProjectTest : MppProjectTest() {
         mppSample.withDependencies {
             mppNativeCheckAtomicfuInImplementation("macosX64")
             mppCheckAtomicfuInApi("macosX64")
+            mppCheckNoAtomicfuInTestApi("macosX64")
         }
         // TODO: klib checks are skipped for now because of this problem KT-61143
         //mppSample.buildAndCheckNativeKlib()
@@ -96,6 +108,7 @@ class NativeMppProjectTest : MppProjectTest() {
         mppSample.withDependencies {
             mppNativeCheckAtomicfuInImplementation("macosX64")
             mppCheckAtomicfuInApi("macosX64")
+            mppCheckNoAtomicfuInTestApi("macosX64")
         }
         // TODO: klib checks are skipped for now because of this problem KT-61143
         //mppSample.buildAndCheckNativeKlib()
