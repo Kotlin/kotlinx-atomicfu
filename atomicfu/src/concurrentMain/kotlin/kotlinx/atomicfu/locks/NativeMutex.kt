@@ -40,30 +40,49 @@ internal class NativeMutex(
     private val parkingQueue = ParkingQueue()
     private val owningThread = atomic<ParkingHandle?>(null)
     private val state = atomic(0)
-    private val holdCount = atomic(0)
     
+    // Only the owning thread can mutate; speculative reads by non-owners are safe
+    // since we always verify ownership before acting on the value.
+    private var holdCount = 0
+
     fun lock() {
-        tryLock(Duration.INFINITE)
+        // Fast path: uncontended CAS 
+        if (holdCount == 0 && state.compareAndSet(0, 1)) {
+            owningThread.value = ParkingSupport.currentThreadHandle()
+            holdCount++
+            return
+        }
+        tryLockSlow(Duration.INFINITE)
     }
 
     fun tryLock(duration: Duration): Boolean {
+        // Fast path: uncontended CAS
+        if (holdCount == 0 && state.compareAndSet(0, 1)) {
+            owningThread.value = ParkingSupport.currentThreadHandle()
+            holdCount++
+            return true
+        }
+        return tryLockSlow(duration)
+    }
+
+    private fun tryLockSlow(duration: Duration): Boolean {
         val currentParkingHandle = ParkingSupport.currentThreadHandle()
 
         // Has to be checked in this order!
-        if (holdCount.value > 0 && currentParkingHandle == owningThread.value) {
-            // Is reentring thread 
-            holdCount.incrementAndGet()
+        if (holdCount > 0 && currentParkingHandle == owningThread.value) {
+            // Is reentring thread
+            holdCount++
             return true
         }
 
         // Otherwise try acquire lock
-        val newState = this@NativeMutex.state.incrementAndGet()
+        val newState = state.incrementAndGet()
         check(newState > 0) { "Negative mutex state should not be possible" }
         
         // If new state 1 than I have acquired lock skipping queue.
         if (newState == 1) {
             owningThread.value = currentParkingHandle
-            holdCount.incrementAndGet()
+            holdCount++
             return true
         }
 
@@ -75,7 +94,7 @@ internal class NativeMutex(
         if (!prevNode.nodeWait(duration)) return false
         parkingQueue.dequeue()
         owningThread.value = currentParkingHandle
-        holdCount.incrementAndGet()
+        holdCount++
         return true
     }
 
@@ -85,12 +104,12 @@ internal class NativeMutex(
         check(currentThreadId == currentOwnerId) { "Thread is not holding the lock" }
 
         // dec hold count
-        check(holdCount.value > 0) { "Thread unlocked more than it locked" }
-        val newHoldCount = holdCount.decrementAndGet()
-        if (newHoldCount > 0) return
+        check(holdCount > 0) { "Thread unlocked more than it locked" }
+        holdCount--
+        if (holdCount > 0) return
 
         // Lock is released by decrementing (only if decremented to 0)
-        val currentState = this@NativeMutex.state.decrementAndGet()
+        val currentState = state.decrementAndGet()
         if (currentState == 0) return
 
         check(currentState > 0) { "Negative mutex state should not be possible" }
@@ -104,15 +123,15 @@ internal class NativeMutex(
             nextParker = parkingQueue.getHead()
             
             // If no nodes left leave mutex in unlocked state
-            if (this@NativeMutex.state.decrementAndGet() == 0) return
+            if (state.decrementAndGet() == 0) return
         }
     }
 
     fun tryLock(): Boolean {
         val currentThreadId = ParkingSupport.currentThreadHandle()
-        if (holdCount.value > 0 && owningThread.value == currentThreadId || this@NativeMutex.state.compareAndSet(0, 1)) {
+        if (holdCount > 0 && owningThread.value == currentThreadId || state.compareAndSet(0, 1)) {
             owningThread.value = currentThreadId
-            holdCount.incrementAndGet()
+            holdCount++
             return true
         }
         return false
