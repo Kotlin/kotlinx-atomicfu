@@ -32,18 +32,17 @@ kotlin {
     androidNativeX64()
     mingwX64()
     watchosDeviceArm64()
+    iosX64()
 
     // Deprecated
     @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
     linuxArm32Hfp()
 
-    @Suppress("DEPRECATION")
-    iosX64()
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     macosX64()
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     tvosX64()
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     watchosX64()
 
     // JS -- always
