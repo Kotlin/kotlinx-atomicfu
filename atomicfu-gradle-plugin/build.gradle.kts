@@ -1,3 +1,5 @@
+import org.gradle.plugin.compatibility.compatibility
+
 /*
  * Copyright 2017-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -50,6 +52,12 @@ gradlePlugin {
             displayName = "Gradle plugin for kotlinx-atomicfu library"
             description = "Enables efficient use of atomic operations in Kotlin multiplatform projects."
             tags = setOf("kotlinx-atomicfu", "atomics", "kotlin")
+
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }
