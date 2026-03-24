@@ -7,6 +7,9 @@ import kotlin.time.Duration
 
 /**
  * Mutual exclusion for Kotlin Multiplatform.
+ *
+ * > **As of atomicfu 0.31.0 [SynchronousMutex] has known performance issues.**
+ * > **Consider using [SynchronizedObject] or [ReentrantLock] instead.**
  * 
  * It can protect a shared resource or critical section from multiple thread accesses.
  * Threads can acquire the lock by calling [lock] and release the lock by calling [unlock].

@@ -5,11 +5,10 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.gradle.api.*
-import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.artifacts.repositories.PasswordCredentials
-import org.gradle.api.provider.*
-import org.gradle.api.publish.maven.*
 import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.*
+import org.gradle.kotlin.dsl.maven
 import org.gradle.plugins.signing.*
 import java.net.*
 
@@ -27,7 +26,7 @@ fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication)
     }
 }
 
-fun PublishingExtension.addPublishingRepositoryIfPresent() {
+fun PublishingExtension.addPublishingRepositoryIfPresent(project: Project) {
     val repoUrl = System.getenv("libs.repo.url")
     if (!repoUrl.isNullOrBlank()) {
         repositories {
@@ -40,6 +39,11 @@ fun PublishingExtension.addPublishingRepositoryIfPresent() {
                 // https://github.com/gradle/gradle/issues/24040
                 credentials(PasswordCredentials::class.java)
             }
+        }
+    }
+    repositories {
+        maven(project.rootProject.layout.buildDirectory.dir("repo")) {
+            name = "buildRepo"
         }
     }
 }

@@ -25,9 +25,7 @@ kotlin {
         freeCompilerArgs.add("-Xsuppress-version-warnings")
         freeCompilerArgs.add("-Xskip-metadata-version-check")
 
-        languageVersion = getOverridingKotlinLanguageVersion(project)?.let { KotlinVersion.fromVersion(it) }
-            ?: KotlinVersion.KOTLIN_1_6
-        apiVersion = getOverridingKotlinApiVersion(project)?.let { KotlinVersion.fromVersion(it) }
-            ?: KotlinVersion.KOTLIN_1_6
+        languageVersion = KotlinVersion.KOTLIN_1_6
+        apiVersion = KotlinVersion.KOTLIN_1_6
     }
 }

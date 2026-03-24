@@ -8,7 +8,7 @@ junit = "4.12"
 maven = "3.5.3"
 maven-pluginTools = "3.5"
 node-gradle = "3.1.1"
-gradle-plugin-publish = "1.2.1"
+gradle-plugin-publish = "2.1.1"
 gradle-develocity = "3.17.6"
 lincheck = "3.1.1"
 

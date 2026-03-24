@@ -4,6 +4,7 @@ import kotlinx.validation.ExperimentalBCVApi
 
 plugins {
     alias(libs.plugins.kotlinx.binaryCompatibilityValidator)
+    id("validate-artifacts-conventions")
 }
 
 val deploy by tasks.registering {

@@ -4,7 +4,7 @@ plugins {
 }
 
 publishing {
-    addPublishingRepositoryIfPresent()
+    addPublishingRepositoryIfPresent(project)
 
     publications.withType<MavenPublication>().configureEach {
         pom {

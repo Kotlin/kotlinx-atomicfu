@@ -7,19 +7,19 @@ if (deployVersion != null) project.version = deployVersion
 
 kotlin.sourceSets.configureEach {
     languageSettings {
-        val overridingKotlinLanguageVersion = getOverridingKotlinLanguageVersion(project)
-        if (overridingKotlinLanguageVersion != null) {
-            languageVersion = overridingKotlinLanguageVersion
-        }
-
-        val overridingKotlinApiVersion = getOverridingKotlinApiVersion(project)
-        if (overridingKotlinApiVersion != null) {
-            apiVersion = overridingKotlinApiVersion
-        }
-
         if (project.path != ":atomicfu-transformer" &&
             project.path != ":atomicfu-gradle-plugin"
         ) {
+            val overridingKotlinLanguageVersion = getOverridingKotlinLanguageVersion(project)
+            if (overridingKotlinLanguageVersion != null) {
+                languageVersion = overridingKotlinLanguageVersion
+            }
+
+            val overridingKotlinApiVersion = getOverridingKotlinApiVersion(project)
+            if (overridingKotlinApiVersion != null) {
+                apiVersion = overridingKotlinApiVersion
+            }
+
             optIn("kotlinx.cinterop.ExperimentalForeignApi")
             optIn("kotlinx.atomicfu.locks.ExperimentalThreadBlockingApi")
         }

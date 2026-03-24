@@ -34,6 +34,7 @@ kotlin {
     }
 
     macosArm64()
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     macosX64()
     linuxArm64()
     linuxX64()
