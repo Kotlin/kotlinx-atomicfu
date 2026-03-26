@@ -41,7 +41,7 @@ class JvmProjectTest {
     }
 
     @Test
-    @Ignore("KT-69701")
+    //@Ignore("KT-69701")
     fun testFilesDeleted() {
 
         val buildClassesAtomicfuDir = jvmSample.targetDir.resolve("build/classes/atomicfu")

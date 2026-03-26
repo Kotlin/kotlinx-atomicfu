@@ -12,7 +12,7 @@ class MavenPublicationMetaInfValidator {
     private val kotlinVersion = System.getProperty("kotlin.version.integration")
 
     @Test
-    @Ignore("KT-69701")
+    //@Ignore("KT-69701")
     fun testMetaInfContents() {
         val clazz = Class.forName("kotlinx.atomicfu.AtomicFU")
         if (kotlinVersion.startsWith("2.4")) {
