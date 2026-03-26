@@ -65,6 +65,9 @@ val mavenTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["mavenTest"].output.classesDirs
     classpath = sourceSets["mavenTest"].runtimeClasspath
 
+    // the kotlin version used to build the library, which is set in root gradle.properties or overriden by the TC config
+    systemProperties["kotlin.version.integration"] = providers.gradleProperty("kotlin_version").orNull
+
     dependsOn(":atomicfu:publishToMavenLocal")
 
     outputs.upToDateWhen { false }
