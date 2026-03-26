@@ -9,7 +9,7 @@ import kotlin.test.fail
 
 class MavenPublicationMetaInfValidator {
     @Test
-    @Ignore
+    @Ignore("KT-69701")
     fun testMetaInfContents() {
         val clazz = Class.forName("kotlinx.atomicfu.AtomicFU")
         JarFile(clazz.protectionDomain.codeSource.location.file).compareMetaInfContents(
