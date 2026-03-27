@@ -55,14 +55,25 @@ class JvmProjectTest {
 
         jvmSample.build().apply {
             assertTrue { buildClassesAtomicfuDir.exists() }
-            assertEquals(
+            val expectedFiles = if (kotlinVersion.startsWith("2.4")) {
+                """
+                build/classes/atomicfu/main/IntArithmetic.class
+                build/classes/atomicfu/main/META-INF/kotlinx.atomicfu.examples_jvm-sample.kotlin_module
+                build/classes/atomicfu/main/MainKt.class
+                build/classes/atomicfu/test/ArithmeticTest.class
+                build/classes/atomicfu/test/META-INF/kotlinx.atomicfu.examples_jvm-sample_test.kotlin_module
+                """.trimIndent()
+            } else {
                 """
                 build/classes/atomicfu/main/IntArithmetic.class
                 build/classes/atomicfu/main/META-INF/jvm-sample.kotlin_module
                 build/classes/atomicfu/main/MainKt.class
                 build/classes/atomicfu/test/ArithmeticTest.class
                 build/classes/atomicfu/test/META-INF/jvm-sample_test.kotlin_module
-                """.trimIndent(),
+                """.trimIndent()
+            }
+            assertEquals(
+                expectedFiles,
                 buildClassesAtomicFuDirFiles()
             )
         }

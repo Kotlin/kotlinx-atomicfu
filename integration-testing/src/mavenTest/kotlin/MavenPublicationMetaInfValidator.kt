@@ -7,16 +7,30 @@ import kotlin.test.Test
 import kotlin.test.fail
 
 class MavenPublicationMetaInfValidator {
+
+    private val kotlinVersion = System.getProperty("kotlin.version.integration")
+
     @Test
     fun testMetaInfContents() {
         val clazz = Class.forName("kotlinx.atomicfu.AtomicFU")
-        JarFile(clazz.protectionDomain.codeSource.location.file).compareMetaInfContents(
-            setOf(
-                "MANIFEST.MF",
-                "atomicfu.kotlin_module",
-                "versions/9/module-info.class"
+        if (kotlinVersion.startsWith("2.4")) {
+            // See KT-69701 Gradle: module name is passed inconsistently to different types of compilations
+            JarFile(clazz.protectionDomain.codeSource.location.file).compareMetaInfContents(
+                setOf(
+                    "MANIFEST.MF",
+                    "org.jetbrains.kotlinx_atomicfu.kotlin_module",
+                    "versions/9/module-info.class"
+                )
             )
-        )
+        } else {
+            JarFile(clazz.protectionDomain.codeSource.location.file).compareMetaInfContents(
+                setOf(
+                    "MANIFEST.MF",
+                    "atomicfu.kotlin_module",
+                    "versions/9/module-info.class"
+                )
+            )
+        }
     }
 
     private fun JarFile.compareMetaInfContents(expected: Set<String>) {
