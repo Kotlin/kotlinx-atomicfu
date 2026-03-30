@@ -43,3 +43,5 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
         logger.info("allWarningsAsErrors=${compilerOptions.allWarningsAsErrors.get()}")
     }
 }
+
+project.configureImplementationJarManifest("jvmJar")
