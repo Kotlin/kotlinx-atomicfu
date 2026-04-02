@@ -20,7 +20,7 @@ kotlin {
 
     jvm()
 
-    js(IR)
+    js()
 
     macosArm64()
     @Suppress("DEPRECATION", "DEPRECATION_ERROR")
