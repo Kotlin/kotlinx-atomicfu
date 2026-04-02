@@ -47,7 +47,7 @@ kotlin {
     watchosX64()
 
     // JS -- always
-    js(IR) {
+    js {
         outputModuleName = "kotlinx-atomicfu"
         // TODO: commented out because browser tests do not work on TeamCity
         // browser()
