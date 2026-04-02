@@ -9,3 +9,5 @@ plugins {
 kotlin {
     jvmToolchain(8)
 }
+
+project.configureImplementationJarManifest("jar")
