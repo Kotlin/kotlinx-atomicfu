@@ -6,8 +6,8 @@
 
 package kotlinx.atomicfu
 
-import kotlin.internal.InlineOnly
 import kotlinx.atomicfu.TraceBase.None
+import kotlin.internal.InlineOnly
 import kotlin.reflect.KProperty
 
 /**
@@ -109,6 +109,12 @@ public expect fun atomic(initial: Boolean): AtomicBoolean
 /**
  * Creates array of AtomicRef<T> of specified size, where each element is initialised with null value
  */
+@Deprecated(
+    message = "Atomic array types provided by the kotlinx-atomicfu are prone to various bugs and will be removed soon. " +
+            "Use AtomicArray type and corresponding factory functions provided by the Kotlin standard library instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("kotlin.concurrent.atomics.atomicArrayOfNulls<T>(size)")
+)
 @Suppress("DEPRECATION")
 @OptionalJsName(ATOMIC_ARRAY_OF_NULLS)
 public fun <T> atomicArrayOfNulls(size: Int): AtomicArray<T?> = AtomicArray(size)
@@ -508,8 +514,22 @@ public inline fun AtomicLong.updateAndGet(function: (Long) -> Long): Long {
 /**
  * Creates a new array of AtomicInt values of the specified size, where each element is initialised with 0
  */
-@Suppress("DEPRECATION") @OptionalJsName(ATOMIC_INT_ARRAY)
-public class AtomicIntArray(size: Int) {
+@Deprecated(
+    message = "Atomic array types provided by the kotlinx-atomicfu are prone to various bugs and will be removed soon. " +
+            "Use AtomicIntArray type provided by the Kotlin standard library instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("kotlin.concurrent.atomics.AtomicIntArray")
+)
+@Suppress("DEPRECATION")
+@OptionalJsName(ATOMIC_INT_ARRAY)
+public class AtomicIntArray
+@Deprecated(
+    message = "Atomic array types provided by the kotlinx-atomicfu are prone to various bugs and will be removed soon. " +
+            "Use AtomicIntArray type provided by the Kotlin standard library instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("kotlin.concurrent.atomics.AtomicIntArray(size)")
+)
+public constructor(size: Int) {
     private val array = Array(size) { atomic(0) }
 
     @OptionalJsName(ARRAY_SIZE)
@@ -525,8 +545,22 @@ public class AtomicIntArray(size: Int) {
 /**
  * Creates a new array of AtomicLong values of the specified size, where each element is initialised with 0L
  */
-@Suppress("DEPRECATION") @OptionalJsName(ATOMIC_LONG_ARRAY)
-public class AtomicLongArray(size: Int) {
+@Deprecated(
+    message = "Atomic array types provided by the kotlinx-atomicfu are prone to various bugs and will be removed soon. " +
+            "Use AtomicLongArray type provided by the Kotlin standard library instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("kotlin.concurrent.atomics.AtomicLongArray")
+)
+@Suppress("DEPRECATION")
+@OptionalJsName(ATOMIC_LONG_ARRAY)
+public class AtomicLongArray
+@Deprecated(
+    message = "Atomic array types provided by the kotlinx-atomicfu are prone to various bugs and will be removed soon. " +
+            "Use AtomicLongArray type provided by the Kotlin standard library instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("kotlin.concurrent.atomics.AtomicLongArray(size)")
+)
+public constructor(size: Int) {
     private val array = Array(size) { atomic(0L) }
 
     @OptionalJsName(ARRAY_SIZE)
@@ -542,7 +576,14 @@ public class AtomicLongArray(size: Int) {
 /**
  * Creates a new array of AtomicBoolean values of the specified size, where each element is initialised with false
  */
-@Suppress("DEPRECATION") @OptionalJsName(ATOMIC_BOOLEAN_ARRAY)
+@Suppress("DEPRECATION")
+@OptionalJsName(ATOMIC_BOOLEAN_ARRAY)
+@Deprecated(
+    message = "Atomic array types provided by the kotlinx-atomicfu are prone to various bugs and will be removed soon. " +
+            "There is no direct replacement for this type in the standard library. " +
+            "Consider encoding boolean values as Int constants and using kotlin.concurrent.atomics.AtomicIntArray instead.",
+    level = DeprecationLevel.WARNING
+)
 public class AtomicBooleanArray(size: Int) {
     private val array = Array(size) { atomic(false) }
 
@@ -556,8 +597,14 @@ public class AtomicBooleanArray(size: Int) {
 
 
 // ==================================== AtomicArray ====================================
-
-@Suppress("DEPRECATION") @OptionalJsName(ATOMIC_REF_ARRAY)
+@Deprecated(
+    message = "Atomic array types provided by the kotlinx-atomicfu are prone to various bugs and will be removed soon. " +
+            "Use AtomicArray type provided by the Kotlin standard library instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("kotlin.concurrent.atomics.AtomicArray<T>")
+)
+@Suppress("DEPRECATION")
+@OptionalJsName(ATOMIC_REF_ARRAY)
 public class AtomicArray<T> internal constructor(size: Int) {
     private val array = Array(size) { atomic<T?>(null) }
 
