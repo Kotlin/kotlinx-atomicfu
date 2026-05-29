@@ -1,5 +1,11 @@
 # Change log for kotlinx.atomicfu
 
+# Versoin 0.33.0
+* Deprecated atomic array types provided by the atomicfu. Use types provided by the Kotlin standard library instead. (#591)
+* Published jar files now include Implementation-* attributes in their manifests (#592)
+* Updated ASM to 9.10.1 (#595)
+* Various build infra updates
+
 # Version 0.32.1
 * Fixed issues with the Gradle plugin publication to the Gradle plugin portal (#589)
 
