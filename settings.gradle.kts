@@ -2,6 +2,11 @@ rootProject.name = "kotlinx-atomicfu"
 
 pluginManagement {
     includeBuild("build-settings-logic")
+
+    repositories {
+        // gradlePluginPortal(), cache-redirected
+        maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
+    }
 }
 
 plugins {
