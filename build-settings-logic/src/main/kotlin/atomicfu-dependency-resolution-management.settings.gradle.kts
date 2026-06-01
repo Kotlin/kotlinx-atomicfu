@@ -38,8 +38,8 @@ dependencyResolutionManagement {
             logger.info("A custom Kotlin repository ${additionalRepositoryProperty.get()} was added")
         }
 
-        mavenCentral()
-
+        // mavenCentral(), cache-redirected
+        maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2")
 
         // we have such a task https://youtrack.jetbrains.com/issue/KT-34732 to move these artifacts to the Maven repository,
         // but before that we need to have ivy for yarn and node dependencies

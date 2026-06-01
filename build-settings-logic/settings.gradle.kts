@@ -4,14 +4,23 @@ dependencyResolutionManagement {
 
     @Suppress("UnstableApiUsage")
     repositories {
-        mavenCentral()
-        gradlePluginPortal()
+        // mavenCentral(), cache-redirected
+        maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2")
+        // gradlePluginPortal(), cache-redirected
+        maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
     }
 
     versionCatalogs {
         create("libs") {
             from(files("../gradle/libs.versions.toml"))
         }
+    }
+}
+
+pluginManagement {
+    repositories {
+        // gradlePluginPortal(), cache-redirected
+        maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
     }
 }
 
