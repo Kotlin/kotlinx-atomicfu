@@ -1,0 +1,2 @@
+org.jetbrains.kotlinx.atomicfu:org.jetbrains.kotlinx.atomicfu.gradle.plugin/.pom
+org.jetbrains.kotlinx:atomicfu-gradle-plugin/.jar,.module,.pom,javadoc.jar,sources.jar
