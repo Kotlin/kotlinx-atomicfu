@@ -1,3 +1,5 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
 rootProject.name = "kotlinx-atomicfu"
 
 pluginManagement {
@@ -11,10 +13,10 @@ pluginManagement {
 
 plugins {
     id("atomicfu-dependency-resolution-management")
-    id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
+    id("org.gradle.toolchains.foojay-resolver-convention") version ("0.8.0")
     id("atomicfu-develocity")
     id("atomicfu-cache-redirector")
-    id("org.jetbrains.kotlinx.artifacts-validator-plugin") version("0.0.2")
+    id("org.jetbrains.kotlinx.artifacts-validator-plugin") version ("0.0.2")
 }
 
 include("atomicfu")
@@ -23,3 +25,16 @@ include("atomicfu-gradle-plugin")
 include("atomicfu-maven-plugin")
 
 include("integration-testing")
+
+if (!DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX) {
+    // Several modules are publishing cinterop libraries,
+    // and only macOs hosts can publish all such libraries for all platforms.
+    // So let's disable check task on other platforms.
+    settings.gradle.beforeProject {
+        tasks.configureEach {
+            if (name == "checkArtifacts" || name == "dumpArtifacts") {
+                enabled = false
+            }
+        }
+    }
+}
