@@ -55,7 +55,7 @@ class JvmProjectTest {
 
         jvmSample.build().apply {
             assertTrue { buildClassesAtomicfuDir.exists() }
-            val expectedFiles = if (kotlinVersion.startsWith("2.4")) {
+            val expectedFiles = if (kotlinVersion >= "2.4") { // TODO: update the test after updating Kotlin version
                 """
                 build/classes/atomicfu/main/IntArithmetic.class
                 build/classes/atomicfu/main/META-INF/kotlinx.atomicfu.examples_jvm-sample.kotlin_module
