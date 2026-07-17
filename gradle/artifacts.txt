@@ -23,7 +23,6 @@ org.jetbrains.kotlinx:atomicfu-tvossimulatorarm64
 org.jetbrains.kotlinx:atomicfu-tvosx64
 org.jetbrains.kotlinx:atomicfu-wasm-js
 org.jetbrains.kotlinx:atomicfu-wasm-wasi
-org.jetbrains.kotlinx:atomicfu-watchosarm32
 org.jetbrains.kotlinx:atomicfu-watchosarm64
 org.jetbrains.kotlinx:atomicfu-watchosdevicearm64
 org.jetbrains.kotlinx:atomicfu-watchossimulatorarm64
