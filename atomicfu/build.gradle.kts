@@ -26,10 +26,6 @@ kotlin {
     iosArm64()
 
     // Tier 3
-    androidNativeArm32()
-    androidNativeArm64()
-    androidNativeX86()
-    androidNativeX64()
     mingwX64()
     watchosDeviceArm64()
     iosX64()
@@ -37,6 +33,15 @@ kotlin {
     // Deprecated
     @Suppress("DEPRECATION") //https://github.com/Kotlin/kotlinx-atomicfu/issues/207
     linuxArm32Hfp()
+
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+    androidNativeArm32()
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+    androidNativeArm64()
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+    androidNativeX86()
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+    androidNativeX64()
 
     @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     macosX64()
