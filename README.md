@@ -178,7 +178,6 @@ apply plugin: 'org.jetbrains.kotlinx.atomicfu'
 
 Maven configuration is supported for JVM projects.
 
-
 <details open>
 <summary>Declare atomicfu version</summary>
 
@@ -205,6 +204,94 @@ Maven configuration is supported for JVM projects.
 ```
 
 </details>
+
+AtomicFU comes in two flavors: a compiler plugin and a legacy bytecode transformation.
+For Maven projects, different configurations are required depending on a chosen flavor.
+
+##### Applying AtomicFU compiler plugin
+
+<details>
+<summary>Add dependency on the compiler plugin</summary>
+
+Compiler plugin needs to be downloaded as a JAR file to apply it to the project.
+It could be configured using Maven dependency plugin. Note that the compiler plugin should use the same version
+as the Kotlin plugin applied to the project (below, it is defined by the `kotlin.version` property)
+
+```xml
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-dependency-plugin</artifactId>
+  <version>3.9.0</version>
+  <executions>
+    <execution>
+      <id>copy-atomicfu-compiler-plugin</id>
+      <phase>generate-sources</phase>
+      <goals>
+        <goal>copy</goal>
+      </goals>
+      <configuration>
+        <artifactItems>
+          <artifactItem>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-atomicfu-compiler-plugin-embeddable</artifactId>
+            <version>${kotlin.version}</version>
+            <outputDirectory>${project.build.directory}/kotlin-plugins</outputDirectory>
+            <destFileName>kotlin-atomicfu-compiler-plugin-embeddable.jar</destFileName>
+          </artifactItem>
+        </artifactItems>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+```
+</details>
+
+<details>
+<summary>Configure the Kotlin compiler</summary>
+
+```xml
+<plugin>
+  <groupId>org.jetbrains.kotlin</groupId>
+  <artifactId>kotlin-maven-plugin</artifactId>
+  <version>${kotlin.version}</version>
+  <extensions>true</extensions>
+  <configuration>
+    <args>
+      <arg>
+        -Xplugin=${project.build.directory}/kotlin-plugins/kotlin-atomicfu-compiler-plugin-embeddable.jar
+      </arg>
+    </args>
+  </configuration>
+  <executions>
+    <execution>
+      <id>compile</id>
+      <phase>compile</phase>
+      <goals>
+        <goal>compile</goal>
+      </goals>
+    </execution>
+    <execution>
+      <id>test-compile</id>
+      <phase>test-compile</phase>
+      <goals>
+        <goal>test-compile</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+```
+</details>
+
+##### Applying legacy bytecode transformation
+
+> [!CAUTION]
+> The bytecode transformation is deprecated and is no longer supported.
+> It is recommended to switch to the compiler plugin instead.
+>
+> The Maven plugin will be no longer published starting from AtomicFU `0.34.0`. 
+
+<details>
+<summary>Expand for details</summary>
 
 Configure build steps so that Kotlin compiler puts classes into a different `classes-pre-atomicfu` directory,
 which is then transformed to a regular `classes` directory to be used later by tests and delivery.
@@ -255,6 +342,7 @@ which is then transformed to a regular `classes` directory to be used later by t
 </build>
 ```
 
+</details>
 </details>
 
 ## Usage constraints
