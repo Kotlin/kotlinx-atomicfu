@@ -6,6 +6,7 @@ package test
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
+import org.junit.Assume.assumeTrue
 import kotlin.test.*
 
 abstract class MppProjectTest {
@@ -36,6 +37,33 @@ class JvmMppProjectTest : MppProjectTest() {
         }
         mppSample.checkConsumableDependencies(false)
         mppSample.buildAndCheckBytecode()
+    }
+
+    @Test
+    fun testDeprecationWarningWithIrTransformation() {
+        mppSample.enableJvmIrTransformation = true
+        mppSample.buildDryRun().output.let { output ->
+            assertFalse(
+                output.contains (
+                    "The transformation does not support recent Kotlin language features and soon will be disabled."
+                ),
+                "Output contains (but should not) the deprecation warning: $output"
+            )
+        }
+    }
+
+    @Test
+    fun testDeprecationWarningWithoutIrTransformation() {
+        assumeTrue(mppSample.getKotlinVersion() >= "2.5.0")
+        mppSample.enableJvmIrTransformation = false
+        mppSample.buildDryRun().output.let { output ->
+            assertTrue(
+                output.contains (
+                    "The transformation does not support recent Kotlin language features and soon will be disabled."
+                ),
+                "Output does not contains the deprecation warning: $output"
+            )
+        }
     }
 }
 

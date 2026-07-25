@@ -11,6 +11,11 @@ internal fun GradleBuild.build(): BuildResult =
         require(it.isSuccessful) { "${this.projectName}:build task FAILED: ${it.output} " }
     }
 
+internal fun GradleBuild.buildDryRun(): BuildResult =
+    runGradle(listOf("build", "--dry-run")).also {
+        require(it.isSuccessful) { "${this.projectName}:build task FAILED: ${it.output} " }
+    }
+
 internal fun GradleBuild.cleanAndBuild(): BuildResult =
     runGradle(listOf("clean", "build")).also {
         require(it.isSuccessful) { "${this.projectName}:build task FAILED: ${it.output} " }

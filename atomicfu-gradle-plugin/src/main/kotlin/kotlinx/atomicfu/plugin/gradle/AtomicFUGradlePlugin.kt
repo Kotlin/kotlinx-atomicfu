@@ -90,6 +90,15 @@ private fun Project.checkCompatibility(afuPluginVersion: String) {
     }
 }
 
+private fun Project.warnAboutBytecodeTransformationDeprecation() {
+    if (getKotlinVersion().atLeast(2, 5, 0) && !project.getBooleanProperty(ENABLE_JVM_IR_TRANSFORMATION)) {
+        logger.warn("[AtomicFU] Project ${project.path} uses legacy atomicfu bytecode transformation. " +
+                "The transformation does not support recent Kotlin language features and soon will be disabled. " +
+                "Consider explicitly enabling the newer IR transformation mode " +
+                "by setting the `$ENABLE_JVM_IR_TRANSFORMATION` Gradle property value to `true`.")
+    }
+}
+
 private fun Project.configureDependencies() {
     withPluginWhenEvaluatedDependencies("kotlin") { version ->
         dependencies.add(
@@ -322,9 +331,19 @@ private fun KotlinCompilationTask<*>.setFriendPaths(friendPathsFileCollection: F
 private fun Project.configureTasks() {
     val config = config
     withPluginWhenEvaluated("kotlin") {
+        warnAboutBytecodeTransformationDeprecation()
         if (config.transformJvm) configureJvmTransformation()
     }
     withPluginWhenEvaluated("kotlin-multiplatform") {
+        extensions.findByType(KotlinTargetsContainer::class.java)?.let { kotlinExtension ->
+            val hasJvmTargets = kotlinExtension.targets.any { target ->
+                target.platformType == KotlinPlatformType.androidJvm ||
+                target.platformType == KotlinPlatformType.jvm
+            }
+            if (hasJvmTargets) {
+                warnAboutBytecodeTransformationDeprecation()
+            }
+        }
         configureMultiplatformTransformation()
     }
 }

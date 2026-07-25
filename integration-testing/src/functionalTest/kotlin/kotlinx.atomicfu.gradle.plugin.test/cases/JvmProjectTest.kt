@@ -6,6 +6,7 @@ package kotlinx.atomicfu.gradle.plugin.test.cases
 
 import kotlinx.atomicfu.gradle.plugin.test.framework.checker.*
 import kotlinx.atomicfu.gradle.plugin.test.framework.runner.*
+import org.junit.Assume.assumeTrue
 import kotlin.test.*
 
 class JvmProjectTest {
@@ -87,6 +88,33 @@ class JvmProjectTest {
             assertEquals(
                 "",
                 buildClassesAtomicFuDirFiles(),
+            )
+        }
+    }
+
+    @Test
+    fun testDeprecationWarningWithIrTransformation() {
+        jvmSample.enableJvmIrTransformation = true
+        jvmSample.buildDryRun().output.let { output ->
+            assertFalse(
+                output.contains (
+                    "The transformation does not support recent Kotlin language features and soon will be disabled."
+                ),
+                "Output contains (but should not) the deprecation warning: $output"
+            )
+        }
+    }
+
+    @Test
+    fun testDeprecationWarningWithoutIrTransformation() {
+        assumeTrue(jvmSample.getKotlinVersion() >= "2.5.0")
+        jvmSample.enableJvmIrTransformation = false
+        jvmSample.buildDryRun().output.let { output ->
+            assertTrue(
+                output.contains (
+                    "The transformation does not support recent Kotlin language features and soon will be disabled."
+                ),
+                "Output does not contains the deprecation warning: $output"
             )
         }
     }
