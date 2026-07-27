@@ -6,7 +6,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ArrayElementInlineFuncTest {
+    @Suppress("DEPRECATION_ERROR")
     private val anyArr = atomicArrayOfNulls<Any?>(5)
+    @Suppress("DEPRECATION_ERROR")
     private val refArr = atomicArrayOfNulls<Box>(5)
 
     private data class Box(val n: Int)

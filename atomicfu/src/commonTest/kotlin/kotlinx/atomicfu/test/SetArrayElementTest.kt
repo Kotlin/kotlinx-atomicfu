@@ -1,7 +1,5 @@
 package kotlinx.atomicfu.test
 
-import kotlinx.atomicfu.AtomicBooleanArray
-import kotlinx.atomicfu.AtomicIntArray
 import kotlinx.atomicfu.atomicArrayOfNulls
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -26,8 +24,11 @@ class SetArrayElementTest {
 }
 
 class ArrayElementSetters {
-    private val intArr = AtomicIntArray(3)
-    private val booleanArr = AtomicBooleanArray(4)
+    @Suppress("DEPRECATION_ERROR")
+    private val intArr = kotlinx.atomicfu.AtomicIntArray(3)
+    @Suppress("DEPRECATION_ERROR")
+    private val booleanArr = kotlinx.atomicfu.AtomicBooleanArray(4)
+    @Suppress("DEPRECATION_ERROR")
     private val refArr = atomicArrayOfNulls<IntBox>(5)
 
     fun setInt(index: Int, data: Int) = intArr[index].compareAndSet(0, data)
@@ -36,6 +37,7 @@ class ArrayElementSetters {
 }
 
 class AtomicArrayWithMethod {
+    @Suppress("DEPRECATION_ERROR")
     val refArray = atomicArrayOfNulls<String>(5)
 
     fun set(data: String, index: Int) {

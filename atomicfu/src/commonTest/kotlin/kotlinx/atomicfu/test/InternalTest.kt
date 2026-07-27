@@ -4,7 +4,6 @@
 
 package kotlinx.atomicfu.test
 
-import kotlinx.atomicfu.AtomicIntArray
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.atomicArrayOfNulls
 
@@ -14,7 +13,9 @@ class A {
     internal val yyy = atomic(638753975930025820)
     internal val zzz = atomic(Node(5))
 
-    internal val intArr = AtomicIntArray(5)
+    @Suppress("DEPRECATION_ERROR")
+    internal val intArr = kotlinx.atomicfu.AtomicIntArray(5)
+    @Suppress("DEPRECATION_ERROR")
     internal val refArr = atomicArrayOfNulls<String>(10)
 
     fun set(index: Int, data: String) = refArr[index].compareAndSet(null, data)

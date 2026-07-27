@@ -1,8 +1,6 @@
 package kotlinx.atomicfu.locks
 
-import kotlinx.atomicfu.AtomicIntArray
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.atomicArrayOfNulls
+import kotlinx.atomicfu.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.fail
@@ -14,7 +12,9 @@ private val THREAD_SETS = listOf(2, 5, 7)
 
 class BarrierTest {
     private class Arrs(numberOfThreads: Int) {
+        @Suppress("DEPRECATION_ERROR")
         val after = AtomicIntArray(numberOfThreads)
+        @Suppress("DEPRECATION_ERROR")
         val before = AtomicIntArray(numberOfThreads)
 
         init {
@@ -66,6 +66,7 @@ private class Barrier(private val parties: Int) {
     }
 
     private val count = atomic(0)
+    @Suppress("DEPRECATION_ERROR")
     private val waiters = atomicArrayOfNulls<Any?>(parties - 1)
 
     fun await() {

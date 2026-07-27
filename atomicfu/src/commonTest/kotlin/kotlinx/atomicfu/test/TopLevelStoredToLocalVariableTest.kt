@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 private val top = atomic(0)
+@Suppress("DEPRECATION_ERROR")
 private val topArr = AtomicIntArray(5)
 
 class TopLevelStoredToLocalVariableTest {

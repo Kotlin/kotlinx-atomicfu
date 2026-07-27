@@ -46,6 +46,7 @@ class UncheckedCastTest {
         assertEquals("AAA", s.getString())
     }
 
+    @Suppress("DEPRECATION_ERROR")
     private val a = atomicArrayOfNulls<Any?>(10)
 
     @Test

@@ -27,7 +27,6 @@
   - [JVM options](#jvm-options)
   - [JS options](#js-options)
 - [More features](#more-features)
-  - [Arrays of atomic values](#arrays-of-atomic-values)
   - [User-defined extensions on atomics](#user-defined-extensions-on-atomics)
   - [Locks](#locks)
   - [Tracing operations](#tracing-operations)
@@ -56,7 +55,7 @@ if your project could not meet these requirements.
   * For **Native**: atomic operations are delegated to Kotlin/Native atomic intrinsics.
   * For **Wasm**: an atomic value is not transformed, it remains boxed, and `kotlinx-atomicfu` library is used as a runtime dependency.
 * Use Kotlin-specific extensions (e.g. inline `loop`, `update`, `updateAndGet` functions).
-* Use atomic arrays, user-defined extensions on atomics and locks (see [more features](#more-features)).
+* Use user-defined extensions on atomics and locks (see [more features](#more-features)).
 * [Tracing operations](#tracing-operations) for debugging.
   
 ## Example
@@ -363,22 +362,6 @@ atomicfu {
 ## More features
 
 AtomicFU provides some additional features that you can use.
-
-### Arrays of atomic values
-
-You can declare arrays of all supported atomic value types. 
-By default arrays are transformed into the corresponding `java.util.concurrent.atomic.Atomic*Array` instances.
-
-If you configure `variant = "VH"` an array will be transformed to plain array using 
-[VarHandle](https://docs.oracle.com/javase/9/docs/api/java/lang/invoke/VarHandle.html) to support atomic operations.
-  
-```kotlin
-val a = atomicArrayOfNulls<T>(size) // similar to Array constructor
-
-val x = a[i].value // read value
-a[i].value = x // set value
-a[i].compareAndSet(expect, update) // do atomic operations
-```
 
 ### Atomic delegates
 

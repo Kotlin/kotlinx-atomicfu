@@ -14,12 +14,18 @@ private val c = atomic(true)
 private val abcNode = atomic(ANode(BNode(CNode(8))))
 private val any = atomic<Any?>(null)
 
+@Suppress("DEPRECATION_ERROR")
 private val intArr = AtomicIntArray(3)
+@Suppress("DEPRECATION_ERROR")
 private val longArr = AtomicLongArray(5)
+@Suppress("DEPRECATION_ERROR")
 private val booleanArr = AtomicBooleanArray(4)
+@Suppress("DEPRECATION_ERROR")
 private val refArr = AtomicArray<ANode<BNode<CNode>>>(5)
+@Suppress("DEPRECATION_ERROR")
 private val anyRefArr = AtomicArray<Any>(10)
 
+@Suppress("DEPRECATION_ERROR")
 private val stringAtomicNullArr = atomicArrayOfNulls<String>(10)
 
 internal val internalTopLevelField = atomic(0)

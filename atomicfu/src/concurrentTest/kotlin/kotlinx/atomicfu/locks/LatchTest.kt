@@ -12,7 +12,9 @@ private val THREAD_SETS = listOf(2, 5, 7)
 
 class LatchTest {
     private class Arrs(numberOfThreads: Int) {
+        @Suppress("DEPRECATION_ERROR")
         val after = AtomicIntArray(numberOfThreads)
+        @Suppress("DEPRECATION_ERROR")
         val before = AtomicIntArray(numberOfThreads)
 
         init {

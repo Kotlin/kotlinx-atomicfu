@@ -1,7 +1,6 @@
 package kotlinx.atomicfu.locks
 
-import kotlinx.atomicfu.AtomicIntArray
-import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.fail
@@ -14,7 +13,9 @@ private const val THREADS_PER_BARRIER_SLOT = 5
 
 class CyclicBarrierTest {
     private class Arrs(numberOfThreads: Int) {
+        @Suppress("DEPRECATION_ERROR")
         val after = AtomicIntArray(numberOfThreads)
+        @Suppress("DEPRECATION_ERROR")
         val before = AtomicIntArray(numberOfThreads)
 
         init {

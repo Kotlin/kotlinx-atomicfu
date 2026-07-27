@@ -124,6 +124,7 @@ class ArrayTest {
     }
 }
 
+@Suppress("DEPRECATION_ERROR")
 class AtomicArrayClass {
     val intArr = AtomicIntArray(10)
     val longArr = AtomicLongArray(10)
@@ -135,6 +136,7 @@ class AtomicArrayClass {
     val a = atomic(IntBox(8))
 }
 
+@Suppress("DEPRECATION_ERROR")
 class ExtendedApiAtomicArrays {
     val stringAtomicNullArray = atomicArrayOfNulls<String>(10)
     val genAtomicNullArr = atomicArrayOfNulls<List<String>>(7)
