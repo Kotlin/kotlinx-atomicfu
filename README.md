@@ -213,9 +213,9 @@ For Maven projects, different configurations are required depending on a chosen 
 <details>
 <summary>Add dependency on the compiler plugin</summary>
 
-Compiler plugin needs to be downloaded as a JAR file to apply it to the project.
-It could be configured using Maven dependency plugin. Note that the compiler plugin should use the same version
-as the Kotlin plugin applied to the project (below, it is defined by the `kotlin.version` property)
+The compiler plugin needs to be downloaded as a JAR file to apply it to the project.
+It can be configured using the Maven Dependency Plugin. Note that the compiler plugin version should match the Kotlin plugin version
+applied to the project (below, it is defined by the `kotlin.version` property).
 
 ```xml
 <plugin>
@@ -288,7 +288,7 @@ as the Kotlin plugin applied to the project (below, it is defined by the `kotlin
 > The bytecode transformation is deprecated and is no longer supported.
 > It is recommended to switch to the compiler plugin instead.
 >
-> The Maven plugin will be no longer published starting from AtomicFU `0.34.0`. 
+> The Maven plugin will no longer be published starting from AtomicFU `0.34.0`.
 
 <details>
 <summary>Expand for details</summary>
