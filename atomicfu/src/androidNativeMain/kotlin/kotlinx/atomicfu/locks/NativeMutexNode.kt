@@ -6,12 +6,11 @@ package kotlinx.atomicfu.locks
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.UnsafeNumber
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.ptr
 import platform.posix.*
 
-@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
+@OptIn(ExperimentalForeignApi::class)
 internal actual class NativeMutexNode {
     internal actual var next: NativeMutexNode? = null
 

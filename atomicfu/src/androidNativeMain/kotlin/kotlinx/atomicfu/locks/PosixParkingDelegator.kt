@@ -3,7 +3,7 @@ package kotlinx.atomicfu.locks
 import kotlinx.cinterop.*
 import platform.posix.*
 
-@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
+@OptIn(ExperimentalForeignApi::class)
 internal actual object ParkingDelegator {
     actual fun createRef(): ParkingData {
         val mut = nativeHeap.alloc<pthread_mutex_t>().ptr
@@ -65,7 +65,7 @@ internal actual object ParkingDelegator {
     }
 }
 
-internal actual class ParkingData @OptIn(UnsafeNumber::class) constructor(
+internal actual class ParkingData(
     val mut: CPointer<pthread_mutex_t>,
     val cond: CPointer<pthread_cond_t>
 )
