@@ -2,6 +2,10 @@ rootProject.name = "buildSrc"
 
 pluginManagement {
     includeBuild("../build-settings-logic")
+
+    repositories {
+        maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
+    }
 }
 
 // For buildSrc we need to declare a custom path to toml file with versions' catalog.
@@ -13,6 +17,10 @@ dependencyResolutionManagement {
         getByName("libs") {
             from(files("../gradle/libs.versions.toml"))
         }
+    }
+
+    repositories {
+        maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
     }
 }
 

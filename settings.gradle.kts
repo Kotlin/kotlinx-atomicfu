@@ -6,6 +6,13 @@ pluginManagement {
     repositories {
         // gradlePluginPortal(), cache-redirected
         maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
+        maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
     }
 }
 
