@@ -364,3 +364,19 @@ val jvmTest by tasks.getting(Test::class) {
     )
     // run them only for transformed code
 }
+
+allprojects {
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        println("Project: $name")
+
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension> {
+            sourceSets.configureEach {
+                dependencies {
+                    implementation("org.jetbrains.kotlin.commonizer:commonizer-support-library:2.4.255-SNAPSHOT")
+                }
+            }
+
+            compilerOptions.freeCompilerArgs.add("-Xskip-prerelease-check")
+        }
+    }
+}

@@ -33,11 +33,11 @@ internal actual object ParkingDelegator {
 
         // Add nanos to current time
         callAndVerify { clock_gettime(CLOCK_MONOTONIC.convert(), ts) }
-        ts.pointed.tv_sec = ts.pointed.tv_sec.addNanosToSeconds(nanos)
+        ts.pointed.tv_sec = ts.pointed.tv_sec.toInt().addNanosToSeconds(nanos).convert()
         ts.pointed.tv_nsec = (ts.pointed.tv_nsec + nanos % 1_000_000_000).convert()
         //Fix overflow
         if (ts.pointed.tv_nsec >= 1_000_000_000) {
-            ts.pointed.tv_sec = ts.pointed.tv_sec.addNanosToSeconds(1_000_000_000)
+            ts.pointed.tv_sec = ts.pointed.tv_sec.toInt().addNanosToSeconds(1_000_000_000).convert()
             ts.pointed.tv_nsec -= 1_000_000_000
         }
         callAndVerify { pthread_mutex_lock(ref.mut) }
