@@ -3,7 +3,7 @@ package kotlinx.atomicfu.locks
 import kotlinx.cinterop.*
 import platform.posix.*
 
-@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
+@OptIn(ExperimentalForeignApi::class)
 internal actual object ParkingDelegator {
     actual fun createRef(): ParkingData {
         val mut = nativeHeap.alloc<pthread_mutex_t>().ptr
