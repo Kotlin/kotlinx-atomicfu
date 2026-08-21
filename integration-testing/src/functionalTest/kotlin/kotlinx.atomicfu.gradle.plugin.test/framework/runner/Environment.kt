@@ -19,7 +19,7 @@ internal const val LOCAL_REPO_DIR_PREFIX = "build/.m2/"
 internal val kotlinVersion = System.getProperty("kotlin.version.integration")
 internal val kotlinNativeVersion = System.getProperty("kotlin.native.version.integration")
 internal val atomicfuVersion = System.getProperty("atomicfu.snapshot.version.integration")
-internal val kotlinArtifactsRepo = System.getProperty("kotlin.artifacts.repository.integration")
+internal val kotlinArtifactsRepo = System.getProperty("kotlin.artifacts.repository.integration")?.let { it.ifBlank { null } }
 
 internal val gradleWrapperDir = File("..")
 
