@@ -30,7 +30,6 @@
   - [Arrays of atomic values](#arrays-of-atomic-values)
   - [User-defined extensions on atomics](#user-defined-extensions-on-atomics)
   - [Locks](#locks)
-  - [Tracing operations](#tracing-operations)
 - [Kotlin/Native support](#kotlin-native-support)
 
 ## Requirements
@@ -517,37 +516,6 @@ is used on JVM. On JVM it is a typealias to the later class, erased on JS.
 > Note that package `kotlinx.atomicfu.locks` is experimental explicitly even while atomicfu is experimental itself,
 > meaning that no ABI guarantees are provided whatsoever. API from this package is not recommended to use in libraries
 > that other projects depend on.
-
-### Tracing operations
-
-You can debug your tests tracing atomic operations with a special trace object:
-
-```kotlin
-private val trace = Trace()
-private val current = atomic(0, trace)
-
-fun update(x: Int): Int {           
-    // custom trace message
-    trace { "calling update($x)" }
-    // automatic tracing of modification operations 
-    return current.getAndAdd(x)
-}
-```      
-
-All trace messages are stored in a cyclic array inside `trace`. 
- 
-You can optionally set the size of trace's message array and format function. For example, 
-you can add a current thread name to the traced messages:
-
-```kotlin
-private val trace = Trace(size = 64) {   
-    index, // index of a trace message 
-    text   // text passed when invoking trace { text }
-    -> "$index: [${Thread.currentThread().name}] $text" 
-} 
-```                           
-
-`trace` is only seen before transformation and completely erased after on Kotlin/JVM and Kotlin/JS.
 
 ## Kotlin Native support
 
