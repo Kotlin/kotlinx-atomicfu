@@ -19,6 +19,5 @@ plugins {
 include("atomicfu")
 include("atomicfu-transformer")
 include("atomicfu-gradle-plugin")
-include("atomicfu-maven-plugin")
 
 include("integration-testing")
