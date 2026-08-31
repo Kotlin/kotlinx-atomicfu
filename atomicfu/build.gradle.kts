@@ -1,11 +1,18 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     id("kotlin-multiplatform-conventions")
     id("kotlin-multiplatform-publish-conventions")
+}
+
+// Temporary workaround for the removed watchosArm32 target
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+fun KotlinMultiplatformExtension.watchosArm32() {
+    // Do nothing
 }
 
 kotlin {
