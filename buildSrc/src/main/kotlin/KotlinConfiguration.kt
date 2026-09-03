@@ -60,7 +60,7 @@ fun getOverridingKotlinLanguageVersion(project: Project): String? {
  * @return a Kotlin API version taken from:
  *
  * 1. the Kotlin community project Gradle plugin,
- * 2. or `kotlin_language_version` Gradle property (from command line or from `gradle.properties`),
+ * 2. or `kotlin_api_version` Gradle property (from command line or from `gradle.properties`),
  *
  * or null otherwise
  */
