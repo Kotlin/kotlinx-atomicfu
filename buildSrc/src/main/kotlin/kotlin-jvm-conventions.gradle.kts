@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
 //     Regular java modules need 'java-library' plugin for proper publication
     `java-library`
@@ -8,6 +10,10 @@ plugins {
 
 kotlin {
     jvmToolchain(8)
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xallow-pre-17-runtime-jdk")
+    }
 }
 
 project.configureImplementationJarManifest("jar")

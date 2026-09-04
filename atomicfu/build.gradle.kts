@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
@@ -11,7 +12,11 @@ plugins {
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     jvmToolchain(8)
-    
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xallow-pre-17-runtime-jdk")
+    }
+
     // Tier 1
     macosArm64()
     iosSimulatorArm64()
