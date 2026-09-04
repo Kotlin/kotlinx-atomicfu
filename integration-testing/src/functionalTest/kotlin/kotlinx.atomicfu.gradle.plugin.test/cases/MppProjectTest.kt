@@ -88,6 +88,7 @@ class WasmMppProjectTest : MppProjectTest() {
 
 class NativeMppProjectTest : MppProjectTest() {
     @Test
+    @Ignore // macosX64 does not exist anymore
     fun testMppNativeWithEnabledIrTransformation() {
         mppSample.enableNativeIrTransformation = true
         // When Native IR transformations are applied, atomicfu-gradle-plugin still provides transitive atomicfu dependency
@@ -102,6 +103,7 @@ class NativeMppProjectTest : MppProjectTest() {
     }
 
     @Test
+    @Ignore // macosX64 does not exist anymore
     fun testMppNativeWithDisabledIrTransformation() {
         mppSample.enableNativeIrTransformation = false
         mppSample.checkConsumableDependencies(true)

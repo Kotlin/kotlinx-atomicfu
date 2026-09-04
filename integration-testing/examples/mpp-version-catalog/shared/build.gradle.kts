@@ -23,8 +23,6 @@ kotlin {
     js()
 
     macosArm64()
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-    macosX64()
     linuxArm64()
     linuxX64()
     mingwX64()
