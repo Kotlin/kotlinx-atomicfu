@@ -2,6 +2,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.dsl.JsModuleKind
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 
 plugins {
     id("kotlin-multiplatform-conventions")
@@ -55,7 +57,42 @@ kotlin {
         outputModuleName = "kotlinx-atomicfu"
         // TODO: commented out because browser tests do not work on TeamCity
         // browser()
-        nodejs()
+
+// The part for testing with the latest JS target supported
+        val mainCompilation = compilations.getByName("main")
+        val testCompilation = compilations.getByName("test")
+
+        val latestJsCompilation = compilations.create("latestJsTest") {
+            associateWith(mainCompilation)
+            defaultSourceSet.dependsOn(testCompilation.defaultSourceSet)
+            binaries.executable(this)
+            binaries.configureEach {
+                linkTask.configure {
+                    compilerOptions {
+                        target.set("es2015")
+                        moduleKind.set(JsModuleKind.MODULE_COMMONJS) // Mocha adapter doesn't support ES modules yet
+                        freeCompilerArgs.add("-Xes-long-as-bigint")
+                    }
+                }
+            }
+        }
+
+        nodejs {
+            val latestTargetRun = testRuns.create("latestTarget") {
+                setExecutionSourceFrom(latestJsCompilation)
+                executionTask.configure {
+                    val devBinary = latestJsCompilation.binaries
+                        .matching { it.mode == KotlinJsBinaryMode.DEVELOPMENT }
+                        .single()
+
+                    inputFileProperty.set(devBinary.mainFileSyncPath)
+                }
+            }
+
+            testTask {
+                dependsOn(latestTargetRun.executionTask)
+            }
+        }
     }
 
     // JVM -- always
