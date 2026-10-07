@@ -60,11 +60,12 @@ kotlin {
 
 // The part for testing with the latest JS target supported
         val mainCompilation = compilations.getByName("main")
-        val testCompilation = compilations.getByName("test")
 
         val latestJsCompilation = compilations.create("latestJsTest") {
             associateWith(mainCompilation)
-            defaultSourceSet.dependsOn(testCompilation.defaultSourceSet)
+            // Sources are configured in the `sourceSets` block below (see `jsLatestJsTest`).
+            // Don't `dependsOn(jsTest)` here: that would make `jsTest` a shared (non-leaf) source set
+            // and break its dependency resolution (e.g., kotlin.test) in the IDE.
             binaries.executable(this)
             binaries.configureEach {
                 linkTask.configure {
@@ -154,6 +155,14 @@ kotlin {
         }
 
         jsTest {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-test-js")
+            }
+        }
+
+        named("jsLatestJsTest") {
+            dependsOn(commonTest.get())
+            kotlin.srcDirs(jsTest.get().kotlin.srcDirs)
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-test-js")
             }
