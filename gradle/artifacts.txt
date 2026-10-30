@@ -1,9 +1,5 @@
 org.jetbrains.kotlinx.atomicfu:org.jetbrains.kotlinx.atomicfu.gradle.plugin
 org.jetbrains.kotlinx:atomicfu
-org.jetbrains.kotlinx:atomicfu-androidnativearm32
-org.jetbrains.kotlinx:atomicfu-androidnativearm64
-org.jetbrains.kotlinx:atomicfu-androidnativex64
-org.jetbrains.kotlinx:atomicfu-androidnativex86
 org.jetbrains.kotlinx:atomicfu-gradle-plugin
 org.jetbrains.kotlinx:atomicfu-iosarm64
 org.jetbrains.kotlinx:atomicfu-iossimulatorarm64
