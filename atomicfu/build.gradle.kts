@@ -35,15 +35,6 @@ kotlin {
     linuxArm32Hfp()
 
     @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-    androidNativeArm32()
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-    androidNativeArm64()
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-    androidNativeX86()
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-    androidNativeX64()
-
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     macosX64()
     @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     tvosX64()
